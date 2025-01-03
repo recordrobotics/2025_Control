@@ -18,17 +18,17 @@ public class PistonTemplate extends KillableSubsystem {
   }
 
   public enum PistonTemplateStates {
-    UP,
-    DOWN,
+    EXTENDED,
+    RETRACTED,
     OFF;
   }
 
   public void toggle(PistonTemplateStates state) {
     switch (state) {
-      case UP:
+      case EXTENDED:
         solenoid.set(DoubleSolenoid.Value.kForward);
         break;
-      case DOWN:
+      case RETRACTED:
         solenoid.set(DoubleSolenoid.Value.kReverse);
         break;
       case OFF: // turn off or kill
