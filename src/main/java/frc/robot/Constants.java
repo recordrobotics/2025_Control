@@ -35,6 +35,19 @@ public final class Constants {
     public static final double SPEAKER_SPEED = 90;
     public static final double AMP_SPEED = 60;
     public static final double REVERSE_SPEED = -30;
+
+    // PID Values
+    public static final double LEFT_MOTOR_KP = 0.07;
+    public static final double LEFT_MOTOR_KI = 0;
+    public static final double LEFT_MOTOR_KD = 0;
+    public static final double LEFT_MOTOR_KS = 0.12;
+    public static final double LEFT_MOTOR_KV = 0.14;
+
+    public static final double RIGHT_MOTOR_KP = 0.07;
+    public static final double RIGHT_MOTOR_KI = 0;
+    public static final double RIGHT_MOTOR_KD = 0;
+    public static final double RIGHT_MOTOR_KS = 0.12;
+    public static final double RIGHT_MOTOR_KV = 0.13;
   }
 
   public final class NeoSim {

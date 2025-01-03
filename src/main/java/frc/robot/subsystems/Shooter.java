@@ -17,10 +17,21 @@ public class Shooter extends KillableSubsystem implements ShuffleboardPublisher 
   private CANSparkMaxWrapper flywheelL;
   private CANSparkMaxWrapper flywheelR;
 
-  private PIDController leftPID = new PIDController(0.07, 0, 0);
-  private PIDController rightPID = new PIDController(0.07, 0.2, 0);
-  private SimpleMotorFeedforward leftFeedForward = new SimpleMotorFeedforward(0.12, 0.14);
-  private SimpleMotorFeedforward rightFeedForward = new SimpleMotorFeedforward(0.12, 0.13);
+  private PIDController leftPID =
+      new PIDController(
+          Constants.Shooter.LEFT_MOTOR_KP,
+          Constants.Shooter.LEFT_MOTOR_KI,
+          Constants.Shooter.LEFT_MOTOR_KD);
+  private PIDController rightPID =
+      new PIDController(
+          Constants.Shooter.RIGHT_MOTOR_KP,
+          Constants.Shooter.RIGHT_MOTOR_KI,
+          Constants.Shooter.RIGHT_MOTOR_KD);
+  private SimpleMotorFeedforward leftFeedForward =
+      new SimpleMotorFeedforward(Constants.Shooter.LEFT_MOTOR_KS, Constants.Shooter.LEFT_MOTOR_KV);
+  private SimpleMotorFeedforward rightFeedForward =
+      new SimpleMotorFeedforward(
+          Constants.Shooter.RIGHT_MOTOR_KS, Constants.Shooter.RIGHT_MOTOR_KV);
   private double targetVelocityLeft = 0.0;
   private double targetVelocityRight = 0.0;
 
