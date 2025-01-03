@@ -1,0 +1,76 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 0.63,
+        "y": 6.643192842729962
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.4312714083953617,
+        "y": 7.021952102283829
+      },
+      "isLocked": false,
+      "linkedName": "DiagSpeakerLeft"
+    },
+    {
+      "anchor": {
+        "x": 2.8872307611518506,
+        "y": 7.00011877397313
+      },
+      "prevControl": {
+        "x": 1.8872307611518506,
+        "y": 7.00011877397313
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "LeftNoteStraight"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0,
+      "rotationDegrees": 56.6,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Acquire",
+      "waypointRelativePos": 0.35,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Acquire"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 1.5,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "SpeakerPlusOne",
+  "previewStartingState": {
+    "rotation": 56.6,
+    "velocity": 0
+  },
+  "useDefaultConstraints": true
+}
