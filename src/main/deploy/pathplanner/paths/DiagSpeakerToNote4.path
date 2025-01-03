@@ -1,0 +1,88 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 0.6222795351573609,
+        "y": 4.3385312981452175
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 5.633375170920705,
+        "y": 0.6482940383804455
+      },
+      "isLocked": false,
+      "linkedName": "DiagSpeakerRight"
+    },
+    {
+      "anchor": {
+        "x": 8.42625267198278,
+        "y": 2.466688828864594
+      },
+      "prevControl": {
+        "x": 6.940275325582657,
+        "y": 2.0442050735155384
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Note4"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6,
+      "rotationDegrees": 13.6,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "New Constraints Zone",
+      "minWaypointRelativePos": 0.95,
+      "maxWaypointRelativePos": 1.0,
+      "constraints": {
+        "maxVelocity": 2.0,
+        "maxAcceleration": 3.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
+  "eventMarkers": [
+    {
+      "name": "Aqcuire",
+      "waypointRelativePos": 0.2,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "AcquirePush"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 6.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 1000.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0.0,
+    "rotation": 13.6,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Speaker Far Note",
+  "previewStartingState": {
+    "rotation": -60.85000000000002,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}

@@ -1,0 +1,55 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 0.39,
+      "y": 4.22
+    },
+    "rotation": 0.0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "FastSourceDiagStart"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.4
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "FastSourceDiagToC5"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "C5Up"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "SourceSideDiag",
+  "choreoAuto": false
+}
