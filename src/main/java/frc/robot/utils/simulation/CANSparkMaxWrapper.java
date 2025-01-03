@@ -1,17 +1,17 @@
 package frc.robot.utils.simulation;
 
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class CANSparkMaxWrapper {
-  public CANSparkMax motor;
+  public SparkMax motor;
   public CANSparkMaxSim simMotor;
 
   public CANSparkMaxWrapper(int deviceId, MotorType type) {
     if (RobotBase.isReal()) {
-      motor = new CANSparkMax(deviceId, type);
+      motor = new SparkMax(deviceId, type);
     } else {
       simMotor = new CANSparkMaxSim();
     }

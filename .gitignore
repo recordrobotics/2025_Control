@@ -190,3 +190,5 @@ docs/source/_build/*
 simgui-ds.json
 simgui.json
 simgui-window.json
+
+networktables.json

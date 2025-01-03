@@ -1,8 +1,8 @@
 package frc.robot.subsystems;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.studica.frc.AHRS;
+import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.shuffleboard.ShuffleboardUI;
 
@@ -23,7 +23,14 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
   private double jerkX;
   private double jerkY;
 
-  public static AHRS _nav = new AHRS(SerialPort.Port.kUSB1);
+  // TODO which port is the navX on?
+  // kMXP_SPI(0),
+  // kMXP_UART(1),
+  // kUSB1(2),
+  // kUSB2(3),
+  // kI2C(4);
+
+  public static AHRS _nav = new AHRS(NavXComType.kMXP_SPI);
 
   // variable to keep track of a reference angle whenever you reset
   private static double referenceAngle = _nav.getAngle();

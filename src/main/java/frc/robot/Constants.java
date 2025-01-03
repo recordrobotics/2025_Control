@@ -4,9 +4,9 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.PIDConstants;
-import com.pathplanner.lib.util.ReplanningConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -288,14 +288,12 @@ public final class Constants {
     /** The max jerk of the robot below which the pose is certain (in G/s) */
     public static final double MaxPoseCertaintyJerk = 80;
 
-    public static final HolonomicPathFollowerConfig PathFollowerConfig =
-        new HolonomicPathFollowerConfig(
+    public static final RobotConfig PPDefaultConfig = new RobotConfig(1, 1, null, 1);
+
+    public static final PPHolonomicDriveController PPDriveController =
+        new PPHolonomicDriveController(
             new PIDConstants(6, 0.0, 0.0), // Translation PID constants
-            new PIDConstants(5, 0.0, 0.0), // Rotation PID constants
-            5, // Max module speed, in m/s
-            locDist, // Drive base radius in meters. Distance from robot center to furthest module.
-            new ReplanningConfig() // Default path replanning config. See the API for the options
-            // here
+            new PIDConstants(5, 0.0, 0.0) // Rotation PID constants
             );
 
     // Module Creation

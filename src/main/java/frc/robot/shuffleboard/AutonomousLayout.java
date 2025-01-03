@@ -11,7 +11,6 @@ import frc.robot.Constants.FieldStartingLocation;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class AutonomousLayout extends AbstractLayout {
 
@@ -19,9 +18,6 @@ public class AutonomousLayout extends AbstractLayout {
   private static SendableChooser<AutoName> autoChooser = new SendableChooser<>();
   private static SendableChooser<FieldStartingLocation> fieldStartingLocationChooser =
       new SendableChooser<>();
-
-  private Supplier<Boolean> acquisitionValue = () -> false;
-  private Supplier<Boolean> hasNoteValue = () -> false;
 
   private static final Map<Integer, TuningData> velocityGraphData = new HashMap<>();
 
@@ -49,19 +45,6 @@ public class AutonomousLayout extends AbstractLayout {
         .withWidget(BuiltInWidgets.kSplitButtonChooser)
         .withSize(6, 1)
         .withPosition(0, 3);
-
-    getTab()
-        .addBoolean("Acquisition", () -> acquisitionValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(9, 0)
-        .withSize(1, 1);
-
-    getTab()
-        .addBoolean("Has Note", () -> hasNoteValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(9, 1)
-        .withSize(1, 1);
-
     getTab()
         .addDoubleArray("Velocity", () -> TuningData.MapToArray(velocityGraphData))
         .withWidget(BuiltInWidgets.kGraph)
@@ -76,14 +59,6 @@ public class AutonomousLayout extends AbstractLayout {
   public void setVisionPose(Pose2d pose) {
     field.getObject("Vision").setPose(pose);
     ;
-  }
-
-  public void setAcquisition(Supplier<Boolean> acquisition) {
-    acquisitionValue = acquisition;
-  }
-
-  public void setHasNote(Supplier<Boolean> hasNote) {
-    hasNoteValue = hasNote;
   }
 
   public void putSwerveVelocityData(int id, double current, double target) {
