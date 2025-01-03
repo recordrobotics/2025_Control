@@ -1,0 +1,82 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 2.9026396514331485,
+        "y": 4.092954054853979
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.0743047791467224,
+        "y": 4.085669852175546
+      },
+      "isLocked": false,
+      "linkedName": "RightNote2"
+    },
+    {
+      "anchor": {
+        "x": 1.55,
+        "y": 5.55
+      },
+      "prevControl": {
+        "x": 1.6209816657041727,
+        "y": 5.620438648012729
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Score1"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": 0.0,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Flywheel",
+      "waypointRelativePos": 0.55,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Retract"
+              }
+            },
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 2.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 1000.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Center Note Routines",
+  "previewStartingState": {
+    "rotation": 0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}

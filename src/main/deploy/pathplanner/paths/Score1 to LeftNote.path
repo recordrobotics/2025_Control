@@ -1,0 +1,76 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.55,
+        "y": 5.55
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.204276934099541,
+        "y": 6.300804952149717
+      },
+      "isLocked": false,
+      "linkedName": "Score1"
+    },
+    {
+      "anchor": {
+        "x": 3.0911884361479456,
+        "y": 7.204076448969224
+      },
+      "prevControl": {
+        "x": 2.136950001525628,
+        "y": 6.2571380452311525
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "LeftNote"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": 40.14,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Acquier",
+      "waypointRelativePos": 0.1,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "AcquirePush"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 2.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 1000.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 40.14,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Center Note Routines",
+  "previewStartingState": {
+    "rotation": 0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}
