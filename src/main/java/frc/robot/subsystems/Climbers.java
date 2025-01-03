@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import frc.robot.RobotMap;
 
 public class Climbers extends KillableSubsystem {
-
   // Sets up solenoid
   private DoubleSolenoid solenoid =
       new DoubleSolenoid(

@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.shuffleboard.ShuffleboardUI;
 
 public class Photosensor extends SubsystemBase implements ShuffleboardPublisher {
-
   private static DigitalInput photosensor;
   private static Boolean debounced_value = false;
   private Debouncer m_debouncer = new Debouncer(0.05, Debouncer.DebounceType.kBoth);

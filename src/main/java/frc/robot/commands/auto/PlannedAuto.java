@@ -4,17 +4,16 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.RobotContainer;
 import frc.robot.shuffleboard.ShuffleboardUI;
-import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.PoseTracker;
 import frc.robot.utils.AutoPath;
 
 public class PlannedAuto extends SequentialCommandGroup {
-  public PlannedAuto(Drivetrain drivetrain, AutoPath autoPath) {
+  public PlannedAuto(AutoPath autoPath) {
     addCommands(
-        new InstantCommand(() -> PoseTracker.resetStartingPose()),
+        new InstantCommand(() -> RobotContainer.poseTracker.resetStartingPose()),
         new PathPlannerAuto(ShuffleboardUI.Autonomous.getAutoChooser()),
-        new InstantCommand(() -> drivetrain.kill()),
+        new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         new WaitCommand(0.1),
         new InstantCommand(() -> System.out.println("Auto End")));
   }

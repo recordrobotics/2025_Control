@@ -7,27 +7,20 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.shuffleboard.ShuffleboardUI;
 
 public class PoseTracker extends SubsystemBase {
-  public static PoseTracker instance;
-
-  private final NavSensor nav = new NavSensor();
+  public final NavSensor nav = new NavSensor(); // TODO should be seperate subsystem or private
 
   private static SwerveDrivePoseEstimator poseFilter;
 
-  private final Drivetrain drivetrain;
-  private final Limelight limelight;
-
-  public PoseTracker(Drivetrain drivetrain, Limelight limelight) {
-    this.drivetrain = drivetrain;
-    this.limelight = limelight;
-
+  public PoseTracker() {
     nav.resetAngleAdjustment();
 
     poseFilter =
         new SwerveDrivePoseEstimator(
-            drivetrain.getKinematics(),
+            RobotContainer.drivetrain.getKinematics(),
             nav.getAdjustedAngle(),
             getModulePositions(),
             ShuffleboardUI.Autonomous.getStartingLocation().getPose());
@@ -37,11 +30,11 @@ public class PoseTracker extends SubsystemBase {
   public void periodic() {
     poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
     poseFilter.addVisionMeasurement(
-        limelight.getPoseEstimate().pose,
-        limelight.getPoseEstimate().timestampSeconds,
+        RobotContainer.limelight.getPoseEstimate().pose,
+        RobotContainer.limelight.getPoseEstimate().timestampSeconds,
         VecBuilder.fill(
-            limelight.getConfidence(),
-            limelight.getConfidence(),
+            RobotContainer.limelight.getConfidence(),
+            RobotContainer.limelight.getConfidence(),
             9999999) // big number to remove all influence of limelight pose rotation
         );
 
@@ -51,47 +44,28 @@ public class PoseTracker extends SubsystemBase {
   }
 
   private SwerveModulePosition[] getModulePositions() {
-    return drivetrain.getModulePositions();
+    return RobotContainer.drivetrain.getModulePositions();
   }
 
-  public Pose2d _getEstimatedPosition() {
+  public Pose2d getEstimatedPosition() {
     return poseFilter.getEstimatedPosition();
   }
 
   /** Similar to resetPose but adds an argument for the initial pose */
-  public void _setToPose(Pose2d pose) {
+  public void setToPose(Pose2d pose) {
     poseFilter.resetPosition(nav.getAdjustedAngle(), getModulePositions(), pose);
   }
 
   /** Resets the field relative position of the robot (mostly for testing). */
-  public void _resetStartingPose() {
+  public void resetStartingPose() {
     setToPose(ShuffleboardUI.Autonomous.getStartingLocation().getPose());
   }
 
   /** Resets the pose to FrontSpeakerClose (shooter facing towards speaker) */
-  public void _resetDriverPose() {
+  public void resetDriverPose() {
     poseFilter.resetPosition(
         nav.getAdjustedAngle(),
         getModulePositions(),
         Constants.FieldStartingLocation.FrontSpeakerClose.getPose());
-  }
-
-  // Singleton stuff
-  // just static versions of the above methods to avoid .instance boilerplate
-
-  public static Pose2d getEstimatedPosition() {
-    return PoseTracker.instance._getEstimatedPosition();
-  }
-
-  public static void setToPose(Pose2d pose) {
-    PoseTracker.instance._setToPose(pose);
-  }
-
-  public static void resetStartingPose() {
-    PoseTracker.instance._resetStartingPose();
-  }
-
-  public static void resetDriverPose() {
-    PoseTracker.instance._resetDriverPose();
   }
 }

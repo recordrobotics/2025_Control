@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import frc.robot.RobotMap;
 
 public class Crashbar extends KillableSubsystem {
-
   // Creates solenoid
   private DoubleSolenoid solenoid =
       new DoubleSolenoid(

@@ -2,17 +2,11 @@ package frc.robot.commands.notes;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.RobotContainer;
 import frc.robot.commands.subroutines.PushAmp;
 import frc.robot.commands.subroutines.SetupAmp;
-import frc.robot.subsystems.Channel;
-import frc.robot.subsystems.Crashbar;
-import frc.robot.subsystems.Shooter;
 
 public class ShootAmp extends SequentialCommandGroup {
-
-  private static Channel _channel;
-  private static Shooter _shooter;
-  private static Crashbar _crashbar;
 
   /** Number of seconds it takes for the flywheel to spin up */
   private final double flywheelSpinupTime = 0.3;
@@ -29,17 +23,15 @@ public class ShootAmp extends SequentialCommandGroup {
    * @param channel
    * @param shooter
    */
-  public ShootAmp(Channel channel, Shooter shooter, Crashbar crashbar) {
-    _channel = channel;
-    _shooter = shooter;
-    _crashbar = crashbar;
-    addRequirements(channel);
-    addRequirements(shooter);
-    addRequirements(crashbar);
+  public ShootAmp() {
+    addRequirements(RobotContainer.channel);
+    addRequirements(RobotContainer.shooter);
+    addRequirements(RobotContainer.crashbar);
 
     addCommands(
-        new SetupAmp(_shooter, _crashbar, true),
+        new SetupAmp(RobotContainer.shooter, RobotContainer.crashbar, true),
         new WaitCommand(Math.max(flywheelSpinupTime, crashbarExtendTime)),
-        new PushAmp(_channel, _shooter, _crashbar, shootTime));
+        new PushAmp(
+            RobotContainer.channel, RobotContainer.shooter, RobotContainer.crashbar, shootTime));
   }
 }

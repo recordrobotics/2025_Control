@@ -23,18 +23,17 @@ import frc.robot.utils.AutoPath;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-
-  // The robot's subsystems and commands are defined here
-  private final NavSensor nav;
-  private final Drivetrain drivetrain;
-  private final Shooter shooter;
-  private final Crashbar crashbar;
-  private final Climbers climbers;
-  private final Acquisition acquisition;
-  private final Channel channel;
-  private final Photosensor photosensor;
-  private final PCMCompressor compressor;
-  private final Limelight limelight;
+  // Subsystems
+  public static final PoseTracker poseTracker = new PoseTracker();
+  public static final Drivetrain drivetrain = new Drivetrain();
+  public static final Channel channel = new Channel();
+  public static final Acquisition acquisition = new Acquisition();
+  public static final Shooter shooter = new Shooter();
+  public static final Climbers climbers = new Climbers();
+  public static final Crashbar crashbar = new Crashbar();
+  public static final Photosensor photosensor = new Photosensor();
+  public static final PCMCompressor pcmCompressor = new PCMCompressor();
+  public static final Limelight limelight = new Limelight();
 
   // Autonomous
   private final AutoPath autoPath;
@@ -42,24 +41,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-
-    // Init subsystems
-    nav = new NavSensor();
-    drivetrain = new Drivetrain();
-    channel = new Channel();
-    acquisition = new Acquisition();
-    shooter = new Shooter();
-    crashbar = new Crashbar();
-    photosensor = new Photosensor();
-    climbers = new Climbers();
-    compressor = new PCMCompressor();
-    limelight = new Limelight();
-
-    // this is very cursed but it is less cursed than other ways to do it, so don't touch
-    PoseTracker.instance = new PoseTracker(drivetrain, limelight);
-
     // Sets up auto path
-    autoPath = new AutoPath(drivetrain, acquisition, photosensor, channel, shooter, crashbar);
+    autoPath = new AutoPath();
 
     // Sets up Control scheme chooser
     ShuffleboardUI.Overview.addControls(
@@ -69,12 +52,19 @@ public class RobotContainer {
     configureButtonBindings();
 
     ShuffleboardPublisher.setup(
-        nav, drivetrain, channel, acquisition, shooter, photosensor, compressor, limelight);
+        poseTracker.nav,
+        drivetrain,
+        channel,
+        acquisition,
+        shooter,
+        photosensor,
+        pcmCompressor,
+        limelight);
   }
 
   public void teleopInit() {
     // Sets default command for manual swerve. It is the only one right now
-    drivetrain.setDefaultCommand(new ManualSwerve(drivetrain));
+    drivetrain.setDefaultCommand(new ManualSwerve());
   }
 
   /**
@@ -92,36 +82,36 @@ public class RobotContainer {
 
     // Command to kill compressor
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getKillCompressor())
-        .onTrue(new InstantCommand(compressor::disable))
-        .onFalse(new InstantCommand(compressor::enable))
+        .onTrue(new InstantCommand(pcmCompressor::disable))
+        .onFalse(new InstantCommand(pcmCompressor::enable))
         .onTrue(new InstantCommand(() -> ShuffleboardUI.Overview.getControl().vibrate(1)))
         .onFalse(new InstantCommand(() -> ShuffleboardUI.Overview.getControl().vibrate(0)));
 
     // Notes triggers
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getAcquire())
-        .toggleOnTrue(new AcquireSmart(acquisition, channel, photosensor, shooter));
+        .toggleOnTrue(new AcquireSmart());
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getShootSpeaker())
-        .toggleOnTrue(new ShootSpeaker(channel, shooter));
+        .toggleOnTrue(new ShootSpeaker());
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getShootAmp())
-        .toggleOnTrue(new ShootAmp(channel, shooter, crashbar));
+        .toggleOnTrue(new ShootAmp());
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getReverse())
-        .whileTrue(new ManualReverse(acquisition, channel));
+        .whileTrue(new ManualReverse());
 
     // Manual triggers
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualShootAmp())
-        .toggleOnTrue(new ManualShooter(shooter, Shooter.ShooterStates.AMP));
+        .toggleOnTrue(new ManualShooter(Shooter.ShooterStates.AMP));
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualShootSpeaker())
-        .toggleOnTrue(new ManualShooter(shooter, Shooter.ShooterStates.SPEAKER));
+        .toggleOnTrue(new ManualShooter(Shooter.ShooterStates.SPEAKER));
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualCrashbar())
-        .toggleOnTrue(new ManualCrashbar(crashbar));
+        .toggleOnTrue(new ManualCrashbar());
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualChannel())
-        .whileTrue(new ManualChannel(channel));
+        .whileTrue(new ManualChannel());
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualClimbers())
-        .toggleOnTrue(new ManualClimbers(climbers));
+        .toggleOnTrue(new ManualClimbers());
 
     // Reset pose trigger
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getPoseReset())
-        .onTrue(new InstantCommand(PoseTracker::resetDriverPose));
+        .onTrue(new InstantCommand(poseTracker::resetDriverPose));
   }
 
   /**
@@ -131,7 +121,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     if (autoCommand == null) {
-      autoCommand = new PlannedAuto(drivetrain, autoPath);
+      autoCommand = new PlannedAuto(autoPath);
     }
     return autoCommand;
   }
@@ -149,7 +139,7 @@ public class RobotContainer {
     crashbar.close();
     photosensor.close();
     climbers.close();
-    compressor.close();
+    pcmCompressor.close();
     limelight.close();
   }
 }

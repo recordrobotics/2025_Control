@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
-import frc.robot.subsystems.PoseTracker;
+import frc.robot.RobotContainer;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.SimpleMath;
 
@@ -32,7 +32,8 @@ public class DoubleXbox extends AbstractControl {
   public DriveCommandData getDriveCommandData() {
 
     // Calculates spin
-    double robot_angle = PoseTracker.getEstimatedPosition().getRotation().getRadians();
+    double robot_angle =
+        RobotContainer.poseTracker.getEstimatedPosition().getRotation().getRadians();
     double target_angle = super.OrientAngle(getAngle().getFirst()).getRadians();
     double spin = anglePID.calculate(robot_angle, target_angle);
     // Calculates proportion of PID to multiply by

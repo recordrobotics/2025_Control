@@ -7,11 +7,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.shuffleboard.ShuffleboardUI;
 import frc.robot.utils.SimpleMath;
 
 public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
-
   private static final String name = "limelight";
   private int numTags = 0;
   private double confidence = 0;
@@ -32,7 +32,13 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   public void periodic() {
     confidence = 0;
     LimelightHelpers.SetRobotOrientation(
-        name, PoseTracker.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        name,
+        RobotContainer.poseTracker.getEstimatedPosition().getRotation().getDegrees(),
+        0,
+        0,
+        0,
+        0,
+        0);
     PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
     PoseEstimate measurement_m2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
 
@@ -61,7 +67,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
         && measurement
                 .pose
                 .getTranslation()
-                .getDistance(PoseTracker.getEstimatedPosition().getTranslation())
+                .getDistance(RobotContainer.poseTracker.getEstimatedPosition().getTranslation())
             > 2) {
       confidence = 0;
     }
@@ -78,7 +84,6 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     } else {
       hasVision = false;
       ShuffleboardUI.Autonomous.setVisionPose(new Pose2d());
-      // TODO should it set confidence to 99999999999 because there is no vision?
     }
   }
 

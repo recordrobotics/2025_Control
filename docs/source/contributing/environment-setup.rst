@@ -17,7 +17,6 @@ is edited.
 - `Python 3.12 <https://www.python.org/downloads/>`__ (ensure that it is in path)
 - `Make <https://gnuwin32.sourceforge.net/packages/make.htm>`__ (only for windows)
 - `Python extension <https://marketplace.visualstudio.com/items?itemName=ms-python.python>`__
-- `Esbonio <https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio>`__
 - `reStructuredText <https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext>`__
 - `reStructuredText Syntax <https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst>`__
 - `Live Preview <https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server>`__
@@ -52,13 +51,14 @@ Finally, restart VSCode to re-run the python extensions.
 
 Configuration
 -------------
-.. note::
-
-  This step is optional since there is already a ``settings.json`` in the project,
-  however if something does not work, make sure to check that all of these settings are correct.
 
 Once all of the extensions are installed, open the **user** ``settings.json`` from
 the ``Command Palette`` :kbd:`Ctrl+Shift+P` and make sure to set the esbonio and lint paths.
+
+.. note::
+
+  This is technically optional since there is already a ``settings.json`` in the project,
+  however if something does not work, make sure to check that all of the settings are correct.
 
 .. code-block:: json
 
@@ -104,7 +104,7 @@ and run ``Live Preview: Start Server`` while an ``rst`` file is open.
  If the live preview window can't find the html file, try to cause a rebuild by editing
  a ``rst`` file. Make sure that the ``docs/build`` directory is being created since that
  is where the live preview points to. Finally, if it still doesn't work, open the output panel
- by pressing :kbd:`Ctrl+Shift+U` and select ``Esbonio`` from the dropdown
+ by pressing :kbd:`Ctrl+Shift+U` and select ``Esbonio Language Server`` from the dropdown
  in the top right. If everything is working, the output should show something about ``build succeeded.``.
 
 .. _manual-building:
