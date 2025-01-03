@@ -1,0 +1,94 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 8.514000495934484,
+        "y": 0.78
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 4.561376294389786,
+        "y": 0.8969415444243991
+      },
+      "isLocked": false,
+      "linkedName": "FarNote"
+    },
+    {
+      "anchor": {
+        "x": 0.6222795351573609,
+        "y": 4.3385312981452175
+      },
+      "prevControl": {
+        "x": 1.9943043678679948,
+        "y": 0.7307338002311335
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "DiagSpeakerRight"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6,
+      "rotationDegrees": -60.84899999999999,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "New Constraints Zone",
+      "minWaypointRelativePos": 0.95,
+      "maxWaypointRelativePos": 1.0,
+      "constraints": {
+        "maxVelocity": 2.0,
+        "maxAcceleration": 3.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
+  "eventMarkers": [
+    {
+      "name": "New Event Marker",
+      "waypointRelativePos": 0.2,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Retract"
+              }
+            },
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 1000.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -60.84899999999999,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Speaker Far Note",
+  "previewStartingState": {
+    "rotation": 0.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}

@@ -1,0 +1,88 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.1134340217398382,
+        "y": 6.501949869996606
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.4793416143057783,
+        "y": 6.513449584816487
+      },
+      "isLocked": false,
+      "linkedName": "AmpDiagScore"
+    },
+    {
+      "anchor": {
+        "x": 3.031275350299988,
+        "y": 6.993104356579084
+      },
+      "prevControl": {
+        "x": 1.4230421017435608,
+        "y": 6.993104356579084
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "B1"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.75,
+      "rotationDegrees": 0,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "Pickup",
+      "minWaypointRelativePos": 0.5,
+      "maxWaypointRelativePos": 0.5,
+      "constraints": {
+        "maxVelocity": 2.0,
+        "maxAcceleration": 3.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
+  "eventMarkers": [
+    {
+      "name": "Acquire",
+      "waypointRelativePos": 0.35,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "AcquirePush"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 1.2,
+    "maxAcceleration": 2.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Amp Side Diagonal",
+  "previewStartingState": {
+    "rotation": 45.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}

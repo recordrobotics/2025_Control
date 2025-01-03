@@ -1,0 +1,67 @@
+{
+  "version": 1.0,
+  "startingPose": null,
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "To Amp"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushAmp"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Amp to Note"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Shoot note 2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "ARCHIVE",
+  "choreoAuto": false
+}

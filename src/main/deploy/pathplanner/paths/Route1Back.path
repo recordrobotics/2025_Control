@@ -1,0 +1,76 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.171132993097341,
+        "y": 7.0198259161363925
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.1242720404579554,
+        "y": 6.9834049027442315
+      },
+      "isLocked": false,
+      "linkedName": "LeftNoteStraight"
+    },
+    {
+      "anchor": {
+        "x": 0.6291279308379378,
+        "y": 6.643192842729962
+      },
+      "prevControl": {
+        "x": 0.5476961136054864,
+        "y": 6.585150968688709
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "DiagSpeakerLeft"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Flywheel",
+      "waypointRelativePos": 0.15,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Retract"
+              }
+            },
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 1.5,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 56.6,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Amp Side Diagonal",
+  "previewStartingState": {
+    "rotation": 0.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": true
+}
