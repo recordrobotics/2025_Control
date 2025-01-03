@@ -1,0 +1,81 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 0.63,
+        "y": 6.64
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.4312714083953617,
+        "y": 7.018759259553867
+      },
+      "isLocked": false,
+      "linkedName": "DiagSpeakerLeft"
+    },
+    {
+      "anchor": {
+        "x": 3.171132993097341,
+        "y": 7.0198259161363925
+      },
+      "prevControl": {
+        "x": 1.6404209530509328,
+        "y": 7.0198259161363925
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "LeftNoteStraight"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0,
+      "rotationDegrees": 56.6,
+      "rotateFast": false
+    },
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": 0.0,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Acquire",
+      "waypointRelativePos": 0.1,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "AcquirePush"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 2.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 1000.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Amp Side Diagonal",
+  "previewStartingState": {
+    "rotation": 56.6,
+    "velocity": 0
+  },
+  "useDefaultConstraints": true
+}

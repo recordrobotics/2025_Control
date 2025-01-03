@@ -1,0 +1,118 @@
+{
+  "HALProvider": {
+    "Other Devices": {
+      "Compressor[0]": {
+        "header": {
+          "open": true
+        }
+      },
+      "DutyCycleEncoder[3]": {
+        "header": {
+          "open": true
+        }
+      },
+      "Talon FX (v6)[2]/Rotor Sensor": {
+        "header": {
+          "open": true
+        }
+      },
+      "navX-Sensor[0]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/Autonomous/Auto Code": "String Chooser",
+      "/Shuffleboard/Autonomous/Field": "Field2d",
+      "/Shuffleboard/Autonomous/Starting Location": "String Chooser",
+      "/Shuffleboard/Overview/Drive Mode": "String Chooser",
+      "/Shuffleboard/Overview/Driver Orientation": "String Chooser",
+      "/Shuffleboard/Test/Acquisition": "Motor Controller",
+      "/Shuffleboard/Test/Channel": "Motor Controller",
+      "/Shuffleboard/Test/Drive 2.0": "Motor Controller",
+      "/Shuffleboard/Test/Drive 4.0": "Motor Controller",
+      "/Shuffleboard/Test/Drive 6.0": "Motor Controller",
+      "/Shuffleboard/Test/Drive 8.0": "Motor Controller",
+      "/Shuffleboard/Test/Turn 1.0": "Motor Controller",
+      "/Shuffleboard/Test/Turn 3.0": "Motor Controller",
+      "/Shuffleboard/Test/Turn 5.0": "Motor Controller",
+      "/Shuffleboard/Test/Turn 7.0": "Motor Controller",
+      "/SmartDashboard/Auto Chooser": "String Chooser",
+      "/SmartDashboard/Drive Mode": "String Chooser",
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Joystick Orientation": "String Chooser",
+      "/SmartDashboard/SendableChooser[0]": "String Chooser"
+    },
+    "windows": {
+      "/SmartDashboard/Field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "FMSInfo": {
+        "open": true
+      },
+      "LiveWindow": {
+        ".status": {
+          "open": true
+        },
+        "open": true
+      },
+      "Shuffleboard": {
+        ".metadata": {
+          "open": true
+        },
+        ".recording": {
+          "open": true
+        },
+        "open": true
+      },
+      "SmartDashboard": {
+        "Field": {
+          "open": true
+        },
+        "open": true
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "Clients": {
+      "open": true
+    },
+    "Connections": {
+      "open": true
+    },
+    "Server": {
+      "Publishers": {
+        "open": true
+      },
+      "Subscribers": {
+        "open": true
+      }
+    },
+    "shuffleboard@1": {
+      "Publishers": {
+        "open": true
+      },
+      "Subscribers": {
+        "open": true
+      },
+      "open": true
+    },
+    "visible": true
+  }
+}
