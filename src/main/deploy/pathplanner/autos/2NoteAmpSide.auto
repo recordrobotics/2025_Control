@@ -1,0 +1,73 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 1.31,
+      "y": 5.55
+    },
+    "rotation": 0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "FlywheelSpeaker"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Speaker to Score1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.7
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Score1 to LeftNote"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftNote to Score1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "Center Note Routines",
+  "choreoAuto": false
+}

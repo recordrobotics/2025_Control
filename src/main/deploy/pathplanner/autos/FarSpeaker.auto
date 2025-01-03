@@ -1,0 +1,61 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 0.62,
+      "y": 4.34
+    },
+    "rotation": -60.85000000000002
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "FlywheelSpeaker"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.7
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DiagSpeakerToBottomNote"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BottomNoteToDiagSpeaker"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PushSpeaker"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "SourceSideDiag",
+  "choreoAuto": false
+}

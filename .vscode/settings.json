@@ -1,0 +1,51 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.server.launchMode": "Standard",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "bin/": true,
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true,
+    "**/*~": true
+  },
+  "java.test.config": [
+    {
+      "name": "WPIlibUnitTests",
+      "workingDirectory": "${workspaceFolder}/build/jni/release",
+      "vmargs": [
+        "-Djava.library.path=${workspaceFolder}/build/jni/release"
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release",
+        "DYLD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release"
+      }
+    },
+  ],
+  "java.test.defaultConfig": "WPIlibUnitTests",
+  "restructuredtext.linter.doc8.extraArgs": [
+    "--config",
+    "${workspaceFolder}/docs/doc8.ini"
+  ],
+  "esbonio.sphinx.numJobs": 0,
+  "esbonio.sphinx.buildDir": "${workspaceFolder}\\docs\\build",
+  "esbonio.sphinx.confDir": "${workspaceFolder}\\docs\\source",
+  "filewatcher.commands": [
+    {
+      "event": "onFileChange",
+      "match": "\\.rst*",
+      "cmd": "\"${workspaceRoot}\\docs\\make.bat\" html"
+    }
+  ],
+  "livePreview.defaultPreviewPath": "/docs/build/html/index.html",
+  "livePreview.previewDebounceDelay": 3000,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "iis.configDir": "",
+  "java.debug.settings.onBuildFailureProceed": true
+}

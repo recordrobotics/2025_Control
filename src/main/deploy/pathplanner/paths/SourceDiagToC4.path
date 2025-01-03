@@ -1,0 +1,88 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.1334335257744161,
+        "y": 4.514138054404375
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.5611372507452916,
+        "y": 1.5276149562448986
+      },
+      "isLocked": false,
+      "linkedName": "SourceDiagScore"
+    },
+    {
+      "anchor": {
+        "x": 8.277540743191514,
+        "y": 2.440207897274712
+      },
+      "prevControl": {
+        "x": 5.407564887889314,
+        "y": 0.6482940383804455
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "C4"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.35,
+      "rotationDegrees": 0,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "Pickup",
+      "minWaypointRelativePos": 0.5,
+      "maxWaypointRelativePos": 0.5,
+      "constraints": {
+        "maxVelocity": 2.0,
+        "maxAcceleration": 3.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
+  "eventMarkers": [
+    {
+      "name": "Acquire",
+      "waypointRelativePos": 0.35,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "AcquirePush"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 4.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 36.87,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "SourceSideDiagonal",
+  "previewStartingState": {
+    "rotation": -52.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}

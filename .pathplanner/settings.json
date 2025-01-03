@@ -1,0 +1,27 @@
+{
+  "robotWidth": 0.46,
+  "robotLength": 0.46,
+  "holonomicMode": true,
+  "pathFolders": [
+    "ARCHIVE",
+    "Amp Side Diagonal",
+    "AutoChain",
+    "Center Note Routines",
+    "Scramble",
+    "SourceSideDiagonal",
+    "Speaker Far Note",
+    "SpeakerPlusOne",
+    "TeleAuto"
+  ],
+  "autoFolders": [
+    "ARCHIVE",
+    "AmpSideDiag",
+    "Center Note Routines",
+    "SourceSideDiag"
+  ],
+  "defaultMaxVel": 1.5,
+  "defaultMaxAccel": 3.0,
+  "defaultMaxAngVel": 540.0,
+  "defaultMaxAngAccel": 720.0,
+  "maxModuleSpeed": 5.0
+}

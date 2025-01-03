@@ -1,0 +1,76 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 8.277540743191514,
+        "y": 2.440207897274712
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.7633993156185066,
+        "y": 1.0343567803373404
+      },
+      "isLocked": false,
+      "linkedName": "C4"
+    },
+    {
+      "anchor": {
+        "x": 1.1334335257744161,
+        "y": 4.514138054404375
+      },
+      "prevControl": {
+        "x": 1.3228227954118554,
+        "y": 0.9157419312566129
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "SourceDiagScore"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "PrepFlywheel",
+      "waypointRelativePos": 0.1,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Retract"
+              }
+            },
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 4.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -52.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "SourceSideDiagonal",
+  "previewStartingState": {
+    "rotation": 36.87,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}
