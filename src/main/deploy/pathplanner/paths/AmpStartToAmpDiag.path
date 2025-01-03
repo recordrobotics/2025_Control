@@ -1,0 +1,92 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 0.39,
+        "y": 6.852774503269805
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 0.49,
+        "y": 6.852774503269805
+      },
+      "isLocked": false,
+      "linkedName": "AmpDiagStart"
+    },
+    {
+      "anchor": {
+        "x": 0.8093860062363999,
+        "y": 6.852774503269805
+      },
+      "prevControl": {
+        "x": 0.7593860062363998,
+        "y": 6.852774503269805
+      },
+      "nextControl": {
+        "x": 0.8593860062363999,
+        "y": 6.852774503269805
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 1.1134340217398382,
+        "y": 6.501949869996606
+      },
+      "prevControl": {
+        "x": 1.1221164306231846,
+        "y": 6.452709482345996
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "AmpDiagScore"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.3,
+      "rotationDegrees": 0.0,
+      "rotateFast": true
+    }
+  ],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "SpinupFlywheel",
+      "waypointRelativePos": 0,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 1.2,
+    "maxAcceleration": 2.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 45.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Amp Side Diagonal",
+  "previewStartingState": {
+    "rotation": 0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": false
+}
