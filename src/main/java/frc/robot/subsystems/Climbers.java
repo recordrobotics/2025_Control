@@ -4,26 +4,26 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import frc.robot.RobotMap;
 
-public class Climbers extends KillableSubsystem {
+public class PistonTemplate extends KillableSubsystem {
 
   // Sets up solenoid
   private DoubleSolenoid solenoid =
       new DoubleSolenoid(
           PneumaticsModuleType.CTREPCM,
-          RobotMap.Climbers.FORWARD_PORT,
-          RobotMap.Climbers.REVERSE_PORT);
+          RobotMap.PistonTemplate.FORWARD_PORT,
+          RobotMap.PistonTemplate.REVERSE_PORT);
 
-  public Climbers() {
-    toggle(ClimberStates.OFF);
+  public PistonTemplate() {
+    toggle(PistonTemplateStates.OFF);
   }
 
-  public enum ClimberStates {
+  public enum PistonTemplateStates {
     UP,
     DOWN,
     OFF;
   }
 
-  public void toggle(ClimberStates state) {
+  public void toggle(PistonTemplateStates state) {
     switch (state) {
       case UP:
         solenoid.set(DoubleSolenoid.Value.kForward);
@@ -40,7 +40,7 @@ public class Climbers extends KillableSubsystem {
 
   @Override
   public void kill() {
-    toggle(ClimberStates.OFF);
+    toggle(PistonTemplateStates.OFF);
   }
 
   /** frees up all hardware allocations */
