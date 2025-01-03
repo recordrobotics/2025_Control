@@ -1,0 +1,70 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 2.8872307611518506,
+        "y": 7.00011877397313
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 0.8403698085124651,
+        "y": 6.963697760580969
+      },
+      "isLocked": false,
+      "linkedName": "LeftNoteStraight"
+    },
+    {
+      "anchor": {
+        "x": 0.6291279308379378,
+        "y": 6.643192842729962
+      },
+      "prevControl": {
+        "x": 0.5476961136054864,
+        "y": 6.585150968688709
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "DiagSpeakerLeft"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "eventMarkers": [
+    {
+      "name": "Flywheel",
+      "waypointRelativePos": 0.2,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "FlywheelSpeaker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 1.5,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 56.6,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "SpeakerPlusOne",
+  "previewStartingState": {
+    "rotation": 0.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": true
+}
