@@ -31,10 +31,8 @@ public class OverviewLayout extends AbstractLayout {
   private static AbstractControl _defaultControl;
 
   // private Supplier<Boolean> poseCertainValue = () -> false;
-  private Supplier<Boolean> acquisitionValue = () -> false;
   private Supplier<Boolean> compressorValue = () -> false;
   private Supplier<Boolean> compressorManuallyDisabledValue = () -> false;
-  private Supplier<Boolean> hasNoteValue = () -> false;
   private Supplier<Boolean> navSensorValue = () -> false;
   private Supplier<Integer> tagNumValue = () -> 0;
   private Supplier<Double> confidenceValue = () -> 0.0;
@@ -51,12 +49,6 @@ public class OverviewLayout extends AbstractLayout {
     //         .withPosition(0, 1);
 
     getTab()
-        .addBoolean("Acquisition", () -> acquisitionValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(6, 0)
-        .withSize(1, 1);
-
-    getTab()
         .addBoolean("Compressor", () -> compressorValue.get())
         .withWidget(BuiltInWidgets.kBooleanBox)
         .withPosition(7, 0)
@@ -66,12 +58,6 @@ public class OverviewLayout extends AbstractLayout {
         .addBoolean("CP Disabled", () -> compressorManuallyDisabledValue.get())
         .withWidget(BuiltInWidgets.kBooleanBox)
         .withPosition(8, 0)
-        .withSize(1, 1);
-
-    getTab()
-        .addBoolean("Has Note", () -> hasNoteValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(9, 0)
         .withSize(1, 1);
 
     getTab()
@@ -103,12 +89,6 @@ public class OverviewLayout extends AbstractLayout {
         .withWidget(BuiltInWidgets.kBooleanBox)
         .withPosition(8, 2)
         .withSize(1, 1);
-
-    getTab()
-        .addDoubleArray("Shooter Speed", () -> TuningData.MapToArray(shooterSpeedData))
-        .withWidget(BuiltInWidgets.kGraph)
-        .withPosition(3, 2)
-        .withSize(4, 3);
   }
 
   /**
@@ -146,20 +126,12 @@ public class OverviewLayout extends AbstractLayout {
         .withSize(3, 1);
   }
 
-  public void setAcquisition(Supplier<Boolean> acquisition) {
-    acquisitionValue = acquisition;
-  }
-
   public void setCompressor(Supplier<Boolean> compressor) {
     compressorValue = compressor;
   }
 
   public void setCompressorManuallyDisabled(Supplier<Boolean> compressorManuallyDisabled) {
     compressorManuallyDisabledValue = compressorManuallyDisabled;
-  }
-
-  public void setHasNote(Supplier<Boolean> hasNote) {
-    hasNoteValue = hasNote;
   }
 
   public void setNavSensor(Supplier<Boolean> navSensor) {

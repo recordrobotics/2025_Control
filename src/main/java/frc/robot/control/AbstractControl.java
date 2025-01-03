@@ -20,33 +20,6 @@ public abstract class AbstractControl {
 
   public abstract void vibrate(double value);
 
-  // Smart notes routines
-  public abstract Boolean getAcquire();
-
-  public abstract Boolean getReverse();
-
-  public abstract Boolean getShootSpeaker();
-
-  public abstract Boolean getShootAmp();
-
-  // Manual
-  public abstract Boolean getManualShootSpeaker();
-
-  public abstract Boolean getManualShootAmp();
-
-  public abstract Boolean getManualChannel();
-
-  public abstract Boolean getManualCrashbar();
-
-  public abstract Boolean getManualClimbers();
-
-  // Tele scoring
-  public abstract Boolean getTeleAmp();
-
-  public abstract Boolean getTeleSpeaker();
-
-  public abstract Boolean getTeleChain();
-
   // Orient XY
   public static Pair<Double, Double> OrientXY(Pair<Double, Double> input) {
     double inputX = input.getFirst();

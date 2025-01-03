@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.auto.*;
 import frc.robot.commands.manual.*;
-import frc.robot.commands.notes.*;
 import frc.robot.control.*;
 import frc.robot.shuffleboard.ShuffleboardUI;
 import frc.robot.subsystems.*;
@@ -27,12 +26,6 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here
   private final NavSensor nav;
   private final Drivetrain drivetrain;
-  private final Shooter shooter;
-  private final Crashbar crashbar;
-  private final Climbers climbers;
-  private final Acquisition acquisition;
-  private final Channel channel;
-  private final Photosensor photosensor;
   private final PCMCompressor compressor;
   private final Limelight limelight;
 
@@ -46,12 +39,6 @@ public class RobotContainer {
     // Init subsystems
     nav = new NavSensor();
     drivetrain = new Drivetrain();
-    channel = new Channel();
-    acquisition = new Acquisition();
-    shooter = new Shooter();
-    crashbar = new Crashbar();
-    photosensor = new Photosensor();
-    climbers = new Climbers();
     compressor = new PCMCompressor();
     limelight = new Limelight();
 
@@ -59,7 +46,7 @@ public class RobotContainer {
     PoseTracker.instance = new PoseTracker(drivetrain, limelight);
 
     // Sets up auto path
-    autoPath = new AutoPath(drivetrain, acquisition, photosensor, channel, shooter, crashbar);
+    autoPath = new AutoPath(drivetrain);
 
     // Sets up Control scheme chooser
     ShuffleboardUI.Overview.addControls(
@@ -69,7 +56,7 @@ public class RobotContainer {
     configureButtonBindings();
 
     ShuffleboardPublisher.setup(
-        nav, drivetrain, channel, acquisition, shooter, photosensor, compressor, limelight);
+        nav, drivetrain, compressor, limelight);
   }
 
   public void teleopInit() {
@@ -88,7 +75,7 @@ public class RobotContainer {
     // Command to kill robot
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getKillAuto())
         .whileTrue(
-            new KillSpecified(drivetrain, acquisition, channel, shooter, crashbar, climbers));
+            new KillSpecified(drivetrain));
 
     // Command to kill compressor
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getKillCompressor())
@@ -96,28 +83,6 @@ public class RobotContainer {
         .onFalse(new InstantCommand(compressor::enable))
         .onTrue(new InstantCommand(() -> ShuffleboardUI.Overview.getControl().vibrate(1)))
         .onFalse(new InstantCommand(() -> ShuffleboardUI.Overview.getControl().vibrate(0)));
-
-    // Notes triggers
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getAcquire())
-        .toggleOnTrue(new AcquireSmart(acquisition, channel, photosensor, shooter));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getShootSpeaker())
-        .toggleOnTrue(new ShootSpeaker(channel, shooter));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getShootAmp())
-        .toggleOnTrue(new ShootAmp(channel, shooter, crashbar));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getReverse())
-        .whileTrue(new ManualReverse(acquisition, channel));
-
-    // Manual triggers
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualShootAmp())
-        .toggleOnTrue(new ManualShooter(shooter, Shooter.ShooterStates.AMP));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualShootSpeaker())
-        .toggleOnTrue(new ManualShooter(shooter, Shooter.ShooterStates.SPEAKER));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualCrashbar())
-        .toggleOnTrue(new ManualCrashbar(crashbar));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualChannel())
-        .whileTrue(new ManualChannel(channel));
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getManualClimbers())
-        .toggleOnTrue(new ManualClimbers(climbers));
 
     // Reset pose trigger
     new Trigger(() -> ShuffleboardUI.Overview.getControl().getPoseReset())
@@ -143,12 +108,6 @@ public class RobotContainer {
   /** frees up all hardware allocations */
   public void close() {
     drivetrain.close();
-    channel.close();
-    acquisition.close();
-    shooter.close();
-    crashbar.close();
-    photosensor.close();
-    climbers.close();
     compressor.close();
     limelight.close();
   }

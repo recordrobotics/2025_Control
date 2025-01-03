@@ -169,6 +169,8 @@ out/
 .fleet
 
 # Simulation GUI and other tools window save file
+networktables.json
+simgui.json
 *-window.json
 
 # Simulation data log directory
@@ -177,16 +179,9 @@ logs/
 # Folder that has CTRE Phoenix Sim device config storage
 ctre_sim/
 
+# clangd
+/.cache
+compile_commands.json
 
-# Sphinx build
-docs/build
-docs/build/*
-docs/source/_build
-docs/source/_build/*
-
-
-
-# Robot simulator setup
-simgui-ds.json
-simgui.json
-simgui-window.json
+# Eclipse generated file for annotation processors
+.factorypath
