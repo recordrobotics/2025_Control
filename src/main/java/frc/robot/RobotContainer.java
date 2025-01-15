@@ -32,6 +32,7 @@ public class RobotContainer {
   public static final CoralShooter coralShooter = new CoralShooter();
   public static final CoralIntake coralIntake = new CoralIntake();
   public static final Lights lights = new Lights();
+  public static final PowerDistributionPanel pdp = new PowerDistributionPanel();
 
   // Autonomous
   @SuppressWarnings("unused")
@@ -102,5 +103,6 @@ public class RobotContainer {
     elevator.close();
     coralShooter.close();
     coralIntake.close();
+    pdp.close();
   }
 }

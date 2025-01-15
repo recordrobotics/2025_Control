@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ModuleConstants.MotorLocation;
@@ -321,5 +322,16 @@ public final class Constants {
 
     public static final ModuleConstants backRightConstants =
         ModuleConstants.fromConfig(MotorLocation.BackRight, MotorType.Falcon);
+  }
+
+  public final class RobotState {
+    public static Mode getMode() {
+      return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
+    }
+
+    public static enum Mode {
+      REAL,
+      REPLAY
+    }
   }
 }
