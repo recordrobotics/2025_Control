@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Percent;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.wpilibj.AddressableLED;
@@ -17,7 +18,8 @@ public class Lights extends SubsystemBase {
     OFF,
     RUNNING,
     SUCCESS,
-    FAIL
+    FAIL,
+    RAINBOW
   }
 
   private AddressableLED LEDs;
@@ -32,15 +34,20 @@ public class Lights extends SubsystemBase {
 
     // Default command makes lights turn off by default
     setDefaultCommand(
-        runPattern(LEDPattern.solid(Color.kBlack), 0, Constants.Lights.length).withName("Off"));
+        runPattern(LEDPattern.solid(Color.kBlack), 0, Constants.Lights.length - 1).withName("Off"));
   }
 
   /** NOTE: Only interact with light strip with the command!!! */
   public void setGlobalMode(LightMode mode) {
-    setRangeMode(mode, 0, Constants.Lights.length);
+    setRangeMode(mode, 0, Constants.Lights.length - 1);
   }
 
   /** NOTE: Only interact with light strip with the command!!! */
+  /**
+   * @param mode the mode to set the LED strip to
+   * @param start the start index of the LED strip to run the pattern on (inclusive)
+   * @param end the end index of the LED strip to run the pattern on (inclusive)
+   */
   public void setRangeMode(LightMode mode, int start, int end) {
     LEDPattern pattern;
 
@@ -56,6 +63,9 @@ public class Lights extends SubsystemBase {
         break;
       case FAIL:
         pattern = LEDPattern.solid(Color.kRed);
+        break;
+      case RAINBOW:
+        pattern = LEDPattern.rainbow(255, 255).scrollAtRelativeSpeed(Percent.per(Second).of((25)));
         break;
       case OFF:
       default:
@@ -76,6 +86,8 @@ public class Lights extends SubsystemBase {
    * Creates a command that runs a pattern on the entire LED strip.
    *
    * @param pattern the LED pattern to run
+   * @param start the start index of the LED strip to run the pattern on (inclusive)
+   * @param end the end index of the LED strip to run the pattern on (inclusive)
    */
   public Command runPattern(LEDPattern pattern, int start, int end) {
     return run(() -> pattern.applyTo(buffer.createView(start, end))); // TODO test view things

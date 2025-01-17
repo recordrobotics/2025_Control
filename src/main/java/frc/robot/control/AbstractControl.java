@@ -14,7 +14,7 @@ public abstract class AbstractControl {
   // Misc
   public abstract Boolean getPoseReset();
 
-  public abstract Boolean getKillAuto();
+  public abstract Boolean getKill();
 
   public abstract Boolean getKillCompressor();
 

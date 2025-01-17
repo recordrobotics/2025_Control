@@ -79,7 +79,7 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public Boolean getKillAuto() {
+  public Boolean getKill() {
     return xbox_controller.getRawButton(8);
   }
 

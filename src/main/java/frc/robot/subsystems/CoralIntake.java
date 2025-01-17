@@ -6,9 +6,11 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
@@ -19,8 +21,9 @@ import frc.robot.utils.KillableSubsystem;
 public class CoralIntake extends KillableSubsystem {
   private final SparkMax motor;
   private final SparkMax servo;
-  private final DigitalInput coralDetector =
-      new DigitalInput(RobotMap.CoralShooter.LIMIT_SWITCH_ID);
+
+  private final DigitalInput coralDetector = new DigitalInput(RobotMap.CoralIntake.LIMIT_SWITCH_ID);
+
   private final ProfiledPIDController servoPID =
       new ProfiledPIDController(
           Constants.CoralIntake.sP,
@@ -29,18 +32,26 @@ public class CoralIntake extends KillableSubsystem {
           new Constraints(
               Constants.CoralIntake.MAX_SERVO_VELOCITY,
               Constants.CoralIntake.MAX_SERVO_ACCELERATION));
+  private final ArmFeedforward servoFeedForward =
+      new ArmFeedforward(
+          Constants.CoralIntake.sS,
+          Constants.CoralIntake.sG,
+          Constants.CoralIntake.sV,
+          Constants.CoralIntake.sA); // Feedforward for servo
+
   private final PIDController pid =
       new PIDController(
-          Constants.CoralShooter.kP, Constants.CoralShooter.kI, Constants.CoralShooter.kD);
+          Constants.CoralIntake.kP, Constants.CoralIntake.kI, Constants.CoralIntake.kD);
+
   private final SimpleMotorFeedforward feedForward =
-      new SimpleMotorFeedforward(Constants.CoralShooter.kS, Constants.CoralShooter.kV);
+      new SimpleMotorFeedforward(Constants.CoralIntake.kS, Constants.CoralIntake.kV);
 
   public CoralIntake() {
-    motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
-    servo = new SparkMax(RobotMap.CoralShooter.SERVO_ID, MotorType.kBrushless);
+    motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
+    servo = new SparkMax(RobotMap.CoralIntake.SERVO_ID, MotorType.kBrushless);
     toggle(CoralIntakeStates.OFF); // initialize as off
     ShuffleboardUI.Test.addSlider("Coral Intake", motor.get(), -1, 1).subscribe(motor::set);
-    ShuffleboardUI.Test.addSlider("Coral Intake Pos", motor.getEncoder().getPosition(), -1, 1)
+    ShuffleboardUI.Test.addSlider("Coral Intake Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
   }
 
@@ -62,6 +73,10 @@ public class CoralIntake extends KillableSubsystem {
 
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
+  }
+
+  public double getServoAngle() {
+    return servo.getEncoder().getPosition() * Math.PI * 2;
   }
 
   /** Set the current shooter speed on both wheels to speed */
@@ -92,10 +107,6 @@ public class CoralIntake extends KillableSubsystem {
     }
   }
 
-  public boolean servoAtGoal() {
-    return servoPID.atSetpoint();
-  }
-
   /** Set the shooter speed to the preset ShooterStates state */
   public void toggle(CoralIntakeStates state) {
     switch (state) {
@@ -112,13 +123,23 @@ public class CoralIntake extends KillableSubsystem {
     }
   }
 
+  private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
+  private double lastSpeed = 0;
+
   @Override
   public void periodic() {
     double pidOutput = pid.calculate(getWheelVelocity());
-    double pidOutputServo = servoPID.calculate(servo.getEncoder().getPosition());
-    double feedforwardOutput = feedForward.calculate(pid.getSetpoint());
+    double pidOutputServo = servoPID.calculate(getServoAngle());
+    double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
+    double servoFeedforwardOutput =
+        servoFeedForward.calculateWithVelocities(
+            getServoAngle(), currentSetpoint.velocity, servoPID.getSetpoint().velocity);
+
     motor.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
-    servo.setVoltage(pidOutputServo);
+    servo.setVoltage(pidOutputServo + servoFeedforwardOutput);
+
+    lastSpeed = pid.getSetpoint();
+    currentSetpoint = servoPID.getSetpoint();
   }
 
   @Override

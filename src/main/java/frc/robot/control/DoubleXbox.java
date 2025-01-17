@@ -105,7 +105,7 @@ public class DoubleXbox extends AbstractControl {
   }
 
   @Override
-  public Boolean getKillAuto() {
+  public Boolean getKill() {
     return drivebox.getRawButton(8) || notesbox.getRawButton(8);
   }
 

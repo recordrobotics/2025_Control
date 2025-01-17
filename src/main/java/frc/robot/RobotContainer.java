@@ -72,7 +72,7 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     // Command to kill robot
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getKillAuto())
+    new Trigger(() -> ShuffleboardUI.Overview.getControl().getKill())
         .whileTrue(new KillSpecified(drivetrain));
 
     // Reset pose trigger
