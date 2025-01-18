@@ -40,32 +40,29 @@ public class CoralShooter extends KillableSubsystem {
 
   public CoralShooter() {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
-    toggle(CoralShooterStates.OFF); // initialize as off
+    toggle(CoralShooterStates.OFF);
     ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
 
     sysIdRoutine =
-      new SysIdRoutine(
-          // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
-          new SysIdRoutine.Config(
-              null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
-          new SysIdRoutine.Mechanism(
-              // Tell SysId how to plumb the driving voltage to the motor(s).
-              motor::setVoltage,
-              // Tell SysId how to record a frame of data for each motor on the mechanism being
-              // characterized.
-              log -> {
-                // Record a frame for the shooter motor.
-                log.motor("coral-shooter-wheel")
-                    .voltage(
-                        m_appliedVoltage.mut_replace(
-                            motor.get() * RobotController.getBatteryVoltage(), Volts))
-                    .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
-                    .angularVelocity(
-                        m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
-              },
-              // Tell SysId to make generated commands require this subsystem, suffix test state in
-              // WPILog with this subsystem's name
-              this));
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null, // default 1 volt/second ramp rate
+                null, // default 7 volt jump
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                motor::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("coral-shooter-wheel")
+                      .voltage(
+                          m_appliedVoltage.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
+                      .angularVelocity(
+                          m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
+                },
+                this));
   }
 
   // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.

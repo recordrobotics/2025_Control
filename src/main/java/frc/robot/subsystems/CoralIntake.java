@@ -50,7 +50,7 @@ public class CoralIntake extends KillableSubsystem {
           Constants.CoralIntake.sS,
           Constants.CoralIntake.sG,
           Constants.CoralIntake.sV,
-          Constants.CoralIntake.sA); // Feedforward for servo
+          Constants.CoralIntake.sA);
 
   private final PIDController pid =
       new PIDController(
@@ -62,49 +62,63 @@ public class CoralIntake extends KillableSubsystem {
   public CoralIntake() {
     motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
     servo = new SparkMax(RobotMap.CoralIntake.SERVO_ID, MotorType.kBrushless);
-    toggle(CoralIntakeStates.OFF); // initialize as off
+    toggle(CoralIntakeStates.OFF);
     ShuffleboardUI.Test.addSlider("Coral Intake Wheel", motor.get(), -1, 1).subscribe(motor::set);
     ShuffleboardUI.Test.addSlider("Coral Intake Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
 
     sysIdRoutineWheel =
         new SysIdRoutine(
-            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
-                null,
-                null,
+                null, // default 1 volt/second ramp rate
+                null, // default 7 volt step voltage
                 null,
                 (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism(
-                // Tell SysId how to plumb the driving voltage to the motor(s).
                 motor::setVoltage,
-                // Tell SysId how to record a frame of data for each motor on the mechanism being
-                // characterized.
+                // Tell SysId how to record a frame of data
                 log -> {
-                  // Record a frame for the shooter motor.
                   log.motor("coral-intake-wheel")
                       .voltage(
-                          m_appliedVoltage.mut_replace(
+                          appliedVoltageWheel.mut_replace(
                               motor.get() * RobotController.getBatteryVoltage(), Volts))
-                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
+                      .angularPosition(angleWheel.mut_replace(getWheelPosition(), Rotations))
                       .angularVelocity(
-                          m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
+                          velocityWheel.mut_replace(getWheelVelocity(), RotationsPerSecond));
                 },
-                // Tell SysId to make generated commands require this subsystem, suffix test state
-                // in
-                // WPILog with this subsystem's name 
+                this));
+
+    sysIdRoutineServo =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null, // default 1 volt/second ramp rate
+                null, // default 7 volt step voltage
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                servo::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("coral-intake-servo")
+                      .voltage(
+                          appliedVoltageServo.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(angleServo.mut_replace(getServoAngle(), Rotations)) // TODO is Rotations right
+                      .angularVelocity(
+                          velocityServo.mut_replace(getServoVelocity(), RotationsPerSecond)); // TODO ^^^^^^^^^^^^^^^
+                },
                 this));
   }
 
-  // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
-  private final MutAngle m_angle = Radians.mutable(0);
-  // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
-
-  // Create a new SysId routine for characterizing the shooter.
+  private final MutVoltage appliedVoltageWheel = Volts.mutable(0);
+  private final MutAngle angleWheel = Radians.mutable(0);
+  private final MutAngularVelocity velocityWheel = RadiansPerSecond.mutable(0);
   private final SysIdRoutine sysIdRoutineWheel;
+
+  private final MutVoltage appliedVoltageServo = Volts.mutable(0);
+  private final MutAngle angleServo = Radians.mutable(0);
+  private final MutAngularVelocity velocityServo = RadiansPerSecond.mutable(0);
+  private final SysIdRoutine sysIdRoutineServo;
 
   public enum CoralIntakeStates {
     REVERSE,
@@ -132,6 +146,10 @@ public class CoralIntake extends KillableSubsystem {
 
   public double getServoAngle() {
     return servo.getEncoder().getPosition() * Math.PI * 2;
+  }
+
+  public double getServoVelocity() {
+    return servo.getEncoder().getVelocity() * Math.PI * 2;
   }
 
   /** Set the current shooter speed on both wheels to speed */
@@ -197,12 +215,20 @@ public class CoralIntake extends KillableSubsystem {
     currentSetpoint = servoPID.getSetpoint();
   }
 
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticWheel(SysIdRoutine.Direction direction) {
     return sysIdRoutineWheel.quasistatic(direction);
   }
 
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicWheel(SysIdRoutine.Direction direction) {
     return sysIdRoutineWheel.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticServo(SysIdRoutine.Direction direction) {
+    return sysIdRoutineServo.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicServo(SysIdRoutine.Direction direction) {
+    return sysIdRoutineServo.dynamic(direction);
   }
 
   @Override
