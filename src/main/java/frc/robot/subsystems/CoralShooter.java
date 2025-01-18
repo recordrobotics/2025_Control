@@ -47,27 +47,16 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   public CoralShooter() {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
     toggle(CoralShooterStates.OFF); // initialize as off
-  }
-  
-  // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
-  private final MutAngle m_angle = Radians.mutable(0);
-  // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
+    ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
 
-  // Create a new SysId routine for characterizing the shooter.
-  private final SysIdRoutine sysIdRoutine =
+    sysIdRoutine =
       new SysIdRoutine(
           // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
           new SysIdRoutine.Config(null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
           new SysIdRoutine.Mechanism(
-              // Tell SysId how to plumb the driving voltage to the motor(s).
               motor::setVoltage,
-              // Tell SysId how to record a frame of data for each motor on the mechanism being
-              // characterized.
+              // Tell SysId how to record a frame of data
               log -> {
-                // Record a frame for the shooter motor.
                 log.motor("coral-shooter-wheel")
                     .voltage(
                         m_appliedVoltage.mut_replace(
@@ -76,9 +65,14 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
                     .angularVelocity(
                         m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
               },
-              // Tell SysId to make generated commands require this subsystem, suffix test state in
-              // WPILog with this subsystem's name ("shooter")
               this));
+  }
+
+  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
+  private final MutAngle m_angle = Radians.mutable(0);
+  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
+
+  private final SysIdRoutine sysIdRoutine;
 
   public enum CoralShooterStates {
     OUT,
