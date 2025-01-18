@@ -4,6 +4,12 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -13,13 +19,20 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.MutAngularVelocity;
+import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.Logger;
 
 public class CoralIntake extends KillableSubsystem implements ShuffleboardPublisher {
   private final SparkMax motor;
@@ -54,8 +67,60 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   public CoralIntake() {
     motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
     arm = new SparkMax(RobotMap.CoralIntake.ARM_ID, MotorType.kBrushless);
-    toggle(CoralIntakeStates.OFF); // initialize as off
+    toggle(CoralIntakeStates.OFF);
+
+    sysIdRoutineWheel =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null, // default 1 volt/second ramp rate
+                null, // default 7 volt step voltage
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                motor::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("coral-intake-wheel")
+                      .voltage(
+                          appliedVoltageWheel.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(angleWheel.mut_replace(getWheelPosition(), Rotations))
+                      .angularVelocity(
+                          velocityWheel.mut_replace(getWheelVelocity(), RotationsPerSecond));
+                },
+                this));
+
+    sysIdRoutineArm =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null, // default 1 volt/second ramp rate
+                null, // default 7 volt step voltage
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                arm::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("coral-intake-arm")
+                      .voltage(
+                          appliedVoltageArm.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(angleArm.mut_replace(getArmAngle(), Rotations)) // TODO is Rotations right
+                      .angularVelocity(
+                          velocityArm.mut_replace(getArmVelocity(), RotationsPerSecond)); // TODO ^^^^^^^^^^^^^^^
+                },
+                this));
   }
+
+  private final MutVoltage appliedVoltageWheel = Volts.mutable(0);
+  private final MutAngle angleWheel = Radians.mutable(0);
+  private final MutAngularVelocity velocityWheel = RadiansPerSecond.mutable(0);
+  private final SysIdRoutine sysIdRoutineWheel;
+
+  private final MutVoltage appliedVoltageArm = Volts.mutable(0);
+  private final MutAngle angleArm = Radians.mutable(0);
+  private final MutAngularVelocity velocityArm = RadiansPerSecond.mutable(0);
+  private final SysIdRoutine sysIdRoutineArm;
 
   public enum CoralIntakeStates {
     REVERSE,
@@ -77,8 +142,17 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
   }
 
+  public double getWheelPosition() {
+    return motor.getEncoder().getPosition() / 60.0; /* RPM -> RPS */
+  }
+
+
   public double getArmAngle() {
     return arm.getEncoder().getPosition() * Math.PI * 2;
+  }
+
+  public double getArmVelocity() {
+    return arm.getEncoder().getVelocity() * Math.PI * 2;
   }
 
   /** Set the current shooter speed on both wheels to speed */
@@ -148,6 +222,22 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     RobotContainer.model.coralIntake.updateSetpoint(currentSetpoint.position);
 
     debounced_value = !m_debouncer.calculate(coralDetector.get());
+  }
+
+  public Command sysIdQuasistaticWheel(SysIdRoutine.Direction direction) {
+    return sysIdRoutineWheel.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicWheel(SysIdRoutine.Direction direction) {
+    return sysIdRoutineWheel.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticArm(SysIdRoutine.Direction direction) {
+    return sysIdRoutineArm.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicArm(SysIdRoutine.Direction direction) {
+    return sysIdRoutineArm.dynamic(direction);
   }
 
   @Override
