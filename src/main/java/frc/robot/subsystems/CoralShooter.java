@@ -34,17 +34,17 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
     toggle(CoralShooterStates.OFF); // initialize as off
   }
-
+  
   public enum CoralShooterStates {
     OUT,
     INTAKE,
     OFF;
   }
-
+  
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
   }
-
+  
   /** Set the current shooter speed on both wheels to speed */
   public void toggle(double speed) {
     pid.setSetpoint(speed);
@@ -54,22 +54,22 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   public void toggle(CoralShooterStates state) {
     switch (state) {
       case OUT:
-        toggle(Constants.CoralShooter.OUT_SPEED);
-        break;
+      toggle(Constants.CoralShooter.OUT_SPEED);
+      break;
       case INTAKE:
-        toggle(Constants.CoralShooter.INTAKE_SPEED);
-        break;
+      toggle(Constants.CoralShooter.INTAKE_SPEED);
+      break;
       case OFF: // Off
       default: // should never happen
-        toggle(0);
-        break;
+      toggle(0);
+      break;
     }
   }
-
+  
   public boolean hasCoral() {
     return debounced_value;
   }
-
+  
   @Override
   public void periodic() {
     double pidOutput = pid.calculate(getWheelVelocity());
@@ -78,7 +78,12 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
 
     debounced_value = !m_debouncer.calculate(coralDetector.get());
   }
-
+  
+  @Override
+  public void setupShuffleboard() {
+    ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
+  }
+  
   @Override
   public void setupShuffleboard() {
     DashboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
