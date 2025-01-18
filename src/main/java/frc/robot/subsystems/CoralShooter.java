@@ -64,7 +64,7 @@ public class CoralShooter extends KillableSubsystem {
                         m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
               },
               // Tell SysId to make generated commands require this subsystem, suffix test state in
-              // WPILog with this subsystem's name ("shooter")
+              // WPILog with this subsystem's name
               this));
   }
 

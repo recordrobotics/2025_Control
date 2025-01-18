@@ -67,7 +67,7 @@ public class CoralIntake extends KillableSubsystem {
     ShuffleboardUI.Test.addSlider("Coral Intake Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
 
-    sysIdRoutine =
+    sysIdRoutineWheel =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
@@ -92,7 +92,7 @@ public class CoralIntake extends KillableSubsystem {
                 },
                 // Tell SysId to make generated commands require this subsystem, suffix test state
                 // in
-                // WPILog with this subsystem's name ("shooter")
+                // WPILog with this subsystem's name 
                 this));
   }
 
@@ -104,7 +104,7 @@ public class CoralIntake extends KillableSubsystem {
   private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
 
   // Create a new SysId routine for characterizing the shooter.
-  private final SysIdRoutine sysIdRoutine;
+  private final SysIdRoutine sysIdRoutineWheel;
 
   public enum CoralIntakeStates {
     REVERSE,
@@ -198,11 +198,11 @@ public class CoralIntake extends KillableSubsystem {
   }
 
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return sysIdRoutine.quasistatic(direction);
+    return sysIdRoutineWheel.quasistatic(direction);
   }
 
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return sysIdRoutine.dynamic(direction);
+    return sysIdRoutineWheel.dynamic(direction);
   }
 
   @Override
