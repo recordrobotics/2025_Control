@@ -10,8 +10,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.PIDController;
@@ -27,12 +25,13 @@ import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.shuffleboard.ShuffleboardUI;
 import frc.robot.utils.KillableSubsystem;
+import org.littletonrobotics.junction.Logger;
 
 public class CoralShooter extends KillableSubsystem {
   private final DigitalInput coralDetector =
       new DigitalInput(RobotMap.CoralShooter.LIMIT_SWITCH_ID);
 
-  private SparkMax motor;
+  private final SparkMax motor;
   private final PIDController pid =
       new PIDController(
           Constants.CoralShooter.kP, Constants.CoralShooter.kI, Constants.CoralShooter.kD);
@@ -43,20 +42,12 @@ public class CoralShooter extends KillableSubsystem {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
     toggle(CoralShooterStates.OFF); // initialize as off
     ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
-  }
 
-  // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
-  private final MutAngle m_angle = Radians.mutable(0);
-  // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
-
-  // Create a new SysId routine for characterizing the shooter.
-  private final SysIdRoutine sysIdRoutine =
+    sysIdRoutine =
       new SysIdRoutine(
           // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
-          new SysIdRoutine.Config(null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+          new SysIdRoutine.Config(
+              null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
           new SysIdRoutine.Mechanism(
               // Tell SysId how to plumb the driving voltage to the motor(s).
               motor::setVoltage,
@@ -75,6 +66,17 @@ public class CoralShooter extends KillableSubsystem {
               // Tell SysId to make generated commands require this subsystem, suffix test state in
               // WPILog with this subsystem's name ("shooter")
               this));
+  }
+
+  // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
+  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
+  // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
+  private final MutAngle m_angle = Radians.mutable(0);
+  // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
+  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
+
+  // Create a new SysId routine for characterizing the shooter.
+  private final SysIdRoutine sysIdRoutine;
 
   public enum CoralShooterStates {
     OUT,

@@ -4,6 +4,12 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -12,11 +18,18 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.MutAngularVelocity;
+import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.shuffleboard.ShuffleboardUI;
 import frc.robot.utils.KillableSubsystem;
+import org.littletonrobotics.junction.Logger;
 
 public class CoralIntake extends KillableSubsystem {
   private final SparkMax motor;
@@ -53,7 +66,45 @@ public class CoralIntake extends KillableSubsystem {
     ShuffleboardUI.Test.addSlider("Coral Intake", motor.get(), -1, 1).subscribe(motor::set);
     ShuffleboardUI.Test.addSlider("Coral Intake Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
+
+    sysIdRoutine =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                // Tell SysId how to plumb the driving voltage to the motor(s).
+                motor::setVoltage,
+                // Tell SysId how to record a frame of data for each motor on the mechanism being
+                // characterized.
+                log -> {
+                  // Record a frame for the shooter motor.
+                  log.motor("coral-intake-wheel")
+                      .voltage(
+                          m_appliedVoltage.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
+                      .angularVelocity(
+                          m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
+                },
+                // Tell SysId to make generated commands require this subsystem, suffix test state
+                // in
+                // WPILog with this subsystem's name ("shooter")
+                this));
   }
+
+  // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
+  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
+  // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
+  private final MutAngle m_angle = Radians.mutable(0);
+  // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
+  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
+
+  // Create a new SysId routine for characterizing the shooter.
+  private final SysIdRoutine sysIdRoutine;
 
   public enum CoralIntakeStates {
     REVERSE,
@@ -73,6 +124,10 @@ public class CoralIntake extends KillableSubsystem {
 
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
+  }
+
+  public double getWheelPosition() {
+    return motor.getEncoder().getPosition() / 60.0; /* RPM -> RPS */
   }
 
   public double getServoAngle() {
@@ -140,6 +195,14 @@ public class CoralIntake extends KillableSubsystem {
 
     lastSpeed = pid.getSetpoint();
     currentSetpoint = servoPID.getSetpoint();
+  }
+
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.quasistatic(direction);
+  }
+
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.dynamic(direction);
   }
 
   @Override
