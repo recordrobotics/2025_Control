@@ -63,7 +63,7 @@ public class CoralIntake extends KillableSubsystem {
     motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
     servo = new SparkMax(RobotMap.CoralIntake.SERVO_ID, MotorType.kBrushless);
     toggle(CoralIntakeStates.OFF); // initialize as off
-    ShuffleboardUI.Test.addSlider("Coral Intake", motor.get(), -1, 1).subscribe(motor::set);
+    ShuffleboardUI.Test.addSlider("Coral Intake Wheel", motor.get(), -1, 1).subscribe(motor::set);
     ShuffleboardUI.Test.addSlider("Coral Intake Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
 
