@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.auto.*;
@@ -116,10 +117,12 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    if (autoCommand == null) {
-      autoCommand = new PlannedAuto();
-    }
-    return autoCommand;
+    // if (autoCommand == null) {
+    //   autoCommand = new PlannedAuto();
+    // }
+    // return autoCommand;
+
+    return drivetrain.sysIdQuasistaticTurnMotors(Direction.kForward);
   }
 
   public void testPeriodic() {

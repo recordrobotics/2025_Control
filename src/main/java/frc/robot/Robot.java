@@ -57,7 +57,6 @@ public class Robot extends LoggedRobot {
     }
 
     Logger.start();
-
     if (Constants.RobotState.MOTOR_LOGGING_ENABLED) {
       for (int i = 0; i < 10; i++) {
         DriverStation.reportWarning(
@@ -108,7 +107,10 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    Logger.end();
+    SignalLogger.stop();
+  }
 
   @Override
   public void disabledPeriodic() {}
