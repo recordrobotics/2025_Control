@@ -106,7 +106,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
    *
    * @return The raw rotations of the turning motor (rotation 2d object).
    */
-  private Rotation2d getTurnWheelRotation2d() {
+  public Rotation2d getTurnWheelRotation2d() {
     // Get the turning motor's current position in rotations
     double numMotorRotations = m_turningMotor.getPosition().getValueAsDouble();
 
@@ -122,10 +122,14 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     return wheelRotation;
   }
 
-  /**
-   * @return The current velocity of the drive motor (meters per second)
-   */
-  private double getDriveWheelVelocity() {
+  public double getTurnWheelVelocity() {
+    // RPS
+    double turnMotorRotationsPerSecond = m_turningMotor.getVelocity().getValueAsDouble();
+    return turnMotorRotationsPerSecond / TURN_GEAR_RATIO;
+  }
+
+  // meters per second
+  public double getDriveWheelVelocity() {
     // Get the drive motor velocity in rotations per second
     double driveMotorRotationsPerSecond = m_driveMotor.getVelocity().getValueAsDouble();
 
@@ -141,12 +145,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     return driveWheelMetersPerSecond;
   }
 
-  /**
-   * *custom function
-   *
-   * @return The distance driven by the drive wheel (meters)
-   */
-  private double getDriveWheelDistance() {
+  public double getDriveWheelDistance() {
     // Get the drive motor's current position in rotations
     double numRotationsDriveMotor = m_driveMotor.getPosition().getValueAsDouble();
 
@@ -228,6 +227,22 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   public void stop() {
     m_driveMotor.setVoltage(0); // Feed forward runs on voltage control
     m_turningMotor.setVoltage(0);
+  }
+
+  public void setDriveMotorVoltsSysIdOnly(double volts) {
+    m_driveMotor.setVoltage(volts);
+  }
+
+  public double getDriveMotorVoltsSysIdOnly() {
+    return m_driveMotor.get();
+  }
+
+  public void setTurnMotorVoltsSysIdOnly(double volts) {
+    m_turningMotor.setVoltage(volts);
+  }
+
+  public double getTurnMotorVoltsSysIdOnly() {
+    return m_turningMotor.get();
   }
 
   @Override

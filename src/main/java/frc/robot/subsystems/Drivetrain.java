@@ -1,9 +1,16 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.commands.manual.ManualSwerve;
@@ -33,7 +40,69 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
   public Drivetrain() {
     setDefaultCommand(new ManualSwerve());
+  
+    sysIdRoutineDriveMotors =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                this::SysIdOnlyDriveMotors,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("drivetrain-drive-motor")
+                      .voltage(
+                          m_appliedVoltageDriveMotors.mut_replace(
+                              SysIdOnlyGetDriveMotorVolts() * RobotController.getBatteryVoltage(),
+                              Volts))
+                      .linearPosition(
+                          m_angleDriveMotors.mut_replace(SysIdOnlyGetDriveMotorPosition(), Meters))
+                      .linearVelocity(
+                          m_velocityDriveMotors.mut_replace(
+                              SysIdOnlyGetDriveMotorVelocity(), MetersPerSecond));
+                },
+                this));
+
+    sysIdRoutineTurnMotors =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                this::SysIdOnlyTurnMotors,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("drivetrain-turn-motor")
+                      .voltage(
+                          m_appliedVoltageTurnMotors.mut_replace(
+                              SysIdOnlyGetTurnMotorVolts() * RobotController.getBatteryVoltage(),
+                              Volts))
+                      .angularPosition(
+                          m_angleTurnMotors.mut_replace(SysIdOnlyGetTurnMotorPosition(), Rotations))
+                      .angularVelocity(
+                          m_velocityTurnMotors.mut_replace(
+                              SysIdOnlyGetTurnMotorVelocity(), RotationsPerSecond));
+                },
+                this));
   }
+
+  private final MutVoltage m_appliedVoltageDriveMotors = Volts.mutable(0);
+  private final MutDistance m_angleDriveMotors = Meters.mutable(0);
+  private final MutLinearVelocity m_velocityDriveMotors = MetersPerSecond.mutable(0);
+
+  private final SysIdRoutine sysIdRoutineDriveMotors;
+
+  private final MutVoltage m_appliedVoltageTurnMotors = Volts.mutable(0);
+  private final MutAngle m_angleTurnMotors = Radians.mutable(0);
+  private final MutAngularVelocity m_velocityTurnMotors = RadiansPerSecond.mutable(0);
+
+  private final SysIdRoutine sysIdRoutineTurnMotors;
 
   /**
    * Drives the robot using joystick info.
@@ -86,6 +155,74 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
     Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
   }
 
+  public void SysIdOnlyDriveMotors(Voltage volts) {
+    m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+  }
+
+  public double SysIdOnlyGetDriveMotorVolts() {
+    // average of all drive motors .get() values
+    return (m_frontLeft.getDriveMotorVoltsSysIdOnly()
+            + m_frontRight.getDriveMotorVoltsSysIdOnly()
+            + m_backLeft.getDriveMotorVoltsSysIdOnly()
+            + m_backRight.getDriveMotorVoltsSysIdOnly())
+        / 4;
+  }
+
+  public double SysIdOnlyGetDriveMotorPosition() {
+    // average
+    return (m_frontLeft.getDriveWheelDistance()
+            + m_frontRight.getDriveWheelDistance()
+            + m_backLeft.getDriveWheelDistance()
+            + m_backRight.getDriveWheelDistance())
+        / 4;
+  }
+
+  public double SysIdOnlyGetDriveMotorVelocity() {
+    // average
+    return (m_frontLeft.getDriveWheelVelocity()
+            + m_frontRight.getDriveWheelVelocity()
+            + m_backLeft.getDriveWheelVelocity()
+            + m_backRight.getDriveWheelVelocity())
+        / 4;
+  }
+
+  public void SysIdOnlyTurnMotors(Voltage volts) {
+    m_frontLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+    m_frontRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+  }
+
+  public double SysIdOnlyGetTurnMotorVolts() {
+    // average of all turn motors .get() values
+    return (m_frontLeft.getTurnMotorVoltsSysIdOnly()
+            + m_frontRight.getTurnMotorVoltsSysIdOnly()
+            + m_backLeft.getTurnMotorVoltsSysIdOnly()
+            + m_backRight.getTurnMotorVoltsSysIdOnly())
+        / 4;
+  }
+
+  public double SysIdOnlyGetTurnMotorPosition() {
+    // average
+    return (m_frontLeft.getTurnWheelRotation2d().getRotations()
+            + m_frontRight.getTurnWheelRotation2d().getRotations()
+            + m_backLeft.getTurnWheelRotation2d().getRotations()
+            + m_backRight.getTurnWheelRotation2d().getRotations())
+        / 4;
+  }
+
+  public double SysIdOnlyGetTurnMotorVelocity() {
+    // average
+    return (m_frontLeft.getTurnWheelVelocity()
+            + m_frontRight.getTurnWheelVelocity()
+            + m_backLeft.getTurnWheelVelocity()
+            + m_backRight.getTurnWheelVelocity())
+        / 4;
+  }
+
   /**
    * Sets the PID target to zero and immediately stops all swerve modules.
    *
@@ -134,6 +271,42 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
       m_backLeft.getModulePosition(),
       m_backRight.getModulePosition()
     };
+  }
+
+  public Command sysIdQuasistaticDriveMotors(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotors
+        .quasistatic(direction)
+        .beforeStarting(
+            new WaitCommand(0.5)
+                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  }
+
+  public Command sysIdDynamicDriveMotors(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotors
+        .dynamic(direction)
+        .beforeStarting(
+            new WaitCommand(0.5)
+                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  }
+
+  public Command sysIdQuasistaticTurnMotors(SysIdRoutine.Direction direction) {
+    return sysIdRoutineTurnMotors
+        .quasistatic(direction)
+        .beforeStarting(
+            new WaitCommand(0.5)
+                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  }
+
+  public Command sysIdDynamicTurnMotors(SysIdRoutine.Direction direction) {
+    return sysIdRoutineTurnMotors
+        .dynamic(direction)
+        .beforeStarting(
+            new WaitCommand(0.5)
+                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+    // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 
   /** frees up all hardware allocations */
