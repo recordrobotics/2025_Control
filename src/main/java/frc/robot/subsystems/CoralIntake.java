@@ -105,9 +105,12 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
                       .voltage(
                           appliedVoltageArm.mut_replace(
                               motor.get() * RobotController.getBatteryVoltage(), Volts))
-                      .angularPosition(angleArm.mut_replace(getArmAngle(), Rotations)) // TODO is Rotations right
+                      .angularPosition(
+                          angleArm.mut_replace(
+                              getArmAngle(), Rotations)) // TODO is Rotations right
                       .angularVelocity(
-                          velocityArm.mut_replace(getArmVelocity(), RotationsPerSecond)); // TODO ^^^^^^^^^^^^^^^
+                          velocityArm.mut_replace(
+                              getArmVelocity(), RotationsPerSecond)); // TODO ^^^^^^^^^^^^^^^
                 },
                 this));
   }

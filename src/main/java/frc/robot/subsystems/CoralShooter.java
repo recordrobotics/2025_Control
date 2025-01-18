@@ -10,8 +10,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.PIDController;
@@ -29,6 +27,7 @@ import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.Logger;
 
 public class CoralShooter extends KillableSubsystem implements ShuffleboardPublisher {
   private final DigitalInput coralDetector =
@@ -50,22 +49,26 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
     ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
 
     sysIdRoutine =
-      new SysIdRoutine(
-          // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
-          new SysIdRoutine.Config(null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
-          new SysIdRoutine.Mechanism(
-              motor::setVoltage,
-              // Tell SysId how to record a frame of data
-              log -> {
-                log.motor("coral-shooter-wheel")
-                    .voltage(
-                        m_appliedVoltage.mut_replace(
-                            motor.get() * RobotController.getBatteryVoltage(), Volts))
-                    .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
-                    .angularVelocity(
-                        m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
-              },
-              this));
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                motor::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("coral-shooter-wheel")
+                      .voltage(
+                          m_appliedVoltage.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
+                      .angularVelocity(
+                          m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
+                },
+                this));
   }
 
   private final MutVoltage m_appliedVoltage = Volts.mutable(0);
