@@ -10,7 +10,8 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.revrobotics.RelativeEncoder;
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.PIDController;
@@ -37,7 +38,6 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
       new Debouncer(Constants.CoralIntake.DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
 
   private SparkMax motor;
-  private RelativeEncoder encoder;
   private final PIDController pid =
       new PIDController(
           Constants.CoralShooter.kP, Constants.CoralShooter.kI, Constants.CoralShooter.kD);
@@ -46,7 +46,6 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
 
   public CoralShooter() {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
-    encoder = motor.getEncoder();
     toggle(CoralShooterStates.OFF); // initialize as off
   }
   
@@ -61,7 +60,7 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   private final SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
-          new SysIdRoutine.Config(),
+          new SysIdRoutine.Config(null, null, null, (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
           new SysIdRoutine.Mechanism(
               // Tell SysId how to plumb the driving voltage to the motor(s).
               motor::setVoltage,
@@ -73,9 +72,9 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
                     .voltage(
                         m_appliedVoltage.mut_replace(
                             motor.get() * RobotController.getBatteryVoltage(), Volts))
-                    .angularPosition(m_angle.mut_replace(encoder.getPosition(), Rotations))
+                    .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
                     .angularVelocity(
-                        m_velocity.mut_replace(encoder.getVelocity() / 60, RotationsPerSecond));
+                        m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
               },
               // Tell SysId to make generated commands require this subsystem, suffix test state in
               // WPILog with this subsystem's name ("shooter")
@@ -89,6 +88,10 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
+  }
+
+  public double getWheelPosition() {
+    return motor.getEncoder().getPosition();
   }
   
   /** Set the current shooter speed on both wheels to speed */
