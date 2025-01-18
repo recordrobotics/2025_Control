@@ -7,13 +7,23 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import static edu.wpi.first.units.Units.*;
+
+import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.MutAngularVelocity;
+import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.CoralIntake.IntakeArmStates;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.Logger;
 
 public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublisher {
   private SparkMax motor;
@@ -45,7 +55,35 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
     motor = new SparkMax(RobotMap.GroundAlgae.MOTOR_ID, MotorType.kBrushless);
     arm = new SparkMax(RobotMap.CoralIntake.ARM_ID, MotorType.kBrushless);
     toggle(GroundAlgaeStates.OFF);
+
+    sysIdRoutine =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(
+                motor::setVoltage,
+                // Tell SysId how to record a frame of data
+                log -> {
+                  log.motor("ground-algae-wheel")
+                      .voltage(
+                          m_appliedVoltage.mut_replace(
+                              motor.get() * RobotController.getBatteryVoltage(), Volts))
+                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
+                      .angularVelocity(
+                          m_velocity.mut_replace(getWheelVelocity() / 60, RotationsPerSecond));
+                },
+                this));
   }
+
+  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
+  private final MutAngle m_angle = Radians.mutable(0);
+  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
+
+  private final SysIdRoutine sysIdRoutine;
 
   public enum GroundAlgaeStates {
     IN,
@@ -76,6 +114,14 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
 
   public void toggle(GroundAlgaeStates state) {
     toggle(state, defaultSpeed);
+  }
+
+  public double getWheelPosition() {
+    return motor.getEncoder().getPosition();
+  }
+
+  public double getWheelVelocity() {
+    return motor.getEncoder().getVelocity();
   }
 
   public double getArmAngle() {
@@ -120,6 +166,14 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
     currentSetpoint = armPID.getSetpoint();
   }
 
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.quasistatic(direction);
+  }
+
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.dynamic(direction);
+  }
+
   @Override
   public void kill() {
     toggle(GroundAlgaeStates.OFF);
@@ -140,5 +194,6 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
     DashboardUI.Test.addSlider("Ground Algae Arm Pos", arm.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleArm);
     // TODO more shuffleboard stuff
+    DashboardUI.Test.addSlider("Ground Algae", motor.get(), -1, 1).subscribe(motor::set);
   }
 }
