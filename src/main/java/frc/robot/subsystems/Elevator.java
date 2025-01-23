@@ -3,8 +3,15 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.LinearQuadraticRegulator;
+import edu.wpi.first.math.estimator.KalmanFilter;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.LinearSystemLoop;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
@@ -30,34 +37,60 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   private final DigitalInput bottomEndStop;
   private final DigitalInput topEndStop;
 
-  // Create a PID controller whose setpoint's change is subject to maximum
-  // velocity and acceleration constraints.
+  // Maximum elevator velocity and acceleration constraints
   private final TrapezoidProfile.Constraints constraints =
       new TrapezoidProfile.Constraints(
           Constants.Elevator.kMaxVelocity, Constants.Elevator.kMaxAcceleration);
-  private final ProfiledPIDController controller =
-      new ProfiledPIDController(
-          Constants.Elevator.kP,
-          Constants.Elevator.kI,
-          Constants.Elevator.kD,
-          constraints,
+  private final TrapezoidProfile m_profile = new TrapezoidProfile(constraints);
+  private TrapezoidProfile.State m_goal = new TrapezoidProfile.State();
+  private TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State();
+
+  // The plant holds a state-space model of our elevator. This system has the following properties:
+  //
+  // States: [position, velocity], in, meters and meters per second.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [position], in meters.
+  //
+  // The Kv and Ka constants are found using the FRC Characterization toolsuite.
+  private final LinearSystem<N2, N1, N2> elevatorSystem =
+      LinearSystemId.identifyPositionSystem(Constants.Elevator.kV, Constants.Elevator.kA);
+
+  // The observer fuses our encoder data and voltage inputs to reject noise.
+  private final KalmanFilter<N2, N1, N2> observer =
+      new KalmanFilter<>(
+          Nat.N2(),
+          Nat.N2(),
+          elevatorSystem,
+          VecBuilder.fill(3.0, 3.0), // Standard deviation of the state (position, velocity)
+          VecBuilder.fill(
+              0.01, 0.01), // Standard deviation of encoder measurements (position, velocity)
           Constants.Elevator.kDt);
-  private final ElevatorFeedforward feedforward =
-      new ElevatorFeedforward(
-          Constants.Elevator.kS,
-          Constants.Elevator.kG,
-          Constants.Elevator.kV,
-          Constants.Elevator.kA);
+
+  // A LQR uses feedback to create voltage commands.
+  private final LinearQuadraticRegulator<N2, N1, N2> controller =
+      new LinearQuadraticRegulator<>(
+          elevatorSystem,
+          VecBuilder.fill(
+              8.0,
+              8.0), // qelms. Positon, Velocity error tolerance, in meters and meters per second.
+          // Decrease
+          // this to more heavily penalize state excursion, or make the controller behave more
+          // aggressively.
+          VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
+          // heavily penalize control effort, or make the controller less aggressive. 12 is a good
+          // starting point because that is the (approximate) maximum voltage of a battery.
+          Constants.Elevator.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
+  // lower if using notifiers.
+
+  // The state-space loop combines a controller, observer, feedforward and plant for easy control.
+  private final LinearSystemLoop<N2, N1, N2> loop =
+      new LinearSystemLoop<>(elevatorSystem, controller, observer, 12.0, Constants.Elevator.kDt);
 
   public Elevator() {
     motorLeft = new TalonFX(RobotMap.Elevator.MOTOR_LEFT_ID);
     motorRight = new TalonFX(RobotMap.Elevator.MOTOR_RIGHT_ID);
     bottomEndStop = new DigitalInput(RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
     topEndStop = new DigitalInput(RobotMap.Elevator.TOP_ENDSTOP_ID);
-
-    controller.setTolerance(
-        Constants.Elevator.AT_GOAL_POSITION_TOLERANCE,
-        Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE);
 
     motorLeft.setPosition(0);
     motorRight.setPosition(0);
@@ -109,6 +142,10 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     return getCurrentRotation() / Constants.Elevator.METERS_PER_ROTATION;
   }
 
+  private double getCurrentVelocity() {
+    return getCurrentRotationalVelocity() / Constants.Elevator.METERS_PER_ROTATION;
+  }
+
   private boolean getBottomEndStopPressed() {
     return bottomEndStop.get();
   }
@@ -117,18 +154,26 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     return topEndStop.get();
   }
 
-  private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
-
   @Override
   public void periodic() {
-    // Run controller and update motor output
-    double pidVal = controller.calculate(getCurrentHeight());
-    double fwVal =
-        feedforward.calculateWithVelocities(
-            currentSetpoint.velocity, controller.getSetpoint().velocity);
+    // Get next setpoint from profile.
+    m_setpoint = m_profile.calculate(Constants.Elevator.kDt, m_setpoint, m_goal);
 
-    if ((!getTopEndStopPressed() || pidVal <= 0) && (!getBottomEndStopPressed() || pidVal >= 0)) {
-      setBothMotors(fwVal + pidVal);
+    // Set setpoint of the linear system (position m, velocity m/s).
+    loop.setNextR(VecBuilder.fill(m_setpoint.position, m_setpoint.velocity));
+
+    // Correct our Kalman filter's state vector estimate with encoder data.
+    loop.correct(VecBuilder.fill(getCurrentHeight(), getCurrentVelocity()));
+
+    // Update our LQR to generate new voltage commands and use the voltages to predict the next
+    // state with out Kalman filter.
+    loop.predict(Constants.Elevator.kDt);
+
+    double nextVoltage = loop.getU(0);
+
+    if ((!getTopEndStopPressed() || nextVoltage <= 0)
+        && (!getBottomEndStopPressed() || nextVoltage >= 0)) {
+      setBothMotors(nextVoltage);
     }
 
     currentSetpoint = controller.getSetpoint();
@@ -148,7 +193,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   public void toggle(double heightMeters) {
-    controller.setGoal(heightMeters);
+    m_goal = new TrapezoidProfile.State(heightMeters, 0.0);
   }
 
   public void moveTo(ElevatorHeight height) {
@@ -163,7 +208,9 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   public boolean atGoal() {
-    return controller.atGoal();
+    return loop.getError(0) < Constants.Elevator.AT_GOAL_POSITION_TOLERANCE
+        && loop.getError(1) < Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE
+        && m_goal.equals(m_setpoint);
   }
 
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -191,7 +238,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   @Override
   public void setupShuffleboard() {
     DashboardUI.Test.addSlider(
-            "Elevator Target", controller.getGoal().position, 0, ElevatorHeight.L4.getHeight())
+            "Elevator Target", m_goal.position, 0, ElevatorHeight.L4.getHeight())
         .subscribe(this::toggle);
   }
 }
