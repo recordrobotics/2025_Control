@@ -177,6 +177,19 @@ public final class Constants {
     public static final double kV = 1.3;
     public static final double kA = 0.2;
 
+    public static final double STD_STATE_POSITION = 3.0; // m
+    public static final double STD_STATE_VELOCITY = 3.0; // m/s
+    public static final double STD_ENCODER_POSITION = 0.01; // m
+    public static final double STD_ENCODER_VELOCITY = 0.01; // m/s
+
+    public static final double REGULATOR_POSITION_ERROR_TOLERANCE =
+        0.1; // (m) tolerance for error, decrease to make regulator more aggressive
+    public static final double REGULATOR_VELOCITY_ERROR_TOLERANCE =
+        0.1; // (m/s) tolerance for error, decrease to make regulator more aggressive
+
+    public static final double REGULATOR_CONTROL_EFFORT_TOLERANCE =
+        12.0; // (V) max control effort, decrease to make regulator more lazy
+
     public static final double METERS_PER_ROTATION = 1;
 
     public static final double AT_GOAL_POSITION_TOLERANCE = 0.01; // TODO test different values

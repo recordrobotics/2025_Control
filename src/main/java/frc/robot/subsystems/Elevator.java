@@ -61,9 +61,15 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
           Nat.N2(),
           Nat.N2(),
           elevatorSystem,
-          VecBuilder.fill(3.0, 3.0), // Standard deviation of the state (position, velocity)
           VecBuilder.fill(
-              0.01, 0.01), // Standard deviation of encoder measurements (position, velocity)
+              Constants.Elevator.STD_STATE_POSITION,
+              Constants.Elevator
+                  .STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
+          VecBuilder.fill(
+              Constants.Elevator.STD_ENCODER_POSITION,
+              Constants.Elevator
+                  .STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements (position,
+          // velocity)
           Constants.Elevator.kDt);
 
   // A LQR uses feedback to create voltage commands.
@@ -71,12 +77,17 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
       new LinearQuadraticRegulator<>(
           elevatorSystem,
           VecBuilder.fill(
-              8.0,
-              8.0), // qelms. Positon, Velocity error tolerance, in meters and meters per second.
+              Constants.Elevator.REGULATOR_POSITION_ERROR_TOLERANCE,
+              Constants.Elevator
+                  .REGULATOR_VELOCITY_ERROR_TOLERANCE), // qelms. Positon, Velocity error tolerance,
+          // in meters and meters per second.
           // Decrease
           // this to more heavily penalize state excursion, or make the controller behave more
           // aggressively.
-          VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
+          VecBuilder.fill(
+              Constants.Elevator
+                  .REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
+          // tolerance. Decrease this to more
           // heavily penalize control effort, or make the controller less aggressive. 12 is a good
           // starting point because that is the (approximate) maximum voltage of a battery.
           Constants.Elevator.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
