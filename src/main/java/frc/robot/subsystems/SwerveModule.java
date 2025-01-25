@@ -234,7 +234,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   public double getDriveMotorVoltsSysIdOnly() {
-    return m_driveMotor.get();
+    return m_driveMotor.getMotorVoltage().getValueAsDouble();
   }
 
   public void setTurnMotorVoltsSysIdOnly(double volts) {
@@ -242,7 +242,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   public double getTurnMotorVoltsSysIdOnly() {
-    return m_turningMotor.get();
+    return m_turningMotor.getMotorVoltage().getValueAsDouble();
   }
 
   @Override
