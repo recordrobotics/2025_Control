@@ -298,6 +298,8 @@ public final class Constants {
 
   public final class Swerve {
 
+    public static double kDt = 0.02;
+
     // Works out module locations
     private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
     private static final double locY = Frame.ROBOT_WHEEL_DISTANCE_LENGTH / 2;
@@ -318,10 +320,6 @@ public final class Constants {
     public static final double KRAKEN_DRIVE_GEAR_RATIO = 6.75; // X1 12 pinion
 
     // PID Values
-    public static final double FALCON_TURN_KP = 0.1;
-    public static final double FALCON_TURN_KI = 0;
-    public static final double FALCON_TURN_KD = 0;
-
     public static final double FALCON_DRIVE_KP = 0.2850;
     public static final double FALCON_DRIVE_KI = 0;
     public static final double FALCON_DRIVE_KD = 0;
@@ -330,13 +328,15 @@ public final class Constants {
     public static final double FALCON_DRIVE_FEEDFORWARD_KV = 2.60;
     public static final double FALCON_DRIVE_FEEDFORWARD_KA = 0.13;
 
-    public static final double FALCON_TURN_FEEDFORWARD_KS = 0.1;
-    public static final double FALCON_TURN_FEEDFORWARD_KV = 1.0;
-    public static final double FALCON_TURN_FEEDFORWARD_KA = 0;
-
-    public static final double KRAKEN_TURN_KP = 0.1;
-    public static final double KRAKEN_TURN_KI = 0;
-    public static final double KRAKEN_TURN_KD = 0;
+    public static final double FALCON_TURN_KV = 1.7519;
+    public static final double FALCON_TURN_KA = 0.017189;
+    public static final double FALCON_TURN_STD_STATE_POSITION = 1;
+    public static final double FALCON_TURN_STD_STATE_VELOCITY = 1;
+    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.1;
+    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.1;
+    public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
+    public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
+    public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     public static final double KRAKEN_DRIVE_KP = 0.2681;
     public static final double KRAKEN_DRIVE_KI = 0;
@@ -346,9 +346,15 @@ public final class Constants {
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KV = 2.4408;
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KA = 0.1;
 
-    public static final double KRAKEN_TURN_FEEDFORWARD_KS = 0.1;
-    public static final double KRAKEN_TURN_FEEDFORWARD_KV = 1.0;
-    public static final double KRAKEN_TURN_FEEDFORWARD_KA = 0;
+    public static final double KRAKEN_TURN_KV = 1.7519;
+    public static final double KRAKEN_TURN_KA = 0.017189;
+    public static final double KRAKEN_TURN_STD_STATE_POSITION = 3;
+    public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 3;
+    public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.01;
+    public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.01;
+    public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
+    public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
+    public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     // Wheel diameter
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);

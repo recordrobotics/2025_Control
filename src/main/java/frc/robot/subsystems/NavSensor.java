@@ -24,13 +24,6 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
   private double jerkX;
   private double jerkY;
 
-  // TODO which port is the navX on?
-  // kMXP_SPI(0),
-  // kMXP_UART(1),
-  // kUSB1(2),
-  // kUSB2(3),
-  // kI2C(4);
-
   public static AHRS _nav = new AHRS(NavXComType.kUSB1);
 
   // variable to keep track of a reference angle whenever you reset
@@ -69,7 +62,7 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
   @Override
   public void periodic() {
     double accelX = _nav.getWorldLinearAccelX();
-    double accelY = _nav.getWorldLinearAccelY(); // TODO: might need to be Z, should test
+    double accelY = _nav.getWorldLinearAccelY();
     jerkX = (accelX - last_accelX) / period;
     jerkY = (accelY - last_accelY) / period;
     last_accelX = accelX;

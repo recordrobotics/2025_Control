@@ -10,11 +10,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import static edu.wpi.first.units.Units.*;
 
 import com.revrobotics.spark.SparkMax;
-import edu.wpi.first.units.measure.MutAngle;
-import edu.wpi.first.units.measure.MutAngularVelocity;
-import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -23,6 +19,7 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.CoralIntake.IntakeArmStates;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublisher {
@@ -63,25 +60,9 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
                 null,
                 null,
                 null,
-                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(
-                motor::setVoltage,
-                // Tell SysId how to record a frame of data
-                log -> {
-                  log.motor("ground-algae-wheel")
-                      .voltage(
-                          m_appliedVoltage.mut_replace(
-                              motor.get() * RobotController.getBatteryVoltage(), Volts))
-                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
-                      .angularVelocity(
-                          m_velocity.mut_replace(getWheelVelocity() / 60, RotationsPerSecond));
-                },
-                this));
+                (state -> Logger.recordOutput("GroundAlgae/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(motor::setVoltage, null, this));
   }
-
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  private final MutAngle m_angle = Radians.mutable(0);
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
 
   private final SysIdRoutine sysIdRoutine;
 
@@ -116,10 +97,12 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
     toggle(state, defaultSpeed);
   }
 
+  @AutoLogOutput
   public double getWheelPosition() {
     return motor.getEncoder().getPosition();
   }
 
+  @AutoLogOutput
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity();
   }

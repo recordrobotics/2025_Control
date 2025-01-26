@@ -13,12 +13,8 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.units.measure.MutAngle;
-import edu.wpi.first.units.measure.MutAngularVelocity;
-import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -28,6 +24,7 @@ import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends KillableSubsystem implements ShuffleboardPublisher {
@@ -110,29 +107,12 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
-                null,
-                null,
-                null,
-                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(
-                this::setBothMotors,
-                // Tell SysId how to record a frame of data
-                log -> {
-                  log.motor("elevator")
-                      .voltage(
-                          m_appliedVoltage.mut_replace(
-                              motorLeft.get() * RobotController.getBatteryVoltage(), Volts))
-                      .angularPosition(m_angle.mut_replace(getCurrentRotation(), Rotations))
-                      .angularVelocity(
-                          m_velocity.mut_replace(
-                              getCurrentRotationalVelocity(), RotationsPerSecond));
-                },
-                this));
+                Volts.of(6).per(Second),
+                Volts.of(7),
+                Seconds.of(1.5),
+                (state -> Logger.recordOutput("Elevator/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(this::setBothMotors, null, this));
   }
-
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  private final MutAngle m_angle = Radians.mutable(0);
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
 
   private final SysIdRoutine sysIdRoutine;
 
@@ -149,11 +129,13 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   /** Average of the left and right heights of the elevator */
-  private double getCurrentHeight() {
+  @AutoLogOutput
+  public double getCurrentHeight() {
     return getCurrentRotation() / Constants.Elevator.METERS_PER_ROTATION;
   }
 
-  private double getCurrentVelocity() {
+  @AutoLogOutput
+  public double getCurrentVelocity() {
     return getCurrentRotationalVelocity() / Constants.Elevator.METERS_PER_ROTATION;
   }
 

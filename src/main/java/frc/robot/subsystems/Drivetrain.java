@@ -17,7 +17,6 @@ import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.DriveCommandDataAutoLogged;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -49,24 +48,19 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
                 null,
                 null,
                 null,
-                (state -> Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(
-                this::SysIdOnlyDriveMotors,
-                null,
-                this));
+                (state ->
+                    Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotors, null, this));
 
     sysIdRoutineTurnMotors =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
-              Volts.of(6).per(Second),
-              Volts.of(7),
-              Seconds.of(1.5),
-              (state -> Logger.recordOutput("Drivetrain/Turn/SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(
-                this::SysIdOnlyTurnMotors,
-                null,
-                this));
+                Volts.of(6).per(Second),
+                Volts.of(7),
+                Seconds.of(1.5),
+                (state -> Logger.recordOutput("Drivetrain/Turn/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(this::SysIdOnlyTurnMotors, null, this));
   }
 
   private final SysIdRoutine sysIdRoutineDriveMotors;
@@ -266,13 +260,11 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
   }
 
   public Command sysIdQuasistaticTurnMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineTurnMotors
-        .quasistatic(direction);
+    return sysIdRoutineTurnMotors.quasistatic(direction);
   }
 
   public Command sysIdDynamicTurnMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineTurnMotors
-        .dynamic(direction);
+    return sysIdRoutineTurnMotors.dynamic(direction);
   }
 
   /** frees up all hardware allocations */

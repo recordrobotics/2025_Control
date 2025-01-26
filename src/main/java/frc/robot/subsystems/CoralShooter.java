@@ -10,12 +10,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.units.measure.MutAngle;
-import edu.wpi.first.units.measure.MutAngularVelocity;
-import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -23,6 +19,7 @@ import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class CoralShooter extends KillableSubsystem implements ShuffleboardPublisher {
@@ -51,25 +48,9 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
                 null,
                 null,
                 null,
-                (state -> Logger.recordOutput("SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(
-                motor::setVoltage,
-                // Tell SysId how to record a frame of data
-                log -> {
-                  log.motor("coral-shooter-wheel")
-                      .voltage(
-                          m_appliedVoltage.mut_replace(
-                              motor.get() * RobotController.getBatteryVoltage(), Volts))
-                      .angularPosition(m_angle.mut_replace(getWheelPosition(), Rotations))
-                      .angularVelocity(
-                          m_velocity.mut_replace(getWheelVelocity(), RotationsPerSecond));
-                },
-                this));
+                (state -> Logger.recordOutput("CoralShooter/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(motor::setVoltage, null, this));
   }
-
-  private final MutVoltage m_appliedVoltage = Volts.mutable(0);
-  private final MutAngle m_angle = Radians.mutable(0);
-  private final MutAngularVelocity m_velocity = RadiansPerSecond.mutable(0);
 
   private final SysIdRoutine sysIdRoutine;
 
@@ -79,10 +60,12 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
     OFF;
   }
 
+  @AutoLogOutput
   public double getWheelVelocity() {
     return motor.getEncoder().getVelocity() / 60.0; /* RPM -> RPS */
   }
 
+  @AutoLogOutput
   public double getWheelPosition() {
     return motor.getEncoder().getPosition();
   }

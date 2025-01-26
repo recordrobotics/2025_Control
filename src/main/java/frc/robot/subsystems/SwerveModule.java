@@ -1,15 +1,25 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.LinearQuadraticRegulator;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.estimator.KalmanFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.LinearSystemLoop;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ShuffleboardPublisher;
@@ -25,9 +35,34 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   private final double turningEncoderOffset;
 
   private final PIDController drivePIDController;
-  private final ProfiledPIDController turningPIDController;
   private final SimpleMotorFeedforward driveFeedForward;
-  private final SimpleMotorFeedforward turningFeedForward;
+
+  // Maximum elevator velocity and acceleration constraints
+  private final TrapezoidProfile.Constraints constraints;
+  private final TrapezoidProfile m_profile;
+  private TrapezoidProfile.State m_goal = new TrapezoidProfile.State();
+  private TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State();
+
+  // The plant holds a state-space model of our turn motor. This system has the following
+  // properties:
+  //
+  // States: [position, velocity], in, meters and meters per second.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [position], in meters.
+  //
+  // The Kv and Ka constants are found using the FRC Characterization toolsuite.
+  private final LinearSystem<N2, N1, N2> turnSystem;
+
+  // The observer fuses our encoder data and voltage inputs to reject noise.
+  private final KalmanFilter<N2, N1, N2> turnObserver;
+
+  // A LQR uses feedback to create voltage commands.
+  private final LinearQuadraticRegulator<N2, N1, N2>
+      turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be
+  // lower if using notifiers.
+
+  // The state-space loop combines a controller, observer, feedforward and plant for easy control.
+  private final LinearSystemLoop<N2, N1, N2> turnLoop;
 
   private final double TURN_GEAR_RATIO;
   private final double DRIVE_GEAR_RATIO;
@@ -70,21 +105,49 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
         new SimpleMotorFeedforward(
             m.DRIVE_FEEDFORWARD_KS, m.DRIVE_FEEDFORWARD_KV, m.DRIVE_FEEDFORWARD_KA);
 
-    this.turningPIDController =
-        new ProfiledPIDController(
-            m.TURN_KP,
-            m.TURN_KI,
-            m.TURN_KD,
-            new TrapezoidProfile.Constraints(
-                m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration));
+    this.constraints =
+        new TrapezoidProfile.Constraints(m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration);
+    this.m_profile = new TrapezoidProfile(constraints);
 
-    this.turningFeedForward =
-        new SimpleMotorFeedforward(
-            m.TURN_FEEDFORWARD_KS, m.TURN_FEEDFORWARD_KV, m.TURN_FEEDFORWARD_KA);
+    this.turnSystem = LinearSystemId.identifyPositionSystem(m.TURN_KV, m.TURN_KA);
+    this.turnObserver =
+        new KalmanFilter<>(
+            Nat.N2(),
+            Nat.N2(),
+            turnSystem,
+            VecBuilder.fill(
+                m.TURN_STD_STATE_POSITION,
+                m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
+            VecBuilder.fill(
+                m.TURN_STD_ENCODER_POSITION,
+                m.TURN_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
+            // (position,
+            // velocity)
+            Constants.Swerve.kDt);
+    this.turnController =
+        new LinearQuadraticRegulator<>(
+            turnSystem,
+            VecBuilder.fill(
+                m.TURN_REGULATOR_POSITION_ERROR_TOLERANCE,
+                m.TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE), // qelms. Positon, Velocity error
+            // tolerance,
+            // in meters and meters per second.
+            // Decrease
+            // this to more heavily penalize state excursion, or make the controller behave more
+            // aggressively.
+            VecBuilder.fill(
+                m.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
+            // tolerance. Decrease this to more
+            // heavily penalize control effort, or make the controller less aggressive. 12 is a good
+            // starting point because that is the (approximate) maximum voltage of a battery.
+            Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
+    // lower if using notifiers.
 
-    // Limit the PID Controller's input range between -0.5 and 0.5 and set the input to be
-    // continuous.
-    turningPIDController.enableContinuousInput(-0.5, 0.5);
+    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.025);
+
+    this.turnLoop =
+        new LinearSystemLoop<>(
+            turnSystem, turnController, turnObserver, 12.0, Constants.Swerve.kDt);
 
     // Corrects for offset in absolute motor position
     m_turningMotor.setPosition(getAbsWheelTurnOffset());
@@ -180,7 +243,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   private double lastSpeedMetersPerSecond = 0;
-  private TrapezoidProfile.State currentTurnState = new TrapezoidProfile.State();
 
   /**
    * Sets the desired state for the module.
@@ -207,13 +269,31 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     // Calculate the turning motor output from the turning PID controller then set
     // turn motor.
-    final double turnPIDOutput =
-        turningPIDController.calculate(
-            getTurnWheelRotation2d().getRotations(), desiredState.angle.getRotations());
-    final double turnFeedforwardOutput =
-        turningFeedForward.calculateWithVelocities(
-            currentTurnState.velocity, turningPIDController.getSetpoint().velocity);
-    m_turningMotor.setVoltage(turnPIDOutput + turnFeedforwardOutput);
+    m_goal = new TrapezoidProfile.State(desiredState.angle.getRotations(), 0.0);
+
+    // Get next setpoint from profile.
+    m_setpoint = m_profile.calculate(Constants.Swerve.kDt, m_setpoint, m_goal);
+
+    // Set setpoint of the linear system (position m, velocity m/s).
+    turnLoop.setNextR(VecBuilder.fill(m_setpoint.position, m_setpoint.velocity));
+
+    // Correct our Kalman filter's state vector estimate with encoder data.
+    turnLoop.correct(
+        VecBuilder.fill(getTurnWheelRotation2d().getRotations(), getTurnWheelVelocity()));
+
+    // Update our LQR to generate new voltage commands and use the voltages to predict the next
+    // state with out Kalman filter.
+    var error = turnController.getR().minus(turnObserver.getXhat());
+    error.set(0, 0, MathUtil.inputModulus(error.get(0, 0), -0.5, 0.5));
+    var u =
+        turnController
+            .getK()
+            .times(error)
+            .plus(turnLoop.getFeedforward().calculate(turnLoop.getNextR()));
+    turnObserver.predict(u, Constants.Swerve.kDt);
+
+    double nextVoltage = turnLoop.getU(0);
+    m_turningMotor.setVoltage(nextVoltage);
 
     // ShuffleboardUI.Autonomous.putSwerveVelocityData(
     //     m_driveMotor.getDeviceID(),
@@ -221,7 +301,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     //     desiredState.angle.getRotations());
 
     lastSpeedMetersPerSecond = desiredState.speedMetersPerSecond;
-    currentTurnState = turningPIDController.getSetpoint();
   }
 
   public void stop() {
