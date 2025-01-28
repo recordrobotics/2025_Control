@@ -18,6 +18,7 @@ import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
@@ -63,6 +64,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
   // The state-space loop combines a controller, observer, feedforward and plant for easy control.
   private final LinearSystemLoop<N2, N1, N2> turnLoop;
+
+  private final Notifier m_notifier;
 
   private final double TURN_GEAR_RATIO;
   private final double DRIVE_GEAR_RATIO;
@@ -143,7 +146,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
             Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
     // lower if using notifiers.
 
-    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.025);
+    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.019);
 
     this.turnLoop =
         new LinearSystemLoop<>(
@@ -151,6 +154,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     // Corrects for offset in absolute motor position
     m_turningMotor.setPosition(getAbsWheelTurnOffset());
+
+    m_notifier = new Notifier(this::controllerPeriodic);
+    m_notifier.startPeriodic(Constants.Swerve.kDt);
   }
 
   /**
@@ -250,26 +256,27 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
    * @param desiredState Desired state with speed and angle.
    */
   public void setDesiredState(SwerveModuleState desiredState) {
-
     // Optimize the reference state to avoid spinning further than 90 degrees
     desiredState.optimize(getTurnWheelRotation2d());
+    drivePIDController.setSetpoint(desiredState.speedMetersPerSecond);
+    m_goal = new TrapezoidProfile.State(desiredState.angle.getRotations(), 0.0);
+  }
 
+  public void controllerPeriodic() {
     // Calculate the drive output from the drive PID controller then set drive
     // motor.
-    double drivePIDOutput =
-        drivePIDController.calculate(getDriveWheelVelocity(), desiredState.speedMetersPerSecond);
+    double drivePIDOutput = drivePIDController.calculate(getDriveWheelVelocity());
     double driveFeedforwardOutput =
         driveFeedForward.calculateWithVelocities(
-            lastSpeedMetersPerSecond, desiredState.speedMetersPerSecond);
+            lastSpeedMetersPerSecond, drivePIDController.getSetpoint());
     m_driveMotor.setVoltage(
         drivePIDOutput + driveFeedforwardOutput); // Feed forward runs on voltage control
 
     DashboardUI.Autonomous.putSwerveVelocityData(
-        m_driveMotor.getDeviceID(), getDriveWheelVelocity(), desiredState.speedMetersPerSecond);
+        m_driveMotor.getDeviceID(), getDriveWheelVelocity(), drivePIDController.getSetpoint());
 
     // Calculate the turning motor output from the turning PID controller then set
     // turn motor.
-    m_goal = new TrapezoidProfile.State(desiredState.angle.getRotations(), 0.0);
 
     // Get next setpoint from profile.
     m_setpoint = m_profile.calculate(Constants.Swerve.kDt, m_setpoint, m_goal);
@@ -283,6 +290,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     // Update our LQR to generate new voltage commands and use the voltages to predict the next
     // state with out Kalman filter.
+    turnController.calculate(turnObserver.getXhat(), turnLoop.getNextR());
     var error = turnController.getR().minus(turnObserver.getXhat());
     error.set(0, 0, MathUtil.inputModulus(error.get(0, 0), -0.5, 0.5));
     var u =
@@ -300,10 +308,11 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     //     getTurnWheelRotation2d().getRotations(),
     //     desiredState.angle.getRotations());
 
-    lastSpeedMetersPerSecond = desiredState.speedMetersPerSecond;
+    lastSpeedMetersPerSecond = drivePIDController.getSetpoint();
   }
 
   public void stop() {
+    drivePIDController.setSetpoint(0);
     m_driveMotor.setVoltage(0); // Feed forward runs on voltage control
     m_turningMotor.setVoltage(0);
   }
@@ -339,6 +348,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
   /** frees up all hardware allocations */
   public void close() {
+    m_notifier.close();
     m_driveMotor.close();
     m_turningMotor.close();
     absoluteTurningMotorEncoder.close();

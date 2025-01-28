@@ -298,7 +298,7 @@ public final class Constants {
 
   public final class Swerve {
 
-    public static double kDt = 0.02;
+    public static double kDt = 0.003;
 
     // Works out module locations
     private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
@@ -330,10 +330,10 @@ public final class Constants {
 
     public static final double FALCON_TURN_KV = 1.7519;
     public static final double FALCON_TURN_KA = 0.017189;
-    public static final double FALCON_TURN_STD_STATE_POSITION = 1;
-    public static final double FALCON_TURN_STD_STATE_VELOCITY = 1;
-    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.1;
-    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.1;
+    public static final double FALCON_TURN_STD_STATE_POSITION = 100;
+    public static final double FALCON_TURN_STD_STATE_VELOCITY = 100;
+    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.0001;
+    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.0001;
     public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
     public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
     public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
@@ -360,8 +360,8 @@ public final class Constants {
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);
 
     // Turn & Drive max velocity and acceleration
-    public static final double TurnMaxAngularVelocity = 20; // ROTATIONS / SECOND
-    public static final double TurnMaxAngularAcceleration = 100; // ROTATIONS / SECOND / SECOND
+    public static final double TurnMaxAngularVelocity = 50; // ROTATIONS / SECOND
+    public static final double TurnMaxAngularAcceleration = 70; // ROTATIONS / SECOND / SECOND
 
     /** The max speed the robot is allowed to travel */
     public static final double robotMaxSpeed = 4.7;

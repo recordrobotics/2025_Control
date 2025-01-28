@@ -32,11 +32,11 @@ public class RobotContainer {
   public static final Drivetrain drivetrain = new Drivetrain();
   public static final PoseTracker poseTracker = new PoseTracker();
   public static final Limelight limelight = new Limelight();
-  public static final Elevator elevator = null;// = new Elevator();
-  public static final CoralShooter coralShooter = null;// = new CoralShooter();
-  public static final CoralIntake coralIntake = null;// = new CoralIntake();
+  public static final Elevator elevator = null; // = new Elevator();
+  public static final CoralShooter coralShooter = null; // = new CoralShooter();
+  public static final CoralIntake coralIntake = null; // = new CoralIntake();
   public static final ElevatorAlgae elevatorAlgae = new ElevatorAlgae();
-  public static final GroundAlgae groundAlgae = new GroundAlgae();
+  public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
   public static final PowerDistributionPanel pdp = new PowerDistributionPanel();
 
@@ -158,11 +158,11 @@ public class RobotContainer {
   public void close() {
     drivetrain.close();
     limelight.close();
-    //elevator.close();
-    //coralShooter.close();
-    //coralIntake.close();
+    // elevator.close();
+    // coralShooter.close();
+    // coralIntake.close();
     elevatorAlgae.close();
-    groundAlgae.close();
+    // groundAlgae.close();
     pdp.close();
   }
 }
