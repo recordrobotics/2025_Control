@@ -146,7 +146,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
             Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
     // lower if using notifiers.
 
-    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.019);
+    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.019895);
 
     this.turnLoop =
         new LinearSystemLoop<>(

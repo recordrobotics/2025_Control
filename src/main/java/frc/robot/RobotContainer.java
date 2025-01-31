@@ -9,8 +9,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.Constants.ElevatorHeight;
-import frc.robot.commands.ElevatorMove;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.LightSignal;
@@ -36,10 +34,10 @@ public class RobotContainer {
   public static final Drivetrain drivetrain = new Drivetrain();
   public static final PoseTracker poseTracker = new PoseTracker();
   public static final Limelight limelight = new Limelight();
-  public static final Elevator elevator = null; //new Elevator();
+  public static final Elevator elevator = null; // new Elevator();
   public static final CoralShooter coralShooter = null; // = new CoralShooter();
   public static final CoralIntake coralIntake = null; // = new CoralIntake();
-  public static final ElevatorAlgae elevatorAlgae = null;// new ElevatorAlgae();
+  public static final ElevatorAlgae elevatorAlgae = null; // new ElevatorAlgae();
   public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
   public static final PowerDistributionPanel pdp = new PowerDistributionPanel();

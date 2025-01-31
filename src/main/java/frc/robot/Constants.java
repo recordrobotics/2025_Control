@@ -185,7 +185,7 @@ public final class Constants {
     public static final double REGULATOR_POSITION_ERROR_TOLERANCE =
         2.4; // (m) tolerance for error, decrease to make regulator more aggressive
     public static final double REGULATOR_VELOCITY_ERROR_TOLERANCE =
-     2.0; // (m/s) tolerance for error, decrease to make regulator more aggressive
+        2.0; // (m/s) tolerance for error, decrease to make regulator more aggressive
 
     public static final double REGULATOR_CONTROL_EFFORT_TOLERANCE =
         7.0; // (V) max control effort, decrease to make regulator more lazy
@@ -330,10 +330,10 @@ public final class Constants {
 
     public static final double FALCON_TURN_KV = 1.7519;
     public static final double FALCON_TURN_KA = 0.017189;
-    public static final double FALCON_TURN_STD_STATE_POSITION = 100;
-    public static final double FALCON_TURN_STD_STATE_VELOCITY = 100;
-    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.0001;
-    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.0001;
+    public static final double FALCON_TURN_STD_STATE_POSITION = 2;
+    public static final double FALCON_TURN_STD_STATE_VELOCITY = 2;
+    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.1;
+    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.1;
     public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
     public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
     public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;

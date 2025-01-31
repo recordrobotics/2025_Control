@@ -165,7 +165,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     double nextVoltage = loop.getU(0);
 
     if ((!getTopEndStopPressed() || nextVoltage <= 0)
-         && (!getBottomEndStopPressed() || nextVoltage >= 0)) {
+        && (!getBottomEndStopPressed() || nextVoltage >= 0)) {
       setBothMotors(nextVoltage);
     }
 
