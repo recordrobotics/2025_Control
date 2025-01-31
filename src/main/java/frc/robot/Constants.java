@@ -348,10 +348,10 @@ public final class Constants {
 
     public static final double KRAKEN_TURN_KV = 1.7519;
     public static final double KRAKEN_TURN_KA = 0.017189;
-    public static final double KRAKEN_TURN_STD_STATE_POSITION = 3;
-    public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 3;
-    public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.01;
-    public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.01;
+    public static final double KRAKEN_TURN_STD_STATE_POSITION = 2;
+    public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 2;
+    public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.1;
+    public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.1;
     public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
     public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
     public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
@@ -359,11 +359,13 @@ public final class Constants {
     // Wheel diameter
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);
 
-    // Turn & Drive max velocity and acceleration
-    public static final double TurnMaxAngularVelocity = 50; // ROTATIONS / SECOND
-    public static final double TurnMaxAngularAcceleration = 70; // ROTATIONS / SECOND / SECOND
+    // Turn max velocity and acceleration
+    // Calculated from motor rpm 5000 / 60 (rps) / gear ratio (15.43)
+    public static final double TurnMaxAngularVelocity = 5.4; // ROTATIONS / SECOND
+    // Calculated from max velocity / time to reach (0.1)
+    public static final double TurnMaxAngularAcceleration = 54; // ROTATIONS / SECOND / SECOND
 
-    /** The max speed the robot is allowed to travel */
+    /** The max speed the robot can travel safely */
     public static final double robotMaxSpeed = 4.7;
 
     /** The max jerk of the robot below which the pose is certain (in G/s) */
@@ -422,7 +424,7 @@ public final class Constants {
       return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
     }
 
-    public static final boolean MOTOR_LOGGING_ENABLED = true;
+    public static final boolean MOTOR_LOGGING_ENABLED = false;
 
     public static enum Mode {
       REAL,
