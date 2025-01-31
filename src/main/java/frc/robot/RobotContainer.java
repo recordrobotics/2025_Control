@@ -9,12 +9,16 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.ElevatorHeight;
+import frc.robot.commands.ElevatorMove;
 // Local imports
 import frc.robot.commands.KillSpecified;
+import frc.robot.commands.LightSignal;
 import frc.robot.commands.auto.*;
 import frc.robot.control.*;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.Lights.LightMode;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -32,10 +36,10 @@ public class RobotContainer {
   public static final Drivetrain drivetrain = new Drivetrain();
   public static final PoseTracker poseTracker = new PoseTracker();
   public static final Limelight limelight = new Limelight();
-  public static final Elevator elevator = null; // = new Elevator();
+  public static final Elevator elevator = null; //new Elevator();
   public static final CoralShooter coralShooter = null; // = new CoralShooter();
   public static final CoralIntake coralIntake = null; // = new CoralIntake();
-  public static final ElevatorAlgae elevatorAlgae = new ElevatorAlgae();
+  public static final ElevatorAlgae elevatorAlgae = null;// new ElevatorAlgae();
   public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
   public static final PowerDistributionPanel pdp = new PowerDistributionPanel();
@@ -120,10 +124,10 @@ public class RobotContainer {
     // new Trigger(() -> ShuffleboardUI.Overview.getControl().getCoralSourceAcquire())
     //     .onTrue(new CoralIntakeFromSource());
     // // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getAcquireAlgae());
-    // new Trigger(() -> ShuffleboardUI.Overview.getControl().getAcquireAlgae())
-    //     .onTrue(new LightSignal(LightMode.CHASE));
-    // new Trigger(() -> ShuffleboardUI.Overview.getControl().getReefAlgae())
-    //     .onTrue(new LightSignal(LightMode.RAINBOW));
+    new Trigger(() -> ShuffleboardUI.Overview.getControl().getIntakeAlgae())
+        .onTrue(new LightSignal(LightMode.CHASE));
+    new Trigger(() -> ShuffleboardUI.Overview.getControl().getReefAlgae())
+        .onTrue(new LightSignal(LightMode.RAINBOW));
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getReefAlgae());
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getScoreAlgae());
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getClimb());
@@ -161,7 +165,7 @@ public class RobotContainer {
     // elevator.close();
     // coralShooter.close();
     // coralIntake.close();
-    elevatorAlgae.close();
+    // elevatorAlgae.close();
     // groundAlgae.close();
     pdp.close();
   }

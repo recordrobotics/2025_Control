@@ -172,25 +172,25 @@ public final class Constants {
 
   public final class Elevator {
     public static final double kDt = 0.02;
-    public static final double kMaxVelocity = 1.00;
-    public static final double kMaxAcceleration = 0.75;
+    public static final double kMaxVelocity = 0.6;
+    public static final double kMaxAcceleration = 1.0;
     public static final double kV = 1.3;
-    public static final double kA = 0.2;
+    public static final double kA = 0.05;
 
-    public static final double STD_STATE_POSITION = 3.0; // m
-    public static final double STD_STATE_VELOCITY = 3.0; // m/s
-    public static final double STD_ENCODER_POSITION = 0.01; // m
-    public static final double STD_ENCODER_VELOCITY = 0.01; // m/s
+    public static final double STD_STATE_POSITION = 100.0; // m
+    public static final double STD_STATE_VELOCITY = 100.0; // m/s
+    public static final double STD_ENCODER_POSITION = 0.001; // m
+    public static final double STD_ENCODER_VELOCITY = 0.001; // m/s
 
     public static final double REGULATOR_POSITION_ERROR_TOLERANCE =
-        0.1; // (m) tolerance for error, decrease to make regulator more aggressive
+        2.4; // (m) tolerance for error, decrease to make regulator more aggressive
     public static final double REGULATOR_VELOCITY_ERROR_TOLERANCE =
-        0.1; // (m/s) tolerance for error, decrease to make regulator more aggressive
+     2.0; // (m/s) tolerance for error, decrease to make regulator more aggressive
 
     public static final double REGULATOR_CONTROL_EFFORT_TOLERANCE =
-        12.0; // (V) max control effort, decrease to make regulator more lazy
+        7.0; // (V) max control effort, decrease to make regulator more lazy
 
-    public static final double METERS_PER_ROTATION = 1;
+    public static final double METERS_PER_ROTATION = 8;
 
     public static final double AT_GOAL_POSITION_TOLERANCE = 0.01; // TODO test different values
     public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.05; // TODO test different values
