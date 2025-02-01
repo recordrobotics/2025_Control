@@ -126,6 +126,8 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+
+    DashboardUI.Autonomous.switchTo();
   }
 
   /** This function is called periodically during autonomous. */
@@ -142,6 +144,8 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
     m_robotContainer.teleopInit();
+
+    DashboardUI.Overview.switchTo();
   }
 
   /** This function is called periodically during operator control. */

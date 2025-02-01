@@ -25,7 +25,7 @@
                 "height": 128.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Limelight Connected",
+                  "topic": "/SmartDashboard/Overview/Limelight Connected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -42,7 +42,7 @@
                 "height": 128.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Has Vision",
+                  "topic": "/SmartDashboard/Overview/Has Vision",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -59,7 +59,7 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Tag Count",
+                  "topic": "/SmartDashboard/Overview/Tag Count",
                   "period": 0.06,
                   "data_type": "int",
                   "show_submit_button": false
@@ -73,7 +73,7 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Confidence",
+                  "topic": "/SmartDashboard/Overview/Confidence",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -91,7 +91,7 @@
             "height": 512.0,
             "type": "Field",
             "properties": {
-              "topic": "/Shuffleboard/Autonomous/Field",
+              "topic": "/SmartDashboard/Autonomous/Field",
               "period": 0.06,
               "field_game": "Reefscape",
               "robot_width": 0.85,
@@ -111,7 +111,7 @@
             "height": 128.0,
             "type": "Split Button Chooser",
             "properties": {
-              "topic": "/Shuffleboard/Autonomous/Starting Location",
+              "topic": "/SmartDashboard/Starting Location",
               "period": 0.06
             }
           },
@@ -123,7 +123,7 @@
             "height": 128.0,
             "type": "ComboBox Chooser",
             "properties": {
-              "topic": "/Shuffleboard/Autonomous/Auto Code",
+              "topic": "/SmartDashboard/Auto Code",
               "period": 0.06,
               "sort_options": false
             }
@@ -136,7 +136,7 @@
             "height": 128.0,
             "type": "Boolean Box",
             "properties": {
-              "topic": "/Shuffleboard/Overview/Nav Sensor",
+              "topic": "/SmartDashboard/Overview/Nav Sensor",
               "period": 0.06,
               "data_type": "boolean",
               "true_color": 4283215696,
@@ -195,7 +195,7 @@
                 "height": 128.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Limelight Connected",
+                  "topic": "/SmartDashboard/Overview/Limelight Connected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -212,7 +212,7 @@
                 "height": 128.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Has Vision",
+                  "topic": "/SmartDashboard/Overview/Has Vision",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -229,7 +229,7 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Tag Count",
+                  "topic": "/SmartDashboard/Overview/Tag Count",
                   "period": 0.06,
                   "data_type": "int",
                   "show_submit_button": false
@@ -243,7 +243,7 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/Shuffleboard/Overview/Confidence",
+                  "topic": "/SmartDashboard/Overview/Confidence",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -254,23 +254,6 @@
         ],
         "containers": [
           {
-            "title": "Nav Sensor",
-            "x": 1408.0,
-            "y": 320.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/Shuffleboard/Overview/Nav Sensor",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
             "title": "Driver Orientation",
             "x": 0.0,
             "y": 512.0,
@@ -278,7 +261,7 @@
             "height": 128.0,
             "type": "Split Button Chooser",
             "properties": {
-              "topic": "/Shuffleboard/Overview/Driver Orientation",
+              "topic": "/SmartDashboard/Driver Orientation",
               "period": 0.06
             }
           },
@@ -290,7 +273,7 @@
             "height": 128.0,
             "type": "Split Button Chooser",
             "properties": {
-              "topic": "/Shuffleboard/Overview/Drive Mode",
+              "topic": "/SmartDashboard/Drive Mode",
               "period": 0.06
             }
           },
@@ -326,7 +309,7 @@
             "height": 256.0,
             "type": "Field",
             "properties": {
-              "topic": "/Shuffleboard/Autonomous/Field",
+              "topic": "/SmartDashboard/Autonomous/Field",
               "period": 0.06,
               "field_game": "Reefscape",
               "robot_width": 0.85,
@@ -336,6 +319,23 @@
               "field_rotation": 0.0,
               "robot_color": 4294198070,
               "trajectory_color": 4294967295
+            }
+          },
+          {
+            "title": "Nav Sensor",
+            "x": 1408.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Overview/Nav Sensor",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
             }
           }
         ]

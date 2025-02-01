@@ -36,9 +36,9 @@ public abstract class AbstractLayout {
 
   protected abstract NetworkTable getNetworkTable();
 
-  public SendableBuilder buildSendable(NTSendable sendable) {
+  public SendableBuilder buildSendable(String topic, NTSendable sendable) {
     var m_builder = new SendableBuilderImpl();
-    m_builder.setTable(getNetworkTable());
+    m_builder.setTable(getNetworkTable().getSubTable(topic));
     sendable.initSendable(m_builder);
     m_builder.startListeners();
     m_builder.update();

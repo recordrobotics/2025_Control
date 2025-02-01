@@ -23,7 +23,7 @@ public class AutonomousLayout extends AbstractLayout {
   private static final Map<Integer, TuningData> velocityGraphData = new HashMap<>();
 
   public AutonomousLayout() {
-    buildSendable(field);
+    buildSendable("Field", field);
 
     EnumSet.allOf(FieldStartingLocation.class)
         .forEach(v -> fieldStartingLocationChooser.addOption(v.name(), v));
