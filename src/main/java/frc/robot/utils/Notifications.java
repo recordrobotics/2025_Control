@@ -11,7 +11,7 @@ public class Notifications {
   public static final int ERROR = 2;
 
   static void send(int type, String title, String description) {
-    send(type, title, description, -1); // Yes it does work it makes it infinite
+    send(type, title, description, 0); // Yes 0 does work it makes it infinite
   }
 
   static void send(int type, String title, String description, int desplayTimeMillis) {
