@@ -238,8 +238,10 @@ public final class Constants {
     public static final double sV = 0;
     public static final double sA = 0;
 
-    public static final double ARM_UP = Math.PI / 2;
-    public static final double ARM_DOWN = 0;
+    public static final double ARM_UP = 0.5; // TODO make correct
+    public static final double ARM_DOWN = 0; // TODO make correct
+
+    public static final double ARM_GEAR_RATIO = 33.18;
 
     public static final double DEBOUNCE_TIME = 0.05; // TODO make correct
 

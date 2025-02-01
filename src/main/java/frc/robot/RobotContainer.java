@@ -35,7 +35,7 @@ public class RobotContainer {
   public static final Limelight limelight = new Limelight();
   public static final Elevator elevator = null; // new Elevator();
   public static final CoralShooter coralShooter = null; // = new CoralShooter();
-  public static final CoralIntake coralIntake = null; // = new CoralIntake();
+  public static final CoralIntake coralIntake = new CoralIntake();
   public static final ElevatorAlgae elevatorAlgae = null; // new ElevatorAlgae();
   public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
@@ -142,14 +142,16 @@ public class RobotContainer {
     // }
     // return autoCommand;
 
-    return drivetrain
-        .sysIdQuasistaticTurnMotors(Direction.kForward)
+    return new InstantCommand()
+        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kReverse))
+        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kForward))
+        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kReverse))
         .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kReverse));
+        .andThen(coralIntake.sysIdDynamicServo(Direction.kForward))
+        .andThen(new WaitCommand(0.4))
+        .andThen(coralIntake.sysIdDynamicServo(Direction.kReverse));
   }
 
   public void testPeriodic() {

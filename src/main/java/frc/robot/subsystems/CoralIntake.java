@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -22,12 +23,15 @@ import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+
+import static edu.wpi.first.units.Units.*;
+
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class CoralIntake extends KillableSubsystem implements ShuffleboardPublisher {
   private final SparkMax motor;
-  private final SparkMax arm;
+  private final TalonFX arm;
 
   private final DigitalInput coralDetector = new DigitalInput(RobotMap.CoralIntake.LIMIT_SWITCH_ID);
   private static Boolean debounced_value = false;
@@ -58,7 +62,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   public CoralIntake() {
     motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
-    arm = new SparkMax(RobotMap.CoralIntake.ARM_ID, MotorType.kBrushless);
+    arm = new TalonFX(RobotMap.CoralIntake.ARM_ID);
     toggle(CoralIntakeStates.OFF);
 
     sysIdRoutineWheel =
@@ -74,12 +78,12 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     sysIdRoutineArm =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                null, // default 1 volt/second ramp rate
-                null, // default 7 volt step voltage
-                null,
+                Volts.of(14).per(Second),
+                Volts.of(3.8),
+                Seconds.of(0.5),
                 (state ->
                     Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(arm::setVoltage, null, this));
+            new SysIdRoutine.Mechanism((v) -> arm.setVoltage(v.magnitude()), null, this));
   }
 
   private final SysIdRoutine sysIdRoutineWheel;
@@ -113,12 +117,12 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @AutoLogOutput
   public double getArmAngle() {
-    return arm.getEncoder().getPosition() * Math.PI * 2;
+    return arm.getPosition().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO;
   }
 
   @AutoLogOutput
   public double getArmVelocity() {
-    return arm.getEncoder().getVelocity() * Math.PI * 2;
+    return arm.getVelocity().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO;
   }
 
   /** Set the current shooter speed on both wheels to speed */
@@ -171,16 +175,15 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   @Override
   public void periodic() {
     double pidOutput = pid.calculate(getWheelVelocity());
-    double pidOutputArm = armPID.calculate(getArmAngle());
     double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
+    motor.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+    lastSpeed = pid.getSetpoint();
+
+    double pidOutputArm = armPID.calculate(getArmAngle());
     double armFeedforwardOutput =
         armFeedForward.calculateWithVelocities(
             getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
-
-    motor.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
     arm.setVoltage(pidOutputArm + armFeedforwardOutput);
-
-    lastSpeed = pid.getSetpoint();
     currentSetpoint = armPID.getSetpoint();
 
     // Update mechanism
@@ -209,7 +212,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   @Override
   public void setupShuffleboard() {
     DashboardUI.Test.addSlider("Coral Intake Motor", motor.get(), -1, 1).subscribe(motor::set);
-    DashboardUI.Test.addSlider("Coral Intake Arm Pos", arm.getEncoder().getPosition(), -1, 1)
+    DashboardUI.Test.addSlider("Coral Intake Arm Pos", arm.getPosition().getValueAsDouble(), -1, 1)
         .subscribe(this::toggleArm);
   }
 
