@@ -153,6 +153,7 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
     m_robotContainer.teleopInit();
+    hasRun = true;
 
     DashboardUI.Overview.switchTo();
   }

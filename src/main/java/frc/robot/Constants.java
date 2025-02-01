@@ -298,7 +298,7 @@ public final class Constants {
 
   public final class Swerve {
 
-    public static double kDt = 0.003;
+    public static double kDt = 0.020;//0.003;
 
     // Works out module locations
     private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
@@ -328,15 +328,23 @@ public final class Constants {
     public static final double FALCON_DRIVE_FEEDFORWARD_KV = 2.60;
     public static final double FALCON_DRIVE_FEEDFORWARD_KA = 0.13;
 
-    public static final double FALCON_TURN_KV = 1.7519;
-    public static final double FALCON_TURN_KA = 0.017189;
-    public static final double FALCON_TURN_STD_STATE_POSITION = 2;
-    public static final double FALCON_TURN_STD_STATE_VELOCITY = 2;
-    public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.1;
-    public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.1;
-    public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
-    public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
-    public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
+    public static final double FALCON_TURN_FEEDFORWARD_KS = 0.0322;
+    public static final double FALCON_TURN_FEEDFORWARD_KV = 2.2119;
+    public static final double FALCON_TURN_FEEDFORWARD_KA = 0.023189;
+
+    // public static final double FALCON_TURN_KV = 1.0519;
+    // public static final double FALCON_TURN_KA = 0.017189;
+    // public static final double FALCON_TURN_STD_STATE_POSITION = 3;
+    // public static final double FALCON_TURN_STD_STATE_VELOCITY = 3;
+    // public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.01;
+    // public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.01;
+    // public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.06;
+    // public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.993;
+    // public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
+
+    public static final double FALCON_TURN_KP = 2.1;
+    public static final double FALCON_TURN_KI = 0;
+    public static final double FALCON_TURN_KD = 0.049;
 
     public static final double KRAKEN_DRIVE_KP = 0.2681;
     public static final double KRAKEN_DRIVE_KI = 0;
@@ -346,24 +354,28 @@ public final class Constants {
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KV = 2.4408;
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KA = 0.1;
 
-    public static final double KRAKEN_TURN_KV = 1.7519;
-    public static final double KRAKEN_TURN_KA = 0.017189;
-    public static final double KRAKEN_TURN_STD_STATE_POSITION = 2;
-    public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 2;
-    public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.1;
-    public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.1;
-    public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
-    public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
-    public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
+    // public static final double KRAKEN_TURN_KV = 1.7519;
+    // public static final double KRAKEN_TURN_KA = 0.017189;
+    // public static final double KRAKEN_TURN_STD_STATE_POSITION = 2;
+    // public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 2;
+    // public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.1;
+    // public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.1;
+    // public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
+    // public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
+    // public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
+
+    public static final double KRAKEN_TURN_KP = 2.3;
+    public static final double KRAKEN_TURN_KI = 0;
+    public static final double KRAKEN_TURN_KD = 0;
 
     // Wheel diameter
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);
 
     // Turn max velocity and acceleration
     // Calculated from motor rpm 5000 / 60 (rps) / gear ratio (15.43)
-    public static final double TurnMaxAngularVelocity = 5.4; // ROTATIONS / SECOND
+    public static final double TurnMaxAngularVelocity = 25; // ROTATIONS / SECOND
     // Calculated from max velocity / time to reach (0.1)
-    public static final double TurnMaxAngularAcceleration = 54; // ROTATIONS / SECOND / SECOND
+    public static final double TurnMaxAngularAcceleration = 15; // ROTATIONS / SECOND / SECOND
 
     /** The max speed the robot can travel safely */
     public static final double robotMaxSpeed = 4.7;
@@ -424,7 +436,7 @@ public final class Constants {
       return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
     }
 
-    public static final boolean MOTOR_LOGGING_ENABLED = false;
+    public static final boolean MOTOR_LOGGING_ENABLED = true;
 
     public static enum Mode {
       REAL,
