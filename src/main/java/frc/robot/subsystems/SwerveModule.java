@@ -333,7 +333,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     double nextVoltage = turnPid + turnFeedforwardOutput;
 
-    m_turningMotor.setVoltage(nextVoltage);
+    m_turningMotor.set(turnPid);
 
     Logger.recordOutput(
         "TargetVel_" + m_turningMotor.getDeviceID(), turningPIDController.getSetpoint().velocity);

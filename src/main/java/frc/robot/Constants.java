@@ -342,7 +342,7 @@ public final class Constants {
     // public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.993;
     // public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
-    public static final double FALCON_TURN_KP = 2.1;
+    public static final double FALCON_TURN_KP = 1.0;
     public static final double FALCON_TURN_KI = 0;
     public static final double FALCON_TURN_KD = 0.049;
 
