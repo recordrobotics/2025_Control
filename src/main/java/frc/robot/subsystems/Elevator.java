@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotMap;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -126,7 +126,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Test.addSlider(
+    DashboardUI.Test.addSlider(
             "Elevator Target", controller.getGoal().position, 0, ElevatorHeight.L4.getHeight())
         .subscribe(this::toggle);
   }

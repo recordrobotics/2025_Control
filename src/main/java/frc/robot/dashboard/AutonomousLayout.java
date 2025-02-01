@@ -1,13 +1,13 @@
-package frc.robot.shuffleboard;
+package frc.robot.dashboard;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldStartingLocation;
+import frc.robot.utils.libraries.Elastic;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,35 +23,18 @@ public class AutonomousLayout extends AbstractLayout {
   private static final Map<Integer, TuningData> velocityGraphData = new HashMap<>();
 
   public AutonomousLayout() {
-    getTab().add(field).withWidget(BuiltInWidgets.kField).withSize(6, 3).withPosition(0, 0);
+    buildSendable(field);
 
     EnumSet.allOf(FieldStartingLocation.class)
         .forEach(v -> fieldStartingLocationChooser.addOption(v.name(), v));
     fieldStartingLocationChooser.addDefaultOption(
         FieldStartingLocation.AutoStart.name(), FieldStartingLocation.AutoStart);
 
-    // Creates the UI for starting location
-    getTab()
-        .add("Starting Location", fieldStartingLocationChooser.getSendableChooser())
-        .withWidget(BuiltInWidgets.kSplitButtonChooser)
-        .withSize(6, 1)
-        .withPosition(0, 3);
-    getTab()
-        .addDoubleArray("Velocity", () -> TuningData.MapToArray(velocityGraphData))
-        .withWidget(BuiltInWidgets.kGraph)
-        .withPosition(6, 2)
-        .withSize(4, 3);
+    addValueSendable("Velocity", () -> TuningData.MapToArray(velocityGraphData), "double[]");
   }
 
   public void setupAutoChooser() {
     autoChooser = new LoggedDashboardChooser<>("Auto Code", AutoBuilder.buildAutoChooser());
-
-    // Creates the UI for auto routines
-    getTab()
-        .add("Auto Code", autoChooser.getSendableChooser())
-        .withWidget(BuiltInWidgets.kComboBoxChooser)
-        .withSize(3, 1)
-        .withPosition(6, 1);
   }
 
   public void setRobotPose(Pose2d pose) {
@@ -60,7 +43,6 @@ public class AutonomousLayout extends AbstractLayout {
 
   public void setVisionPose(Pose2d pose) {
     field.getObject("Vision").setPose(pose);
-    ;
   }
 
   public void putSwerveVelocityData(int id, double current, double target) {
@@ -68,8 +50,13 @@ public class AutonomousLayout extends AbstractLayout {
   }
 
   @Override
-  public ShuffleboardTab getTab() {
-    return Shuffleboard.getTab("Autonomous");
+  public void switchTo() {
+    Elastic.selectTab("Autonomous");
+  }
+
+  @Override
+  protected NetworkTable getNetworkTable() {
+    return NetworkTableInstance.getDefault().getTable("/SmartDashboard/Autonomous");
   }
 
   public Command getAutoChooser() {

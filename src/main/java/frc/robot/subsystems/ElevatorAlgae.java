@@ -12,7 +12,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -81,8 +81,7 @@ public class ElevatorAlgae extends KillableSubsystem implements ShuffleboardPubl
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Test.addSlider("Algae on the Elevator", motor.get(), -1, 1)
-        .subscribe(motor::set);
+    DashboardUI.Test.addSlider("Algae on the Elevator", motor.get(), -1, 1).subscribe(motor::set);
   }
 
   @Override

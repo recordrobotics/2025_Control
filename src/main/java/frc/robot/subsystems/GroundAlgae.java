@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -70,6 +70,6 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
   @Override
   public void setupShuffleboard() {
     // TODO do we need other shuffleboard stuff
-    ShuffleboardUI.Test.addMotor("GroundAlgae", motor);
+    DashboardUI.Test.addMotor("GroundAlgae", motor);
   }
 }

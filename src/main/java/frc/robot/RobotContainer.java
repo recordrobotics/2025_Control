@@ -11,7 +11,7 @@ import frc.robot.commands.KillSpecified;
 import frc.robot.commands.auto.*;
 import frc.robot.commands.manual.*;
 import frc.robot.control.*;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.ShuffleboardPublisher;
@@ -48,10 +48,10 @@ public class RobotContainer {
     // Sets up auto path
     autoPath = new AutoPath();
 
-    ShuffleboardUI.Autonomous.setupAutoChooser();
+    DashboardUI.Autonomous.setupAutoChooser();
 
     // Sets up Control scheme chooser
-    ShuffleboardUI.Overview.addControls(new JoystickXbox(2, 0));
+    DashboardUI.Overview.addControls(new JoystickXbox(2, 0));
 
     // Bindings and Teleop
     configureButtonBindings();
@@ -73,11 +73,11 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     // Command to kill robot
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getKill())
+    new Trigger(() -> DashboardUI.Overview.getControl().getKill())
         .whileTrue(new KillSpecified(drivetrain));
 
     // Reset pose trigger
-    new Trigger(() -> ShuffleboardUI.Overview.getControl().getPoseReset())
+    new Trigger(() -> DashboardUI.Overview.getControl().getPoseReset())
         .onTrue(new InstantCommand(poseTracker::resetDriverPose));
 
     // new Trigger(() -> ShuffleboardUI.Overview.getControl().getCoralShootL1())
@@ -115,7 +115,7 @@ public class RobotContainer {
   }
 
   public void testPeriodic() {
-    ShuffleboardUI.Test.testPeriodic();
+    DashboardUI.Test.testPeriodic();
   }
 
   /** frees up all hardware allocations */

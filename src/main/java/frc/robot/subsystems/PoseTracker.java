@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class PoseTracker extends SubsystemBase implements AutoCloseable {
@@ -25,7 +25,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
             RobotContainer.drivetrain.getKinematics(),
             nav.getAdjustedAngle(),
             getModulePositions(),
-            ShuffleboardUI.Autonomous.getStartingLocation().getPose());
+            DashboardUI.Autonomous.getStartingLocation().getPose());
   }
 
   @Override
@@ -42,7 +42,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
 
     SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
     SmartDashboard.putNumber("pose", poseFilter.getEstimatedPosition().getRotation().getDegrees());
-    ShuffleboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
+    DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
   }
 
   private SwerveModulePosition[] getModulePositions() {
@@ -61,7 +61,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
 
   /** Resets the field relative position of the robot (mostly for testing). */
   public void resetStartingPose() {
-    setToPose(ShuffleboardUI.Autonomous.getStartingLocation().getPose());
+    setToPose(DashboardUI.Autonomous.getStartingLocation().getPose());
   }
 
   /** Resets the pose to FrontSpeakerClose (shooter facing towards speaker) */

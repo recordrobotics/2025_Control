@@ -7,7 +7,7 @@ package frc.robot.commands.manual;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
 
 /** An example command that uses an example subsystem. */
@@ -27,7 +27,7 @@ public class ManualSwerve extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    AbstractControl controls = ShuffleboardUI.Overview.getControl();
+    AbstractControl controls = DashboardUI.Overview.getControl();
 
     DriveCommandData driveCommandData = controls.getDriveCommandData();
     RobotContainer.drivetrain.drive(driveCommandData);

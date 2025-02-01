@@ -1,4 +1,4 @@
-package frc.robot.shuffleboard;
+package frc.robot.dashboard;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.GenericEntry;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-public class TestLayout extends AbstractLayout {
+public class TestLayout {
 
   public interface PeriodicListener<T> extends EventListener {
     public void periodic(T value);
@@ -124,7 +124,6 @@ public class TestLayout extends AbstractLayout {
     }
   }
 
-  @Override
   public ShuffleboardTab getTab() {
     return Shuffleboard.getTab("Test");
   }

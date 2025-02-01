@@ -10,7 +10,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -203,7 +203,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     m_driveMotor.setVoltage(
         drivePIDOutput + driveFeedforwardOutput); // Feed forward runs on voltage control
 
-    ShuffleboardUI.Autonomous.putSwerveVelocityData(
+    DashboardUI.Autonomous.putSwerveVelocityData(
         m_driveMotor.getDeviceID(), getDriveWheelVelocity(), desiredState.speedMetersPerSecond);
 
     // Calculate the turning motor output from the turning PID controller then set
@@ -232,13 +232,13 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Test.addSlider("Drive " + driveMotorChannel, m_driveMotor.get(), -1, 1)
+    DashboardUI.Test.addSlider("Drive " + driveMotorChannel, m_driveMotor.get(), -1, 1)
         .subscribe(m_driveMotor::set);
 
-    ShuffleboardUI.Test.addSlider("Turn " + turningMotorChannel, m_turningMotor.get(), -1, 1)
+    DashboardUI.Test.addSlider("Turn " + turningMotorChannel, m_turningMotor.get(), -1, 1)
         .subscribe(m_turningMotor::set);
 
-    ShuffleboardUI.Test.addNumber(
+    DashboardUI.Test.addNumber(
         "Encoder " + absoluteTurningMotorEncoder.getSourceChannel(),
         absoluteTurningMotorEncoder::get);
   }

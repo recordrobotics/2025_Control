@@ -5,7 +5,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
@@ -98,12 +98,12 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private void handleMeasurement(PoseEstimate estimate, double confidence) {
     if (confidence > 0) {
       hasVision = true;
-      ShuffleboardUI.Autonomous.setVisionPose(estimate.pose);
+      DashboardUI.Autonomous.setVisionPose(estimate.pose);
       currentEstimate = estimate;
       currentConfidence = confidence;
     } else {
       hasVision = false;
-      ShuffleboardUI.Autonomous.setVisionPose(new Pose2d());
+      DashboardUI.Autonomous.setVisionPose(new Pose2d());
       currentConfidence = 9999999;
     }
   }
@@ -143,9 +143,9 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Overview.setTagNum(() -> numTags);
-    ShuffleboardUI.Overview.setConfidence(() -> confidence);
-    ShuffleboardUI.Overview.setHasVision(() -> hasVision);
-    ShuffleboardUI.Overview.setLimelightConnected(() -> limelightConnected);
+    DashboardUI.Overview.setTagNum(() -> numTags);
+    DashboardUI.Overview.setConfidence(() -> confidence);
+    DashboardUI.Overview.setHasVision(() -> hasVision);
+    DashboardUI.Overview.setLimelightConnected(() -> limelightConnected);
   }
 }

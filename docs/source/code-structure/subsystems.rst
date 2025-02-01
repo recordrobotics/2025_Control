@@ -14,7 +14,6 @@ Read through `Command-Based Progamming <https://docs.wpilib.org/en/stable/docs/s
     subsystems/climbers
     subsystems/crashbar
     subsystems/navsensor
-    subsystems/PCMcompressor
     subsystems/photosensor
     subsystems/shooter
     subsystems/killablesubsystem

@@ -4,7 +4,7 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ShuffleboardPublisher;
 
 public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
@@ -83,7 +83,7 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Overview.setNavSensor(NavSensor._nav::isConnected);
-    ShuffleboardUI.Test.addBoolean("Nav Sensor", NavSensor._nav::isConnected);
+    DashboardUI.Overview.setNavSensor(NavSensor._nav::isConnected);
+    DashboardUI.Test.addBoolean("Nav Sensor", NavSensor._nav::isConnected);
   }
 }

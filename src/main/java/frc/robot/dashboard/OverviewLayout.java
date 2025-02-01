@@ -1,9 +1,9 @@
-package frc.robot.shuffleboard;
+package frc.robot.dashboard;
 
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.control.AbstractControl;
+import frc.robot.utils.libraries.Elastic;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +31,6 @@ public class OverviewLayout extends AbstractLayout {
   private static AbstractControl _defaultControl;
 
   // private Supplier<Boolean> poseCertainValue = () -> false;
-  private Supplier<Boolean> compressorValue = () -> false;
-  private Supplier<Boolean> compressorManuallyDisabledValue = () -> false;
   private Supplier<Boolean> navSensorValue = () -> false;
   private Supplier<Integer> tagNumValue = () -> 0;
   private Supplier<Double> confidenceValue = () -> 0.0;
@@ -42,53 +40,15 @@ public class OverviewLayout extends AbstractLayout {
   private static final Map<Integer, TuningData> shooterSpeedData = new HashMap<>();
 
   public OverviewLayout() {
-    // getTab()
-    //         .addBoolean("Pose Certain", () -> poseCertainValue.get())
-    //         .withWidget(BuiltInWidgets.kBooleanBox)
-    //         .withSize(1, 1)
-    //         .withPosition(0, 1);
+    addValueSendable("Nav Sensor", () -> navSensorValue.get(), "boolean");
 
-    getTab()
-        .addBoolean("Compressor", () -> compressorValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(7, 0)
-        .withSize(1, 1);
+    addValueSendable("Tag Count", () -> tagNumValue.get(), "int");
 
-    getTab()
-        .addBoolean("CP Disabled", () -> compressorManuallyDisabledValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(8, 0)
-        .withSize(1, 1);
+    addValueSendable("Confidence", () -> confidenceValue.get(), "double");
 
-    getTab()
-        .addBoolean("Nav Sensor", () -> navSensorValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(6, 1)
-        .withSize(1, 1);
+    addValueSendable("Has Vision", () -> hasVisionValue.get(), "boolean");
 
-    getTab()
-        .addInteger("Tag Count", () -> tagNumValue.get())
-        .withWidget(BuiltInWidgets.kTextView)
-        .withPosition(7, 1)
-        .withSize(1, 1);
-
-    getTab()
-        .addDouble("Confidence", () -> confidenceValue.get())
-        .withWidget(BuiltInWidgets.kTextView)
-        .withPosition(8, 1)
-        .withSize(1, 1);
-
-    getTab()
-        .addBoolean("Has Vision", () -> hasVisionValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(7, 2)
-        .withSize(1, 1);
-
-    getTab()
-        .addBoolean("Limelight Connected", () -> limelightConnectedValue.get())
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withPosition(8, 2)
-        .withSize(1, 1);
+    addValueSendable("Limelight Connected", () -> limelightConnectedValue.get(), "boolean");
   }
 
   /**
@@ -110,28 +70,6 @@ public class OverviewLayout extends AbstractLayout {
         .forEach(v -> driverOrientation.addOption(v.display_name, v));
     driverOrientation.addDefaultOption(
         DriverOrientation.XAxisTowardsTrigger.display_name, DriverOrientation.XAxisTowardsTrigger);
-
-    // Creates the UI for driverOrientation
-    getTab()
-        .add("Driver Orientation", driverOrientation.getSendableChooser())
-        .withWidget(BuiltInWidgets.kSplitButtonChooser)
-        .withPosition(0, 0)
-        .withSize(3, 1);
-
-    // Creates the UI for drive mode
-    getTab()
-        .add("Drive Mode", driveMode.getSendableChooser())
-        .withWidget(BuiltInWidgets.kSplitButtonChooser)
-        .withPosition(0, 1)
-        .withSize(3, 1);
-  }
-
-  public void setCompressor(Supplier<Boolean> compressor) {
-    compressorValue = compressor;
-  }
-
-  public void setCompressorManuallyDisabled(Supplier<Boolean> compressorManuallyDisabled) {
-    compressorManuallyDisabledValue = compressorManuallyDisabled;
   }
 
   public void setNavSensor(Supplier<Boolean> navSensor) {
@@ -159,8 +97,13 @@ public class OverviewLayout extends AbstractLayout {
   }
 
   @Override
-  public ShuffleboardTab getTab() {
-    return Shuffleboard.getTab("Overview");
+  public void switchTo() {
+    Elastic.selectTab("Overview");
+  }
+
+  @Override
+  protected NetworkTable getNetworkTable() {
+    return NetworkTableInstance.getDefault().getTable("/SmartDashboard/Overview");
   }
 
   public DriverOrientation getDriverOrientation() {

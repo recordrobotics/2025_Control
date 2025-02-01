@@ -16,7 +16,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
-import frc.robot.shuffleboard.ShuffleboardUI;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 
@@ -148,8 +148,8 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @Override
   public void setupShuffleboard() {
-    ShuffleboardUI.Test.addSlider("Coral Intake Motor", motor.get(), -1, 1).subscribe(motor::set);
-    ShuffleboardUI.Test.addSlider("Coral Intake Servo Pos", servo.getEncoder().getPosition(), -1, 1)
+    DashboardUI.Test.addSlider("Coral Intake Motor", motor.get(), -1, 1).subscribe(motor::set);
+    DashboardUI.Test.addSlider("Coral Intake Servo Pos", servo.getEncoder().getPosition(), -1, 1)
         .subscribe(this::toggleServo);
   }
 
