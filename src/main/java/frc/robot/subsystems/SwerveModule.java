@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -17,6 +15,7 @@ import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.littletonrobotics.junction.Logger;
 
 public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
@@ -58,7 +57,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   //     turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be
   // // lower if using notifiers.
 
-  // // The state-space loop combines a controller, observer, feedforward and plant for easy control.
+  // // The state-space loop combines a controller, observer, feedforward and plant for easy
+  // control.
   // private final LinearSystemLoop<N2, N1, N2> turnLoop;
 
   private final Notifier m_notifier;
@@ -116,7 +116,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     //         turnSystem,
     //         VecBuilder.fill(
     //             m.TURN_STD_STATE_POSITION,
-    //             m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
+    //             m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position,
+    // velocity)
     //         VecBuilder.fill(
     //             m.TURN_STD_ENCODER_POSITION,
     //             m.TURN_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
@@ -137,9 +138,11 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     //         VecBuilder.fill(
     //             m.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
     //         // tolerance. Decrease this to more
-    //         // heavily penalize control effort, or make the controller less aggressive. 12 is a good
+    //         // heavily penalize control effort, or make the controller less aggressive. 12 is a
+    // good
     //         // starting point because that is the (approximate) maximum voltage of a battery.
-    //         Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be
+    //         Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can
+    // be
     // // lower if using notifiers.
 
     // turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.019895);
@@ -154,11 +157,12 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
             m.TURN_KI,
             m.TURN_KD,
             new TrapezoidProfile.Constraints(
-                m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration), Constants.Swerve.kDt);
+                m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration),
+            Constants.Swerve.kDt);
 
     this.turnFeedForward =
-    new SimpleMotorFeedforward(
-        m.TURN_FEEDFORWARD_KS, m.TURN_FEEDFORWARD_KV, m.TURN_FEEDFORWARD_KA);
+        new SimpleMotorFeedforward(
+            m.TURN_FEEDFORWARD_KS, m.TURN_FEEDFORWARD_KV, m.TURN_FEEDFORWARD_KA);
 
     // Limit the PID Controller's input range between -0.5 and 0.5 and set the input to be
     // continuous.
@@ -168,7 +172,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     m_turningMotor.setPosition(getAbsWheelTurnOffset());
 
     m_notifier = new Notifier(this::controllerPeriodic);
-    //m_notifier.startPeriodic(Constants.Swerve.kDt);
+    // m_notifier.startPeriodic(Constants.Swerve.kDt);
   }
 
   /**
@@ -331,10 +335,13 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     m_turningMotor.setVoltage(nextVoltage);
 
-    Logger.recordOutput("TargetVel_" + m_turningMotor.getDeviceID(), turningPIDController.getSetpoint().velocity);
-    Logger.recordOutput("TargetPos_" + m_turningMotor.getDeviceID(), turningPIDController.getSetpoint().position);
+    Logger.recordOutput(
+        "TargetVel_" + m_turningMotor.getDeviceID(), turningPIDController.getSetpoint().velocity);
+    Logger.recordOutput(
+        "TargetPos_" + m_turningMotor.getDeviceID(), turningPIDController.getSetpoint().position);
     Logger.recordOutput("CurrentVel_" + m_turningMotor.getDeviceID(), getTurnWheelVelocity());
-    Logger.recordOutput("CurrentPos_" + m_turningMotor.getDeviceID(), getTurnWheelRotation2d().getRotations());
+    Logger.recordOutput(
+        "CurrentPos_" + m_turningMotor.getDeviceID(), getTurnWheelRotation2d().getRotations());
 
     lastSpeedMetersPerSecond = drivePIDController.getSetpoint();
     lastTurnRotationsPerSecond = turningPIDController.getSetpoint().velocity;

@@ -37,7 +37,7 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   public CoralShooter() {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
     toggle(CoralShooterStates.OFF); // initialize as off
-    ShuffleboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
+    DashboardUI.Test.addSlider("Coral Shooter", motor.get(), -1, 1).subscribe(motor::set);
 
     sysIdRoutine =
         new SysIdRoutine(

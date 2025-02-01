@@ -298,7 +298,7 @@ public final class Constants {
 
   public final class Swerve {
 
-    public static double kDt = 0.020;//0.003;
+    public static double kDt = 0.020; // 0.003;
 
     // Works out module locations
     private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;

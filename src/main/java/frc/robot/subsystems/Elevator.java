@@ -230,8 +230,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
 
   @Override
   public void setupShuffleboard() {
-    DashboardUI.Test.addSlider(
-            "Elevator Target", m_goal.position, 0, ElevatorHeight.L4.getHeight())
+    DashboardUI.Test.addSlider("Elevator Target", m_goal.position, 0, ElevatorHeight.L4.getHeight())
         .subscribe(this::toggle);
   }
 }

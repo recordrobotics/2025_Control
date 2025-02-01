@@ -11,7 +11,6 @@ import frc.robot.utils.libraries.Elastic;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class AutonomousLayout extends AbstractLayout {
