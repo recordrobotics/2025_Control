@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -23,9 +25,6 @@ import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
-
-import static edu.wpi.first.units.Units.*;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -78,9 +77,9 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     sysIdRoutineArm =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(14).per(Second),
-                Volts.of(3.8),
-                Seconds.of(0.5),
+                Volts.of(2).per(Second),
+                Volts.of(0.6),
+                Seconds.of(3),
                 (state ->
                     Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> arm.setVoltage(v.magnitude()), null, this));
@@ -212,7 +211,8 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   @Override
   public void setupShuffleboard() {
     DashboardUI.Test.addSlider("Coral Intake Motor", motor.get(), -1, 1).subscribe(motor::set);
-    DashboardUI.Test.addSlider("Coral Intake Arm Pos", arm.getPosition().getValueAsDouble(), -1, 1)
+    DashboardUI.Test.addSlider(
+            "Coral Intake Arm Pos", arm.getPosition().getValueAsDouble(), -1, 1)
         .subscribe(this::toggleArm);
   }
 
