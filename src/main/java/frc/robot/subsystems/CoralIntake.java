@@ -17,6 +17,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -122,6 +123,11 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   @AutoLogOutput
   public double getArmVelocity() {
     return arm.getVelocity().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO;
+  }
+
+  @AutoLogOutput
+  public double getServoSetTo() {
+    return servo.get() * RobotController.getBatteryVoltage();
   }
 
   /** Set the current shooter speed on both wheels to speed */
