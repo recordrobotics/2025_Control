@@ -3,7 +3,7 @@ DISTANCE_FROM_REEF_CENTER = 1.386  # TODO tune
 DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
 
 # robot things
-HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number
+HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
 
 # field things
 FIELD_CENTER = (8.775, 4.028)  # TODO this is just a guess
@@ -11,6 +11,8 @@ BLUE_REEF_CENTER = (4.489, 4.028)  # TODO this is just a guess
 
 
 import math
+import json
+from os.path import abspath
 
 POS = tuple[float, float]  # position
 VEC = tuple[float, float]  # vector
@@ -117,4 +119,20 @@ def get_correct_position(letter: str, blue_side: bool) -> tuple[POS, float]:
 
     return pos, heading
 
-print(get_correct_position("D", True))
+
+def read_path_from_letter(letter: str):
+    """reads the path at '../src/main/deploy/pathplanner/paths/Approach Coral {letter}.path'"""
+    with open(
+        f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
+        "r",
+    ) as f:
+        return json.load(f)
+
+
+def write_path_to_letter(letter: str, path):
+    """writes the path to '../src/main/deploy/pathplanner/paths/Approach Coral {letter}.path'"""
+    with open(
+        f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
+        "w",
+    ) as f:
+        json.dump(path, f, indent=2)
