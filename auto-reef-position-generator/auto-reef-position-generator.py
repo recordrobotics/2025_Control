@@ -1,12 +1,20 @@
+# tuning things
+DISTANCE_FROM_REEF_CENTER = 1.386  # TODO tune
+DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
+
+# robot things
+HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number
+
+# field things
 FIELD_CENTER = (8.775, 4.028)  # TODO this is just a guess
 BLUE_REEF_CENTER = (4.489, 4.028)  # TODO this is just a guess
 
+
 import math
-import json
 
 POS = tuple[float, float]  # position
 VEC = tuple[float, float]  # vector
-# yes i know these are the samebut they are used for different things
+# yes i know these are the same but they are used for different things
 # so having them different reduces ambiguity in what the function's arguments are for
 
 PLACE_TO_HEADING = {
@@ -24,6 +32,23 @@ PLACE_TO_HEADING = {
     "L": -60,
 }
 
+PLACE_MORE_LEFT = {
+    "A": 1,
+    "B": -1,
+    "C": 1,
+    "D": -1,
+    "E": 1,
+    "F": -1,
+    "G": 1,
+    "H": -1,
+    "I": 1,
+    "J": -1,
+    "K": 1,
+    "L": -1,
+}
+
+LETTERS = list("ABCDEFGHIJKL")
+
 
 def switch_side(pos: POS) -> POS:
     """rotate pos 180 degrees about the field center"""
@@ -37,10 +62,23 @@ def switch_side(pos: POS) -> POS:
     return px, py
 
 
+def normalize_angle(angle: float) -> float:
+    """make an angle (-180, 180]"""
+    result = (angle + 180) % 360 - 180
+    if result == -180:
+        result = 180.0
+    return result
+
+
+def switch_side_with_heading(pos: POS, heading: float) -> tuple[POS, float]:
+    """rotate pos 180 degrees about the field center"""
+    return switch_side(pos), normalize_angle(heading + 180)
+
+
 def get_rotated_unit_vectors(heading: float) -> tuple[VEC, VEC]:
     """returns the unit vectors for a given heading in degrees"""
     rad = math.radians(heading)
-    return (round(math.cos(rad)), math.sin(rad)), (-math.sin(rad), math.cos(rad))
+    return (math.cos(rad), math.sin(rad)), (-math.sin(rad), math.cos(rad))
 
 
 def apply_translation_robot_relative(pos: POS, heading: float, trans: VEC) -> POS:
@@ -52,4 +90,31 @@ def apply_translation_robot_relative(pos: POS, heading: float, trans: VEC) -> PO
     )
 
 
-print(apply_translation_robot_relative(BLUE_REEF_CENTER, 0, (1, 1))) # TODO need mor tst
+def get_correct_position(letter: str, blue_side: bool) -> tuple[POS, float]:
+    """returns the correct positions and headings for a given letter and side of the field"""
+    heading = PLACE_TO_HEADING[letter]
+
+    pos = BLUE_REEF_CENTER
+    pos = apply_translation_robot_relative(
+        pos,
+        heading,
+        (
+            -DISTANCE_FROM_REEF_CENTER,
+            DISTANCE_FROM_CENTER_OF_REEF_SEGMENT * PLACE_MORE_LEFT[letter],
+        ),
+    )
+    pos = apply_translation_robot_relative(
+        pos,
+        heading,
+        (
+            0,
+            -HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER,
+        ),
+    )
+
+    if not blue_side:
+        pos, heading = switch_side_with_heading(pos, heading)
+
+    return pos, heading
+
+print(get_correct_position("D", True))
