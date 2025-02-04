@@ -230,13 +230,13 @@ public final class Constants {
 
     public static final double INTAKE_TIME = 0.1; // TODO make correct
 
-    public static final double sP = 0;
+    public static final double sP = 4.4651;
     public static final double sI = 0;
-    public static final double sD = 0;
-    public static final double sS = 0;
-    public static final double sG = 0;
-    public static final double sV = 0;
-    public static final double sA = 0;
+    public static final double sD = 0.48808;
+    public static final double sG = 0.024867;
+    public static final double sS = 0.16213;
+    public static final double sV = 0.52909;
+    public static final double sA = 0.035848;
 
     public static final double ARM_UP = 0.5; // TODO make correct
     public static final double ARM_DOWN = 0; // TODO make correct

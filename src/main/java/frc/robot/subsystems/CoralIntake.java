@@ -18,6 +18,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -85,6 +86,8 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
                 (state ->
                     Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> arm.setVoltage(v.magnitude()), null, this));
+
+    SmartDashboard.putNumber("CoralIntakeArm", 0);
   }
 
   private final SysIdRoutine sysIdRoutineWheel;
@@ -118,12 +121,18 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @AutoLogOutput
   public double getArmAngle() {
-    return arm.getPosition().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO * 2 * Math.PI;
+    return arm.getPosition().getValueAsDouble()
+        / Constants.CoralIntake.ARM_GEAR_RATIO
+        * 2
+        * Math.PI;
   }
 
   @AutoLogOutput
   public double getArmVelocity() {
-    return arm.getVelocity().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO * 2 * Math.PI;
+    return arm.getVelocity().getValueAsDouble()
+        / Constants.CoralIntake.ARM_GEAR_RATIO
+        * 2
+        * Math.PI;
   }
 
   @AutoLogOutput
@@ -136,11 +145,11 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     pid.setSetpoint(speed);
   }
 
-  public void toggleArm(double pos) {
-    armPID.setGoal(pos);
+  public void toggleArm(double angleRadians) {
+    armPID.setGoal(angleRadians);
   }
 
-  public boolean atGoal() {
+  public boolean armAtGoal() {
     return armPID.atGoal();
   }
 
@@ -180,6 +189,11 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @Override
   public void periodic() {
+    System.out.println(
+        "kujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecd");
+    System.out.println(SmartDashboard.getNumber("CoralIntakeArm", 0));
+    toggleArm(SmartDashboard.getNumber("CoralIntakeArm", 0));
+
     double pidOutput = pid.calculate(getWheelVelocity());
     double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
     motor.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
@@ -189,6 +203,11 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     double armFeedforwardOutput =
         armFeedForward.calculateWithVelocities(
             getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
+
+    Logger.recordOutput("CoralArmTargetPosition", armPID.getSetpoint().position);
+    Logger.recordOutput("CoralArmTargetVelocity", armPID.getSetpoint().velocity);
+    Logger.recordOutput("CoralIntakeSetVoltage", pidOutputArm + armFeedforwardOutput);
+
     arm.setVoltage(pidOutputArm + armFeedforwardOutput);
     currentSetpoint = armPID.getSetpoint();
 

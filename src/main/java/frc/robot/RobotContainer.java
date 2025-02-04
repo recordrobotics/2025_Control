@@ -164,7 +164,7 @@ public class RobotContainer {
     limelight.close();
     // elevator.close();
     // coralShooter.close();
-    // coralIntake.close();
+    coralIntake.close();
     // elevatorAlgae.close();
     // groundAlgae.close();
     pdp.close();
