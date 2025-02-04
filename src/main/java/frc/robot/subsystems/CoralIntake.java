@@ -63,6 +63,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   public CoralIntake() {
     motor = new SparkMax(RobotMap.CoralIntake.MOTOR_ID, MotorType.kBrushless);
     arm = new TalonFX(RobotMap.CoralIntake.ARM_ID);
+    arm.setPosition(0);
     toggle(CoralIntakeStates.OFF);
 
     sysIdRoutineWheel =
@@ -78,9 +79,9 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     sysIdRoutineArm =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(2).per(Second),
-                Volts.of(0.6),
-                Seconds.of(3),
+                Volts.of(3).per(Second),
+                Volts.of(1.7),
+                Seconds.of(1),
                 (state ->
                     Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> arm.setVoltage(v.magnitude()), null, this));
@@ -117,17 +118,17 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @AutoLogOutput
   public double getArmAngle() {
-    return arm.getPosition().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO;
+    return arm.getPosition().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO * 2 * Math.PI;
   }
 
   @AutoLogOutput
   public double getArmVelocity() {
-    return arm.getVelocity().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO;
+    return arm.getVelocity().getValueAsDouble() / Constants.CoralIntake.ARM_GEAR_RATIO * 2 * Math.PI;
   }
 
   @AutoLogOutput
-  public double getServoSetTo() {
-    return servo.get() * RobotController.getBatteryVoltage();
+  public double getArmSetTo() {
+    return arm.get() * RobotController.getBatteryVoltage();
   }
 
   /** Set the current shooter speed on both wheels to speed */
