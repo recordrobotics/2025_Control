@@ -2,6 +2,10 @@
 DISTANCE_FROM_REEF_CENTER = 1.386  # TODO tune
 DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
 
+# path things
+PATH_LENGTH = 0.053
+CONTROL_LENGTH = 0.250
+
 # robot things
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
 
@@ -92,7 +96,7 @@ def apply_translation_robot_relative(pos: POS, heading: float, trans: VEC) -> PO
     )
 
 
-def get_correct_position(letter: str, blue_side: bool) -> tuple[POS, float]:
+def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
     """returns the correct positions and headings for a given letter and side of the field"""
     heading = PLACE_TO_HEADING[letter]
 
@@ -120,6 +124,25 @@ def get_correct_position(letter: str, blue_side: bool) -> tuple[POS, float]:
     return pos, heading
 
 
+def get_all_correct_positions(letter: str, blue_side: bool) -> tuple[list[POS], float]:
+    """
+    returns this list of (position, heading):
+     - start pos (POS, float)
+     - start next control (POS)
+     - end pos (POS)
+     - end previous control (POS)
+    """
+    end_pos, heading = get_correct_end_position(letter, blue_side)
+    end_control = apply_translation_robot_relative(
+        end_pos, heading, (-CONTROL_LENGTH, 0)
+    )
+    start_pos = apply_translation_robot_relative(end_pos, heading, (-PATH_LENGTH, 0))
+    start_control = apply_translation_robot_relative(
+        start_pos, heading, (CONTROL_LENGTH, 0)
+    )
+    return [start_pos, start_control, end_pos, end_control], heading
+
+
 def read_path_from_letter(letter: str):
     """reads the path at '../src/main/deploy/pathplanner/paths/Approach Coral {letter}.path'"""
     with open(
@@ -136,3 +159,27 @@ def write_path_to_letter(letter: str, path):
         "w",
     ) as f:
         json.dump(path, f, indent=2)
+
+
+def change_path(letter: str, blue_side: bool):
+    path = read_path_from_letter(letter)
+    (start_pos, start_control, end_pos, end_control), heading = (
+        get_all_correct_positions(letter, blue_side)
+    )
+
+    path["waypoints"][0]["anchor"]["x"] = start_pos[0]
+    path["waypoints"][0]["anchor"]["y"] = start_pos[1]
+    path["waypoints"][0]["nextControl"]["x"] = start_control[0]
+    path["waypoints"][0]["nextControl"]["y"] = start_control[1]
+
+    path["waypoints"][1]["anchor"]["x"] = end_pos[0]
+    path["waypoints"][1]["anchor"]["y"] = end_pos[1]
+    path["waypoints"][1]["prevControl"]["x"] = end_control[0]
+    path["waypoints"][1]["prevControl"]["y"] = end_control[1]
+
+    path["goalEndState"]["rotation"] = heading
+    path["idealStartingState"]["rotation"] = heading
+
+    write_path_to_letter(letter, path)
+
+change_path("A", True)
