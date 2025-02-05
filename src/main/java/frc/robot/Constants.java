@@ -4,11 +4,15 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Percent;
+import static edu.wpi.first.units.Units.Seconds;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -16,6 +20,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Dimensionless;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.utils.DriverStationUtils;
@@ -63,6 +69,9 @@ public final class Constants {
     public static final double DEFAULT_SPEED = 0.1; // TODO tune
 
     public static final double DEBOUNCE_TIME = 0.1; // TODO idk where these numbers came from
+
+    public static final double UP_ANGLE = 0.0; // TODO
+    public static final double DOWN_ANGLE = 1.0; // TODO
   }
 
   public final class ElevatorAlgae {
@@ -199,6 +208,8 @@ public final class Constants {
 
     public static final Pose3d ROOT_MECHANISM_POSE = new Pose3d(0.3, 0, 0, new Rotation3d(0, 0, 0));
     public static final double MIN_LENGTH = 0.6;
+
+    public static final double MAX_HEIGHT = 1; // TODO ummmmmmmmmmmmm idk
   }
 
   public final class CoralShooter {
@@ -255,9 +266,16 @@ public final class Constants {
   public final class Lights {
     public static final int length = 150;
 
-    public static final double multiplier = 100; // In precent
+    public static final Dimensionless multiplier = Percent.of(100);
 
-    public static final int pulsateFrequency = 1; // Seconds
+    public static final Time pulsateFrequency = Seconds.of(1);
+
+    public static final Map<String, Pair<Integer, Integer>> PART_INDECIES =
+        Map.of(
+            "Elevator", Pair.of(0, 5),
+            "Ground Algae", Pair.of(6, 10),
+            "Coral Intake", Pair.of(11, 15),
+            "Coral Shooter", Pair.of(16, 20));
   }
 
   public final class Control {

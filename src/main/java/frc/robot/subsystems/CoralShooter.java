@@ -33,6 +33,7 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
           Constants.CoralShooter.kP, Constants.CoralShooter.kI, Constants.CoralShooter.kD);
   private final SimpleMotorFeedforward feedForward =
       new SimpleMotorFeedforward(Constants.CoralShooter.kS, Constants.CoralShooter.kV);
+  private CoralShooterStates currentState = CoralShooterStates.OFF;
 
   public CoralShooter() {
     motor = new SparkMax(RobotMap.CoralShooter.MOTOR_ID, MotorType.kBrushless);
@@ -77,16 +78,23 @@ public class CoralShooter extends KillableSubsystem implements ShuffleboardPubli
   public void toggle(CoralShooterStates state) {
     switch (state) {
       case OUT:
+        currentState = CoralShooterStates.OUT;
         toggle(Constants.CoralShooter.OUT_SPEED);
         break;
       case INTAKE:
+        currentState = CoralShooterStates.INTAKE;
         toggle(Constants.CoralShooter.INTAKE_SPEED);
         break;
       case OFF: // Off
       default: // should never happen
+        currentState = CoralShooterStates.OFF;
         toggle(0);
         break;
     }
+  }
+
+  public CoralShooterStates getCurrentState() {
+    return currentState;
   }
 
   public boolean hasCoral() {

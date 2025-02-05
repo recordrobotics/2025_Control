@@ -19,6 +19,7 @@ import frc.robot.utils.ShuffleboardPublisher;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+// TODO arm
 public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublisher {
   private SparkMax motor;
   private final SparkMax arm;
@@ -77,14 +78,14 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
 
   public void toggle(GroundAlgaeStates state, double speed) {
     switch (state) {
-      case IN: // take in note
+      case IN:
         motor.set(speed);
         break;
-      case OUT: // push out note
+      case OUT:
         motor.set(-speed);
         break;
-      case OFF: // turn off or kill
-      default: // should never happen
+      case OFF:
+      default:
         motor.set(0);
         break;
     }
@@ -152,6 +153,10 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
 
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return sysIdRoutine.dynamic(direction);
+  }
+
+  public double getArmAngle() {
+    return 0; // TODO implement arm
   }
 
   @Override
