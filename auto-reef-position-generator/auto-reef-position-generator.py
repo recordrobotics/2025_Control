@@ -219,4 +219,10 @@ def change_path(letter: str, blue_side: bool):
     edit_linked_waypoint(path["waypoints"][1]["linkedName"], end_pos)
 
 
-change_path("A", True)
+def main():
+    for letter in LETTERS:
+        change_path(letter, True)
+
+
+if __name__ == "__main__":
+    main()
