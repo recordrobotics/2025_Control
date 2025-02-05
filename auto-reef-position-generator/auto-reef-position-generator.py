@@ -160,9 +160,7 @@ def write_path_to_letter(letter: str, path):
         json.dump(path, f, indent=2)
 
 
-def edit_linked_waypoint(
-    name: str, pos: POS
-):  # TODO TODO TODO TODO TODO TODO make it so it edits the control handle too
+def edit_linked_waypoint(name: str, pos: POS):
     # loop through all paths in ../src/main/deploy/pathplanner/paths
     # and look for waypoints with "linkedName": name
     # and change their position to pos
@@ -175,6 +173,22 @@ def edit_linked_waypoint(
             data = json.load(f)
         for waypoint in data["waypoints"]:
             if waypoint["linkedName"] == name:
+                if waypoint["nextControl"]:
+                    control_handle_offset = (
+                        waypoint["nextControl"]["x"] - waypoint["anchor"]["x"],
+                        waypoint["nextControl"]["y"] - waypoint["anchor"]["y"],
+                    )
+                    waypoint["nextControl"]["x"] = pos[0] + control_handle_offset[0]
+                    waypoint["nextControl"]["y"] = pos[1] + control_handle_offset[1]
+
+                if waypoint["prevControl"]:
+                    control_handle_offset = (
+                        waypoint["prevControl"]["x"] - waypoint["anchor"]["x"],
+                        waypoint["prevControl"]["y"] - waypoint["anchor"]["y"],
+                    )
+                    waypoint["prevControl"]["x"] = pos[0] + control_handle_offset[0]
+                    waypoint["prevControl"]["y"] = pos[1] + control_handle_offset[1]
+
                 waypoint["anchor"]["x"] = pos[0]
                 waypoint["anchor"]["y"] = pos[1]
         with open(f"src/main/deploy/pathplanner/paths/{path}", "w") as f:
