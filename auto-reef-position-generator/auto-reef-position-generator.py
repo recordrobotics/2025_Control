@@ -16,6 +16,7 @@ BLUE_REEF_CENTER = (4.489, 4.028)  # TODO this is just a guess
 
 import math
 import json
+from os import listdir
 from os.path import abspath
 
 POS = tuple[float, float]  # position
@@ -144,7 +145,6 @@ def get_all_correct_positions(letter: str, blue_side: bool) -> tuple[list[POS], 
 
 
 def read_path_from_letter(letter: str):
-    """reads the path at '../src/main/deploy/pathplanner/paths/Approach Coral {letter}.path'"""
     with open(
         f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
         "r",
@@ -153,12 +153,32 @@ def read_path_from_letter(letter: str):
 
 
 def write_path_to_letter(letter: str, path):
-    """writes the path to '../src/main/deploy/pathplanner/paths/Approach Coral {letter}.path'"""
     with open(
         f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
         "w",
     ) as f:
         json.dump(path, f, indent=2)
+
+
+def edit_linked_waypoint(
+    name: str, pos: POS
+):  # TODO TODO TODO TODO TODO TODO make it so it edits the control handle too
+    # loop through all paths in ../src/main/deploy/pathplanner/paths
+    # and look for waypoints with "linkedName": name
+    # and change their position to pos
+    if name == None:
+        return
+
+    paths = listdir("src/main/deploy/pathplanner/paths")
+    for path in paths:
+        with open(f"src/main/deploy/pathplanner/paths/{path}", "r") as f:
+            data = json.load(f)
+        for waypoint in data["waypoints"]:
+            if waypoint["linkedName"] == name:
+                waypoint["anchor"]["x"] = pos[0]
+                waypoint["anchor"]["y"] = pos[1]
+        with open(f"src/main/deploy/pathplanner/paths/{path}", "w") as f:
+            json.dump(data, f, indent=2)
 
 
 def change_path(letter: str, blue_side: bool):
@@ -181,5 +201,8 @@ def change_path(letter: str, blue_side: bool):
     path["idealStartingState"]["rotation"] = heading
 
     write_path_to_letter(letter, path)
+    edit_linked_waypoint(path["waypoints"][0]["linkedName"], start_pos)
+    edit_linked_waypoint(path["waypoints"][1]["linkedName"], end_pos)
+
 
 change_path("A", True)
