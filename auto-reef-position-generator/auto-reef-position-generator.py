@@ -1,5 +1,6 @@
 # tuning things
-DISTANCE_FROM_REEF_CENTER = 1.386  # TODO tune
+DISTANCE_FROM_REEF_CENTER_CORAL = 1.386  # TODO tune
+DISTANCE_FROM_REEF_CENTER_ALGAE = 1.386  # TODO tune
 DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
 
 # path things
@@ -8,6 +9,7 @@ CONTROL_LENGTH = 0.250
 
 # robot things
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
+HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = 0.125  # TODO put real number (CAD?)
 
 # field things
 FIELD_CENTER = (8.775, 4.028)  # TODO this is just a guess
@@ -26,35 +28,49 @@ VEC = tuple[float, float]  # vector
 
 PLACE_TO_HEADING = {
     "A": 0,
+    "AB": 0,
     "B": 0,
     "C": 60,
+    "CD": 60,
     "D": 60,
     "E": 120,
+    "EF": 120,
     "F": 120,
     "G": 180,
+    "GH": 180,
     "H": 180,
     "I": -120,
+    "IJ": -120,
     "J": -120,
     "K": -60,
+    "KL": -60,
     "L": -60,
 }
 
 PLACE_MORE_LEFT = {
     "A": 1,
+    "AB": 0,
     "B": -1,
     "C": 1,
+    "CD": 0,
     "D": -1,
     "E": 1,
+    "EF": 0,
     "F": -1,
     "G": 1,
+    "GH": 0,
     "H": -1,
     "I": 1,
+    "IJ": 0,
     "J": -1,
     "K": 1,
+    "KL": 0,
     "L": -1,
 }
 
-LETTERS = list("ABCDEFGHIJKL")
+CORAL_LETTERS = list("ABCDEFGHIJKL")
+ALGAE_LETTERS = ["AB", "CD", "EF", "GH", "IJ", "KL"]
+ALL_LETTERS = CORAL_LETTERS + ALGAE_LETTERS
 
 
 def switch_side(pos: POS) -> POS:
@@ -99,6 +115,17 @@ def apply_translation_robot_relative(pos: POS, heading: float, trans: VEC) -> PO
 
 def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
     """returns the correct positions and headings for a given letter and side of the field"""
+    left_offset = (
+        HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER
+        if letter in CORAL_LETTERS
+        else HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING
+    )
+    distance_from_reef_center = (
+        DISTANCE_FROM_REEF_CENTER_CORAL
+        if letter in CORAL_LETTERS
+        else DISTANCE_FROM_REEF_CENTER_ALGAE
+    )
+
     heading = PLACE_TO_HEADING[letter]
 
     pos = BLUE_REEF_CENTER
@@ -106,18 +133,11 @@ def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
         pos,
         heading,
         (
-            -DISTANCE_FROM_REEF_CENTER,
-            DISTANCE_FROM_CENTER_OF_REEF_SEGMENT * PLACE_MORE_LEFT[letter],
+            -distance_from_reef_center,
+            (DISTANCE_FROM_CENTER_OF_REEF_SEGMENT * PLACE_MORE_LEFT[letter]),
         ),
     )
-    pos = apply_translation_robot_relative(
-        pos,
-        heading,
-        (
-            0,
-            -HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER,
-        ),
-    )
+    pos = apply_translation_robot_relative(pos, heading, (0, -left_offset))
 
     if not blue_side:
         pos, heading = switch_side_with_heading(pos, heading)
@@ -145,16 +165,18 @@ def get_all_correct_positions(letter: str, blue_side: bool) -> tuple[list[POS], 
 
 
 def read_path_from_letter(letter: str):
+    type_of_thing = "Coral" if letter in CORAL_LETTERS else "Algae"
     with open(
-        f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
+        f"src/main/deploy/pathplanner/paths/Approach {type_of_thing} {letter}.path",
         "r",
     ) as f:
         return json.load(f)
 
 
 def write_path_to_letter(letter: str, path):
+    type_of_thing = "Coral" if letter in CORAL_LETTERS else "Algae"
     with open(
-        f"src/main/deploy/pathplanner/paths/Approach Coral {letter}.path",
+        f"src/main/deploy/pathplanner/paths/Approach {type_of_thing} {letter}.path",
         "w",
     ) as f:
         json.dump(path, f, indent=2)
@@ -220,7 +242,7 @@ def change_path(letter: str, blue_side: bool):
 
 
 def main():
-    for letter in LETTERS:
+    for letter in ALL_LETTERS:
         change_path(letter, True)
 
 
