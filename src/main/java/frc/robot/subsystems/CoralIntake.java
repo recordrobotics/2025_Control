@@ -45,8 +45,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
           Constants.CoralIntake.sI,
           Constants.CoralIntake.sD,
           new Constraints(
-              Constants.CoralIntake.MAX_ARM_VELOCITY,
-              Constants.CoralIntake.MAX_ARM_ACCELERATION));
+              Constants.CoralIntake.MAX_ARM_VELOCITY, Constants.CoralIntake.MAX_ARM_ACCELERATION));
   private final ArmFeedforward armFeedForward =
       new ArmFeedforward(
           Constants.CoralIntake.sS,
@@ -83,8 +82,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
                 Volts.of(3).per(Second),
                 Volts.of(1.7),
                 Seconds.of(1),
-                (state ->
-                    Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
+                (state -> Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> arm.setVoltage(v.magnitude()), null, this));
 
     SmartDashboard.putNumber("CoralIntakeArm", 0);
@@ -237,8 +235,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
   @Override
   public void setupShuffleboard() {
     DashboardUI.Test.addSlider("Coral Intake Motor", motor.get(), -1, 1).subscribe(motor::set);
-    DashboardUI.Test.addSlider(
-            "Coral Intake Arm Pos", arm.getPosition().getValueAsDouble(), -1, 1)
+    DashboardUI.Test.addSlider("Coral Intake Arm Pos", arm.getPosition().getValueAsDouble(), -1, 1)
         .subscribe(this::toggleArm);
   }
 

@@ -40,7 +40,7 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
   public Drivetrain() {
     setDefaultCommand(new ManualSwerve());
-  
+
     sysIdRoutineDriveMotors =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.

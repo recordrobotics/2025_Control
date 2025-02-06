@@ -143,15 +143,15 @@ public class RobotContainer {
     // return autoCommand;
 
     return new InstantCommand()
-        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kForward))
+        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kForward))
+        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdQuasistaticServo(Direction.kReverse))
+        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdDynamicServo(Direction.kForward))
+        .andThen(coralIntake.sysIdDynamicArm(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdDynamicServo(Direction.kReverse));
+        .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse));
   }
 
   public void testPeriodic() {
