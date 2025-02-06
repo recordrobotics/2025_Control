@@ -155,10 +155,6 @@ public class GroundAlgae extends KillableSubsystem implements ShuffleboardPublis
     return sysIdRoutine.dynamic(direction);
   }
 
-  public double getArmAngle() {
-    return 0; // TODO implement arm
-  }
-
   @Override
   public void kill() {
     toggle(GroundAlgaeStates.OFF);
