@@ -274,6 +274,8 @@ public final class Constants {
 
     public static final Time pulsateFrequency = Seconds.of(1);
 
+    public static final double FLASH_GREEN_TIME = 1; // seconds
+
     public static enum LightSegments {
       ELEVATOR,
       GROUND_ALGAE,
