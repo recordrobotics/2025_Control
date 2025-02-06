@@ -23,12 +23,16 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.util.Color;
+import frc.robot.subsystems.CoralShooter.CoralShooterStates;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ModuleConstants.MotorLocation;
 import frc.robot.utils.ModuleConstants.MotorType;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -270,12 +274,67 @@ public final class Constants {
 
     public static final Time pulsateFrequency = Seconds.of(1);
 
-    public static final Map<String, Pair<Integer, Integer>> PART_INDECIES =
+    public static enum LightSegments {
+      ELEVATOR,
+      GROUND_ALGAE,
+      CORAL_INTAKE,
+      CORAL_SHOOTER
+    }
+
+    public static final Map<LightSegments, Pair<Integer, Integer>> PART_INDECIES =
         Map.of(
-            "Elevator", Pair.of(0, 5),
-            "Ground Algae", Pair.of(6, 10),
-            "Coral Intake", Pair.of(11, 15),
-            "Coral Shooter", Pair.of(16, 20));
+            LightSegments.ELEVATOR, Pair.of(0, 5),
+            LightSegments.GROUND_ALGAE, Pair.of(6, 10),
+            LightSegments.CORAL_INTAKE, Pair.of(11, 15),
+            LightSegments.CORAL_SHOOTER, Pair.of(16, 20));
+
+    public static final LEDPattern PULSATING_ORANGE =
+        LEDPattern.solid(Color.kOrange)
+            .breathe(Constants.Lights.pulsateFrequency)
+            .blend(LEDPattern.solid(Color.kOrange));
+    public static final LEDPattern PULSATING_GREEN =
+        LEDPattern.solid(Color.kGreen).breathe(Constants.Lights.pulsateFrequency);
+    public static final LEDPattern OFF = LEDPattern.solid(Color.kBlack);
+
+    public static final LEDPattern elevatorPattern =
+        PULSATING_GREEN
+            .mask(
+                LEDPattern.progressMaskLayer(
+                    () ->
+                        RobotContainer.elevator.getCurrentHeight() / Constants.Elevator.MAX_HEIGHT))
+            .overlayOn(PULSATING_ORANGE);
+    public static final Supplier<LEDPattern> algaePattern =
+        () ->
+            LEDPattern.solid(
+                Color.lerpRGB(
+                    Color.kRed,
+                    Color.kGreen,
+                    (RobotContainer.groundAlgae.getArmAngle() - Constants.GroundAlgae.UP_ANGLE)
+                        / (Constants.GroundAlgae.DOWN_ANGLE
+                            - Constants.GroundAlgae
+                                .UP_ANGLE))); // TODO this is some of the worst code ive seen today
+    public static final Supplier<LEDPattern> coralIntakePattern =
+        () ->
+            LEDPattern.solid(
+                Color.lerpRGB(
+                    Color.kRed,
+                    Color.kGreen,
+                    (RobotContainer.coralIntake.getServoAngle() - Constants.CoralIntake.SERVO_UP)
+                        / (Constants.CoralIntake.SERVO_DOWN
+                            - Constants.CoralIntake
+                                .SERVO_UP))); // TODO also bad (but not the worst ive written today)
+    public static final Supplier<LEDPattern> coralShooterPattern =
+        () ->
+            (RobotContainer.coralShooter.getCurrentState() == CoralShooterStates.OFF)
+                ? PULSATING_GREEN
+                : PULSATING_ORANGE;
+
+    public static final Map<LightSegments, Supplier<LEDPattern>> DEFAULT_PATTERNS =
+        Map.of(
+            LightSegments.ELEVATOR, () -> OFF,
+            LightSegments.GROUND_ALGAE, () -> OFF,
+            LightSegments.CORAL_INTAKE, () -> OFF,
+            LightSegments.CORAL_SHOOTER, () -> OFF);
   }
 
   public final class Control {
