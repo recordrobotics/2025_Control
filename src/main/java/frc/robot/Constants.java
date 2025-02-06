@@ -321,10 +321,10 @@ public final class Constants {
                 Color.lerpRGB(
                     Color.kRed,
                     Color.kGreen,
-                    (RobotContainer.coralIntake.getServoAngle() - Constants.CoralIntake.SERVO_UP)
-                        / (Constants.CoralIntake.SERVO_DOWN
+                    (RobotContainer.coralIntake.getArmAngle() - Constants.CoralIntake.ARM_UP)
+                        / (Constants.CoralIntake.ARM_DOWN
                             - Constants.CoralIntake
-                                .SERVO_UP))); // TODO also bad (but not the worst ive written today)
+                                .ARM_UP))); // TODO also bad (but not the worst ive written today)
     public static final Supplier<LEDPattern> coralShooterPattern =
         () ->
             (RobotContainer.coralShooter.getCurrentState() == CoralShooterStates.OFF)
