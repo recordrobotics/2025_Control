@@ -305,7 +305,7 @@ public final class Constants {
                     () ->
                         RobotContainer.elevator.getCurrentHeight() / Constants.Elevator.MAX_HEIGHT))
             .overlayOn(PULSATING_ORANGE);
-    public static final Supplier<LEDPattern> algaePattern =
+    public static final Supplier<LEDPattern> groundAlgaePattern =
         () ->
             LEDPattern.solid(
                 Color.lerpRGB(
