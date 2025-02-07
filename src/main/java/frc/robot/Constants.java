@@ -176,6 +176,8 @@ public final class Constants {
     public static final double kMaxAcceleration = 1.0;
     public static final double kV = 1.3;
     public static final double kA = 0.05;
+    public static final double kG = 0.04;
+    public static final double kS = 0.01;
 
     public static final double STD_STATE_POSITION = 100.0; // m
     public static final double STD_STATE_VELOCITY = 100.0; // m/s

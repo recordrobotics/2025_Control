@@ -162,11 +162,16 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     // state with out Kalman filter.
     loop.predict(Constants.Elevator.kDt);
 
-    double nextVoltage = loop.getU(0);
+    double nextVoltage =
+        loop.getU(0)
+            + Constants.Elevator.kG
+            + Constants.Elevator.kS * Math.signum(m_setpoint.velocity);
 
     if ((!getTopEndStopPressed() || nextVoltage <= 0)
         && (!getBottomEndStopPressed() || nextVoltage >= 0)) {
       setBothMotors(nextVoltage);
+    } else {
+      setBothMotors(0);
     }
 
     // Update mechanism

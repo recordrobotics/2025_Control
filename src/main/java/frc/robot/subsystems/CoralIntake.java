@@ -202,7 +202,7 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
               getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
     } else {
       armFeedforwardOutput = Constants.CoralIntake.sG * Math.cos(getArmAngle());
-      armFeedforwardOutput += Math.copySign(Constants.CoralIntake.sS, armFeedforwardOutput);
+      // armFeedforwardOutput += Math.copySign(Constants.CoralIntake.sS, armFeedforwardOutput);
     }
     Logger.recordOutput("CoralArmTargetPosition", armPID.getSetpoint().position);
     Logger.recordOutput("CoralArmTargetVelocity", armPID.getSetpoint().velocity);
