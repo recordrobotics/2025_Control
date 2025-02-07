@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -25,6 +26,7 @@ import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.utils.ArmFeedforwardJava;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -187,9 +189,6 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
   @Override
   public void periodic() {
-    System.out.println(
-        "kujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecdkujyhtgrvfecd");
-    System.out.println(SmartDashboard.getNumber("CoralIntakeArm", 0));
     toggleArm(SmartDashboard.getNumber("CoralIntakeArm", 0));
 
     double pidOutput = pid.calculate(getWheelVelocity());
@@ -198,13 +197,18 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
     lastSpeed = pid.getSetpoint();
 
     double pidOutputArm = armPID.calculate(getArmAngle());
-    double armFeedforwardOutput =
-        armFeedForward.calculateWithVelocities(
+    double armFeedforwardOutput;
+    if(Math.abs(armPID.getSetpoint().velocity) > 1e-2) {
+      armFeedforwardOutput = armFeedForward.calculateWithVelocities(
             getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
-
+    } else {
+      armFeedforwardOutput = Constants.CoralIntake.sG * Math.cos(getArmAngle());
+      armFeedforwardOutput += Math.copySign(Constants.CoralIntake.sS, armFeedforwardOutput);
+    }
     Logger.recordOutput("CoralArmTargetPosition", armPID.getSetpoint().position);
     Logger.recordOutput("CoralArmTargetVelocity", armPID.getSetpoint().velocity);
-    Logger.recordOutput("CoralIntakeSetVoltage", pidOutputArm + armFeedforwardOutput);
+    Logger.recordOutput("CoralIntakeSetVoltage", pidOutputArm);
+    Logger.recordOutput("CoralIntakeSetVoltageFF", armFeedforwardOutput);
 
     arm.setVoltage(pidOutputArm + armFeedforwardOutput);
     currentSetpoint = armPID.getSetpoint();

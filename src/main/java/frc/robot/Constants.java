@@ -222,8 +222,8 @@ public final class Constants {
     public static final double kS = 0.12;
     public static final double kV = 0.14;
 
-    public static final double MAX_ARM_VELOCITY = 0.1; // TODO do the thing
-    public static final double MAX_ARM_ACCELERATION = 0.1; // TODO do the thing
+    public static final double MAX_ARM_VELOCITY = 2; // TODO do the thing
+    public static final double MAX_ARM_ACCELERATION = 2; // TODO do the thing
 
     public static final double REVERSE_SPEED = 0.2; // TODO this is probably too slow
     public static final double INTAKE_SPEED = -0.2; // TODO ^^^^^^^^^^^

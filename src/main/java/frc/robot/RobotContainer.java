@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.LightSignal;
+import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
@@ -63,6 +64,8 @@ public class RobotContainer {
     configureButtonBindings();
 
     ShuffleboardPublisher.setup(poseTracker.nav, drivetrain, limelight);
+
+    drivetrain.setDefaultCommand(new ManualSwerve());
   }
 
   public void teleopInit() {}
