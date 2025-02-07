@@ -26,7 +26,6 @@ import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.dashboard.DashboardUI;
-import frc.robot.utils.ArmFeedforwardJava;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import org.littletonrobotics.junction.AutoLogOutput;

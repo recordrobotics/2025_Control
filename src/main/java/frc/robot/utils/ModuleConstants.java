@@ -111,25 +111,25 @@ public class ModuleConstants {
     // Turn Motor Constants
     switch (turnMotorType) {
       case Falcon:
-        // this.TURN_KV = Constants.Swerve.FALCON_TURN_KV;
-        // this.TURN_KA = Constants.Swerve.FALCON_TURN_KA;
-        // this.TURN_STD_STATE_POSITION = Constants.Swerve.FALCON_TURN_STD_STATE_POSITION;
-        // this.TURN_STD_STATE_VELOCITY = Constants.Swerve.FALCON_TURN_STD_STATE_VELOCITY;
-        // this.TURN_STD_ENCODER_POSITION = Constants.Swerve.FALCON_TURN_STD_ENCODER_POSITION;
-        // this.TURN_STD_ENCODER_VELOCITY = Constants.Swerve.FALCON_TURN_STD_ENCODER_VELOCITY;
-        // this.TURN_REGULATOR_POSITION_ERROR_TOLERANCE =
-        //     Constants.Swerve.FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE;
-        // this.TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE =
-        //     Constants.Swerve.FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE;
-        // this.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE =
-        //     Constants.Swerve.FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE;
+        this.TURN_KV = Constants.Swerve.FALCON_TURN_KV;
+        this.TURN_KA = Constants.Swerve.FALCON_TURN_KA;
+        this.TURN_STD_STATE_POSITION = Constants.Swerve.FALCON_TURN_STD_STATE_POSITION;
+        this.TURN_STD_STATE_VELOCITY = Constants.Swerve.FALCON_TURN_STD_STATE_VELOCITY;
+        this.TURN_STD_ENCODER_POSITION = Constants.Swerve.FALCON_TURN_STD_ENCODER_POSITION;
+        this.TURN_STD_ENCODER_VELOCITY = Constants.Swerve.FALCON_TURN_STD_ENCODER_VELOCITY;
+        this.TURN_REGULATOR_POSITION_ERROR_TOLERANCE =
+            Constants.Swerve.FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE;
+        this.TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE =
+            Constants.Swerve.FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE;
+        this.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE =
+            Constants.Swerve.FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE;
         this.TURN_GEAR_RATIO = Constants.Swerve.FALCON_TURN_GEAR_RATIO;
-        this.TURN_KP = Constants.Swerve.FALCON_TURN_KP;
-        this.TURN_KI = Constants.Swerve.FALCON_TURN_KI;
-        this.TURN_KD = Constants.Swerve.FALCON_TURN_KD;
-        this.TURN_FEEDFORWARD_KS = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KS;
-        this.TURN_FEEDFORWARD_KV = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KV;
-        this.TURN_FEEDFORWARD_KA = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KA;
+        // this.TURN_KP = Constants.Swerve.FALCON_TURN_KP;
+        // this.TURN_KI = Constants.Swerve.FALCON_TURN_KI;
+        // this.TURN_KD = Constants.Swerve.FALCON_TURN_KD;
+        // this.TURN_FEEDFORWARD_KS = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KS;
+        // this.TURN_FEEDFORWARD_KV = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KV;
+        // this.TURN_FEEDFORWARD_KA = Constants.Swerve.FALCON_TURN_FEEDFORWARD_KA;
         break;
       case Kraken:
         // this.TURN_KV = Constants.Swerve.KRAKEN_TURN_KV;
