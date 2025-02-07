@@ -169,11 +169,9 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
       setBothMotors(nextVoltage);
     }
 
-    currentSetpoint = controller.getSetpoint();
-
     // Update mechanism
     RobotContainer.model.elevator.update(getCurrentHeight());
-    RobotContainer.model.elevator.updateSetpoint(currentSetpoint.position);
+    RobotContainer.model.elevator.updateSetpoint(m_setpoint.position);
   }
 
   private void setBothMotors(double voltage) {

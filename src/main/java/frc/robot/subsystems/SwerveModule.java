@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -40,8 +39,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   private final PIDController drivePIDController;
   private final SimpleMotorFeedforward driveFeedForward;
 
-  //private final ProfiledPIDController turningPIDController;
-  //private final SimpleMotorFeedforward turnFeedForward;
+  // private final ProfiledPIDController turningPIDController;
+  // private final SimpleMotorFeedforward turnFeedForward;
 
   // Maximum elevator velocity and acceleration constraints
   private final TrapezoidProfile.Constraints constraints;
@@ -64,7 +63,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
   // // A LQR uses feedback to create voltage commands.
   private final LinearQuadraticRegulator<N2, N1, N2>
-       turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be
+      turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be
   // // lower if using notifiers.
 
   // // The state-space loop combines a controller, observer, feedforward and plant for easy
@@ -127,7 +126,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
             VecBuilder.fill(
                 m.TURN_STD_STATE_POSITION,
                 m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position,
-    // velocity)
+            // velocity)
             VecBuilder.fill(
                 m.TURN_STD_ENCODER_POSITION,
                 m.TURN_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
@@ -149,7 +148,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
                 m.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
             // tolerance. Decrease this to more
             // heavily penalize control effort, or make the controller less aggressive. 12 is a
-    // good
+            // good
             // starting point because that is the (approximate) maximum voltage of a battery.
             Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can
     // be
@@ -176,7 +175,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     // Limit the PID Controller's input range between -0.5 and 0.5 and set the input to be
     // continuous.
-    //turningPIDController.enableContinuousInput(-0.5, 0.5);
+    // turningPIDController.enableContinuousInput(-0.5, 0.5);
 
     // Corrects for offset in absolute motor position
     m_turningMotor.setPosition(getAbsWheelTurnOffset());
@@ -290,8 +289,12 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     // Optimize the reference state to avoid spinning further than 90 degrees
     desiredState.optimize(getTurnWheelRotation2d());
     drivePIDController.setSetpoint(desiredState.speedMetersPerSecond);
-    //turningPIDController.setGoal(desiredState.angle.getRotations());
-    m_goal = new TrapezoidProfile.State(updateTargetRotation(desiredState.angle.getRotations(), getTurnWheelRotation2d().getRotations()), 0);
+    // turningPIDController.setGoal(desiredState.angle.getRotations());
+    m_goal =
+        new TrapezoidProfile.State(
+            updateTargetRotation(
+                desiredState.angle.getRotations(), getTurnWheelRotation2d().getRotations()),
+            0);
 
     // ShuffleboardUI.Autonomous.putSwerveVelocityData(
     //   m_driveMotor.getDeviceID(), getDriveWheelVelocity(), drivePIDController.getSetpoint());
@@ -325,7 +328,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     // Correct our Kalman filter's state vector estimate with encoder data.
     turnLoop.correct(
-         VecBuilder.fill(getTurnWheelRotation2d().getRotations(), getTurnWheelVelocity()));
+        VecBuilder.fill(getTurnWheelRotation2d().getRotations(), getTurnWheelVelocity()));
 
     // Update our LQR to generate new voltage commands and use the voltages to predict the next
     // state with out Kalman filter.
@@ -352,10 +355,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     m_turningMotor.setVoltage(nextVoltage);
 
-    Logger.recordOutput(
-        "TargetVel_" + m_turningMotor.getDeviceID(), m_setpoint.velocity);
-    Logger.recordOutput(
-        "TargetPos_" + m_turningMotor.getDeviceID(), m_setpoint.position);
+    Logger.recordOutput("TargetVel_" + m_turningMotor.getDeviceID(), m_setpoint.velocity);
+    Logger.recordOutput("TargetPos_" + m_turningMotor.getDeviceID(), m_setpoint.position);
     Logger.recordOutput("CurrentVel_" + m_turningMotor.getDeviceID(), getTurnWheelVelocity());
     Logger.recordOutput(
         "CurrentPos_" + m_turningMotor.getDeviceID(), getTurnWheelRotation2d().getRotations());

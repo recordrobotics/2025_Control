@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.DriveCommandDataAutoLogged;
 import frc.robot.utils.KillableSubsystem;

@@ -9,7 +9,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -197,9 +196,10 @@ public class CoralIntake extends KillableSubsystem implements ShuffleboardPublis
 
     double pidOutputArm = armPID.calculate(getArmAngle());
     double armFeedforwardOutput;
-    if(Math.abs(armPID.getSetpoint().velocity) > 1e-2) {
-      armFeedforwardOutput = armFeedForward.calculateWithVelocities(
-            getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
+    if (Math.abs(armPID.getSetpoint().velocity) > 1e-2) {
+      armFeedforwardOutput =
+          armFeedForward.calculateWithVelocities(
+              getArmAngle(), currentSetpoint.velocity, armPID.getSetpoint().velocity);
     } else {
       armFeedforwardOutput = Constants.CoralIntake.sG * Math.cos(getArmAngle());
       armFeedforwardOutput += Math.copySign(Constants.CoralIntake.sS, armFeedforwardOutput);
