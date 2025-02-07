@@ -85,7 +85,7 @@ public class RobotModel extends SubsystemBase {
 
       // Second stage
       poses[i++] =
-          poses[i - 1].transformBy(
+          poses[i - 2].transformBy(
               new Transform3d(0, elevator.getLength() * 0.1, 0, new Rotation3d(0, 0, 0)));
     }
   }
@@ -155,6 +155,10 @@ public class RobotModel extends SubsystemBase {
 
   @AutoLogOutput
   public Pose3d[] mechanismPoses = new Pose3d[Elevator.POSE_COUNT + CoralIntake.POSE_COUNT];
+
+  public RobotModel() {
+    periodic();
+  }
 
   @Override
   public void periodic() {

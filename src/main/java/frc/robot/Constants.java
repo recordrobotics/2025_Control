@@ -435,13 +435,14 @@ public final class Constants {
 
   public final class RobotState {
     public static Mode getMode() {
-      return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
+      return RobotBase.isReal() ? Mode.REAL : RobotBase.isSimulation() ? Mode.SIM : Mode.REPLAY;
     }
 
     public static final boolean MOTOR_LOGGING_ENABLED = true;
 
     public static enum Mode {
       REAL,
+      SIM,
       REPLAY
     }
   }
