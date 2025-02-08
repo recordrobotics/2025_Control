@@ -36,7 +36,7 @@ public class RobotContainer {
   public static final Limelight limelight = new Limelight();
   public static final Elevator elevator = null; // new Elevator();
   public static final CoralShooter coralShooter = null; // = new CoralShooter();
-  public static final CoralIntake coralIntake = null; // = new CoralIntake();
+  public static final CoralIntake coralIntake = new CoralIntake();
   public static final ElevatorAlgae elevatorAlgae = null; // new ElevatorAlgae();
   public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
@@ -176,7 +176,7 @@ public class RobotContainer {
     limelight.close();
     // elevator.close();
     // coralShooter.close();
-    // coralIntake.close();
+    coralIntake.close();
     // elevatorAlgae.close();
     // groundAlgae.close();
     pdp.close();

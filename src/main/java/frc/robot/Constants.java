@@ -224,8 +224,8 @@ public final class Constants {
     public static final double kS = 0.12;
     public static final double kV = 0.14;
 
-    public static final double MAX_ARM_VELOCITY = 2; // TODO do the thing
-    public static final double MAX_ARM_ACCELERATION = 2; // TODO do the thing
+    public static final double MAX_ARM_VELOCITY = 30;
+    public static final double MAX_ARM_ACCELERATION = 30;
 
     public static final double REVERSE_SPEED = 0.2; // TODO this is probably too slow
     public static final double INTAKE_SPEED = -0.2; // TODO ^^^^^^^^^^^
@@ -247,8 +247,7 @@ public final class Constants {
 
     public static final double DEBOUNCE_TIME = 0.05; // TODO make correct
 
-    public static final Pose3d ROOT_MECHANISM_POSE =
-        new Pose3d(0, 0, 0, new Rotation3d(0, 0, 0));
+    public static final Pose3d ROOT_MECHANISM_POSE = new Pose3d(0, 0, 0, new Rotation3d(0, 0, 0));
     public static final double LENGTH = 0.6;
     public static final double ANGLE_OFFSET = 0;
   }

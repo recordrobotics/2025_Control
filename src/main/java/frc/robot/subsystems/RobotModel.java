@@ -157,8 +157,7 @@ public class RobotModel extends SubsystemBase {
   @AutoLogOutput
   public Pose3d[] mechanismPoses = new Pose3d[Elevator.POSE_COUNT + CoralIntake.POSE_COUNT];
 
-  @AutoLogOutput
-  public Pose2d robot = new Pose2d();
+  @AutoLogOutput public Pose2d robot = new Pose2d();
 
   public RobotModel() {
     periodic();
