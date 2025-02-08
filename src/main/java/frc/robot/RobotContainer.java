@@ -12,12 +12,10 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 // Local imports
 import frc.robot.commands.KillSpecified;
-import frc.robot.commands.LightSignal;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
-import frc.robot.subsystems.Lights.LightMode;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.ShuffleboardPublisher;
 import org.photonvision.PhotonCamera;
@@ -135,10 +133,8 @@ public class RobotContainer {
     // new Trigger(() -> ShuffleboardUI.Overview.getControl().getCoralSourceAcquire())
     //     .onTrue(new CoralIntakeFromSource());
     // // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getAcquireAlgae());
-    new Trigger(() -> DashboardUI.Overview.getControl().getIntakeAlgae())
-        .onTrue(new LightSignal(LightMode.CHASE));
-    new Trigger(() -> DashboardUI.Overview.getControl().getReefAlgae())
-        .onTrue(new LightSignal(LightMode.RAINBOW));
+    // new Trigger(() -> DashboardUI.Overview.getControl().getIntakeAlgae());
+    // new Trigger(() -> DashboardUI.Overview.getControl().getReefAlgae());
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getReefAlgae());
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getScoreAlgae());
     // TODO: new Trigger(() -> ShuffleboardUI.Overview.getControl().getClimb());
