@@ -248,9 +248,9 @@ public final class Constants {
     public static final double DEBOUNCE_TIME = 0.05; // TODO make correct
 
     public static final Pose3d ROOT_MECHANISM_POSE =
-        new Pose3d(-0.3, 0.5, 0, new Rotation3d(0, 0, 0));
+        new Pose3d(0, 0, 0, new Rotation3d(0, 0, 0));
     public static final double LENGTH = 0.6;
-    public static final double ANGLE_OFFSET = 15;
+    public static final double ANGLE_OFFSET = 0;
   }
 
   public final class Lights {
@@ -296,7 +296,7 @@ public final class Constants {
 
     public static final double ROBOT_WHEEL_DISTANCE_LENGTH = 0.5969;
 
-    public static final double BUMPER_WIDTH = 0.7;
+    public static final double BUMPER_WIDTH = 0.762;
     public static final double MAX_MECHANISM_HEIGHT = 2.1336;
   }
 

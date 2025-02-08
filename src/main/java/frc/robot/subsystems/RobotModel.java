@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -33,7 +34,7 @@ public class RobotModel extends SubsystemBase {
         mechanism.getRoot(
             "elevator_root",
             Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
-            Constants.Elevator.ROOT_MECHANISM_POSE.getY());
+            Constants.Elevator.ROOT_MECHANISM_POSE.getZ());
     private LoggedMechanismLigament2d elevator =
         root.append(
             new LoggedMechanismLigament2d(
@@ -51,7 +52,7 @@ public class RobotModel extends SubsystemBase {
         mechanism_setpoint.getRoot(
             "elevator_root",
             Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
-            Constants.Elevator.ROOT_MECHANISM_POSE.getY());
+            Constants.Elevator.ROOT_MECHANISM_POSE.getZ());
     private LoggedMechanismLigament2d elevator_setpoint =
         root_setpoint.append(
             new LoggedMechanismLigament2d(
@@ -101,7 +102,7 @@ public class RobotModel extends SubsystemBase {
         mechanism.getRoot(
             "coralintake_root",
             Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
-            Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
+            Constants.CoralIntake.ROOT_MECHANISM_POSE.getZ());
     private LoggedMechanismLigament2d coralintake =
         root.append(
             new LoggedMechanismLigament2d(
@@ -119,7 +120,7 @@ public class RobotModel extends SubsystemBase {
         mechanism_setpoint.getRoot(
             "coralintake_root",
             Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
-            Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
+            Constants.CoralIntake.ROOT_MECHANISM_POSE.getZ());
     private LoggedMechanismLigament2d coralintake_setpoint =
         root_setpoint.append(
             new LoggedMechanismLigament2d(
@@ -155,6 +156,9 @@ public class RobotModel extends SubsystemBase {
 
   @AutoLogOutput
   public Pose3d[] mechanismPoses = new Pose3d[Elevator.POSE_COUNT + CoralIntake.POSE_COUNT];
+
+  @AutoLogOutput
+  public Pose2d robot = new Pose2d();
 
   public RobotModel() {
     periodic();
