@@ -4,6 +4,11 @@ plugins {
     id 'com.diffplug.spotless' version '6.20.0'
 }
 
+wpi.maven.useLocal = false
+wpi.maven.useDevelopment = true
+wpi.versions.wpilibVersion = '2025.+'
+wpi.versions.wpimathVersion = '2025.+'
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
