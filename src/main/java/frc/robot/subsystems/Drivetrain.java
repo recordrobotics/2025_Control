@@ -8,7 +8,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
@@ -29,6 +29,9 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
   private DriveCommandDataAutoLogged driveCommandDataAutoLogged = new DriveCommandDataAutoLogged();
 
+  private final SysIdRoutine sysIdRoutineDriveMotors;
+  private final SysIdRoutine sysIdRoutineTurnMotors;
+
   // Creates swerve kinematics
   private final SwerveDriveKinematics m_kinematics =
       new SwerveDriveKinematics(
@@ -42,9 +45,9 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
-                null,
-                null,
-                null,
+                Volts.of(3).per(Second),
+                Volts.of(3),
+                Seconds.of(2),
                 (state ->
                     Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotors, null, this));
@@ -59,9 +62,6 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
                 (state -> Logger.recordOutput("Drivetrain/Turn/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism(this::SysIdOnlyTurnMotors, null, this));
   }
-
-  private final SysIdRoutine sysIdRoutineDriveMotors;
-  private final SysIdRoutine sysIdRoutineTurnMotors;
 
   /**
    * Drives the robot using joystick info.
@@ -240,19 +240,13 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
   public Command sysIdQuasistaticDriveMotors(SysIdRoutine.Direction direction) {
     return sysIdRoutineDriveMotors
-        .quasistatic(direction)
-        .beforeStarting(
-            new WaitCommand(0.5)
-                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+        .quasistatic(direction).raceWith(Commands.run(()->drive(new DriveCommandData())));
     // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 
   public Command sysIdDynamicDriveMotors(SysIdRoutine.Direction direction) {
     return sysIdRoutineDriveMotors
-        .dynamic(direction)
-        .beforeStarting(
-            new WaitCommand(0.5)
-                .deadlineFor(run(() -> drive(new DriveCommandData(0, 0, 0, false)))));
+        .dynamic(direction).raceWith(Commands.run(()->drive(new DriveCommandData())));
     // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 

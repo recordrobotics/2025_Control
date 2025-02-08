@@ -17,6 +17,7 @@ import frc.robot.control.*;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.ShuffleboardPublisher;
 import org.photonvision.PhotonCamera;
 
@@ -151,25 +152,14 @@ public class RobotContainer {
     // }
     // return autoCommand;
 
-    return new InstantCommand()
-        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
-        // .andThen(new WaitCommand(0.4))
-        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
-        // .andThen(new WaitCommand(0.4))
-        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse))
-        // .andThen(new WaitCommand(0.4))
-        // .andThen(coralIntake.sysIdDynamicArm(Direction.kForward))
-        // .andThen(new WaitCommand(0.4))
-        // .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse));
-        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kForward))
-        .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kForward))
-        .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kReverse))
-        .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kForward))
-        .andThen(new WaitCommand(0.4))
-        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kReverse));
+    return drivetrain.run(()->drivetrain.drive(new DriveCommandData())).withTimeout(0.4)
+        .andThen(drivetrain.sysIdQuasistaticDriveMotors(Direction.kForward))
+        .andThen(drivetrain.run(()->drivetrain.drive(new DriveCommandData())).withTimeout(0.4))
+        .andThen(drivetrain.sysIdQuasistaticDriveMotors(Direction.kReverse))
+        .andThen(drivetrain.run(()->drivetrain.drive(new DriveCommandData())).withTimeout(0.4))
+        .andThen(drivetrain.sysIdDynamicDriveMotors(Direction.kForward))
+        .andThen(drivetrain.run(()->drivetrain.drive(new DriveCommandData())).withTimeout(0.4))
+        .andThen(drivetrain.sysIdDynamicDriveMotors(Direction.kReverse));
   }
 
   public void testPeriodic() {

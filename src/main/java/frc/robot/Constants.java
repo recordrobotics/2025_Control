@@ -402,13 +402,13 @@ public final class Constants {
     public static final double KRAKEN_DRIVE_GEAR_RATIO = 6.75; // X1 12 pinion
 
     // PID Values
-    public static final double FALCON_DRIVE_KP = 0.2850;
+    public static final double FALCON_DRIVE_KP = 0.59821;
     public static final double FALCON_DRIVE_KI = 0;
     public static final double FALCON_DRIVE_KD = 0;
 
-    public static final double FALCON_DRIVE_FEEDFORWARD_KS = 0.274308;
-    public static final double FALCON_DRIVE_FEEDFORWARD_KV = 2.60;
-    public static final double FALCON_DRIVE_FEEDFORWARD_KA = 0.13;
+    public static final double FALCON_DRIVE_FEEDFORWARD_KS = 0.12373;
+    public static final double FALCON_DRIVE_FEEDFORWARD_KV = 2.5609;
+    public static final double FALCON_DRIVE_FEEDFORWARD_KA = 0.10075;
 
     // public static final double FALCON_TURN_FEEDFORWARD_KS = 0.0322;
     // public static final double FALCON_TURN_FEEDFORWARD_KV = 2.2119;

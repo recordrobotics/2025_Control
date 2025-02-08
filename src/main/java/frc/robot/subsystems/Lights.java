@@ -29,7 +29,7 @@ public class Lights extends SubsystemBase implements AutoCloseable {
     off();
 
     // Default command makes lights turn off by default
-    setDefaultCommand(new InstantCommand(this::off));
+    setDefaultCommand(new InstantCommand(this::off, this));
   }
 
   private void setGlobalPattern(LEDPattern pattern) {
