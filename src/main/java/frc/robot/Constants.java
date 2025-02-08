@@ -336,14 +336,15 @@ public final class Constants {
     // public static final double FALCON_TURN_FEEDFORWARD_KV = 2.2119;
     // public static final double FALCON_TURN_FEEDFORWARD_KA = 0.023189;
 
-    public static final double FALCON_TURN_KV = 1.0519;
-    public static final double FALCON_TURN_KA = 0.017189;
+    public static final double FALCON_TURN_KV = 1.7518;
+    public static final double FALCON_TURN_KA = 0.015791;
+    public static final double FALCON_TURN_KS = 0.08889;
     public static final double FALCON_TURN_STD_STATE_POSITION = 3;
     public static final double FALCON_TURN_STD_STATE_VELOCITY = 3;
     public static final double FALCON_TURN_STD_ENCODER_POSITION = 0.01;
     public static final double FALCON_TURN_STD_ENCODER_VELOCITY = 0.01;
-    public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.06;
-    public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.993;
+    public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.02;
+    public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.6999;
     public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     // public static final double FALCON_TURN_KP = 1.0;
@@ -358,15 +359,16 @@ public final class Constants {
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KV = 2.4408;
     public static final double KRAKEN_DRIVE_FEEDFORWARD_KA = 0.1;
 
-    // public static final double KRAKEN_TURN_KV = 1.7519;
-    // public static final double KRAKEN_TURN_KA = 0.017189;
-    // public static final double KRAKEN_TURN_STD_STATE_POSITION = 2;
-    // public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 2;
-    // public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.1;
-    // public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.1;
-    // public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
-    // public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
-    // public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
+    public static final double KRAKEN_TURN_KV = 1.7519;
+    public static final double KRAKEN_TURN_KA = 0.017189;
+    public static final double KRAKEN_TURN_KS = 0.001;
+    public static final double KRAKEN_TURN_STD_STATE_POSITION = 2;
+    public static final double KRAKEN_TURN_STD_STATE_VELOCITY = 2;
+    public static final double KRAKEN_TURN_STD_ENCODER_POSITION = 0.1;
+    public static final double KRAKEN_TURN_STD_ENCODER_VELOCITY = 0.1;
+    public static final double KRAKEN_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.1;
+    public static final double KRAKEN_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.693;
+    public static final double KRAKEN_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     public static final double KRAKEN_TURN_KP = 2.3;
     public static final double KRAKEN_TURN_KI = 0;

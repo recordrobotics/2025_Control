@@ -70,6 +70,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   // control.
   private final LinearSystemLoop<N2, N1, N2> turnLoop;
 
+  private final double turn_kS;
+
   private final Notifier m_notifier;
 
   private final double TURN_GEAR_RATIO;
@@ -154,7 +156,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     // be
     // lower if using notifiers.
 
-    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.019895);
+    turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.020015);
 
     this.turnLoop =
         new LinearSystemLoop<>(
@@ -176,6 +178,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     // Limit the PID Controller's input range between -0.5 and 0.5 and set the input to be
     // continuous.
     // turningPIDController.enableContinuousInput(-0.5, 0.5);
+
+    turn_kS = m.TURN_KS;
 
     // Corrects for offset in absolute motor position
     m_turningMotor.setPosition(getAbsWheelTurnOffset());
@@ -217,7 +221,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   public double updateTargetRotation(double target, double current) {
-    return MathUtil.inputModulus(target, -1, 1) + current;
+    //return MathUtil.inputModulus(target, -1, 1) + current;
+    //return ((target + 0.5) % 1.0 + 1.0) % 1.0 - 0.5 + Math.floor(current + 0.5);
+    return target - Math.round(target - current);
   }
 
   public double getTurnWheelVelocity() {
@@ -278,7 +284,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   private double lastSpeedMetersPerSecond = 0;
-  private double lastTurnRotationsPerSecond = 0;
 
   /**
    * Sets the desired state for the module.
@@ -290,6 +295,12 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
     desiredState.optimize(getTurnWheelRotation2d());
     drivePIDController.setSetpoint(desiredState.speedMetersPerSecond);
     // turningPIDController.setGoal(desiredState.angle.getRotations());
+    // m_goal =
+    //     new TrapezoidProfile.State(
+    //         updateTargetRotation(
+    //             desiredState.angle.getRotations(), getTurnWheelRotation2d().getRotations()),
+    //         0);
+
     m_goal =
         new TrapezoidProfile.State(
             updateTargetRotation(
@@ -344,7 +355,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
 
     turnLoop.predict(Constants.Swerve.kDt);
 
-    double nextVoltage = turnLoop.getU(0);
+    double nextVoltage = turnLoop.getU(0) + turn_kS * Math.signum(m_setpoint.velocity);
 
     // double turnPid = turningPIDController.calculate(getTurnWheelRotation2d().getRotations());
     // double turnFeedforwardOutput =
@@ -362,7 +373,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
         "CurrentPos_" + m_turningMotor.getDeviceID(), getTurnWheelRotation2d().getRotations());
 
     lastSpeedMetersPerSecond = drivePIDController.getSetpoint();
-    lastTurnRotationsPerSecond = m_setpoint.velocity;
   }
 
   public void stop() {

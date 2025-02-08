@@ -36,7 +36,7 @@ public class RobotContainer {
   public static final Limelight limelight = new Limelight();
   public static final Elevator elevator = null; // new Elevator();
   public static final CoralShooter coralShooter = null; // = new CoralShooter();
-  public static final CoralIntake coralIntake = new CoralIntake();
+  public static final CoralIntake coralIntake = null; // = new CoralIntake();
   public static final ElevatorAlgae elevatorAlgae = null; // new ElevatorAlgae();
   public static final GroundAlgae groundAlgae = null; // new GroundAlgae();
   public static final Lights lights = new Lights();
@@ -146,15 +146,24 @@ public class RobotContainer {
     // return autoCommand;
 
     return new InstantCommand()
-        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
+        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
+        // .andThen(new WaitCommand(0.4))
+        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
+        // .andThen(new WaitCommand(0.4))
+        // .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse))
+        // .andThen(new WaitCommand(0.4))
+        // .andThen(coralIntake.sysIdDynamicArm(Direction.kForward))
+        // .andThen(new WaitCommand(0.4))
+        // .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse));
+        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward))
+        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse))
+        .andThen(drivetrain.sysIdQuasistaticTurnMotors(Direction.kReverse))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdDynamicArm(Direction.kForward))
+        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kForward))
         .andThen(new WaitCommand(0.4))
-        .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse));
+        .andThen(drivetrain.sysIdDynamicTurnMotors(Direction.kReverse));
   }
 
   public void testPeriodic() {
@@ -167,7 +176,7 @@ public class RobotContainer {
     limelight.close();
     // elevator.close();
     // coralShooter.close();
-    coralIntake.close();
+    // coralIntake.close();
     // elevatorAlgae.close();
     // groundAlgae.close();
     pdp.close();
