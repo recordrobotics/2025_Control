@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
@@ -221,8 +220,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable {
   }
 
   public double updateTargetRotation(double target, double current) {
-    //return MathUtil.inputModulus(target, -1, 1) + current;
-    //return ((target + 0.5) % 1.0 + 1.0) % 1.0 - 0.5 + Math.floor(current + 0.5);
+    // return MathUtil.inputModulus(target, -1, 1) + current;
+    // return ((target + 0.5) % 1.0 + 1.0) % 1.0 - 0.5 + Math.floor(current + 0.5);
     return target - Math.round(target - current);
   }
 
