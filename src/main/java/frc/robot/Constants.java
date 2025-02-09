@@ -464,18 +464,13 @@ public final class Constants {
     public static final Current KRAKEN_DRIVE_STATOR_CURRENT_LIMIT = Amps.of(120);
     public static final Current KRAKEN_DRIVE_SUPPLY_CURRENT_LIMIT = Amps.of(32);
 
-    // PID Values
-    public static final double FALCON_DRIVE_KP = 0.59821;
-    public static final double FALCON_DRIVE_KI = 0;
-    public static final double FALCON_DRIVE_KD = 0;
-
-    public static final double FALCON_DRIVE_FEEDFORWARD_KS = 0.12373;
-    public static final double FALCON_DRIVE_FEEDFORWARD_KV = 2.5609;
-    public static final double FALCON_DRIVE_FEEDFORWARD_KA = 0.10075;
-
-    // public static final double FALCON_TURN_FEEDFORWARD_KS = 0.0322;
-    // public static final double FALCON_TURN_FEEDFORWARD_KV = 2.2119;
-    // public static final double FALCON_TURN_FEEDFORWARD_KA = 0.023189;
+    public static final double FALCON_DRIVE_KS = 0.12373;
+    public static final double FALCON_DRIVE_KV = 2.5609;
+    public static final double FALCON_DRIVE_KA = 0.10075;
+    public static final double FALCON_DRIVE_STD_STATE_VELOCITY = 3;
+    public static final double FALCON_DRIVE_STD_ENCODER_VELOCITY = 0.01;
+    public static final double FALCON_DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.6999;
+    public static final double FALCON_DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     public static final double FALCON_TURN_KV = 1.7518;
     public static final double FALCON_TURN_KA = 0.015791;
@@ -487,18 +482,6 @@ public final class Constants {
     public static final double FALCON_TURN_REGULATOR_POSITION_ERROR_TOLERANCE = 0.02;
     public static final double FALCON_TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.6999;
     public static final double FALCON_TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
-
-    // public static final double FALCON_TURN_KP = 1.0;
-    // public static final double FALCON_TURN_KI = 0;
-    // public static final double FALCON_TURN_KD = 0.049;
-
-    public static final double KRAKEN_DRIVE_KP = 0.2681;
-    public static final double KRAKEN_DRIVE_KI = 0;
-    public static final double KRAKEN_DRIVE_KD = 0;
-
-    public static final double KRAKEN_DRIVE_FEEDFORWARD_KS = 0.1586;
-    public static final double KRAKEN_DRIVE_FEEDFORWARD_KV = 2.4408;
-    public static final double KRAKEN_DRIVE_FEEDFORWARD_KA = 0.1;
 
     public static final double KRAKEN_TURN_KV = 1.7519;
     public static final double KRAKEN_TURN_KA = 0.017189;
@@ -514,6 +497,14 @@ public final class Constants {
     public static final double KRAKEN_TURN_KP = 2.3;
     public static final double KRAKEN_TURN_KI = 0;
     public static final double KRAKEN_TURN_KD = 0;
+
+    public static final double KRAKEN_DRIVE_KS = 0.12373;
+    public static final double KRAKEN_DRIVE_KV = 2.5609;
+    public static final double KRAKEN_DRIVE_KA = 0.10075;
+    public static final double KRAKEN_DRIVE_STD_STATE_VELOCITY = 3;
+    public static final double KRAKEN_DRIVE_STD_ENCODER_VELOCITY = 0.01;
+    public static final double KRAKEN_DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE = 1.6999;
+    public static final double KRAKEN_DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE = 7.0;
 
     // Wheel diameter
     public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);

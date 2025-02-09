@@ -162,11 +162,33 @@ public class ModuleConstants {
     switch (driveMotorType) {
       case Falcon:
         this.DRIVE_GEAR_RATIO = Constants.Swerve.FALCON_DRIVE_GEAR_RATIO;
+
+        this.DRIVE_KV = Constants.Swerve.FALCON_DRIVE_KV;
+        this.DRIVE_KA = Constants.Swerve.FALCON_DRIVE_KA;
+        this.DRIVE_KS = Constants.Swerve.FALCON_DRIVE_KS;
+        this.DRIVE_STD_STATE_VELOCITY = Constants.Swerve.FALCON_DRIVE_STD_STATE_VELOCITY;
+        this.DRIVE_STD_ENCODER_VELOCITY = Constants.Swerve.FALCON_DRIVE_STD_ENCODER_VELOCITY;
+        this.DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE =
+            Constants.Swerve.FALCON_DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE;
+        this.DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE =
+            Constants.Swerve.FALCON_DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE;
+
         this.driveMotorStatorCurrentLimit = Constants.Swerve.FALCON_DRIVE_STATOR_CURRENT_LIMIT;
         this.driveMotorSupplyCurrentLimit = Constants.Swerve.FALCON_DRIVE_SUPPLY_CURRENT_LIMIT;
         break;
       case Kraken:
         this.DRIVE_GEAR_RATIO = Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO;
+
+        this.DRIVE_KV = Constants.Swerve.KRAKEN_DRIVE_KV;
+        this.DRIVE_KA = Constants.Swerve.KRAKEN_DRIVE_KA;
+        this.DRIVE_KS = Constants.Swerve.KRAKEN_DRIVE_KS;
+        this.DRIVE_STD_STATE_VELOCITY = Constants.Swerve.KRAKEN_DRIVE_STD_STATE_VELOCITY;
+        this.DRIVE_STD_ENCODER_VELOCITY = Constants.Swerve.KRAKEN_DRIVE_STD_ENCODER_VELOCITY;
+        this.DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE =
+            Constants.Swerve.KRAKEN_DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE;
+        this.DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE =
+            Constants.Swerve.KRAKEN_DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE;
+
         this.driveMotorStatorCurrentLimit = Constants.Swerve.KRAKEN_DRIVE_STATOR_CURRENT_LIMIT;
         this.driveMotorSupplyCurrentLimit = Constants.Swerve.KRAKEN_DRIVE_SUPPLY_CURRENT_LIMIT;
         break;
