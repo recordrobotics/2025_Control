@@ -70,8 +70,7 @@ public class SwerveModuleSim implements SwerveModuleIO {
     // TODO: fix divide by 19.4 workaround (why does this fix the motor sim?)
     dcDriveMotorSim =
         new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                m.DRIVE_FEEDFORWARD_KV / 19.4, m.DRIVE_FEEDFORWARD_KA / 19.4),
+            LinearSystemId.createDCMotorSystem(m.DRIVE_KV / 19.4, m.DRIVE_KA / 19.4),
             dcDriveMotor.withReduction(DRIVE_GEAR_RATIO),
             0.001,
             0.001);

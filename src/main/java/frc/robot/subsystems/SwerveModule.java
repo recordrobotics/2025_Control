@@ -148,8 +148,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     Timer.delay(2.3);
 
     // Sets motor speeds to 0
-    m_driveMotor.set(0);
-    m_turningMotor.set(0);
+    io.setDriveMotorVoltage(0);
+    io.setTurnMotorVoltage(0);
 
     this.constraints =
         new TrapezoidProfile.Constraints(m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration);
@@ -194,17 +194,15 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     turn_kS = m.TURN_KS;
 
-    this.driveSystem = LinearSystemId.identifyPositionSystem(m.DRIVE_KV, m.DRIVE_KA);
+    this.driveSystem = LinearSystemId.identifyVelocitySystem(m.DRIVE_KV, m.DRIVE_KA);
     this.driveObserver =
         new KalmanFilter<>(
-            Nat.N2(),
-            Nat.N2(),
+            Nat.N1(),
+            Nat.N1(),
             driveSystem,
             VecBuilder.fill(
-                m.DRIVE_STD_STATE_POSITION,
-                m.DRIVE_STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
+                m.DRIVE_STD_STATE_VELOCITY), // Standard deviation of the state (velocity)
             VecBuilder.fill(
-                m.DRIVE_STD_ENCODER_POSITION,
                 m.DRIVE_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
             // (position, velocity)
             Constants.Swerve.kDt);
@@ -212,7 +210,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         new LinearQuadraticRegulator<>(
             driveSystem,
             VecBuilder.fill(
-                m.DRIVE_REGULATOR_POSITION_ERROR_TOLERANCE,
                 m.DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE), // qelms. Positon, Velocity error
             // tolerance, in meters and meters per second. Decrease this to more heavily penalize
             // state excursion, or make the controller behave more aggressively.
@@ -398,7 +395,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     Logger.recordOutput(
         "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
 
-    // Logger.recordOutput("TargetVel_" + driveMotorChannel, drivePIDController.getSetpoint()); TODO make state space
+    // Logger.recordOutput("TargetVel_" + driveMotorChannel, drivePIDController.getSetpoint()); TODO
+    // make state space
     Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
   }
 

@@ -38,17 +38,15 @@ public class ModuleConstants {
   public Current driveMotorSupplyCurrentLimit;
   public Current driveMotorStatorCurrentLimit;
 
-  public double DRIVE_KP;
-  public double DRIVE_KI;
-  public double DRIVE_KD;
+  public double DRIVE_KV;
+  public double DRIVE_KA;
+  public double DRIVE_KS;
 
-  // public double TURN_KP;
-  // public double TURN_KI;
-  // public double TURN_KD;
+  public double DRIVE_STD_STATE_VELOCITY;
+  public double DRIVE_STD_ENCODER_VELOCITY;
 
-  public double DRIVE_FEEDFORWARD_KS;
-  public double DRIVE_FEEDFORWARD_KV;
-  public double DRIVE_FEEDFORWARD_KA;
+  public double DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE;
+  public double DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE;
 
   public double TURN_KV;
   public double TURN_KA;
@@ -163,26 +161,12 @@ public class ModuleConstants {
     // Drive Motor Constants
     switch (driveMotorType) {
       case Falcon:
-        this.DRIVE_KP = Constants.Swerve.FALCON_DRIVE_KP;
-        this.DRIVE_KI = Constants.Swerve.FALCON_DRIVE_KI;
-        this.DRIVE_KD = Constants.Swerve.FALCON_DRIVE_KD;
-        this.DRIVE_FEEDFORWARD_KS = Constants.Swerve.FALCON_DRIVE_FEEDFORWARD_KS;
-        this.DRIVE_FEEDFORWARD_KV = Constants.Swerve.FALCON_DRIVE_FEEDFORWARD_KV;
-        this.DRIVE_FEEDFORWARD_KA = Constants.Swerve.FALCON_DRIVE_FEEDFORWARD_KA;
         this.DRIVE_GEAR_RATIO = Constants.Swerve.FALCON_DRIVE_GEAR_RATIO;
-
         this.driveMotorStatorCurrentLimit = Constants.Swerve.FALCON_DRIVE_STATOR_CURRENT_LIMIT;
         this.driveMotorSupplyCurrentLimit = Constants.Swerve.FALCON_DRIVE_SUPPLY_CURRENT_LIMIT;
         break;
       case Kraken:
-        this.DRIVE_KP = Constants.Swerve.KRAKEN_DRIVE_KP;
-        this.DRIVE_KI = Constants.Swerve.KRAKEN_DRIVE_KI;
-        this.DRIVE_KD = Constants.Swerve.KRAKEN_DRIVE_KD;
-        this.DRIVE_FEEDFORWARD_KS = Constants.Swerve.KRAKEN_DRIVE_FEEDFORWARD_KS;
-        this.DRIVE_FEEDFORWARD_KV = Constants.Swerve.KRAKEN_DRIVE_FEEDFORWARD_KV;
-        this.DRIVE_FEEDFORWARD_KA = Constants.Swerve.KRAKEN_DRIVE_FEEDFORWARD_KA;
         this.DRIVE_GEAR_RATIO = Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO;
-
         this.driveMotorStatorCurrentLimit = Constants.Swerve.KRAKEN_DRIVE_STATOR_CURRENT_LIMIT;
         this.driveMotorSupplyCurrentLimit = Constants.Swerve.KRAKEN_DRIVE_SUPPLY_CURRENT_LIMIT;
         break;
