@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.36331946779365,
-        "y": 5.1967507007680664
+        "x": 5.1799211616751135,
+        "y": 5.2907105560458065
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.241371167782044,
-        "y": 4.9785108965977924
+        "x": 5.0549211616751135,
+        "y": 5.074204205099697
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.310459883603065,
-        "y": 5.1174613244821785
+        "x": 5.153421161675113,
+        "y": 5.244811209645231
       },
       "prevControl": {
-        "x": 5.449305465939242,
-        "y": 5.355746766300345
+        "x": 5.278421161675113,
+        "y": 5.461317560591341
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -120
   },
   "reversed": false,
   "folder": "Coral Approaches",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -120
   },
   "useDefaultConstraints": true
 }
