@@ -8,8 +8,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.estimator.KalmanFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -41,13 +39,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   private final double turningEncoderOffset;
 
-  private final PIDController drivePIDController;
-  private final SimpleMotorFeedforward driveFeedForward;
-
-  // private final ProfiledPIDController turningPIDController;
-  // private final SimpleMotorFeedforward turnFeedForward;
-
-  // Maximum elevator velocity and acceleration constraints
+  // Maximum velocity and acceleration constraints
   private final TrapezoidProfile.Constraints constraints;
   private final TrapezoidProfile m_profile;
   private TrapezoidProfile.State m_goal = new TrapezoidProfile.State();
@@ -63,19 +55,43 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   // The Kv and Ka constants are found using the FRC Characterization toolsuite.
   private final LinearSystem<N2, N1, N2> turnSystem;
 
-  // // The observer fuses our encoder data and voltage inputs to reject noise.
+  // The observer fuses our encoder data and voltage inputs to reject noise.
   private final KalmanFilter<N2, N1, N2> turnObserver;
 
-  // // A LQR uses feedback to create voltage commands.
+  // A LQR uses feedback to create voltage commands.
   private final LinearQuadraticRegulator<N2, N1, N2>
-      turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be
-  // // lower if using notifiers.
+      turnController; // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using
+  // notifiers.
 
-  // // The state-space loop combines a controller, observer, feedforward and plant for easy
-  // control.
+  // The state-space loop combines a controller, observer, feedforward and plant for easy control.
   private final LinearSystemLoop<N2, N1, N2> turnLoop;
 
   private final double turn_kS;
+
+  // The plant holds a state-space model of our turn motor. This system has the following
+  // properties:
+  //
+  // States: [position, velocity], in, meters and meters per second.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [position], in meters.
+  //
+  // The Kv and Ka constants are found using the FRC Characterization toolsuite.
+  private final LinearSystem<N1, N1, N1> driveSystem;
+
+  // The observer fuses our encoder data and voltage inputs to reject noise.
+  private final KalmanFilter<N1, N1, N1> driveObserver;
+
+  // A LQR uses feedback to create voltage commands.
+  private final LinearQuadraticRegulator<N1, N1, N1>
+      driveController; // Nominal time between loops. 0.020 for TimedRobot, but can be lower if
+  // using notifiers.
+
+  // The state-space loop combines a controller, observer, feedforward and plant for easy control.
+  private final LinearSystemLoop<N1, N1, N1> driveLoop;
+
+  private final double drive_kS;
+
+  private double targetDriveVelocity;
 
   private final Notifier m_notifier;
 
@@ -132,15 +148,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     Timer.delay(2.3);
 
     // Sets motor speeds to 0
-    io.setDriveMotorPercent(0);
-    io.setTurnMotorPercent(0);
-
-    // Creates PID Controllers
-    this.drivePIDController = new PIDController(m.DRIVE_KP, m.DRIVE_KI, m.DRIVE_KD);
-
-    this.driveFeedForward =
-        new SimpleMotorFeedforward(
-            m.DRIVE_FEEDFORWARD_KS, m.DRIVE_FEEDFORWARD_KV, m.DRIVE_FEEDFORWARD_KA);
+    m_driveMotor.set(0);
+    m_turningMotor.set(0);
 
     this.constraints =
         new TrapezoidProfile.Constraints(m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration);
@@ -154,13 +163,11 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
             turnSystem,
             VecBuilder.fill(
                 m.TURN_STD_STATE_POSITION,
-                m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position,
-            // velocity)
+                m.TURN_STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
             VecBuilder.fill(
                 m.TURN_STD_ENCODER_POSITION,
                 m.TURN_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
-            // (position,
-            // velocity)
+            // (position, velocity)
             Constants.Swerve.kDt);
     this.turnController =
         new LinearQuadraticRegulator<>(
@@ -168,20 +175,16 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
             VecBuilder.fill(
                 m.TURN_REGULATOR_POSITION_ERROR_TOLERANCE,
                 m.TURN_REGULATOR_VELOCITY_ERROR_TOLERANCE), // qelms. Positon, Velocity error
-            // tolerance,
-            // in meters and meters per second.
-            // Decrease
-            // this to more heavily penalize state excursion, or make the controller behave more
-            // aggressively.
+            // tolerance, in meters and meters per second. Decrease this to more heavily
+            // penalize state excursion, or make the controller behave more aggressively.
             VecBuilder.fill(
                 m.TURN_REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
-            // tolerance. Decrease this to more
-            // heavily penalize control effort, or make the controller less aggressive. 12 is a
-            // good
-            // starting point because that is the (approximate) maximum voltage of a battery.
-            Constants.Swerve.kDt); // Nominal time between loops. 0.020 for TimedRobot, but can
-    // be
-    // lower if using notifiers.
+            // tolerance. Decrease this to more heavily penalize control effort, or
+            // make the controller less aggressive. 12 is a good starting point because
+            // that is the (approximate) maximum voltage of a battery.
+            Constants.Swerve
+                .kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if
+    // using notifiers.
 
     turnController.latencyCompensate(turnSystem, Constants.Swerve.kDt, 0.020015);
 
@@ -189,24 +192,46 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         new LinearSystemLoop<>(
             turnSystem, turnController, turnObserver, 12.0, Constants.Swerve.kDt);
 
-    // this.turningPIDController =
-    //     new ProfiledPIDController(
-    //         m.TURN_KP,
-    //         m.TURN_KI,
-    //         m.TURN_KD,
-    //         new TrapezoidProfile.Constraints(
-    //             m.TurnMaxAngularVelocity, m.TurnMaxAngularAcceleration),
-    //         Constants.Swerve.kDt);
-
-    // this.turnFeedForward =
-    //     new SimpleMotorFeedforward(
-    //         m.TURN_FEEDFORWARD_KS, m.TURN_FEEDFORWARD_KV, m.TURN_FEEDFORWARD_KA);
-
-    // Limit the PID Controller's input range between -0.5 and 0.5 and set the input to be
-    // continuous.
-    // turningPIDController.enableContinuousInput(-0.5, 0.5);
-
     turn_kS = m.TURN_KS;
+
+    this.driveSystem = LinearSystemId.identifyPositionSystem(m.DRIVE_KV, m.DRIVE_KA);
+    this.driveObserver =
+        new KalmanFilter<>(
+            Nat.N2(),
+            Nat.N2(),
+            driveSystem,
+            VecBuilder.fill(
+                m.DRIVE_STD_STATE_POSITION,
+                m.DRIVE_STD_STATE_VELOCITY), // Standard deviation of the state (position, velocity)
+            VecBuilder.fill(
+                m.DRIVE_STD_ENCODER_POSITION,
+                m.DRIVE_STD_ENCODER_VELOCITY), // Standard deviation of encoder measurements
+            // (position, velocity)
+            Constants.Swerve.kDt);
+    this.driveController =
+        new LinearQuadraticRegulator<>(
+            driveSystem,
+            VecBuilder.fill(
+                m.DRIVE_REGULATOR_POSITION_ERROR_TOLERANCE,
+                m.DRIVE_REGULATOR_VELOCITY_ERROR_TOLERANCE), // qelms. Positon, Velocity error
+            // tolerance, in meters and meters per second. Decrease this to more heavily penalize
+            // state excursion, or make the controller behave more aggressively.
+            VecBuilder.fill(
+                m.DRIVE_REGULATOR_CONTROL_EFFORT_TOLERANCE), // relms. Control effort (voltage)
+            // tolerance. Decrease this to more heavily penalize control effort, or
+            // make the controller less aggressive. 12 is a good starting point because
+            // that is the (approximate) maximum voltage of a battery.
+            Constants.Swerve
+                .kDt); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if
+    // using notifiers.
+
+    driveController.latencyCompensate(driveSystem, Constants.Swerve.kDt, 0.020015);
+
+    this.driveLoop =
+        new LinearSystemLoop<>(
+            driveSystem, driveController, driveObserver, 12.0, Constants.Swerve.kDt);
+
+    drive_kS = m.DRIVE_KS;
 
     // Corrects for offset in absolute motor position
     io.setTurnMotorPosition(getAbsWheelTurnOffset());
@@ -310,8 +335,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     return new SwerveModulePosition(getDriveWheelDistance(), getTurnWheelRotation2d());
   }
 
-  private double lastSpeedMetersPerSecond = 0;
-
   /**
    * Sets the desired state for the module.
    *
@@ -320,19 +343,14 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   public void setDesiredState(SwerveModuleState desiredState) {
     // Optimize the reference state to avoid spinning further than 90 degrees
     desiredState.optimize(getTurnWheelRotation2d());
-    drivePIDController.setSetpoint(desiredState.speedMetersPerSecond);
-    // turningPIDController.setGoal(desiredState.angle.getRotations());
-    // m_goal =
-    //     new TrapezoidProfile.State(
-    //         updateTargetRotation(
-    //             desiredState.angle.getRotations(), getTurnWheelRotation2d().getRotations()),
-    //         0);
 
     m_goal =
         new TrapezoidProfile.State(
             updateTargetRotation(
                 desiredState.angle.getRotations(), getTurnWheelRotation2d().getRotations()),
             0);
+
+    targetDriveVelocity = desiredState.speedMetersPerSecond;
 
     // ShuffleboardUI.Autonomous.putSwerveVelocityData(
     //   m_driveMotor.getDeviceID(), getDriveWheelVelocity(), drivePIDController.getSetpoint());
@@ -346,17 +364,17 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public void controllerPeriodic() {
-    // Calculate the drive output from the drive PID controller then set drive
-    // motor.
-    double drivePIDOutput = drivePIDController.calculate(getDriveWheelVelocity());
-    double driveFeedforwardOutput =
-        driveFeedForward.calculateWithVelocities(
-            lastSpeedMetersPerSecond, drivePIDController.getSetpoint());
-    io.setDriveMotorVoltage(
-        drivePIDOutput + driveFeedforwardOutput); // Feed forward runs on voltage control
+    // Set setpoint of the linear system (position m, velocity m/s).
+    driveLoop.setNextR(VecBuilder.fill(targetDriveVelocity));
 
-    // Calculate the turning motor output from the turning PID controller then set
-    // turn motor.
+    // Correct our Kalman filter's state vector estimate with encoder data.
+    driveLoop.correct(VecBuilder.fill(getDriveWheelVelocity()));
+
+    driveLoop.predict(Constants.Swerve.kDt);
+
+    double nextDriveVoltage = driveLoop.getU(0) + drive_kS * Math.signum(m_setpoint.velocity);
+
+    io.setDriveMotorVoltage(nextDriveVoltage);
 
     // Get next setpoint from profile.
     m_setpoint = m_profile.calculate(Constants.Swerve.kDt, m_setpoint, m_goal);
@@ -368,30 +386,11 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     turnLoop.correct(
         VecBuilder.fill(getTurnWheelRotation2d().getRotations(), getTurnWheelVelocity()));
 
-    // Update our LQR to generate new voltage commands and use the voltages to predict the next
-    // state with out Kalman filter.
-    // turnController.calculate(turnObserver.getXhat(), turnLoop.getNextR());
-    // var error = turnController.getR().minus(turnObserver.getXhat());
-    // error.set(0, 0, MathUtil.inputModulus(error.get(0, 0), -0.5, 0.5));
-    // var u =
-    //     turnController
-    //         .getK()
-    //         .times(error)
-    //         .plus(turnLoop.getFeedforward().calculate(turnLoop.getNextR()));
-    // turnObserver.predict(u, Constants.Swerve.kDt);
-
     turnLoop.predict(Constants.Swerve.kDt);
 
-    double nextVoltage = turnLoop.getU(0) + turn_kS * Math.signum(m_setpoint.velocity);
+    double nextturnVoltage = turnLoop.getU(0) + turn_kS * Math.signum(m_setpoint.velocity);
 
-    // double turnPid = turningPIDController.calculate(getTurnWheelRotation2d().getRotations());
-    // double turnFeedforwardOutput =
-    //     turnFeedForward.calculateWithVelocities(
-    //         lastTurnRotationsPerSecond, turningPIDController.getSetpoint().velocity);
-
-    // double nextVoltage = turnPid + turnFeedforwardOutput;
-
-    io.setTurnMotorVoltage(nextVoltage);
+    io.setTurnMotorVoltage(nextturnVoltage);
 
     Logger.recordOutput("TargetVel_" + turningMotorChannel, m_setpoint.velocity);
     Logger.recordOutput("TargetPos_" + turningMotorChannel, m_setpoint.position);
@@ -399,10 +398,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     Logger.recordOutput(
         "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
 
-    Logger.recordOutput("TargetVel_" + driveMotorChannel, drivePIDController.getSetpoint());
+    // Logger.recordOutput("TargetVel_" + driveMotorChannel, drivePIDController.getSetpoint()); TODO make state space
     Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
-
-    lastSpeedMetersPerSecond = drivePIDController.getSetpoint();
   }
 
   public void simulationPeriodic() {
@@ -410,8 +407,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public void stop() {
-    drivePIDController.setSetpoint(0);
-    io.setDriveMotorVoltage(0); // Feed forward runs on voltage control
+    targetDriveVelocity = 0;
+    io.setDriveMotorVoltage(0);
     io.setTurnMotorVoltage(0);
   }
 
