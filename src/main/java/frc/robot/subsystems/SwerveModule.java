@@ -395,8 +395,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     Logger.recordOutput(
         "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
 
-    // Logger.recordOutput("TargetVel_" + driveMotorChannel, drivePIDController.getSetpoint()); TODO
-    // make state space
+    Logger.recordOutput("TargetVel_" + driveMotorChannel, targetDriveVelocity);
     Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
   }
 
