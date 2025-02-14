@@ -16,6 +16,10 @@ import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
+import java.util.ArrayList;
+import java.util.List;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private int numTags = 0;
@@ -32,6 +36,16 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
   @Override
   public void periodic() {
+    Logger.recordOutput(
+        "limelightPose",
+        new Pose3d(
+            new Translation3d(RobotContainer.poseTracker.getEstimatedPosition().getTranslation())
+                .plus(Constants.Limelight.LIMELIGHT_OFFSET),
+            new Rotation3d(
+                Degrees.of(0),
+                Constants.Limelight.LIMELIGHT_ANGLE_UP,
+                RobotContainer.poseTracker.getEstimatedPosition().getRotation().getMeasure())));
+
     confidence = 0;
     LimelightHelpers.SetRobotOrientation(
         name,
@@ -76,12 +90,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     updateCrop();
   }
 
+  private List<Pose3d> visibleTags = new ArrayList<>();
+
   private void updateCrop() {
-    if (!hasVision) { // failsafe if cropping goes wrong this will be triggered and reset the crop
-      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
-      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
-      return;
-    }
+    // if (!hasVision) { // failsafe if cropping goes wrong this will be triggered and reset the
+    // crop
+    //   LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
+    //   LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+    //   return;
+    // }
 
     Pose2d robotPose = RobotContainer.poseTracker.getEstimatedPosition();
     Pose3d limelightPose3d =
@@ -99,14 +116,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     double x1 = 0;
     double y1 = 0;
 
+    visibleTags.clear();
+
     for (AprilTag tag : Constants.Limelight.FIELD_LAYOUT.getTags()) {
-      Pose3d tagPose = tag.pose;
+      Translation3d limelightToTagTranslation =
+          tag.pose.getTranslation().minus(limelightPose3d.getTranslation());
       Rotation3d limelightToTagRotation =
           limelightPose3d
               .getRotation()
-              .minus(
-                  SimpleMath.translationToRotation(
-                      tagPose.getTranslation().minus(limelightPose3d.getTranslation())));
+              .minus(SimpleMath.translationToRotation(limelightToTagTranslation));
 
       // using isNear feels cursed but if it works it works
       boolean withinRangeVertical =
@@ -117,8 +135,18 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
           limelightToTagRotation
               .getMeasureZ()
               .isNear(Degrees.of(0), Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER);
+      boolean isCloseEnough =
+          limelightToTagTranslation.getNorm() < Constants.Limelight.MAX_SIGHT_DISTANCE;
+      boolean isFacingTheRightWay =
+          SimpleMath.closeTo(
+              limelightToTagRotation.unaryMinus(),
+              tag.pose.getRotation(),
+              Constants.Limelight.MAX_TAG_READING_ANGLE);
 
-      if (withinRangeVertical && withinRangeHorizontal) {
+      if (isFacingTheRightWay) { // (withinRangeVertical && withinRangeHorizontal && isCloseEnough)
+        // {
+        visibleTags.add(tag.pose);
+
         foundOne = true;
 
         double tagCenterX =
@@ -147,6 +175,12 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       }
     }
 
+    // visibleTags.clear();
+
+    // for (AprilTag tag : Constants.Limelight.FIELD_LAYOUT.getTags()) {
+    //   visibleTags.add(tag.pose);
+    // }
+
     // Make sure x0, x1, y0, y1 are within the range of -1 to 1
     x0 = Math.max(-1, x0);
     x1 = Math.min(1, x1);
@@ -173,6 +207,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       DashboardUI.Autonomous.setVisionPose(new Pose2d());
       currentConfidence = 9999999;
     }
+  }
+
+  @AutoLogOutput
+  private Pose3d[] getVisibleTags() {
+    Pose3d[] poses = new Pose3d[visibleTags.size()];
+    for (int i = 0; i < visibleTags.size(); i++) {
+      poses[i] = visibleTags.get(i);
+    }
+    return poses;
   }
 
   public PoseEstimate getPoseEstimate() {
