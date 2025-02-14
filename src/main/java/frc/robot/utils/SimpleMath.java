@@ -1,10 +1,13 @@
 package frc.robot.utils;
 
+import static edu.wpi.first.units.Units.Radians;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants;
 
 public class SimpleMath {
@@ -97,5 +100,10 @@ public class SimpleMath {
 
     // Roll is set to 0 as it's not required
     return new Rotation3d(0.0, pitch, yaw);
+  }
+
+  public static boolean closeTo(Rotation3d a, Rotation3d b, Angle tolerance) {
+    return Math.acos(a.getAxis().dot(b.getAxis()) / (a.getAxis().norm() * b.getAxis().norm()))
+        < tolerance.in(Radians);
   }
 }

@@ -68,12 +68,12 @@ public final class Constants {
   }
 
   public final class Limelight {
-    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(23); // TODO make correct
+    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(22); // TODO make correct
     public static final Translation3d LIMELIGHT_OFFSET =
         new Translation3d(
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.4)); // TODO make correct
+            Meters.of(0.38), // TODO make correct
+            Meters.of(0.18), // TODO make correct
+            Meters.of(0.236)); // TODO make correct
 
     public static final String LIMELIGHT_NAME = "limelight";
     public static final AprilTagFieldLayout FIELD_LAYOUT =
@@ -83,6 +83,11 @@ public final class Constants {
     public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(40);
 
     public static final double CROPPING_MARGIN = 0.2; // units are in ... um ... uh ... Numbers!
+
+    public static final double MAX_SIGHT_DISTANCE = 7.0; // meters TODO make correct
+
+    public static final Angle MAX_TAG_READING_ANGLE = Degrees.of(80); // TODO make correct
+    // with a perfect camera this would be 79.9999 but our camea isn't perfect
   }
 
   public final class Climber {
