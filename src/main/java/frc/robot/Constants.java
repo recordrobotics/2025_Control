@@ -85,9 +85,6 @@ public final class Constants {
     public static final double CROPPING_MARGIN = 0.2; // units are in ... um ... uh ... Numbers!
 
     public static final double MAX_SIGHT_DISTANCE = 7.0; // meters TODO make correct
-
-    public static final Angle MAX_TAG_READING_ANGLE = Degrees.of(80); // TODO make correct
-    // with a perfect camera this would be 79.9999 but our camea isn't perfect
   }
 
   public final class Climber {
