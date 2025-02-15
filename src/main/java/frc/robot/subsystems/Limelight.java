@@ -11,6 +11,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.RobotState.Mode;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
@@ -93,28 +94,31 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private List<Pose3d> visibleTags = new ArrayList<>();
 
   private void updateCrop() {
-    // if (!hasVision) { // failsafe if cropping goes wrong this will be triggered and reset the
-    // crop
-    //   LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
-    //   LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
-    //   return;
-    // }
+    if (!hasVision && (Constants.RobotState.getMode() == Mode.REAL)) { // failsafe. if crop wrong this trigger; reset crop
+      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
+      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      return;
+    }
 
     Pose2d robotPose = RobotContainer.poseTracker.getEstimatedPosition();
     Pose3d limelightPose3d =
         new Pose3d(
             new Translation3d(robotPose.getTranslation())
-                .plus(Constants.Limelight.LIMELIGHT_OFFSET),
+                .plus(Constants.Limelight.LIMELIGHT_OFFSET)
+                .rotateAround(
+                    new Translation3d(robotPose.getTranslation()),
+                    new Rotation3d(0, 0, robotPose.getRotation().getRadians())),
             new Rotation3d(
                 Degrees.of(0),
-                Constants.Limelight.LIMELIGHT_ANGLE_UP,
+                Constants.Limelight.LIMELIGHT_ANGLE_UP.unaryMinus(),
                 robotPose.getRotation().getMeasure()));
 
     boolean foundOne = false;
-    double x0 = 0;
-    double y0 = 0;
-    double x1 = 0;
-    double y1 = 0;
+
+    double x0 = 1;
+    double y0 = -1;
+    double x1 = 1;
+    double y1 = -1;
 
     visibleTags.clear();
 
@@ -122,32 +126,24 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       Translation3d limelightToTagTranslation =
           tag.pose.getTranslation().minus(limelightPose3d.getTranslation());
       Rotation3d limelightToTagRotation =
-          limelightPose3d
-              .getRotation()
-              .minus(SimpleMath.translationToRotation(limelightToTagTranslation));
+          SimpleMath.translationToRotation(limelightToTagTranslation);
 
       // using isNear feels cursed but if it works it works
       boolean withinRangeVertical =
           limelightToTagRotation
               .getMeasureY()
-              .isNear(Degrees.of(0), Constants.Limelight.FOV_VERTICAL_FROM_CENTER);
+              .isNear(Constants.Limelight.LIMELIGHT_ANGLE_UP.unaryMinus(), Constants.Limelight.FOV_VERTICAL_FROM_CENTER);
       boolean withinRangeHorizontal =
           limelightToTagRotation
               .getMeasureZ()
-              .isNear(Degrees.of(0), Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER);
+              .isNear(limelightPose3d.getRotation().getMeasureZ(), Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER);
       boolean isCloseEnough =
           limelightToTagTranslation.getNorm() < Constants.Limelight.MAX_SIGHT_DISTANCE;
-      boolean isFacingTheRightWay =
-          SimpleMath.closeTo(
-              limelightToTagRotation.unaryMinus(),
-              tag.pose.getRotation(),
-              Constants.Limelight.MAX_TAG_READING_ANGLE);
 
-      if (isFacingTheRightWay) { // (withinRangeVertical && withinRangeHorizontal && isCloseEnough)
-        // {
-        visibleTags.add(tag.pose);
-
+      if (withinRangeVertical && withinRangeHorizontal && isCloseEnough) {
         foundOne = true;
+
+        visibleTags.add(new Pose3d(tag.pose.getTranslation(), limelightToTagRotation));
 
         double tagCenterX =
             limelightToTagRotation.getMeasureZ().in(Degrees)
@@ -175,12 +171,6 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       }
     }
 
-    // visibleTags.clear();
-
-    // for (AprilTag tag : Constants.Limelight.FIELD_LAYOUT.getTags()) {
-    //   visibleTags.add(tag.pose);
-    // }
-
     // Make sure x0, x1, y0, y1 are within the range of -1 to 1
     x0 = Math.max(-1, x0);
     x1 = Math.min(1, x1);
@@ -190,10 +180,20 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     if (!foundOne) {
       LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
       LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      Logger.recordOutput("x0", -1.0);
+      Logger.recordOutput("x1", 1.0);
+      Logger.recordOutput("y0", -1.0);
+      Logger.recordOutput("y1", 1.0);
+      Logger.recordOutput("downscale", 2.0);
       return;
     }
     LimelightHelpers.setCropWindow(name, x0, x1, y0, y1);
     LimelightHelpers.SetFiducialDownscalingOverride(name, 1);
+    Logger.recordOutput("x0", x0);
+    Logger.recordOutput("x1", x1);
+    Logger.recordOutput("y0", y0);
+    Logger.recordOutput("y1", y1);
+    Logger.recordOutput("downscale", 1);
   }
 
   private void handleMeasurement(PoseEstimate estimate, double confidence) {
