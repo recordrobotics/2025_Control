@@ -156,9 +156,9 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
         visibleTags.add(new Pose3d(tag.pose.getTranslation(), limelightToTagRotation));
 
         double tagCenterX =
-            (limelightToTagRotation.getMeasureZ().in(Degrees)
+            -((limelightToTagRotation.getMeasureZ().in(Degrees)
                     - limelightPose3d.getRotation().getMeasureZ().in(Degrees))
-                / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+                / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees));
         double tagCenterY =
             (limelightToTagRotation.getMeasureY().in(Degrees)
                     - limelightPose3d.getRotation().getMeasureY().in(Degrees))
