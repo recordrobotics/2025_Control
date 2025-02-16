@@ -125,10 +125,6 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     visibleTags.clear();
 
     for (AprilTag tag : Constants.Limelight.FIELD_LAYOUT.getTags()) {
-      if (tag.ID != 13) {
-        continue;
-      }
-
       Translation3d limelightToTagTranslation =
           tag.pose.getTranslation().minus(limelightPose3d.getTranslation());
       Rotation3d limelightToTagRotation =
