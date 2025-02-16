@@ -79,10 +79,10 @@ public final class Constants {
     public static final AprilTagFieldLayout FIELD_LAYOUT =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
-    public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(28);
-    public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(40);
+    public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(56.2 / 2.0 + 10);
+    public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(82.0 / 2.0 + 10);
 
-    public static final double CROPPING_MARGIN = 0.2; // units are in ... um ... uh ... Numbers!
+    public static final double CROPPING_MARGIN = 0.4; // units are in viewport range
 
     public static final double MAX_SIGHT_DISTANCE = 7.0; // meters TODO make correct
   }
