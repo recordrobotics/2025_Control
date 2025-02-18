@@ -71,21 +71,23 @@ public final class Constants {
   }
 
   public final class Limelight {
-    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(23); // TODO make correct
+    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(22); // TODO make correct
     public static final Translation3d LIMELIGHT_OFFSET =
         new Translation3d(
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.4)); // TODO make correct
+            Meters.of(0.38), // TODO make correct
+            Meters.of(0.18), // TODO make correct
+            Meters.of(0.236)); // TODO make correct
 
     public static final String LIMELIGHT_NAME = "limelight";
     public static final AprilTagFieldLayout FIELD_LAYOUT =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
-    public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(28);
-    public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(40);
+    public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(56.2 / 2.0 + 10);
+    public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(82.0 / 2.0 + 10);
 
-    public static final double CROPPING_MARGIN = 0.2; // units are in ... um ... uh ... Numbers!
+    public static final double CROPPING_MARGIN = 0.4; // units are in viewport range
+
+    public static final double MAX_SIGHT_DISTANCE = 7.0; // meters TODO make correct
   }
 
   public final class ElevatorArm {

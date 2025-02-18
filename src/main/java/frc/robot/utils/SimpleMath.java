@@ -86,7 +86,7 @@ public class SimpleMath {
   public static Rotation3d translationToRotation(Translation3d translation) {
     double x = translation.getX();
     double y = translation.getY();
-    double z = translation.getZ();
+    double z = -translation.getZ(); // TODO why does this only work if its negative?
 
     // Calculate yaw (rotation around Z axis)
     double yaw = Math.atan2(y, x);
