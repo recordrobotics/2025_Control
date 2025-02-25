@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
@@ -90,7 +91,8 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
   private void updateCrop(RawFiducial[] rawFiducials) {
     cyclesSinceLastZoomOut++;
-    if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT || rawFiducials.length == 0) {
+    if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT
+        || rawFiducials.length == 0) {
       LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
       LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
       cyclesSinceLastZoomOut = 0;
@@ -104,10 +106,29 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     double y1 = rawFiducials[0].tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
 
     for (RawFiducial f : rawFiducials) {
-      double tagX0 = (f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees)) - Constants.Limelight.CROPPING_MARGIN;
-      double tagX1 = (f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees)) + Constants.Limelight.CROPPING_MARGIN;
-      double tagY0 = (f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees)) - Constants.Limelight.CROPPING_MARGIN;
-      double tagY1 = (f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees)) + Constants.Limelight.CROPPING_MARGIN;
+      double tagX0 = f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+      double tagX1 = f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+      double tagY0 = f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+      double tagY1 = f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+
+      Double angleFromCenterToEdge =
+          Math.atan(
+              (Constants.Limelight.DISTANCE_FROM_TAG_CENTER_TO_EDGE
+                      + Constants.Limelight.DISTANCE_CROPPING_MARGIN)
+                  / f.distToCamera);
+
+      double verticalMargin =
+          Constants.Limelight.ANGLE_CROPPING_MARGIN
+              + (angleFromCenterToEdge / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Radians));
+      double horizontalMargin =
+          Constants.Limelight.ANGLE_CROPPING_MARGIN
+              + (angleFromCenterToEdge
+                  / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Radians));
+      
+      tagX0 -= horizontalMargin;
+      tagX1 += horizontalMargin;
+      tagY0 -= verticalMargin;
+      tagY1 += verticalMargin;
 
       if (tagX0 < x0) {
         x0 = tagX0;
