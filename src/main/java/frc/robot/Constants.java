@@ -82,6 +82,8 @@ public final class Constants {
     public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(28);
     public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(40);
 
+    public static final int MAX_CYCLES_UNTIL_ZOOM_OUT = 10; // TODO test if good
+
     public static final double CROPPING_MARGIN = 0.2; // units are in ... um ... uh ... Numbers!
   }
 
