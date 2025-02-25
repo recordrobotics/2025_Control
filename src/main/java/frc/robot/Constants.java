@@ -68,7 +68,22 @@ public final class Constants {
   }
 
   public final class Limelight {
-    public static final String LIMELIGHT_NAME = "limelight-3G-on-the-swerve-cover";
+    public static final String LIMELIGHT_NAME = "limelight";
+
+    public static final Angle FOV_VERTICAL_FROM_CENTER = Degrees.of(28);
+    public static final Angle FOV_HORIZONTAL_FROM_CENTER = Degrees.of(40);
+
+    public static final double DISTANCE_FROM_TAG_CENTER_TO_EDGE = Units.inchesToMeters(3.25);
+    public static final double DISTANCE_CROPPING_MARGIN = 0.2; // meters added to above
+    public static final double ANGLE_CROPPING_MARGIN =
+        0.1; // units are in ... um ... uh ... Numbers!
+    public static final int MAX_CYCLES_UNTIL_ZOOM_OUT = 10; // TODO test if good
+    public static final int SAVED_FRAMES = 3;
+
+    public static final LinearVelocity MAX_LINEAR_SPEED =
+        MetersPerSecond.of(2.5); // TODO make correct // above this speed, we can't read the tag
+    public static final AngularVelocity MAX_ANGULAR_SPEED =
+        RadiansPerSecond.of(1.5); // TODO make correct // above this speed, we can't read the tag
   }
 
   public final class Climber {

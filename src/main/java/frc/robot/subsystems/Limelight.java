@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -9,6 +12,7 @@ import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
+import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -24,6 +28,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
   private double currentConfidence = 9999999; // large number means less confident
   private PoseEstimate currentEstimate = new PoseEstimate();
+  private int cyclesSinceLastZoomOut = 0;
 
   private PoseEstimate unsafeEstimate = new PoseEstimate();
 
@@ -47,6 +52,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
     if (measurement == null || measurement_m2 == null) {
       limelightConnected = false;
+      updateCrop(new RawFiducial[0]); // no fiducials
       return;
     } else {
       limelightConnected = true;
@@ -79,6 +85,60 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
 
     handleMeasurement(measurement, confidence);
+    updateCrop(measurement.rawFiducials);
+  }
+
+  private void updateCrop(RawFiducial[] rawFiducials) {
+    cyclesSinceLastZoomOut++;
+    if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT || rawFiducials.length == 0) {
+      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
+      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      cyclesSinceLastZoomOut = 0;
+      return;
+    }
+
+    // values that will definatly be cropped in
+    double x0 = rawFiducials[0].txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+    double x1 = rawFiducials[0].txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+    double y0 = rawFiducials[0].tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+    double y1 = rawFiducials[0].tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+
+    for (RawFiducial f : rawFiducials) {
+      double tagX0 = (f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees)) - Constants.Limelight.CROPPING_MARGIN;
+      double tagX1 = (f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees)) + Constants.Limelight.CROPPING_MARGIN;
+      double tagY0 = (f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees)) - Constants.Limelight.CROPPING_MARGIN;
+      double tagY1 = (f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees)) + Constants.Limelight.CROPPING_MARGIN;
+
+      if (tagX0 < x0) {
+        x0 = tagX0;
+      }
+      if (tagX1 > x1) {
+        x1 = tagX1;
+      }
+      if (tagY0 < y0) {
+        y0 = tagY0;
+      }
+      if (tagY1 > y1) {
+        y1 = tagY1;
+      }
+    }
+
+    // ensure values are in [-1, 1]
+    if (x0 < -1) {
+      x0 = -1;
+    }
+    if (x1 > 1) {
+      x1 = 1;
+    }
+    if (y0 < -1) {
+      y0 = -1;
+    }
+    if (y1 > 1) {
+      y1 = 1;
+    }
+
+    LimelightHelpers.setCropWindow(name, x0, x1, y0, y1);
+    LimelightHelpers.SetFiducialDownscalingOverride(name, 1);
   }
 
   private void handleMeasurement(PoseEstimate estimate, double confidence) {
