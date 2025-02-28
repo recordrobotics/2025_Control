@@ -99,19 +99,8 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     updateCrop(measurement.rawFiducials);
   }
 
-  // input (old, new)
-  private void addMissingFiducials(RawFiducial[] rawFiducials1, RawFiducial[] rawFiducials2) {
-    for (int i = 0; i < rawFiducials2.length; i++) {
-      if (rawFiducials2[i] == null) {
-        rawFiducials2[i] = rawFiducials1[i];
-      }
-    }
-  }
-
   private void updateCrop(RawFiducial[] rawFiducials) {
     RawFiducial[] origRawFiducials = rawFiducials;
-
-    addMissingFiducials(lastRawFiducials, rawFiducials);
 
     // clear lastRawFiducials and lastTagVisible
     for (int i = 0; i < lastRawFiducials.length; i++) {
