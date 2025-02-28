@@ -1,10 +1,14 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
@@ -127,7 +131,8 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
 
     if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT
-        || rawFiducials.length == 0) {
+        || rawFiducials.length == 0
+        || isGoingTooFast()) {
       LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
       LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
       cyclesSinceLastZoomOut = 0;
@@ -228,6 +233,17 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
   }
 
+  private boolean isGoingTooFast() {
+    LinearVelocity translationSpeed =
+        RobotContainer.poseTracker.getEstimatedTranslationalVelocity();
+    AngularVelocity angularSpeed = RobotContainer.poseTracker.getEstimatedAngularVelocity();
+    return translationSpeed.abs(MetersPerSecond)
+            > Constants.Limelight.MAX_LINEAR_SPEED.abs(MetersPerSecond)
+        && angularSpeed.abs(RadiansPerSecond)
+            > Constants.Limelight.MAX_ANGULAR_SPEED.abs(RadiansPerSecond);
+  }
+
+  @AutoLogOutput
   public PoseEstimate getPoseEstimate() {
     return currentEstimate;
   }
