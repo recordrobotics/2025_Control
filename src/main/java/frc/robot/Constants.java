@@ -87,6 +87,7 @@ public final class Constants {
     public static final double ANGLE_CROPPING_MARGIN =
         0.1; // units are in ... um ... uh ... Numbers!
     public static final int MAX_CYCLES_UNTIL_ZOOM_OUT = 10; // TODO test if good
+    public static final int SAVED_FRAMES = 3;
 
     public static final LinearVelocity MAX_LINEAR_SPEED =
         MetersPerSecond.of(2.5); // TODO make correct // above this speed, we can't read the tag
