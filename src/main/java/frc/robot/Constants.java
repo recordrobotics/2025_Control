@@ -70,7 +70,6 @@ public final class Constants {
   }
 
   public final class Limelight {
-
     public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(23); // TODO make correct
     public static final Translation3d LIMELIGHT_OFFSET =
         new Translation3d(
@@ -90,6 +89,11 @@ public final class Constants {
     public static final double ANGLE_CROPPING_MARGIN =
         0.1; // units are in ... um ... uh ... Numbers!
     public static final int MAX_CYCLES_UNTIL_ZOOM_OUT = 10; // TODO test if good
+
+    public static final LinearVelocity MAX_LINEAR_SPEED =
+        MetersPerSecond.of(2.5); // TODO make correct // above this speed, we can't read the tag
+    public static final AngularVelocity MAX_ANGULAR_SPEED =
+        RadiansPerSecond.of(1.5); // TODO make correct // above this speed, we can't read the tag
   }
 
   public final class Climber {
