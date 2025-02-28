@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -18,7 +17,6 @@ import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
-import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -43,7 +41,6 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private double lastY1 = 1;
   private int[] lastTagVisible = new int[22];
   private RawFiducial[] lastRawFiducials = new RawFiducial[22];
-  private static final int savedFrames = 3;
 
   private PoseEstimate unsafeEstimate = new PoseEstimate();
 
@@ -115,7 +112,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     // update lastRawFiducials and lastTagVisible
     for (RawFiducial f : origRawFiducials) {
       lastRawFiducials[f.id - 1] = f;
-      lastTagVisible[f.id - 1] = savedFrames;
+      lastTagVisible[f.id - 1] = Constants.Limelight.SAVED_FRAMES;
     }
 
     cyclesSinceLastZoomOut++;
