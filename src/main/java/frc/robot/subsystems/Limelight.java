@@ -14,6 +14,7 @@ import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -30,6 +31,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private double currentConfidence = 9999999; // large number means less confident
   private PoseEstimate currentEstimate = new PoseEstimate();
   private int cyclesSinceLastZoomOut = 0;
+  private int cyclesDoneInZoomOut = 0;
+
+  private double lastX0 = -1;
+  private double lastX1 = 1;
+  private double lastY0 = -1;
+  private double lastY1 = 1;
+  private int[] lastTagVisible = new int[22];
+  private RawFiducial[] lastRawFiducials = new RawFiducial[22];
+  private static final int savedFrames = 3;
 
   private PoseEstimate unsafeEstimate = new PoseEstimate();
 
@@ -89,15 +99,56 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     updateCrop(measurement.rawFiducials);
   }
 
+  // input (old, new)
+  private void addMissingFiducials(RawFiducial[] rawFiducials1, RawFiducial[] rawFiducials2) {
+    for (int i = 0; i < rawFiducials2.length; i++) {
+      if (rawFiducials2[i] == null) {
+        rawFiducials2[i] = rawFiducials1[i];
+      }
+    }
+  }
+
   private void updateCrop(RawFiducial[] rawFiducials) {
+    RawFiducial[] origRawFiducials = rawFiducials;
+
+    addMissingFiducials(lastRawFiducials, rawFiducials);
+
+    // clear lastRawFiducials and lastTagVisible
+    for (int i = 0; i < lastRawFiducials.length; i++) {
+      if (lastTagVisible[i] > 0) lastRawFiducials[i] = null;
+      lastTagVisible[i]--;
+    }
+
+    // update lastRawFiducials and lastTagVisible
+    for (RawFiducial f : origRawFiducials) {
+      lastRawFiducials[f.id - 1] = f;
+      lastTagVisible[f.id - 1] = savedFrames;
+    }
+
     cyclesSinceLastZoomOut++;
+    cyclesDoneInZoomOut++;
+
+    if (cyclesDoneInZoomOut < 2) {
+      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
+      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      cyclesSinceLastZoomOut = 0;
+
+      Logger.recordOutput("IsZoomedOut", true);
+      return;
+    }
+
     if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT
         || rawFiducials.length == 0) {
       LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
       LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
       cyclesSinceLastZoomOut = 0;
+      cyclesDoneInZoomOut = 0;
+
+      Logger.recordOutput("IsZoomedOut", true);
       return;
     }
+
+    Logger.recordOutput("IsZoomedOut", false);
 
     // values that will definatly be cropped in
     double x0 = rawFiducials[0].txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
@@ -124,7 +175,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
           Constants.Limelight.ANGLE_CROPPING_MARGIN
               + (angleFromCenterToEdge
                   / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Radians));
-      
+
       tagX0 -= horizontalMargin;
       tagX1 += horizontalMargin;
       tagY0 -= verticalMargin;
@@ -157,6 +208,17 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     if (y1 > 1) {
       y1 = 1;
     }
+
+    lastX0 = x0;
+    lastY0 = y0;
+    lastX1 = x1;
+    lastY1 = y1;
+
+    // average of all x0, x1, y0, y1 values with their prevs
+    x0 = (x0 + lastX0) / 2;
+    x1 = (x1 + lastX1) / 2;
+    y0 = (y0 + lastY0) / 2;
+    y1 = (y1 + lastY1) / 2;
 
     LimelightHelpers.setCropWindow(name, x0, x1, y0, y1);
     LimelightHelpers.SetFiducialDownscalingOverride(name, 1);
