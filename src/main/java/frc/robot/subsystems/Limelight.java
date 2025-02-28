@@ -37,7 +37,6 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private double lastY1 = 1;
   private int[] lastTagVisible = new int[22];
   private RawFiducial[] lastRawFiducials = new RawFiducial[22];
-  private static final int savedFrames = 3;
 
   public Limelight() {
     LimelightHelpers.setPipelineIndex(name, 0);
@@ -101,7 +100,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     // update lastRawFiducials and lastTagVisible
     for (RawFiducial f : origRawFiducials) {
       lastRawFiducials[f.id - 1] = f;
-      lastTagVisible[f.id - 1] = savedFrames;
+      lastTagVisible[f.id - 1] = Constants.Limelight.SAVED_FRAMES;
     }
 
     cyclesSinceLastZoomOut++;
