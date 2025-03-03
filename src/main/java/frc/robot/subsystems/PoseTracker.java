@@ -1,9 +1,17 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -15,12 +23,12 @@ import frc.robot.subsystems.io.sim.NavSensorSim;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class PoseTracker extends SubsystemBase implements AutoCloseable {
-
   public final NavSensor nav =
       new NavSensor(
           Constants.RobotState.getMode() == Mode.REAL ? new NavSensorReal() : new NavSensorSim());
-
   private static SwerveDrivePoseEstimator poseFilter;
+  private Pose2d lastPose = new Pose2d();
+  private double lastPoseTimestamp = Timer.getTimestamp(); // seconds
 
   public PoseTracker() {
     nav.resetAngleAdjustment();
@@ -48,6 +56,8 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
     SmartDashboard.putNumber("pose", poseFilter.getEstimatedPosition().getRotation().getDegrees());
     DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
+
+    lastPose = poseFilter.getEstimatedPosition();
   }
 
   private SwerveModulePosition[] getModulePositions() {
@@ -57,6 +67,28 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getEstimatedPosition() {
     return poseFilter.getEstimatedPosition();
+  }
+
+  public LinearVelocity getEstimatedTranslationalVelocity() {
+    Distance vectorToLast =
+        Meters.of(
+            poseFilter
+                .getEstimatedPosition()
+                .getTranslation()
+                .getDistance(lastPose.getTranslation()));
+    Time timeToLast = Seconds.of(Timer.getTimestamp() - lastPoseTimestamp);
+    return vectorToLast.div(timeToLast);
+  }
+
+  public AngularVelocity getEstimatedAngularVelocity() {
+    Angle angleToLast =
+        poseFilter
+            .getEstimatedPosition()
+            .getRotation()
+            .getMeasure()
+            .minus(lastPose.getRotation().getMeasure());
+    Time timeToLast = Seconds.of(Timer.getTimestamp() - lastPoseTimestamp);
+    return angleToLast.div(timeToLast);
   }
 
   /** Similar to resetPose but adds an argument for the initial pose */
