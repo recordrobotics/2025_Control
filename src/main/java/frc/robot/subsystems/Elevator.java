@@ -184,8 +184,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     loop.setNextR(VecBuilder.fill(m_setpoint.position, m_setpoint.velocity));
 
     // Correct our Kalman filter's state vector estimate with encoder data.
-    loop.correct(VecBuilder.fill(getCurrentHeight(), getCurrentVelocity()));
-
+    loop.correct(VecBuilder.fill(getCurrentHeight(), getCurrentVelocity()))
     // Update our LQR to generate new voltage commands and use the voltages to predict the next
     // state with out Kalman filter.
     loop.predict(Constants.Elevator.kDt);
@@ -195,7 +194,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
             + Constants.Elevator.kG
             + Constants.Elevator.kS * Math.signum(m_setpoint.velocity);
 
-    if (Math.abs(getCurrentVelocity()) < 0.2
+    if (Math.abs(getCurrentVelocity()) < 0.26
         || ((!getTopEndStopPressed() || nextVoltage <= 0)
             && (!getBottomEndStopPressed() || nextVoltage >= 0))) {
       setBothMotors(nextVoltage);

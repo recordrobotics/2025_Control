@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.05,
-        "y": 3.9029999999999996
+        "x": 1.6423155737704918,
+        "y": 7.321618852459016
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.3,
-        "y": 3.9029999999999996
+        "x": 2.3975409836065573,
+        "y": 6.698258196721311
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Source1O"
     },
     {
       "anchor": {
-        "x": 3.1029999999999998,
-        "y": 3.9029999999999996
+        "x": 3.8600409836065577,
+        "y": 5.535450819672132
       },
       "prevControl": {
-        "x": 2.8529999999999998,
-        "y": 3.9029999999999996
+        "x": 3.080840163934426,
+        "y": 6.038934426229508
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "ReefK"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -60.92266850048335
   },
   "reversed": false,
-  "folder": "Algae Approaches",
+  "folder": "SourceToReef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 36.86989764584397
   },
   "useDefaultConstraints": true
 }

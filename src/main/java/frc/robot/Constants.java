@@ -787,7 +787,7 @@ public final class Constants {
     public static final Distance WHEEL_DIAMETER =
         DISTANCE_BETWEEN_AXLES.minus(CORAL_OUTER_DIAMETER);
 
-    public static final Distance CORAL_INTAKE_DISTANCE = Inches.of(-3);
+    public static final Distance CORAL_INTAKE_DISTANCE = Inches.of(-4);
 
     // m/s coral
     public static final double POSITION_MODE_MAX_VELOCITY = 1.4;
