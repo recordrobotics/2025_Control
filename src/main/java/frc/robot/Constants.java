@@ -239,49 +239,44 @@ public final class Constants {
 
   // TODO find values
   public enum RobotAlignPose {
-    BA(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BB(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BC(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BD(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BE(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BF(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BG(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BH(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BI(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BK(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BL(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RA(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RB(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RC(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RD(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RE(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RF(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RG(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RH(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RI(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RK(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RL(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RPR(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270))),
-    BPR(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90))),
+    BA(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BB(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BC(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BD(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BE(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BF(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BG(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BH(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BI(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BK(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    BL(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RA(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RB(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RC(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RD(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RE(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RF(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RG(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RH(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RI(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RK(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RL(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
+    RPR(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
+    BPR(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
     // 1 is left, 2 is right, both from driver view
-    RSO1(Rotation2d.fromDegrees(125)),
-    RSO2(Rotation2d.fromDegrees(-125)),
-    BSO1(Rotation2d.fromDegrees(-55)),
-    BSO2(Rotation2d.fromDegrees(55));
+    RSO1(new Pose2d(1.2, 7, Rotation2d.fromDegrees(125)), false),
+    RSO2(new Pose2d(1.2, 1, Rotation2d.fromDegrees(-125)), false),
+    BSO1(new Pose2d(16.2, 1, Rotation2d.fromDegrees(-55)), false),
+    BSO2(new Pose2d(16.2, 7, Rotation2d.fromDegrees(55)), false);
 
     private Pose2d pose;
     private boolean useTranslation;
 
-    private RobotAlignPose(Pose2d pose) {
+    private RobotAlignPose(Pose2d pose, boolean useTranslation) {
       this.pose = pose;
-      useTranslation = true;
-    }
-
-    private RobotAlignPose(Rotation2d rotation) {
-      useTranslation = false;
-      pose = new Pose2d(0, 0, rotation);
+      this.useTranslation = useTranslation;
     }
 
     public Pose2d getPose() {

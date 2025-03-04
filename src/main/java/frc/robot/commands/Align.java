@@ -7,7 +7,7 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.hybrid.AlignToPose;
 import java.util.HashSet;
 
-public class AlignToReef {
+public class Align {
   public static Command create(double tolerance, double rotTol) {
     return new DeferredCommand(
         () -> {
