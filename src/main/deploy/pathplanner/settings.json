@@ -3,10 +3,7 @@
   "robotLength": 0.94,
   "holonomicMode": true,
   "pathFolders": [
-    "Algae Approaches",
-    "Coral Approaches",
-    "Barge Approaches",
-    "Source Approaches"
+    "SourceToReef"
   ],
   "autoFolders": [],
   "defaultMaxVel": 3.0,
