@@ -155,6 +155,14 @@ public class Drivetrain extends KillableSubsystem
     Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
   }
 
+  public ChassisSpeeds getVelocity() { // in per seconds
+    return m_kinematics.toChassisSpeeds(
+        m_frontLeft.getModuleState(),
+        m_frontRight.getModuleState(),
+        m_backLeft.getModuleState(),
+        m_backRight.getModuleState());
+  }
+
   @Override
   public void simulationPeriodic() {
     m_frontLeft.simulationPeriodic();

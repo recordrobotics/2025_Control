@@ -768,6 +768,12 @@ public final class Constants {
     public static final double MAX_HEIGHT = 1.343;
 
     public static final Distance MANUAL_CONTROL_MARGIN = Meters.of(0.1);
+
+    // TODO should be moved to drivetrain constants
+    public static final Double DRIVETRAIN_ACCELERATION_PER_ELEVATOR_METER_FROM_TOP =
+        0.5; // TODO tune // meters per second per second per meter
+    public static final Double DRIVETRAIN_ACCELERATION_WHEN_AT_TOP =
+        0.5; // TODO tune // meters per second per second
   }
 
   public final class CoralShooter {
