@@ -237,6 +237,74 @@ public final class Constants {
     }
   }
 
+  // TODO find values
+  public enum RobotAlignPose {
+    BA(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BB(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BC(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BD(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BE(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BF(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BG(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BH(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BI(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BK(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BL(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RA(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RB(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RC(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RD(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RE(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RF(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RG(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RH(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RI(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RK(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RL(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RPR(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    BPR(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
+    RSO1(Rotation2d.fromDegrees(0)),
+    RSO2(Rotation2d.fromDegrees(0)),
+    BSO1(Rotation2d.fromDegrees(0)),
+    BSO2(Rotation2d.fromDegrees(0));
+
+    private Pose2d pose;
+    private boolean useTranslation;
+
+    private RobotAlignPose(Pose2d pose) {
+      this.pose = pose;
+      useTranslation = true;
+    }
+
+    private RobotAlignPose(Rotation2d rotation) {
+      useTranslation = false;
+      pose = new Pose2d(0, 0, rotation);
+    }
+
+    public Pose2d getPose() {
+      return pose;
+    }
+
+    public boolean useTranslation() {
+      return useTranslation;
+    }
+
+    public static RobotAlignPose closestTo(Pose2d pose, double maxDistance) {
+      RobotAlignPose closest = null;
+      double closestDistance = Double.MAX_VALUE;
+      for (RobotAlignPose align : RobotAlignPose.values()) {
+        double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
+        if (distance <= maxDistance && distance < closestDistance) {
+          closest = align;
+          closestDistance = distance;
+        }
+      }
+      return closest;
+    }
+  }
+
   public enum ProcessorPose {
     Blue(0),
     Red(1);
