@@ -263,12 +263,13 @@ public final class Constants {
     RJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
     RK(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
     RL(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RPR(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    BPR(new Pose2d(0, 0, Rotation2d.fromDegrees(0))),
-    RSO1(Rotation2d.fromDegrees(0)),
-    RSO2(Rotation2d.fromDegrees(0)),
-    BSO1(Rotation2d.fromDegrees(0)),
-    BSO2(Rotation2d.fromDegrees(0));
+    RPR(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270))),
+    BPR(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90))),
+    // 1 is left, 2 is right, both from driver view
+    RSO1(Rotation2d.fromDegrees(125)),
+    RSO2(Rotation2d.fromDegrees(-125)),
+    BSO1(Rotation2d.fromDegrees(-55)),
+    BSO2(Rotation2d.fromDegrees(55));
 
     private Pose2d pose;
     private boolean useTranslation;
