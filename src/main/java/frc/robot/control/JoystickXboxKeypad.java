@@ -38,6 +38,15 @@ public class JoystickXboxKeypad extends AbstractControl {
     return driveCommandData;
   }
 
+  public Boolean getAutoAlign() {
+    return joystick.getRawButton(7)
+        || joystick.getRawButton(8)
+        || joystick.getRawButton(9)
+        || joystick.getRawButton(10)
+        || joystick.getRawButton(11)
+        || joystick.getRawButton(12);
+  }
+
   public Pair<Double, Double> getXY() {
     double X =
         SimpleMath.ApplyThresholdAndSensitivity(
@@ -82,7 +91,10 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   @Override
   public Boolean getPoseReset() {
-    return joystick.getRawButtonPressed(2);
+    return joystick.getRawButtonPressed(3)
+        || joystick.getRawButtonPressed(4)
+        || joystick.getRawButtonPressed(5)
+        || joystick.getRawButtonPressed(6);
   }
 
   @Override

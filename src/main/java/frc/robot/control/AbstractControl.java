@@ -13,6 +13,8 @@ public abstract class AbstractControl {
   // Movement
   public abstract DriveCommandData getDriveCommandData();
 
+  public abstract Boolean getAutoAlign();
+
   // Misc
   public abstract Boolean getPoseReset();
 

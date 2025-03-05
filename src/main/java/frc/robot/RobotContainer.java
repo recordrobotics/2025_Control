@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.RobotState.Mode;
+import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUp;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -252,6 +253,9 @@ public class RobotContainer {
         .onTrue(new ProcessorScore());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getClimb());
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
+        .whileTrue(Align.create(0.1, 0.05)); // TODO: make correct and units
 
     // Simulation control commands
     if (Constants.RobotState.getMode() == Mode.SIM) {
