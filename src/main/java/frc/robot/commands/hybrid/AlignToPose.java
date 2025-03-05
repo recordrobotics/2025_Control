@@ -4,6 +4,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.control.AbstractControl;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
 
 public class AlignToPose extends Command {
@@ -22,6 +24,8 @@ public class AlignToPose extends Command {
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
     this.doTranslation = doTranslation;
+
+    addRequirements(RobotContainer.drivetrain);
   }
 
   @Override
@@ -41,8 +45,15 @@ public class AlignToPose extends Command {
               rotPID.calculate(pose.getRotation().getRadians()),
               true));
     } else {
+      AbstractControl controls = DashboardUI.Overview.getControl();
+      DriveCommandData driveCommandData = controls.getDriveCommandData();
+
       RobotContainer.drivetrain.drive(
-          new DriveCommandData(0, 0, rotPID.calculate(pose.getRotation().getRadians()), true));
+          new DriveCommandData(
+              driveCommandData.xSpeed,
+              driveCommandData.ySpeed,
+              rotPID.calculate(pose.getRotation().getRadians()),
+              driveCommandData.fieldRelative));
     }
   }
 
