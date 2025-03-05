@@ -163,16 +163,16 @@ public final class Constants {
   }
 
   public enum ElevatorHeight {
-    INTAKE(Constants.Elevator.STARTING_HEIGHT, Units.degreesToRadians(-100)),
+    INTAKE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-100)),
     L1(0.26, Units.degreesToRadians(-101.69)),
     L2(0.56, Units.degreesToRadians(-101.69)),
     LOW_REEF_ALGAE(0.4849, Units.degreesToRadians(-37.841)),
     L3(0.937, Units.degreesToRadians(-101.57)),
     HIGH_REEF_ALGAE(0.916, Units.degreesToRadians(-40.26)),
     L4(1.309, Units.degreesToRadians(64.99)),
-    BOTTOM(Constants.Elevator.STARTING_HEIGHT, Units.degreesToRadians(-90)),
-    GROUND_ALGAE(Constants.Elevator.STARTING_HEIGHT, Units.degreesToRadians(-28)),
-    GROUND_ALGAE_PROCESSOR(Constants.Elevator.STARTING_HEIGHT, Units.degreesToRadians(60.66)),
+    BOTTOM(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-90)),
+    GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-28)),
+    GROUND_ALGAE_PROCESSOR(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(60.66)),
     PROCESSOR_SCORE(0.04, Units.degreesToRadians(-60));
 
     private double height;
@@ -737,7 +737,8 @@ public final class Constants {
     public static final double kG = 0.28565;
     public static final double kS = 0.076647;
 
-    public static final double STARTING_HEIGHT = 0; // Units.inchesToMeters(1.25);
+    public static final double STARTING_HEIGHT = 0;
+    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);
