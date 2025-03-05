@@ -11,7 +11,7 @@ import frc.robot.utils.DriveCommandData;
 public class AlignToPose extends Command {
   PIDController xPID = new PIDController(1, 0, 0);
   PIDController yPID = new PIDController(1, 0, 0);
-  PIDController rotPID = new PIDController(1, 0, 0);
+  PIDController rotPID = new PIDController(0.1, 0, 0);
   boolean doTranslation;
 
   public AlignToPose(Pose2d pose, double tolerance, double rotTol, boolean doTranslation) {
@@ -23,6 +23,8 @@ public class AlignToPose extends Command {
     }
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
+    rotPID.enableContinuousInput(-Math.PI, Math.PI);
+
     this.doTranslation = doTranslation;
 
     addRequirements(RobotContainer.drivetrain);
