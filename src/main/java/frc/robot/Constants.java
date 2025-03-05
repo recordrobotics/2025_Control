@@ -738,6 +738,7 @@ public final class Constants {
     public static final double kS = 0.076647;
 
     public static final double STARTING_HEIGHT = Units.inchesToMeters(1.25);
+    public static final double MAX_HEIGHT = 1.343;
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -765,15 +766,8 @@ public final class Constants {
 
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0.15, 0, Rotation2d.fromDegrees(0));
     public static final double MIN_LENGTH = 0.65;
-    public static final double MAX_HEIGHT = 1.343;
 
     public static final Distance MANUAL_CONTROL_MARGIN = Meters.of(0.1);
-
-    // TODO should be moved to drivetrain constants
-    public static final Double DRIVETRAIN_ACCELERATION_PER_ELEVATOR_METER_FROM_TOP =
-        0.5; // TODO tune // meters per second per second per meter
-    public static final Double DRIVETRAIN_ACCELERATION_WHEN_AT_TOP =
-        0.5; // TODO tune // meters per second per second
   }
 
   public final class CoralShooter {
@@ -982,8 +976,10 @@ public final class Constants {
   }
 
   public final class Swerve {
+    public static final double MAX_ACCELERATION_AT_ELEVATOR_MINIMUM = 7.0; // m/s^2 TODO tune
+    public static final double MAX_ACCELERATION_AT_ELEVATOR_MAXIMUM = 3.0; // m/s^2 TODO tune
 
-    public static double kDt = 0.020; // 0.003;
+    public static final double kDt = 0.020;
 
     // Works out module locations
     private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
@@ -996,10 +992,9 @@ public final class Constants {
     private static final Translation2d backRightLocation = new Translation2d(-locX, -locY);
 
     // Gear ratios for falcon and kraken
-    public static final double FALCON_TURN_GEAR_RATIO =
-        15.43; // (https://web.archive.org/web/20230117081053/https://docs.wcproducts.com/wcp-swervex/general-info/ratio-options)
-    public static final double FALCON_DRIVE_GEAR_RATIO =
-        7.36; // (https://web.archive.org/web/20230117081053/https://docs.wcproducts.com/wcp-swervex/general-info/ratio-options)
+    // (https://web.archive.org/web/20230117081053/https://docs.wcproducts.com/wcp-swervex/general-info/ratio-options)
+    public static final double FALCON_TURN_GEAR_RATIO = 15.43;
+    public static final double FALCON_DRIVE_GEAR_RATIO = 7.36;
 
     public static final double KRAKEN_TURN_GEAR_RATIO = 13.3714;
     public static final double KRAKEN_DRIVE_GEAR_RATIO = 6.75; // X1 12 pinion
@@ -1062,7 +1057,7 @@ public final class Constants {
     public static final double TurnMaxAngularAcceleration = 5; // ROTATIONS / SECOND / SECOND
 
     /** The max speed the robot can travel safely */
-    public static final double robotMaxSpeed = 4.7;
+    public static final double robotMaxSpeed = 4.7; // TODO tune
 
     /** The max jerk of the robot below which the pose is certain (in G/s) */
     public static final double MaxPoseCertaintyJerk = 80;

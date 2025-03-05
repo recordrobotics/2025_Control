@@ -4,6 +4,7 @@
 
 package frc.robot.commands.manual;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -30,12 +31,14 @@ public class ManualSwerve extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double elevatorHeightFromTop =
-        Constants.Elevator.MAX_HEIGHT - RobotContainer.elevator.getCurrentHeight();
     double maxAcceleration =
-        Constants.Elevator.DRIVETRAIN_ACCELERATION_PER_ELEVATOR_METER_FROM_TOP
-                * elevatorHeightFromTop
-            + Constants.Elevator.DRIVETRAIN_ACCELERATION_WHEN_AT_TOP;
+        MathUtil.interpolate(
+            Constants.Swerve.MAX_ACCELERATION_AT_ELEVATOR_MINIMUM,
+            Constants.Swerve.MAX_ACCELERATION_AT_ELEVATOR_MAXIMUM,
+            MathUtil.inverseInterpolate(
+                Constants.Elevator.STARTING_HEIGHT,
+                Constants.Elevator.MAX_HEIGHT,
+                RobotContainer.elevator.getCurrentHeight()));
 
     AbstractControl controls = DashboardUI.Overview.getControl();
 
@@ -53,6 +56,9 @@ public class ManualSwerve extends Command {
         Math.sqrt(
             diffSpeeds.vxMetersPerSecond * diffSpeeds.vxMetersPerSecond
                 + diffSpeeds.vyMetersPerSecond * diffSpeeds.vyMetersPerSecond); // m/s^2
+
+    Logger.recordOutput("ManualSwerve/translationalAcceleration", translationalAcceleration);
+
     if (translationalAcceleration > maxAcceleration) {
       double percentOver = translationalAcceleration / maxAcceleration;
       driveCommandData.xSpeed -= currentSpeeds.vxMetersPerSecond;
