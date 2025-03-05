@@ -737,7 +737,7 @@ public final class Constants {
     public static final double kG = 0.28565;
     public static final double kS = 0.076647;
 
-    public static final double STARTING_HEIGHT = Units.inchesToMeters(1.25);
+    public static final double STARTING_HEIGHT = 0; // Units.inchesToMeters(1.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -765,7 +765,7 @@ public final class Constants {
 
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0.15, 0, Rotation2d.fromDegrees(0));
     public static final double MIN_LENGTH = 0.65;
-    public static final double MAX_HEIGHT = 1.343;
+    public static final double MAX_HEIGHT = 1.339;
 
     public static final Distance MANUAL_CONTROL_MARGIN = Meters.of(0.1);
   }
