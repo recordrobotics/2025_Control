@@ -7,12 +7,11 @@ import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
-import frc.robot.utils.SimpleMath;
 
 public class AlignToPose extends Command {
-  PIDController xPID = new PIDController(3, 0, 0.2);
-  PIDController yPID = new PIDController(3, 0, 0.2);
-  PIDController rotPID = new PIDController(8.8, 0, 0.2);
+  PIDController xPID = new PIDController(8, 0, 0.2);
+  PIDController yPID = new PIDController(8, 0, 0.2);
+  PIDController rotPID = new PIDController(5, 0, 0.2);
   boolean doTranslation;
 
   public AlignToPose(Pose2d pose, double tolerance, double rotTol, boolean doTranslation) {
@@ -24,7 +23,7 @@ public class AlignToPose extends Command {
     }
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
-    //rotPID.enableContinuousInput(-Math.PI, Math.PI);
+    rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     this.doTranslation = doTranslation;
 
@@ -33,7 +32,7 @@ public class AlignToPose extends Command {
 
   @Override
   public boolean isFinished() {
-    if (!doTranslation) return rotPID.atSetpoint();
+    if (!doTranslation) return false;
     return xPID.atSetpoint() && yPID.atSetpoint() && rotPID.atSetpoint();
   }
 
@@ -45,7 +44,7 @@ public class AlignToPose extends Command {
     double y = yPID.calculate(pose.getY());
     double rot = rotPID.calculate(pose.getRotation().getRadians());
 
-    rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
+    //rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
 
     if (doTranslation) {
       RobotContainer.drivetrain.drive(

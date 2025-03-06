@@ -53,7 +53,7 @@ public class NavSensorSim implements NavSensorIO {
   public void simulationPeriodic() {
     int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[2]");
     SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
-    angleRads -= RobotContainer.drivetrain.getChassisSpeeds().omegaRadiansPerSecond * 0.02;
+    angleRads += RobotContainer.drivetrain.getChassisSpeeds().omegaRadiansPerSecond * 0.02;
     angle.set(Units.radiansToDegrees(angleRads));
   }
 }

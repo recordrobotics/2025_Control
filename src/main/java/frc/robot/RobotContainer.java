@@ -255,7 +255,7 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getClimb());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(Align.create(0.1, 0.05)); // TODO: make correct and units
+        .whileTrue(Align.create(0.01, 0.05)); // TODO: make correct and units
 
     // Simulation control commands
     if (Constants.RobotState.getMode() == Mode.SIM) {

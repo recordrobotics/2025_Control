@@ -263,7 +263,7 @@ public final class Constants {
     RJ(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
     RK(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
     RL(new Pose2d(0, 0, Rotation2d.fromDegrees(0)), true),
-    RPR(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
+    RPR(new Pose2d(6, 0.6, Rotation2d.fromDegrees(-90)), true),
     BPR(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
     // 1 is left, 2 is right, both from driver view
     RSO1(new Pose2d(1.2, 7, Rotation2d.fromDegrees(125)), false),
