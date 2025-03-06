@@ -44,7 +44,7 @@ public class AlignToPose extends Command {
     double y = yPID.calculate(pose.getY());
     double rot = rotPID.calculate(pose.getRotation().getRadians());
 
-    //rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
+    // rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
 
     if (doTranslation) {
       RobotContainer.drivetrain.drive(new DriveCommandData(x, y, rot, true));

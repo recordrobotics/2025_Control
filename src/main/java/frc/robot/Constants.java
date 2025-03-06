@@ -11,6 +11,7 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -700,9 +701,15 @@ public final class Constants {
   }
 
   public enum FieldStartingLocation {
-    AutoStart(
-        new Pose2d(15.305, 4.001, new Rotation2d(Math.PI)),
-        new Pose2d(1.235, 4.001, new Rotation2d(0))); // TODO this is old!
+    BargeLeft(
+        new Pose2d(FlippingUtil.fieldSizeX - 7.145, 1.909, new Rotation2d(0)),
+        new Pose2d(7.145, 6.171, new Rotation2d(Math.PI))),
+    BargeCenter(
+        new Pose2d(FlippingUtil.fieldSizeX - 7.145, 4.026, new Rotation2d(0)),
+        new Pose2d(7.145, 4.026, new Rotation2d(Math.PI))),
+    BargeRight(
+        new Pose2d(FlippingUtil.fieldSizeX - 7.145, 6.171, new Rotation2d(0)),
+        new Pose2d(7.145, 1.909, new Rotation2d(Math.PI)));
 
     private final Pose2d m_transformRed;
     private final Pose2d m_transformBlue;
@@ -716,17 +723,6 @@ public final class Constants {
       return DriverStationUtils.getCurrentAlliance() == Alliance.Red
           ? m_transformRed
           : m_transformBlue;
-    }
-  }
-
-  // Auto routines
-  public enum AutoName {
-    None("");
-
-    public final String pathref;
-
-    AutoName(String pathplannerRef) {
-      pathref = pathplannerRef;
     }
   }
 

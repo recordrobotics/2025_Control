@@ -58,6 +58,8 @@ public class CoralIntake extends KillableSubsystem
       new SimpleMotorFeedforward(
           Constants.CoralIntake.kS, Constants.CoralIntake.kV, Constants.CoralIntake.kA);
 
+  private IntakeArmStates currentState = IntakeArmStates.UP;
+
   public CoralIntake(CoralIntakeIO io) {
     this.io = io;
 
@@ -158,6 +160,10 @@ public class CoralIntake extends KillableSubsystem
     return io.getArmVoltage();
   }
 
+  public IntakeArmStates getArmState() {
+    return currentState;
+  }
+
   /** Set the current shooter speed on both wheels to speed */
   public void toggle(double speed) {
     pid.setSetpoint(speed);
@@ -172,6 +178,7 @@ public class CoralIntake extends KillableSubsystem
   }
 
   public void toggleArm(IntakeArmStates state) {
+    currentState = state;
     switch (state) {
       case UP:
         toggleArm(Constants.CoralIntake.ARM_UP);

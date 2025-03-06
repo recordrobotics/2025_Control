@@ -28,7 +28,7 @@ public class AutonomousLayout extends AbstractLayout {
     EnumSet.allOf(FieldStartingLocation.class)
         .forEach(v -> fieldStartingLocationChooser.addOption(v.name(), v));
     fieldStartingLocationChooser.addDefaultOption(
-        FieldStartingLocation.AutoStart.name(), FieldStartingLocation.AutoStart);
+        FieldStartingLocation.BargeCenter.name(), FieldStartingLocation.BargeCenter);
 
     addValueSendable("Velocity", () -> TuningData.MapToArray(velocityGraphData), "double[]");
   }
@@ -65,7 +65,7 @@ public class AutonomousLayout extends AbstractLayout {
 
   public FieldStartingLocation getStartingLocation() {
     return fieldStartingLocationChooser.get() == null
-        ? FieldStartingLocation.AutoStart
+        ? FieldStartingLocation.BargeCenter
         : fieldStartingLocationChooser.get();
   }
 }

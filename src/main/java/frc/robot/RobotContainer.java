@@ -13,9 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.Align;
@@ -32,6 +30,7 @@ import frc.robot.commands.ElevatorReefToggled;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.auto.PlannedAuto;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
@@ -41,6 +40,7 @@ import frc.robot.control.*;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.AlgaeGrabber.AlgaeGrabberStates;
+import frc.robot.subsystems.CoralIntake.IntakeArmStates;
 import frc.robot.subsystems.io.real.AlgaeGrabberReal;
 import frc.robot.subsystems.io.real.CoralIntakeReal;
 import frc.robot.subsystems.io.real.CoralShooterReal;
@@ -224,7 +224,10 @@ public class RobotContainer {
 
     var coralScoreL1Cmd =
         Commands.either(
-            new CoralIntakeShootL1(),
+            Commands.either(
+                new CoralIntakeShootL1(),
+                Commands.none(),
+                () -> coralIntake.getArmState() == IntakeArmStates.SCORE_L1),
             new CoralIntakeFromGroundUp(false),
             () -> coralIntake.getArmAngle() >= Constants.CoralIntake.ARM_SCORE_L1 - 0.1);
     coralScoreL1Cmd.addRequirements(coralIntakeMoveToggleRequirement);
@@ -270,28 +273,29 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // if (autoCommand == null) {
-    //   autoCommand = new PlannedAuto();
-    // }
-    // return autoCommand;
+    if (autoCommand == null) {
+      autoCommand = new PlannedAuto();
+    }
+    return autoCommand;
 
-    return new InstantCommand()
-        .andThen(
-            drivetrain
-                .sysIdQuasistaticDriveMotors(Direction.kForward)
-                .andThen(new WaitCommand(0.4)))
-        .andThen(
-            drivetrain
-                .sysIdQuasistaticDriveMotors(Direction.kForward)
-                .andThen(new WaitCommand(0.4)))
-        .andThen(
-            drivetrain
-                .sysIdQuasistaticDriveMotors(Direction.kReverse)
-                .andThen(new WaitCommand(0.4)))
-        .andThen(
-            drivetrain.sysIdDynamicDriveMotors(Direction.kForward).andThen(new WaitCommand(0.4)))
-        .andThen(
-            drivetrain.sysIdDynamicDriveMotors(Direction.kReverse).andThen(new WaitCommand(0.4)));
+    // return new InstantCommand()
+    //     .andThen(
+    //         drivetrain
+    //             .sysIdQuasistaticDriveMotors(Direction.kForward)
+    //             .andThen(new WaitCommand(0.4)))
+    //     .andThen(
+    //         drivetrain
+    //             .sysIdQuasistaticDriveMotors(Direction.kForward)
+    //             .andThen(new WaitCommand(0.4)))
+    //     .andThen(
+    //         drivetrain
+    //             .sysIdQuasistaticDriveMotors(Direction.kReverse)
+    //             .andThen(new WaitCommand(0.4)))
+    //     .andThen(
+    //         drivetrain.sysIdDynamicDriveMotors(Direction.kForward).andThen(new WaitCommand(0.4)))
+    //     .andThen(
+    //         drivetrain.sysIdDynamicDriveMotors(Direction.kReverse).andThen(new
+    // WaitCommand(0.4)));
   }
 
   public void testPeriodic() {

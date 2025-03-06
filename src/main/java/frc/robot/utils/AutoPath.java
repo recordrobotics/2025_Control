@@ -9,7 +9,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants;
+import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
+import frc.robot.commands.Align;
+import frc.robot.commands.CoralIntakeFromSource;
+import frc.robot.commands.CoralShoot;
+import frc.robot.commands.ElevatorMove;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import org.littletonrobotics.junction.Logger;
 
@@ -30,6 +35,14 @@ public class AutoPath {
     // Stop the robot's movement
     NamedCommands.registerCommand(
         "Stop", new InstantCommand(() -> RobotContainer.drivetrain.kill()));
+
+    NamedCommands.registerCommand("AutoAlign", Align.create(0.01, 0.05).withTimeout(1.5));
+    NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
+    NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));
+    NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));
+    NamedCommands.registerCommand("ElevatorDown", new ElevatorMove(ElevatorHeight.BOTTOM));
+    NamedCommands.registerCommand("SourceIntake", new CoralIntakeFromSource().withTimeout(4));
+    NamedCommands.registerCommand("CoralShoot", new CoralShoot().withTimeout(3));
 
     // Configures auto builder
     AutoBuilder.configure(

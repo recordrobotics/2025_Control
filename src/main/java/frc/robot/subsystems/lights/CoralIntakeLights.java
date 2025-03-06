@@ -1,6 +1,5 @@
 package frc.robot.subsystems.lights;
 
-import edu.wpi.first.wpilibj.LEDPattern;
 import frc.robot.Constants;
 import frc.robot.subsystems.Lights;
 

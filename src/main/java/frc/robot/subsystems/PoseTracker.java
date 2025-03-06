@@ -3,7 +3,9 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -12,6 +14,7 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
+import frc.robot.utils.DriverStationUtils;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class PoseTracker extends SubsystemBase implements AutoCloseable {
@@ -69,9 +72,17 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
     setToPose(DashboardUI.Autonomous.getStartingLocation().getPose());
   }
 
-  /** Resets the pose to FrontSpeakerClose (shooter facing towards speaker) */
+  /**
+   * Resets the pose to face elevator away from driverstation, while keeping translation the same
+   */
   public void resetDriverPose() {
-    setToPose(Constants.FieldStartingLocation.AutoStart.getPose());
+    Pose2d current = getEstimatedPosition();
+    setToPose(
+        new Pose2d(
+            current.getTranslation(),
+            DriverStationUtils.getCurrentAlliance() == Alliance.Red
+                ? new Rotation2d(Math.PI)
+                : new Rotation2d(0)));
   }
 
   public void close() throws Exception {
