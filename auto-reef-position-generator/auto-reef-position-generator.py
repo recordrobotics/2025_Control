@@ -9,8 +9,7 @@ HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = 0.125  # TODO put real number (CAD
 
 # field things
 FIELD_CENTER = (8.7741252, 4.0259508)
-BLUE_REEF_CENTER = (4.489, 4.0259508)
-
+BLUE_REEF_CENTER = (4.4893371, 4.0259508)
 
 import math
 import json
