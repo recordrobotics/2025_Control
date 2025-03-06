@@ -3,10 +3,6 @@ DISTANCE_FROM_REEF_CENTER_CORAL = 1.386  # TODO tune
 DISTANCE_FROM_REEF_CENTER_ALGAE = 1.386  # TODO tune
 DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
 
-# path things
-PATH_LENGTH = 0.053
-CONTROL_LENGTH = 0.250
-
 # robot things
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = 0.125  # TODO put real number (CAD?)
@@ -145,25 +141,6 @@ def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
     return pos, heading
 
 
-def get_all_correct_positions(letter: str, blue_side: bool) -> tuple[list[POS], float]:
-    """
-    returns this list of (position, heading):
-     - start pos (POS, float)
-     - start next control (POS)
-     - end pos (POS)
-     - end previous control (POS)
-    """
-    end_pos, heading = get_correct_end_position(letter, blue_side)
-    end_control = apply_translation_robot_relative(
-        end_pos, heading, (-CONTROL_LENGTH, 0)
-    )
-    start_pos = apply_translation_robot_relative(end_pos, heading, (-PATH_LENGTH, 0))
-    start_control = apply_translation_robot_relative(
-        start_pos, heading, (CONTROL_LENGTH, 0)
-    )
-    return [start_pos, start_control, end_pos, end_control], heading
-
-
 def read_path_from_letter(letter: str):
     type_of_thing = "Coral" if letter in CORAL_LETTERS else "Algae"
     with open(
@@ -182,7 +159,7 @@ def write_path_to_letter(letter: str, path):
         json.dump(path, f, indent=2)
 
 
-def edit_linked_waypoint(name: str, pos: POS):
+def edit_linked_waypoint(name: str, pos: POS, heading: float): # TODO test heading
     # loop through all paths in ../src/main/deploy/pathplanner/paths
     # and look for waypoints with "linkedName": name
     # and change their position to pos
@@ -196,6 +173,9 @@ def edit_linked_waypoint(name: str, pos: POS):
         for waypoint in data["waypoints"]:
             if waypoint["linkedName"] == name:
                 if waypoint["nextControl"]:
+                    if not waypoint["prevControl"]: # first waypoint
+                        data["idealStartingState"]["rotation"] = heading
+
                     control_handle_offset = (
                         waypoint["nextControl"]["x"] - waypoint["anchor"]["x"],
                         waypoint["nextControl"]["y"] - waypoint["anchor"]["y"],
@@ -204,6 +184,9 @@ def edit_linked_waypoint(name: str, pos: POS):
                     waypoint["nextControl"]["y"] = pos[1] + control_handle_offset[1]
 
                 if waypoint["prevControl"]:
+                    if not waypoint["nextControl"]: # last waypoint
+                        data["goalEndState"]["rotation"] = heading
+
                     control_handle_offset = (
                         waypoint["prevControl"]["x"] - waypoint["anchor"]["x"],
                         waypoint["prevControl"]["y"] - waypoint["anchor"]["y"],
@@ -217,33 +200,11 @@ def edit_linked_waypoint(name: str, pos: POS):
             json.dump(data, f, indent=2)
 
 
-def change_path(letter: str, blue_side: bool):
-    path = read_path_from_letter(letter)
-    (start_pos, start_control, end_pos, end_control), heading = (
-        get_all_correct_positions(letter, blue_side)
-    )
-
-    path["waypoints"][0]["anchor"]["x"] = start_pos[0]
-    path["waypoints"][0]["anchor"]["y"] = start_pos[1]
-    path["waypoints"][0]["nextControl"]["x"] = start_control[0]
-    path["waypoints"][0]["nextControl"]["y"] = start_control[1]
-
-    path["waypoints"][1]["anchor"]["x"] = end_pos[0]
-    path["waypoints"][1]["anchor"]["y"] = end_pos[1]
-    path["waypoints"][1]["prevControl"]["x"] = end_control[0]
-    path["waypoints"][1]["prevControl"]["y"] = end_control[1]
-
-    path["goalEndState"]["rotation"] = heading
-    path["idealStartingState"]["rotation"] = heading
-
-    write_path_to_letter(letter, path)
-    edit_linked_waypoint(path["waypoints"][0]["linkedName"], start_pos)
-    edit_linked_waypoint(path["waypoints"][1]["linkedName"], end_pos)
-
-
 def main():
-    for letter in ALL_LETTERS:
-        change_path(letter, True)
+    for letter in CORAL_LETTERS:
+        # just change the linked ones
+        pos, heading = get_correct_end_position(letter, True)
+        edit_linked_waypoint(f"Reef{letter}", pos, heading)
 
 
 if __name__ == "__main__":
