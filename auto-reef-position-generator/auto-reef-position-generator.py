@@ -1,7 +1,7 @@
 # tuning things
 DISTANCE_FROM_REEF_CENTER_CORAL = 1.386  # TODO tune
 DISTANCE_FROM_REEF_CENTER_ALGAE = 1.386  # TODO tune
-DISTANCE_FROM_CENTER_OF_REEF_SEGMENT = 0.17  # TODO tune
+DISTANCE_FROM_CENTER_OF_REEF_SEGMENT_TO_POLE = 0.1643095012
 
 # robot things
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
@@ -130,7 +130,7 @@ def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
         heading,
         (
             -distance_from_reef_center,
-            (DISTANCE_FROM_CENTER_OF_REEF_SEGMENT * PLACE_MORE_LEFT[letter]),
+            (DISTANCE_FROM_CENTER_OF_REEF_SEGMENT_TO_POLE * PLACE_MORE_LEFT[letter]),
         ),
     )
     pos = apply_translation_robot_relative(pos, heading, (0, -left_offset))
