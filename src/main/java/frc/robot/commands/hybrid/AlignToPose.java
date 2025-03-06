@@ -7,11 +7,12 @@ import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
+import frc.robot.utils.SimpleMath;
 
 public class AlignToPose extends Command {
-  PIDController xPID = new PIDController(1, 0, 0);
-  PIDController yPID = new PIDController(1, 0, 0);
-  PIDController rotPID = new PIDController(0.1, 0, 0);
+  PIDController xPID = new PIDController(3, 0, 0.2);
+  PIDController yPID = new PIDController(3, 0, 0.2);
+  PIDController rotPID = new PIDController(8.8, 0, 0.2);
   boolean doTranslation;
 
   public AlignToPose(Pose2d pose, double tolerance, double rotTol, boolean doTranslation) {
@@ -23,7 +24,7 @@ public class AlignToPose extends Command {
     }
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
-    rotPID.enableContinuousInput(-Math.PI, Math.PI);
+    //rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     this.doTranslation = doTranslation;
 
@@ -39,12 +40,19 @@ public class AlignToPose extends Command {
   @Override
   public void execute() {
     Pose2d pose = RobotContainer.poseTracker.getEstimatedPosition();
+
+    double x = xPID.calculate(pose.getX());
+    double y = yPID.calculate(pose.getY());
+    double rot = rotPID.calculate(pose.getRotation().getRadians());
+
+    rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
+
     if (doTranslation) {
       RobotContainer.drivetrain.drive(
           new DriveCommandData(
-              xPID.calculate(pose.getX()),
-              yPID.calculate(pose.getY()),
-              rotPID.calculate(pose.getRotation().getRadians()),
+              x,
+              y,
+              rot,
               true));
     } else {
       AbstractControl controls = DashboardUI.Overview.getControl();
@@ -54,7 +62,7 @@ public class AlignToPose extends Command {
           new DriveCommandData(
               driveCommandData.xSpeed,
               driveCommandData.ySpeed,
-              rotPID.calculate(pose.getRotation().getRadians()),
+              rot,
               driveCommandData.fieldRelative));
     }
   }

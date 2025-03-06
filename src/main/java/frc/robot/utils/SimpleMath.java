@@ -1,5 +1,6 @@
 package frc.robot.utils;
 
+import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -97,5 +98,25 @@ public class SimpleMath {
 
     // Roll is set to 0 as it's not required
     return new Rotation3d(0.0, pitch, yaw);
+  }
+
+  public static double slewRateLimitLinear(double current, double next, double dt, double maxVelocity) {
+    if (maxVelocity < 0) {
+      Exception e = new IllegalArgumentException();
+      MathSharedStore.reportError(
+          "maxVelocity must be a non-negative number, got " + maxVelocity, e.getStackTrace());
+      return next;
+    }
+    double diff = next - current;
+    double dist = Math.abs(diff);
+
+    if (dist < 1e-9) {
+      return next;
+    }
+    if (dist > maxVelocity * dt) {
+      // Move maximum allowed amount in direction of the difference
+      return current + (diff * (maxVelocity * dt / dist));
+    }
+    return next;
   }
 }
