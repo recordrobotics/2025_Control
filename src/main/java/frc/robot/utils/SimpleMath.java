@@ -100,7 +100,8 @@ public class SimpleMath {
     return new Rotation3d(0.0, pitch, yaw);
   }
 
-  public static double slewRateLimitLinear(double current, double next, double dt, double maxVelocity) {
+  public static double slewRateLimitLinear(
+      double current, double next, double dt, double maxVelocity) {
     if (maxVelocity < 0) {
       Exception e = new IllegalArgumentException();
       MathSharedStore.reportError(

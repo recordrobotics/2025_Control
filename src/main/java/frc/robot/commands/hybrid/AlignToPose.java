@@ -47,12 +47,7 @@ public class AlignToPose extends Command {
     //rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
 
     if (doTranslation) {
-      RobotContainer.drivetrain.drive(
-          new DriveCommandData(
-              x,
-              y,
-              rot,
-              true));
+      RobotContainer.drivetrain.drive(new DriveCommandData(x, y, rot, true));
     } else {
       AbstractControl controls = DashboardUI.Overview.getControl();
       DriveCommandData driveCommandData = controls.getDriveCommandData();

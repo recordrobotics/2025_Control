@@ -85,7 +85,7 @@ def normalize_angle(angle: float) -> float:
     """make an angle (-180, 180]"""
     result = (angle + 180) % 360 - 180
     if result == -180:
-        result = 180.0
+        result = 180
     return result
 
 
@@ -159,7 +159,7 @@ def write_path_to_letter(letter: str, path):
         json.dump(path, f, indent=2)
 
 
-def edit_linked_waypoint(name: str, pos: POS, heading: float): # TODO test heading
+def edit_linked_waypoint(name: str, pos: POS, heading: float):  # TODO test heading
     # loop through all paths in ../src/main/deploy/pathplanner/paths
     # and look for waypoints with "linkedName": name
     # and change their position to pos
@@ -173,7 +173,7 @@ def edit_linked_waypoint(name: str, pos: POS, heading: float): # TODO test headi
         for waypoint in data["waypoints"]:
             if waypoint["linkedName"] == name:
                 if waypoint["nextControl"]:
-                    if not waypoint["prevControl"]: # first waypoint
+                    if not waypoint["prevControl"]:  # first waypoint
                         data["idealStartingState"]["rotation"] = heading
 
                     control_handle_offset = (
@@ -184,7 +184,7 @@ def edit_linked_waypoint(name: str, pos: POS, heading: float): # TODO test headi
                     waypoint["nextControl"]["y"] = pos[1] + control_handle_offset[1]
 
                 if waypoint["prevControl"]:
-                    if not waypoint["nextControl"]: # last waypoint
+                    if not waypoint["nextControl"]:  # last waypoint
                         data["goalEndState"]["rotation"] = heading
 
                     control_handle_offset = (
@@ -202,9 +202,15 @@ def edit_linked_waypoint(name: str, pos: POS, heading: float): # TODO test headi
 
 def main():
     for letter in CORAL_LETTERS:
-        # just change the linked ones
-        pos, heading = get_correct_end_position(letter, True)
-        edit_linked_waypoint(f"Reef{letter}", pos, heading)
+        bPos, bHeading = get_correct_end_position(letter, True)
+        rPos, rHeading = get_correct_end_position(letter, False)
+        edit_linked_waypoint(f"Reef{letter}", bPos, bHeading)
+        print(
+            f"B{letter}(new Pose2d({bPos[0]}, {bPos[1]}, Rotation2d.fromDegrees({bHeading})), true),"
+        )
+        print(
+            f"R{letter}(new Pose2d({rPos[0]}, {rPos[1]}, Rotation2d.fromDegrees({rHeading})), true),"
+        )
 
 
 if __name__ == "__main__":
