@@ -4,8 +4,8 @@ DISTANCE_FROM_REEF_CENTER_ALGAE = 1.386  # TODO tune
 DISTANCE_FROM_CENTER_OF_REEF_SEGMENT_TO_POLE = 0.1643095012
 
 # robot things
-HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (CAD?)
-HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = 0.125  # TODO put real number (CAD?)
+HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.2003806
+HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = -0.1055532306
 
 # field things
 FIELD_CENTER = (8.7741252, 4.0259508)
@@ -14,7 +14,6 @@ BLUE_REEF_CENTER = (4.4893371, 4.0259508)
 import math
 import json
 from os import listdir
-from os.path import abspath
 
 POS = tuple[float, float]  # position
 VEC = tuple[float, float]  # vector
