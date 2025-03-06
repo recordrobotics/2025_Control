@@ -8,8 +8,8 @@ HOW_FAR_LEFT_FROM_CENTER_IS_THE_CORAL_SHOOTER = 0.203  # TODO put real number (C
 HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = 0.125  # TODO put real number (CAD?)
 
 # field things
-FIELD_CENTER = (8.775, 4.028)  # TODO this is just a guess
-BLUE_REEF_CENTER = (4.489, 4.028)  # TODO this is just a guess
+FIELD_CENTER = (8.7741252, 4.0259508)
+BLUE_REEF_CENTER = (4.489, 4.0259508)
 
 
 import math
