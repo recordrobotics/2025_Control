@@ -7,31 +7,67 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Barge Positions"
+            "pathName": "BargeLeftToL4"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "ElevatorL4"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Source1OToReefA"
+            "name": "Stop"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "ElevatorDown"
+            "name": "CoralShoot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "New Path"
+            "pathName": "L4ToSource"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SourceIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "SourceToL4"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "CoralShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L42ToSource"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
           }
         }
       ]
