@@ -11,10 +11,6 @@ HOW_FAR_LEFT_FROM_CENTER_IS_THE_ALGAE_THING = -0.1055532306
 FIELD_CENTER = (8.7741252, 4.0259508)
 BLUE_REEF_CENTER = (4.4893371, 4.0259508)
 
-import math
-import json
-from os import listdir
-
 POS = tuple[float, float]  # position
 VEC = tuple[float, float]  # vector
 # yes i know these are the same but they are used for different things
@@ -65,6 +61,12 @@ PLACE_MORE_LEFT = {
 CORAL_LETTERS = list("ABCDEFGHIJKL")
 ALGAE_LETTERS = ["AB", "CD", "EF", "GH", "IJ", "KL"]
 ALL_LETTERS = CORAL_LETTERS + ALGAE_LETTERS
+
+SOURCES = ["SourceLeftOuter", "SourceLeftInner", "SourceRightInner", "SourceRightOuter"]
+
+import math
+import json
+from os import listdir
 
 
 def switch_side(pos: POS) -> POS:
@@ -139,19 +141,19 @@ def get_correct_end_position(letter: str, blue_side: bool) -> tuple[POS, float]:
     return pos, heading
 
 
-def read_path_from_letter(letter: str):
-    type_of_thing = "Coral" if letter in CORAL_LETTERS else "Algae"
+def read_path_from_letter(letter: str, source: str, source_first: bool):
+    filename = f"{source}ToReef{letter}.path" if source_first else f"Reef{letter}To{source}.path"
     with open(
-        f"src/main/deploy/pathplanner/paths/Approach {type_of_thing} {letter}.path",
+        f"src/main/deploy/pathplanner/paths/{filename}",
         "r",
     ) as f:
         return json.load(f)
 
 
-def write_path_to_letter(letter: str, path):
-    type_of_thing = "Coral" if letter in CORAL_LETTERS else "Algae"
+def write_path_to_letter(letter: str, source: str, path, source_first: bool):
+    filname = f"{source}ToReef{letter}.path" if source_first else f"Reef{letter}To{source}.path"
     with open(
-        f"src/main/deploy/pathplanner/paths/Approach {type_of_thing} {letter}.path",
+        f"src/main/deploy/pathplanner/paths/{filname}",
         "w",
     ) as f:
         json.dump(path, f, indent=2)
@@ -196,6 +198,18 @@ def edit_linked_waypoint(name: str, pos: POS, heading: float):  # TODO test head
                 waypoint["anchor"]["y"] = pos[1]
         with open(f"src/main/deploy/pathplanner/paths/{path}", "w") as f:
             json.dump(data, f, indent=2)
+
+
+def default_fill_coral_paths():
+    for source in SOURCES:
+        for letter in CORAL_LETTERS:
+            path = json.loads(open(f"auto-reef-position-generator/Default.path").read())
+            path["waypoints"][0]["linkedName"] = source
+            path["waypoints"][-1]["linkedName"] = f"Reef{letter}"
+            write_path_to_letter(letter, source, path, True)
+            path["waypoints"][0]["linkedName"] = f"Reef{letter}"
+            path["waypoints"][-1]["linkedName"] = source
+            write_path_to_letter(letter, source, path, False)
 
 
 def main():
