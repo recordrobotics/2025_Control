@@ -20,7 +20,7 @@ public class NavSensorReal implements NavSensorIO {
 
   @Override
   public double getAngle() {
-    return _nav.getAngle();
+    return -_nav.getAngle();
   }
 
   @Override
