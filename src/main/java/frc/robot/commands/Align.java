@@ -9,7 +9,7 @@ import frc.robot.commands.hybrid.AlignToPose;
 import java.util.Set;
 
 public class Align {
-  public static Command create(double tolerance, double rotTol) {
+  public static Command create(double tolerance, double rotTol, boolean forceUseTranslation) {
     return new DeferredCommand(
         () -> {
           RobotAlignPose alignPose =
@@ -17,7 +17,7 @@ public class Align {
           if (alignPose == null) return Commands.none();
 
           return new AlignToPose(
-              alignPose.getPose(), tolerance, rotTol, alignPose.useTranslation());
+              alignPose.getPose(), tolerance, rotTol, forceUseTranslation || alignPose.useTranslation());
         },
         Set.of(RobotContainer.drivetrain));
   }

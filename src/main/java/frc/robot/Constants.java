@@ -241,6 +241,7 @@ public final class Constants {
   // TODO find values
   public enum RobotAlignPose {
     // Reefs
+    RA(new Pose2d(14.447000000000001, 4.061, Rotation2d.fromDegrees(180)), true),
     BA(new Pose2d(3.1033371, 3.9898797012000005, Rotation2d.fromDegrees(0)), true),
     RA(new Pose2d(14.4449133, 4.0620218988, Rotation2d.fromDegrees(180)), true),
     BB(new Pose2d(3.1033371, 3.6612606988000005, Rotation2d.fromDegrees(0)), true),
@@ -266,13 +267,13 @@ public final class Constants {
     BL(new Pose2d(3.4805062078520828, 5.043916959045232, Rotation2d.fromDegrees(-60)), true),
     RL(new Pose2d(14.067744192147918, 3.007984640954769, Rotation2d.fromDegrees(120)), true),
     // Processors
-    RProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
-    BProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
+    BProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
+    RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
     // 1 is left, 2 is right, both from driver view
-    RSourceOuterLeft(new Pose2d(1.2, 7, Rotation2d.fromDegrees(125)), false),
-    RSourceOuterRight(new Pose2d(1.2, 1, Rotation2d.fromDegrees(-125)), false),
-    BSourceOuterLeft(new Pose2d(16.2, 1, Rotation2d.fromDegrees(-55)), false),
-    BSourceOuterRight(new Pose2d(16.2, 7, Rotation2d.fromDegrees(55)), false);
+    BSourceOuterLeft(new Pose2d(1.642, 7.322, Rotation2d.fromDegrees(36.870)), false);
+    // BSourceOuterRight(new Pose2d(1.2, 1, Rotation2d.fromDegrees(-125)), false),
+    // RSourceOuterLeft(new Pose2d(16.2, 1, Rotation2d.fromDegrees(-55)), false),
+    // RSourceOuterRight(new Pose2d(16.2, 7, Rotation2d.fromDegrees(55)), false);
 
     private Pose2d pose;
     private boolean useTranslation;
