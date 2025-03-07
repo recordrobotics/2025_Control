@@ -241,7 +241,6 @@ public final class Constants {
   // TODO find values
   public enum RobotAlignPose {
     // Reefs
-    RA(new Pose2d(14.447000000000001, 4.061, Rotation2d.fromDegrees(180)), true),
     BA(new Pose2d(3.1033371, 3.9898797012000005, Rotation2d.fromDegrees(0)), true),
     RA(new Pose2d(14.4449133, 4.0620218988, Rotation2d.fromDegrees(180)), true),
     BB(new Pose2d(3.1033371, 3.6612606988000005, Rotation2d.fromDegrees(0)), true),

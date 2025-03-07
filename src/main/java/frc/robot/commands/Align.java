@@ -17,7 +17,10 @@ public class Align {
           if (alignPose == null) return Commands.none();
 
           return new AlignToPose(
-              alignPose.getPose(), tolerance, rotTol, forceUseTranslation || alignPose.useTranslation());
+              alignPose.getPose(),
+              tolerance,
+              rotTol,
+              forceUseTranslation || alignPose.useTranslation());
         },
         Set.of(RobotContainer.drivetrain));
   }
