@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 1.6769999999999998,
+        "y": 0.7294999999999994
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 2.6769999999999996,
+        "y": 0.7294999999999994
       },
       "isLocked": false,
       "linkedName": "SourceRightOuter"
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 143.25588871521674
   },
   "useDefaultConstraints": true
 }
