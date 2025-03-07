@@ -13,6 +13,12 @@
         {
           "type": "named",
           "data": {
+            "name": "AutoAlign"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Stop"
           }
         },
@@ -26,6 +32,12 @@
           "type": "path",
           "data": {
             "pathName": "L4ToSource"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAlign"
           }
         },
         {
@@ -49,6 +61,12 @@
         {
           "type": "named",
           "data": {
+            "name": "AutoAlign"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Stop"
           }
         },
@@ -62,6 +80,12 @@
           "type": "path",
           "data": {
             "pathName": "L42ToSource"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAlign"
           }
         },
         {

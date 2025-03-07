@@ -36,7 +36,7 @@ public class AutoPath {
     NamedCommands.registerCommand(
         "Stop", new InstantCommand(() -> RobotContainer.drivetrain.kill()));
 
-    NamedCommands.registerCommand("AutoAlign", Align.create(0.01, 0.05).withTimeout(1.5));
+    NamedCommands.registerCommand("AutoAlign", Align.create(0.01, 0.05, true).withTimeout(1.5));
     NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
     NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));
     NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));
