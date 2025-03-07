@@ -8,11 +8,27 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.8753371,
-        "y": 4.3906409012
+        "x": 6.084803349368802,
+        "y": 4.544528556482145
       },
       "isLocked": false,
       "linkedName": "ReefH"
+    },
+    {
+      "anchor": {
+        "x": 5.55030737704918,
+        "y": 5.547438524590164
+      },
+      "prevControl": {
+        "x": 5.702862877846668,
+        "y": 5.349380908790044
+      },
+      "nextControl": {
+        "x": 4.998742754300278,
+        "y": 6.263516106652281
+      },
+      "isLocked": false,
+      "linkedName": null
     },
     {
       "anchor": {
@@ -20,8 +36,8 @@
         "y": 7.0
       },
       "prevControl": {
-        "x": 1.0,
-        "y": 7.0
+        "x": 1.6065531120835943,
+        "y": 7.078560355234664
       },
       "nextControl": null,
       "isLocked": false,

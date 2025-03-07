@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.8753371,
-        "y": 4.3906409012
+        "x": 6.557528881795465,
+        "y": 4.47496919574235
       },
       "isLocked": false,
       "linkedName": "ReefH"
@@ -20,8 +20,8 @@
         "y": 3.80075
       },
       "prevControl": {
-        "x": 5.4935,
-        "y": 3.80075
+        "x": 6.243541199822195,
+        "y": 3.8052885254953646
       },
       "nextControl": null,
       "isLocked": false,
