@@ -19,7 +19,7 @@ public class AlignToPose extends Command {
       xPID.setTolerance(tolerance);
       yPID.setTolerance(tolerance);
       xPID.setSetpoint(pose.getX());
-      yPID.setSetpoint(pose.getY()); 
+      yPID.setSetpoint(pose.getY());
     }
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
