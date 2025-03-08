@@ -17,6 +17,9 @@ import frc.robot.commands.CoralIntakeMoveL1;
 import frc.robot.commands.CoralIntakeShootL1;
 import frc.robot.commands.CoralShoot;
 import frc.robot.commands.ElevatorMove;
+import frc.robot.commands.ElevatorMoveThenAlgaeGrab;
+import frc.robot.commands.ElevatorMoveThenAlgaeGrabEnd;
+import frc.robot.commands.ProcessorScore;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import org.littletonrobotics.junction.Logger;
 
@@ -38,13 +41,16 @@ public class AutoPath {
     NamedCommands.registerCommand(
         "Stop", new InstantCommand(() -> RobotContainer.drivetrain.kill()));
 
-    NamedCommands.registerCommand("AutoAlign", Align.create(0.01, 0.05, true).withTimeout(1.5));
+    NamedCommands.registerCommand("AutoAlign", Align.create(0.02, 0.07, true).withTimeout(1.0));
     NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
     NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));
     NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));
     NamedCommands.registerCommand("ElevatorDown", new ElevatorMove(ElevatorHeight.BOTTOM));
+    NamedCommands.registerCommand("AlgaeL2", ElevatorMoveThenAlgaeGrab.create(ElevatorHeight.LOW_REEF_ALGAE));
+    NamedCommands.registerCommand("AlgaeL2End", new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE));
+    NamedCommands.registerCommand("ProcessorScore", new ProcessorScore());
     NamedCommands.registerCommand("SourceIntake", new CoralIntakeFromSource().withTimeout(4));
-    NamedCommands.registerCommand("CoralShoot", new CoralShoot().withTimeout(3));
+    NamedCommands.registerCommand("CoralShoot", new CoralShoot().withTimeout(2));
     NamedCommands.registerCommand("CoralL1ArmMove", new CoralIntakeMoveL1().withTimeout(3));
     NamedCommands.registerCommand("CoralL1Shoot", new CoralIntakeShootL1().withTimeout(3));
 

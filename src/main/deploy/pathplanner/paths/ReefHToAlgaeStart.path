@@ -3,45 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.141657608075689,
-        "y": 2.9360985371937627
+        "x": 5.7593371,
+        "y": 4.385950800000001
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.699075056763817,
-        "y": 3.022319218016273
+        "x": 6.114927312655603,
+        "y": 4.2600737726729125
       },
       "isLocked": false,
-      "linkedName": "ReefE"
+      "linkedName": "ReefH"
     },
     {
       "anchor": {
-        "x": 2.7691598360655743,
-        "y": 2.34672131147541
+        "x": 6.2204999999999995,
+        "y": 4.112749999999999
       },
       "prevControl": {
-        "x": 3.4503824446620524,
-        "y": 1.678478492182728
-      },
-      "nextControl": {
-        "x": 2.2743968032089583,
-        "y": 2.832057293848459
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 1.62825,
-        "y": 7.34
-      },
-      "prevControl": {
-        "x": 1.4435090583811248,
-        "y": 7.171563707919667
+        "x": 5.980652368253161,
+        "y": 4.18554966923276
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "SourceLeftOuter"
+      "linkedName": "AlgaeGHStart"
     }
   ],
   "rotationTargets": [],
@@ -58,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 37.13092444820949
+    "rotation": 180.0
   },
   "reversed": false,
-  "folder": "Source and Reef",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 120
+    "rotation": 180
   },
   "useDefaultConstraints": true
 }

@@ -3,35 +3,52 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.7117500000000001,
-        "y": 1.3339999999999999
+        "x": 7.145,
+        "y": 4.026
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.71175,
-        "y": 1.3339999999999996
+        "x": 6.870313830347343,
+        "y": 4.075916389822236
       },
       "isLocked": false,
-      "linkedName": "SourceRightInner"
+      "linkedName": "StartBargeCenter"
     },
     {
       "anchor": {
         "x": 5.7593371,
-        "y": 4.045950800000001
+        "y": 4.385950800000001
       },
       "prevControl": {
-        "x": 4.7593371,
-        "y": 4.045950800000001
+        "x": 6.007714977516362,
+        "y": 4.357517897220531
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "ReefG"
+      "linkedName": "ReefH"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1,
+      "rotationDegrees": 0.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "ElevatorL4",
+      "waypointRelativePos": 0.2573163997791247,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "ElevatorL4"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 2.5,
     "maxAcceleration": 3.0,
@@ -45,10 +62,10 @@
     "rotation": 180
   },
   "reversed": false,
-  "folder": "Source and Reef",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 143.59591143692094
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

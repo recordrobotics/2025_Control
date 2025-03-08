@@ -9,9 +9,9 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
 
 public class AlignToPose extends Command {
-  PIDController xPID = new PIDController(8, 0, 0.2);
-  PIDController yPID = new PIDController(8, 0, 0.2);
-  PIDController rotPID = new PIDController(5, 0, 0.2);
+  PIDController xPID = new PIDController(3, 0, 0.01);
+  PIDController yPID = new PIDController(3, 0, 0.01);
+  PIDController rotPID = new PIDController(4, 0, 0.05);
   boolean doTranslation;
 
   public AlignToPose(Pose2d pose, double tolerance, double rotTol, boolean doTranslation) {
@@ -19,7 +19,7 @@ public class AlignToPose extends Command {
       xPID.setTolerance(tolerance);
       yPID.setTolerance(tolerance);
       xPID.setSetpoint(pose.getX());
-      yPID.setSetpoint(pose.getY());
+      yPID.setSetpoint(pose.getY()); 
     }
     rotPID.setTolerance(rotTol);
     rotPID.setSetpoint(pose.getRotation().getRadians());
