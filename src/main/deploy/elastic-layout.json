@@ -238,6 +238,19 @@
               "true_icon": "None",
               "false_icon": "None"
             }
+          },
+          {
+            "title": "Reset",
+            "x": 1088.0,
+            "y": 256.0,
+            "width": 192.0,
+            "height": 128.0,
+            "type": "Toggle Button",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous/ResetLocationButton",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
           }
         ]
       }
