@@ -273,14 +273,8 @@ public final class Constants {
     RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
 
     BSourceOuterLeft(new Pose2d(1.628, 7.340, Rotation2d.fromDegrees(36.870)), false),
-    BSourceOuterRight(
-        new Pose2d(1.609, 0.700, Rotation2d.fromDegrees(143.791)), false),
-    RSourceOuterLeft(
-        new Pose2d(
-          1.609,
-            0.700,
-            Rotation2d.fromDegrees(-143.791)),
-        false),
+    BSourceOuterRight(new Pose2d(1.609, 0.700, Rotation2d.fromDegrees(143.791)), false),
+    RSourceOuterLeft(new Pose2d(1.609, 0.700, Rotation2d.fromDegrees(-143.791)), false),
     RSourceOuterRight(
         new Pose2d(FlippingUtil.fieldSizeX - 1.628, 7.340, Rotation2d.fromDegrees(-36.209)), false),
 
@@ -732,9 +726,8 @@ public final class Constants {
         new Pose2d(13.958, 5.265, Rotation2d.fromDegrees(-120)),
         new Pose2d(2.082, 4.053, Rotation2d.fromDegrees(0))),
     ProccessorTest(
-      new Pose2d(10.242, 7.581, Rotation2d.fromDegrees(90)),
-      new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90))
-    );
+        new Pose2d(10.242, 7.581, Rotation2d.fromDegrees(90)),
+        new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90)));
 
     private final Pose2d m_transformRed;
     private final Pose2d m_transformBlue;
