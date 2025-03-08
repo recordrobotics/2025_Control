@@ -29,13 +29,19 @@ public class JoystickXbox extends AbstractControl {
   public DriveCommandData getDriveCommandData() {
     // Gets information needed to drive
 
-    double x = getXY().getFirst() * getDirectionalSpeedLevel();
-    double y = getXY().getSecond() * getDirectionalSpeedLevel();
+    var xy = getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive()));
+
+    double x = xy.getFirst() * getDirectionalSpeedLevel();
+    double y = xy.getSecond() * getDirectionalSpeedLevel();
 
     if (getCoralIntakeRelativeDrive()) {
-      double temp = x;
-      x = -y;
-      y = temp;
+      y = -y;
+    }
+
+    if (getElevatorRelativeDrive()) {
+      double temp = y;
+      y = -x;
+      x = -temp;
     }
 
     DriveCommandData driveCommandData =
@@ -60,7 +66,7 @@ public class JoystickXbox extends AbstractControl {
     return joystick.getRawButton(10);
   }
 
-  public Pair<Double, Double> getXY() {
+  public Pair<Double, Double> getXY(boolean orient) {
     double X =
         SimpleMath.ApplyThresholdAndSensitivity(
             joystick.getX(),
@@ -71,7 +77,9 @@ public class JoystickXbox extends AbstractControl {
             joystick.getY(),
             Constants.Control.JOYSTICK_Y_THRESHOLD,
             Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
-    return super.OrientXY(new Pair<Double, Double>(X, Y));
+
+    if (orient) return super.OrientXY(new Pair<Double, Double>(X, Y));
+    else return new Pair<Double, Double>(X, Y);
   }
 
   public Double getSpin() {
