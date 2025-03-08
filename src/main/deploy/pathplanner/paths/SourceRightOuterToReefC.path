@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.6769999999999998,
-        "y": 0.7294999999999994
+        "x": 1.60875,
+        "y": 0.7002499999999998
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.6769999999999996,
-        "y": 0.7294999999999994
+        "x": 2.1397288365306437,
+        "y": 1.5179538925574276
       },
       "isLocked": false,
       "linkedName": "SourceRightOuter"
     },
     {
       "anchor": {
-        "x": 3.8275755879032185,
-        "y": 2.8076040409547685
+        "x": 3.871657608075689,
+        "y": 2.916098537193763
       },
       "prevControl": {
-        "x": 2.8275755879032185,
-        "y": 2.8076040409547685
+        "x": 3.6517937496806505,
+        "y": 2.5602122925952857
       },
       "nextControl": null,
       "isLocked": false,
@@ -31,10 +31,22 @@
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "ElevatorL4",
+      "waypointRelativePos": 0.30074441687344927,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "ElevatorL4"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,7 +54,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 59.99999999999999
+    "rotation": 60
   },
   "reversed": false,
   "folder": "Source and Reef",

@@ -3,45 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.837016591924311,
-        "y": 5.115803062806238
+        "x": 7.145,
+        "y": 1.909
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.6170945061789883,
-        "y": 5.234690724913905
+        "x": 6.582039182754961,
+        "y": 2.138997895092683
       },
       "isLocked": false,
-      "linkedName": "ReefK"
+      "linkedName": "StartBargeRight"
     },
     {
       "anchor": {
-        "x": 2.9130122950819675,
-        "y": 5.415573770491803
+        "x": 5.141657608075689,
+        "y": 2.9360985371937627
       },
       "prevControl": {
-        "x": 3.1864544875376017,
-        "y": 5.584870946583288
-      },
-      "nextControl": {
-        "x": 2.428377883833041,
-        "y": 5.11552045200287
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 1.60875,
-        "y": 0.7002499999999998
-      },
-      "prevControl": {
-        "x": 1.7892777776025162,
-        "y": 1.7221463170076303
+        "x": 6.546127763156699,
+        "y": 1.882549114276571
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "SourceRightOuter"
+      "linkedName": "ReefE"
     }
   ],
   "rotationTargets": [],
@@ -49,13 +33,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "ElevatorDown",
-      "waypointRelativePos": 0.1296421336934445,
+      "name": "ElevatorL4",
+      "waypointRelativePos": 0.3214044564483458,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "ElevatorDown"
+          "name": "ElevatorL4"
         }
       }
     }
@@ -70,13 +54,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 143.25588871521674
+    "rotation": 120
   },
   "reversed": false,
-  "folder": "Source and Reef",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -60
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

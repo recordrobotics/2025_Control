@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BargeLeftToL4"
+            "pathName": "BargeRightToL4"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "ReefJToSourceLeftOuter"
+            "pathName": "ReefEToSourceRightOuter"
           }
         },
         {
@@ -61,7 +61,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SourceLeftOuterToReefK"
+            "pathName": "SourceRightOuterToReefD"
           }
         },
         {
@@ -85,7 +85,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "ReefKToSourceLeftOuter"
+            "pathName": "ReefDToSourceRightOuter"
           }
         },
         {
@@ -109,7 +109,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SourceLeftOuterToReefL"
+            "pathName": "SourceRightOuterToReefC"
           }
         },
         {
@@ -133,7 +133,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "ReefLToPark"
+            "pathName": "ReefCToPark"
           }
         },
         {

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.7650986120967818,
-        "y": 5.208226460245232
+        "x": 3.837016591924311,
+        "y": 5.115803062806238
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.224902292885989,
-        "y": 6.16501513411498
+        "x": 3.2968202727135183,
+        "y": 6.072591736675986
       },
       "isLocked": false,
       "linkedName": "ReefK"
     },
     {
       "anchor": {
-        "x": 1.70625,
-        "y": 7.3302499999999995
+        "x": 1.62825,
+        "y": 7.34
       },
       "prevControl": {
-        "x": 2.6800089313088757,
-        "y": 6.501455243650518
+        "x": 2.602008931308876,
+        "y": 6.511205243650519
       },
       "nextControl": null,
       "isLocked": false,
@@ -34,7 +34,7 @@
   "eventMarkers": [
     {
       "name": "ElevatorDown",
-      "waypointRelativePos": 0.08372721134368653,
+      "waypointRelativePos": 0.2253101736972721,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -45,8 +45,8 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -60,7 +60,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -59.99999999999999
+    "rotation": -60
   },
   "useDefaultConstraints": true
 }

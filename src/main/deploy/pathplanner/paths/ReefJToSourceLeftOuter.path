@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.8665062078520815,
-        "y": 5.408607060245233
+        "x": 4.8125679546376015,
+        "y": 5.305803062806238
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.690288511991558,
-        "y": 5.666834439422452
+        "x": 4.714246674152386,
+        "y": 5.535657203085997
       },
       "isLocked": false,
       "linkedName": "ReefJ"
@@ -20,24 +20,24 @@
         "y": 5.967008196721312
       },
       "prevControl": {
-        "x": 4.881587073847186,
-        "y": 5.756243864157329
+        "x": 4.951717627894234,
+        "y": 5.657435965567527
       },
       "nextControl": {
-        "x": 3.8377392068852423,
-        "y": 7.39251163622668
+        "x": 3.9632544161274317,
+        "y": 7.153139696096183
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 1.70625,
-        "y": 7.3302499999999995
+        "x": 1.62825,
+        "y": 7.34
       },
       "prevControl": {
-        "x": 2.9530289650699624,
-        "y": 6.832730967197854
+        "x": 3.054083061446664,
+        "y": 6.763887655820272
       },
       "nextControl": null,
       "isLocked": false,
@@ -50,7 +50,7 @@
   "eventMarkers": [
     {
       "name": "ElevatorDown",
-      "waypointRelativePos": 0.1944632005401738,
+      "waypointRelativePos": 0.931017369727048,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -61,8 +61,8 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -76,7 +76,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -120
   },
   "useDefaultConstraints": true
 }

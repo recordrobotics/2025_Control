@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.6769999999999998,
-        "y": 0.7294999999999994
+        "x": 1.60875,
+        "y": 0.7002499999999998
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.6769999999999996,
-        "y": 0.7294999999999994
+        "x": 2.6087499999999997,
+        "y": 0.7002499999999998
       },
       "isLocked": false,
       "linkedName": "SourceRightOuter"
     },
     {
       "anchor": {
-        "x": 3.1033371,
-        "y": 3.6612606988000005
+        "x": 3.2193371,
+        "y": 3.6659508000000005
       },
       "prevControl": {
-        "x": 2.1033371,
-        "y": 3.6612606988000005
+        "x": 2.2193371,
+        "y": 3.6659508000000005
       },
       "nextControl": null,
       "isLocked": false,
@@ -33,8 +33,8 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 0
   },
   "reversed": false,
   "folder": "Source and Reef",

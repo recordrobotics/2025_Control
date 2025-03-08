@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.8275755879032185,
-        "y": 2.8076040409547685
+        "x": 3.871657608075689,
+        "y": 2.916098537193763
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.111502173395336,
-        "y": 2.681298485651672
+        "x": 4.155584193567806,
+        "y": 2.789792981890667
       },
       "isLocked": false,
       "linkedName": "ReefC"
@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 0.7215,
-        "y": 1.4119999999999993
+        "x": 0.7117500000000001,
+        "y": 1.3339999999999999
       },
       "prevControl": {
-        "x": 0.6686375488478487,
-        "y": 1.1676527854503211
+        "x": 0.6588875488478487,
+        "y": 1.0896527854503217
       },
       "nextControl": null,
       "isLocked": false,
@@ -49,8 +49,8 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -64,7 +64,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 59.99999999999999
+    "rotation": 60
   },
   "useDefaultConstraints": true
 }
