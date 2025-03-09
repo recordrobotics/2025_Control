@@ -19,6 +19,7 @@ import frc.robot.commands.Align;
 import frc.robot.commands.BargeScore;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUp;
+import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralIntakeMoveL1;
 import frc.robot.commands.CoralIntakeShootL1;
 import frc.robot.commands.CoralShoot;
@@ -28,7 +29,6 @@ import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
-import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.auto.PlannedAuto;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
