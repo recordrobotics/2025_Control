@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
@@ -18,6 +19,8 @@ import frc.robot.commands.ElevatorMove;
 import frc.robot.commands.ElevatorMoveThenAlgaeGrab;
 import frc.robot.commands.ElevatorMoveThenAlgaeGrabEnd;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.auto.CoralIntakeFromSourceEnd;
+import frc.robot.commands.auto.CoralIntakeFromSourceStart;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import org.littletonrobotics.junction.Logger;
 
@@ -50,8 +53,15 @@ public class AutoPath {
         "AlgaeL2End", new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE));
     NamedCommands.registerCommand("ProcessorScore", new ProcessorScore());
     NamedCommands.registerCommand("SourceIntake", new CoralIntakeFromSource().withTimeout(4));
-    NamedCommands.registerCommand("SourceIntakeStart", new CoralIntakeFromSource().withTimeout(4));
-    NamedCommands.registerCommand("SourceIntakeEnd", new CoralIntakeFromSource().withTimeout(4));
+    NamedCommands.registerCommand(
+        "SourceIntakeStart", new CoralIntakeFromSourceStart().withTimeout(4));
+    NamedCommands.registerCommand("SourceIntakeEnd", new CoralIntakeFromSourceEnd().withTimeout(3));
+    NamedCommands.registerCommand(
+        "SourceIntakeWait",
+        new WaitUntilCommand(
+            () ->
+                RobotContainer.coralShooter.hasCoral()
+                    && RobotContainer.coralShooter.positionAtGoal()));
     NamedCommands.registerCommand("CoralShoot", new CoralShoot().withTimeout(2));
 
     // Configures auto builder

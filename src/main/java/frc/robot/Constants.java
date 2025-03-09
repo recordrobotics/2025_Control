@@ -274,7 +274,9 @@ public final class Constants {
 
     BSourceOuterLeft(new Pose2d(1.574, 7.371, Rotation2d.fromDegrees(35.734)), false),
     BSourceOuterRight(new Pose2d(1.541, 0.669, Rotation2d.fromDegrees(144.118)), false),
-    RSourceOuterLeft(new Pose2d(FlippingUtil.fieldSizeX - 1.541, 0.669, Rotation2d.fromDegrees(-144.118)), false),
+    RSourceOuterLeft(
+        new Pose2d(FlippingUtil.fieldSizeX - 1.541, 0.669, Rotation2d.fromDegrees(-144.118)),
+        false),
     RSourceOuterRight(
         new Pose2d(FlippingUtil.fieldSizeX - 1.574, 7.371, Rotation2d.fromDegrees(-35.734)), false),
 

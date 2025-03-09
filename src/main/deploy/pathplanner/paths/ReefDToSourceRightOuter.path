@@ -33,13 +33,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "ElevatorDown",
+      "name": "SourceIntakeStart",
       "waypointRelativePos": 0.22531017369727052,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "ElevatorDown"
+          "name": "SourceIntakeStart"
         }
       }
     }
@@ -60,7 +60,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 60
+    "rotation": 59.99999999999999
   },
   "useDefaultConstraints": true
 }

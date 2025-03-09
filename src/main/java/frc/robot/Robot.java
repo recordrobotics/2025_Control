@@ -5,7 +5,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DriverStation;

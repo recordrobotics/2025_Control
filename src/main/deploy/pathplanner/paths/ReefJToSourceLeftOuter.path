@@ -49,13 +49,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "ElevatorDown",
+      "name": "SourceIntakeStart",
       "waypointRelativePos": 0.931017369727048,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "ElevatorDown"
+          "name": "SourceIntakeStart"
         }
       }
     }
