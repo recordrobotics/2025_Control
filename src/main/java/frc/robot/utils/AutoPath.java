@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
@@ -55,7 +56,8 @@ public class AutoPath {
     NamedCommands.registerCommand("SourceIntake", new CoralIntakeFromSource().withTimeout(4));
     NamedCommands.registerCommand(
         "SourceIntakeStart", new CoralIntakeFromSourceStart().withTimeout(4));
-    NamedCommands.registerCommand("SourceIntakeEnd", new CoralIntakeFromSourceEnd().withTimeout(3));
+    NamedCommands.registerCommand(
+        "SourceIntakeEnd", new InstantCommand(() -> new CoralIntakeFromSourceEnd().withTimeout(3).schedule()).withTimeout(0.1));
     NamedCommands.registerCommand(
         "SourceIntakeWait",
         new WaitUntilCommand(

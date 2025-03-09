@@ -20,27 +20,34 @@ public class CoralIntakeFromSourceEnd extends SequentialCommandGroup {
             () -> {
               RobotContainer.coralIntake.toggleArm(IntakeArmStates.UP);
               RobotContainer.coralIntake.toggle(CoralIntakeStates.OFF);
-            },
-            RobotContainer.coralIntake),
+            }
+            //,RobotContainer.coralIntake
+            ),
         // move coral a set distance
         new InstantCommand(
-            () -> RobotContainer.coralShooter.moveBy(Constants.CoralShooter.CORAL_INTAKE_DISTANCE),
-            RobotContainer.coralShooter),
+            () -> RobotContainer.coralShooter.moveBy(Constants.CoralShooter.CORAL_INTAKE_DISTANCE)
+            //,
+            //RobotContainer.coralShooter
+            ),
         new WaitUntilCommand(() -> RobotContainer.coralShooter.positionAtGoal()),
         new InstantCommand(
-            () -> RobotContainer.coralShooter.toggle(CoralShooterStates.OFF),
-            RobotContainer.coralShooter),
-        new ScheduleCommand(
-            RobotContainer.lights
-                .elevator
-                .runPattern(Constants.Lights.FLASHING_GREEN)
-                .alongWith(
-                    RobotContainer.lights.coralIntake.runPattern(Constants.Lights.FLASHING_GREEN))
-                .alongWith(
-                    RobotContainer.lights.coralShooter.runPattern(Constants.Lights.FLASHING_GREEN))
-                .alongWith(
-                    RobotContainer.lights.stateVisualizer.runPattern(
-                        Constants.Lights.PULSATING_GREEN))
-                .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME)));
+            () -> RobotContainer.coralShooter.toggle(CoralShooterStates.OFF)
+            //,
+            //RobotContainer.coralShooter
+            )
+            //,
+        // new ScheduleCommand(
+        //     RobotContainer.lights
+        //         .elevator
+        //         .runPattern(Constants.Lights.FLASHING_GREEN)
+        //         .alongWith(
+        //             RobotContainer.lights.coralIntake.runPattern(Constants.Lights.FLASHING_GREEN))
+        //         .alongWith(
+        //             RobotContainer.lights.coralShooter.runPattern(Constants.Lights.FLASHING_GREEN))
+        //         .alongWith(
+        //             RobotContainer.lights.stateVisualizer.runPattern(
+        //                 Constants.Lights.PULSATING_GREEN))
+        //         .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME))
+                );
   }
 }

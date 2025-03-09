@@ -9,8 +9,8 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
 
 public class AlignToPose extends Command {
-  PIDController xPID = new PIDController(3, 0, 0.01);
-  PIDController yPID = new PIDController(3, 0, 0.01);
+  PIDController xPID = new PIDController(4, 0, 0.01);
+  PIDController yPID = new PIDController(4, 0, 0.01);
   PIDController rotPID = new PIDController(4, 0, 0.05);
   boolean doTranslation;
 
