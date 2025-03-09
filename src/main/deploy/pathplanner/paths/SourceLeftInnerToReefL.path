@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4400451290566605,
-        "y": 6.100299579194726
+        "x": 1.6827117171080674,
+        "y": 6.711004406988366
       },
       "isLocked": false,
       "linkedName": "SourceLeftInner"
@@ -20,8 +20,8 @@
         "y": 4.9518030628062375
       },
       "prevControl": {
-        "x": 2.8876925065242207,
-        "y": 5.35673104366264
+        "x": 2.5529602594830156,
+        "y": 4.9518030628062375
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -59.99999999999999
+    "rotation": -60
   },
   "reversed": false,
   "folder": "Source and Reef",

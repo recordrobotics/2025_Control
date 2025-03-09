@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.993750238994153,
-        "y": 4.593633469708818
+        "x": 3.4675374827567507,
+        "y": 4.04789357875219
       },
       "isLocked": false,
       "linkedName": "ReefA"
@@ -20,8 +20,8 @@
         "y": 7.371316605797899
       },
       "prevControl": {
-        "x": 1.8056783129340297,
-        "y": 6.89946019734347
+        "x": 1.763856162666259,
+        "y": 7.2091754241249495
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 0
   },
   "useDefaultConstraints": true
 }
