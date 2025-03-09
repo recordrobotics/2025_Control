@@ -6,8 +6,8 @@
     "Source and Reef"
   ],
   "autoFolders": [],
-  "defaultMaxVel": 2.5,
-  "defaultMaxAccel": 3.0,
+  "defaultMaxVel": 2.8,
+  "defaultMaxAccel": 3.3,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 720.0,
   "defaultNominalVoltage": 12.0,
