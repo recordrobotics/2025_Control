@@ -34,6 +34,8 @@ public class AutonomousLayout extends AbstractLayout {
     addValueSendable("Velocity", () -> TuningData.MapToArray(velocityGraphData), "double[]");
 
     SmartDashboard.putBoolean("Autonomous/ResetLocationButton", false);
+    SmartDashboard.putBoolean("Autonomous/LimelightRotation", false);
+    SmartDashboard.putBoolean("Autonomous/ForceMT1", false);
   }
 
   public void setupAutoChooser() {
@@ -74,5 +76,13 @@ public class AutonomousLayout extends AbstractLayout {
 
   public boolean getResetLocation() {
     return SmartDashboard.getBoolean("Autonomous/ResetLocationButton", false);
+  }
+
+  public boolean getLimelightRotation() {
+    return SmartDashboard.getBoolean("Autonomous/LimelightRotation", false);
+  }
+
+  public boolean getForceMT1() {
+    return SmartDashboard.getBoolean("Autonomous/ForceMT1", false);
   }
 }

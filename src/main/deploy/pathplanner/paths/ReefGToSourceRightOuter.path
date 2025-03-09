@@ -4,12 +4,12 @@
     {
       "anchor": {
         "x": 5.7593371,
-        "y": 4.0339508
+        "y": 4.055950800000001
       },
       "prevControl": null,
       "nextControl": {
         "x": 6.0040275544772195,
-        "y": 4.08520098524583
+        "y": 4.10720098524583
       },
       "isLocked": false,
       "linkedName": "ReefG"
@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 1.541342865764005,
-        "y": 0.6693097484941416
+        "x": 1.5030759213649596,
+        "y": 0.6741915079831017
       },
       "prevControl": {
-        "x": 1.2913756051581318,
-        "y": 0.673355564258047
+        "x": 1.2531086607590864,
+        "y": 0.6782373237470071
       },
       "nextControl": null,
       "isLocked": false,
@@ -64,7 +64,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 180
   },
   "useDefaultConstraints": true
 }

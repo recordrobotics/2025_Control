@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.821228208675446,
-        "y": 5.300803062806238
+        "x": 4.8039077005997575,
+        "y": 5.3108030628062375
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.7229069281902305,
-        "y": 5.5306572030859975
+        "x": 4.705586420114542,
+        "y": 5.540657203085997
       },
       "isLocked": false,
       "linkedName": "ReefJ"
@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 1.574,
-        "y": 7.371
+        "x": 1.5635644427411994,
+        "y": 7.386350477486264
       },
       "prevControl": {
-        "x": 2.9998330614466626,
-        "y": 6.794887655820273
+        "x": 2.9893975041878638,
+        "y": 6.8102381333065365
       },
       "nextControl": null,
       "isLocked": false,
@@ -76,7 +76,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -120
   },
   "useDefaultConstraints": true
 }
