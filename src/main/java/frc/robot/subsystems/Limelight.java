@@ -54,14 +54,18 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
     numTags = measurement.tagCount;
 
-    if (measurement.tagCount > 0 && SimpleMath.isPoseInField(measurement.pose)) {
-      if (measurement.avgTagDist
-          < Units.feetToMeters(7)) { // 7 feet is where the MT1 (yellow) gets bad wiggles
-        confidence = 0.65; // mt 1
-      } else {
-        confidence = 0.7; // mt 2
-        measurement = measurement_m2;
+    if(!DashboardUI.Autonomous.getForceMT1()){
+      if (measurement.tagCount > 0 && SimpleMath.isPoseInField(measurement.pose)) {
+        if (measurement.avgTagDist
+            < Units.feetToMeters(7)) { // 7 feet is where the MT1 (yellow) gets bad wiggles
+          confidence = 0.65; // mt 1
+        } else {
+          confidence = 0.7; // mt 2
+          measurement = measurement_m2;
+        }
       }
+    } else {
+      confidence = 0.65; // mt 1
     }
 
     if (measurement

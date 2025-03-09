@@ -195,6 +195,8 @@ public class RobotContainer {
         .onTrue(new InstantCommand(poseTracker::resetDriverPose));
     new Trigger(() -> DashboardUI.Autonomous.getResetLocation())
         .onTrue(new InstantCommand(poseTracker::resetStartingPose).ignoringDisable(true));
+    new Trigger(() -> DashboardUI.Autonomous.getLimelightRotation())
+        .onTrue(new InstantCommand(poseTracker::resetToLimelight).ignoringDisable(true));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL1())
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L1));

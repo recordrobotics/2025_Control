@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.1312653032302755,
-        "y": 2.930098537193763
+        "x": 5.150317862113533,
+        "y": 2.941098537193763
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.3539909855163454,
-        "y": 2.294820857060346
+        "x": 5.373043544399603,
+        "y": 2.305820857060346
       },
       "isLocked": false,
       "linkedName": "ReefE"
@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 1.541342865764005,
-        "y": 0.6693097484941416
+        "x": 1.5030759213649596,
+        "y": 0.6741915079831017
       },
       "prevControl": {
-        "x": 3.5108428657640727,
-        "y": 1.3713097484939372
+        "x": 3.4725759213650274,
+        "y": 1.3761915079828972
       },
       "nextControl": null,
       "isLocked": false,
@@ -76,7 +76,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 119.99999999999999
+    "rotation": 120
   },
   "useDefaultConstraints": true
 }
