@@ -8,27 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.1480849666574935,
-        "y": 5.494053845215894
+        "x": 6.193092790541477,
+        "y": 5.519974326191457
       },
       "isLocked": false,
       "linkedName": "StartBargeLeft"
-    },
-    {
-      "anchor": {
-        "x": 6.1538274684964716,
-        "y": 5.459236228519293
-      },
-      "prevControl": {
-        "x": 6.34608707532539,
-        "y": 5.6190368655079785
-      },
-      "nextControl": {
-        "x": 5.961567861667553,
-        "y": 5.2994355915306075
-      },
-      "isLocked": false,
-      "linkedName": null
     },
     {
       "anchor": {
@@ -36,8 +20,8 @@
         "y": 5.299803062806237
       },
       "prevControl": {
-        "x": 5.683780339838002,
-        "y": 5.353483319783789
+        "x": 6.2277937056214405,
+        "y": 5.214299184335834
       },
       "nextControl": null,
       "isLocked": false,
@@ -50,7 +34,7 @@
   "eventMarkers": [
     {
       "name": "ElevatorL4",
-      "waypointRelativePos": 0.5,
+      "waypointRelativePos": 0.2573163997791247,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -70,7 +54,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -120
   },
   "reversed": false,
   "folder": null,
