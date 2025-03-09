@@ -8,14 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
+<<<<<<< Updated upstream
         "x": 5.164448698543588,
         "y": 2.4788552504022534
+=======
+        "x": 4.885081503402548,
+        "y": 2.390938335863218
+>>>>>>> Stashed changes
       },
       "isLocked": false,
       "linkedName": "ReefE"
     },
     {
       "anchor": {
+<<<<<<< Updated upstream
         "x": 5.12,
         "y": 2.1334999999997954
       },
@@ -26,6 +32,18 @@
       "nextControl": {
         "x": 4.998274995555585,
         "y": 1.9151355722808854
+=======
+        "x": 4.836,
+        "y": 2.3089999999999997
+      },
+      "prevControl": {
+        "x": 4.877637337662527,
+        "y": 2.6039030963176986
+      },
+      "nextControl": {
+        "x": 4.801049171983476,
+        "y": 2.0614551765417835
+>>>>>>> Stashed changes
       },
       "isLocked": false,
       "linkedName": null
@@ -36,8 +54,13 @@
         "y": 0.6693097484941416
       },
       "prevControl": {
+<<<<<<< Updated upstream
         "x": 2.9207113584035787,
         "y": 1.2829886161640442
+=======
+        "x": 2.606087891274533,
+        "y": 1.3630499282422042
+>>>>>>> Stashed changes
       },
       "nextControl": null,
       "isLocked": false,

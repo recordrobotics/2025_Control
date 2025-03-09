@@ -8,8 +8,13 @@
       },
       "prevControl": null,
       "nextControl": {
+<<<<<<< Updated upstream
         "x": 6.1480849666574935,
         "y": 5.494053845215894
+=======
+        "x": 6.011085723059951,
+        "y": 5.907611694361624
+>>>>>>> Stashed changes
       },
       "isLocked": false,
       "linkedName": "StartBargeLeft"
@@ -36,8 +41,13 @@
         "y": 5.299803062806237
       },
       "prevControl": {
+<<<<<<< Updated upstream
         "x": 5.683780339838002,
         "y": 5.353483319783789
+=======
+        "x": 6.0154498434426555,
+        "y": 5.862689943839031
+>>>>>>> Stashed changes
       },
       "nextControl": null,
       "isLocked": false,
@@ -50,7 +60,11 @@
   "eventMarkers": [
     {
       "name": "ElevatorL4",
+<<<<<<< Updated upstream
       "waypointRelativePos": 0.5,
+=======
+      "waypointRelativePos": 0.25,
+>>>>>>> Stashed changes
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
