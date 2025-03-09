@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.60875,
-        "y": 0.7002499999999998
+        "x": 1.541342865764005,
+        "y": 0.6693097484941416
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.2499254760381024,
-        "y": 1.240533816917336
+        "x": 2.1825183418021075,
+        "y": 1.209593565411478
       },
       "isLocked": false,
       "linkedName": "SourceRightOuter"
@@ -17,11 +17,11 @@
     {
       "anchor": {
         "x": 5.7593371,
-        "y": 4.385950800000001
+        "y": 4.3739508
       },
       "prevControl": {
         "x": 7.371999999999999,
-        "y": 2.9380598988000006
+        "y": 2.9260598988
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 143.25588871521674
+    "rotation": 144.11786275379518
   },
   "useDefaultConstraints": true
 }
