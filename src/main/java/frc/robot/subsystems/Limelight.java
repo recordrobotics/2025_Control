@@ -2,8 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 
-import org.littletonrobotics.junction.AutoLogOutput;
-
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -18,6 +16,7 @@ import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
+import org.littletonrobotics.junction.AutoLogOutput;
 
 public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private int numTags = 0;
@@ -56,7 +55,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
     numTags = measurement.tagCount;
 
-    if(!DashboardUI.Autonomous.getForceMT1()){
+    if (!DashboardUI.Autonomous.getForceMT1()) {
       if (measurement.tagCount > 0 && SimpleMath.isPoseInField(measurement.pose)) {
         if (measurement.avgTagDist
             < Units.feetToMeters(7)) { // 7 feet is where the MT1 (yellow) gets bad wiggles
