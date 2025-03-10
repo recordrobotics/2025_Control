@@ -44,6 +44,8 @@ public abstract class AbstractControl {
 
   public abstract AngularVelocity getManualElevatorArmVelocity();
 
+  public abstract AutoScoreDirection getAutoScoreDirection();
+
   // Intake coral
   public abstract Boolean getCoralGroundIntake();
 
@@ -102,5 +104,11 @@ public abstract class AbstractControl {
       default:
         return angle;
     }
+  }
+
+  public enum AutoScoreDirection {
+    None,
+    Left,
+    Right
   }
 }

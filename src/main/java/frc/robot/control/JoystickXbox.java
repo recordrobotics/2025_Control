@@ -149,6 +149,17 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
+  public AutoScoreDirection getAutoScoreDirection() {
+    if (xbox_controller.getLeftX() < 0.5) {
+      return AutoScoreDirection.Left;
+    } else if (xbox_controller.getLeftX() > 0.5) {
+      return AutoScoreDirection.Right;
+    } else {
+      return AutoScoreDirection.None;
+    }
+  }
+
+  @Override
   public Boolean getCoralShoot() {
     return xbox_controller.getPOV() == 270;
   }

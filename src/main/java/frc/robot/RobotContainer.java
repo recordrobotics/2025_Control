@@ -32,12 +32,14 @@ import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
 import frc.robot.commands.VibrateXbox;
 import frc.robot.commands.auto.PlannedAuto;
+import frc.robot.commands.hybrid.AutoScore;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.commands.simulation.PlaceRandomGroundAlgae;
 import frc.robot.commands.simulation.PlaceRandomGroundCoral;
 import frc.robot.control.*;
+import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.CoralIntake.IntakeArmStates;
@@ -274,7 +276,21 @@ public class RobotContainer {
         .toggleOnTrue(new BargeScore());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(Align.create(0.01, 0.05, false)); // TODO: make correct and units
+        .whileTrue(Align.create(0.01, 0.05, false));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+        .and(
+            () ->
+                DashboardUI.Overview.getControl().getAutoScoreDirection()
+                    == AutoScoreDirection.Left)
+        .onTrue(new AutoScore(AutoScoreDirection.Left));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+        .and(
+            () ->
+                DashboardUI.Overview.getControl().getAutoScoreDirection()
+                    == AutoScoreDirection.Right)
+        .onTrue(new AutoScore(AutoScoreDirection.Right));
 
     // Simulation control commands
     if (Constants.RobotState.getMode() == Mode.SIM) {
