@@ -316,6 +316,76 @@ public final class Constants {
       }
       return closest;
     }
+
+    public static final RobotAlignPose[] leftReefPoses = {
+      RobotAlignPose.BA,
+      RobotAlignPose.BC,
+      RobotAlignPose.BF,
+      RobotAlignPose.BH,
+      RobotAlignPose.BJ,
+      RobotAlignPose.BK,
+      RobotAlignPose.RA,
+      RobotAlignPose.RC,
+      RobotAlignPose.RF,
+      RobotAlignPose.RH,
+      RobotAlignPose.RJ,
+      RobotAlignPose.RK
+    };
+
+    public static final RobotAlignPose[] rightReefPoses = {
+      RobotAlignPose.BB,
+      RobotAlignPose.BD,
+      RobotAlignPose.BE,
+      RobotAlignPose.BG,
+      RobotAlignPose.BI,
+      RobotAlignPose.BL,
+      RobotAlignPose.RB,
+      RobotAlignPose.RD,
+      RobotAlignPose.RE,
+      RobotAlignPose.RG,
+      RobotAlignPose.RI,
+      RobotAlignPose.RL
+    };
+
+    public static final RobotAlignPose[] reefPoses = {
+      RobotAlignPose.BA,
+      RobotAlignPose.BB,
+      RobotAlignPose.BC,
+      RobotAlignPose.BD,
+      RobotAlignPose.BE,
+      RobotAlignPose.BF,
+      RobotAlignPose.BG,
+      RobotAlignPose.BH,
+      RobotAlignPose.BI,
+      RobotAlignPose.BJ,
+      RobotAlignPose.BL,
+      RobotAlignPose.BK,
+      RobotAlignPose.RA,
+      RobotAlignPose.RB,
+      RobotAlignPose.RC,
+      RobotAlignPose.RD,
+      RobotAlignPose.RE,
+      RobotAlignPose.RF,
+      RobotAlignPose.RG,
+      RobotAlignPose.RH,
+      RobotAlignPose.RI,
+      RobotAlignPose.RJ,
+      RobotAlignPose.RL,
+      RobotAlignPose.RK
+    };
+
+    public static RobotAlignPose closestReefTo(Pose2d pose, double maxDistance) {
+      RobotAlignPose closest = null;
+      double closestDistance = Double.MAX_VALUE;
+      for (RobotAlignPose align : reefPoses) {
+        double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
+        if (distance <= maxDistance && distance < closestDistance) {
+          closest = align;
+          closestDistance = distance;
+        }
+      }
+      return closest;
+    }
   }
 
   public enum ProcessorPose {

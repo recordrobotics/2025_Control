@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
+import frc.robot.Constants.RobotAlignPose;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.Align;
 import frc.robot.commands.BargeScore;
@@ -208,7 +209,12 @@ public class RobotContainer {
             DashboardUI.Overview.getControl().getManualOverride()
                 || coralShooter.coralReady()
                 || !(elevator.getNearestHeight() == ElevatorHeight.INTAKE
-                    || elevator.getNearestHeight() == ElevatorHeight.BOTTOM);
+                    || elevator.getNearestHeight() == ElevatorHeight.BOTTOM)
+                || !((elevator.getNearestHeight() == ElevatorHeight.L4
+                        || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE)
+                    && RobotAlignPose.closestReefTo(
+                            RobotContainer.poseTracker.getEstimatedPosition(), 0.2)
+                        != null);
 
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
         .and(elevatorLock)

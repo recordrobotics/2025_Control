@@ -29,36 +29,6 @@ public class Align {
         Set.of(RobotContainer.drivetrain));
   }
 
-  private static final RobotAlignPose[] leftReefPoses = {
-    RobotAlignPose.BA,
-    RobotAlignPose.BC,
-    RobotAlignPose.BF,
-    RobotAlignPose.BH,
-    RobotAlignPose.BJ,
-    RobotAlignPose.BK,
-    RobotAlignPose.RA,
-    RobotAlignPose.RC,
-    RobotAlignPose.RF,
-    RobotAlignPose.RH,
-    RobotAlignPose.RJ,
-    RobotAlignPose.RK
-  };
-
-  private static final RobotAlignPose[] rightReefPoses = {
-    RobotAlignPose.BB,
-    RobotAlignPose.BD,
-    RobotAlignPose.BE,
-    RobotAlignPose.BG,
-    RobotAlignPose.BI,
-    RobotAlignPose.BL,
-    RobotAlignPose.RB,
-    RobotAlignPose.RD,
-    RobotAlignPose.RE,
-    RobotAlignPose.RG,
-    RobotAlignPose.RI,
-    RobotAlignPose.RL
-  };
-
   public static Command createForReef(
       AutoScoreDirection direction, double tolerance, double rotTol) {
     return new DeferredCommand(
@@ -69,7 +39,9 @@ public class Align {
           RobotAlignPose closest = null;
           double closestDistance = Double.MAX_VALUE;
           for (RobotAlignPose align :
-              direction == AutoScoreDirection.Left ? leftReefPoses : rightReefPoses) {
+              direction == AutoScoreDirection.Left
+                  ? RobotAlignPose.leftReefPoses
+                  : RobotAlignPose.rightReefPoses) {
             double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
             if (distance <= maxDistance && distance < closestDistance) {
               closest = align;
@@ -94,7 +66,9 @@ public class Align {
           RobotAlignPose closest = null;
           double closestDistance = Double.MAX_VALUE;
           for (RobotAlignPose align :
-              direction == AutoScoreDirection.Left ? leftReefPoses : rightReefPoses) {
+              direction == AutoScoreDirection.Left
+                  ? RobotAlignPose.leftReefPoses
+                  : RobotAlignPose.rightReefPoses) {
             double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
             if (distance <= maxDistance && distance < closestDistance) {
               closest = align;
