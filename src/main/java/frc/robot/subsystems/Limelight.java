@@ -72,7 +72,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
             .pose
             .getTranslation()
             .getDistance(RobotContainer.poseTracker.getEstimatedPosition().getTranslation())
-        > 2) {
+        > 5) {
       confidence = 0;
     }
 
