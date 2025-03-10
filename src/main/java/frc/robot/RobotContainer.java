@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.networktables.NetworkTableInstance;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -29,6 +30,7 @@ import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.VibrateXbox;
 import frc.robot.commands.auto.PlannedAuto;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
@@ -54,6 +56,7 @@ import frc.robot.subsystems.io.stub.ClimberStub;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import java.util.function.BooleanSupplier;
 import org.photonvision.PhotonCamera;
 
 /**
@@ -198,14 +201,32 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Autonomous.getLimelightRotation())
         .onTrue(new InstantCommand(poseTracker::resetToLimelight).ignoringDisable(true));
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL1())
-        .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L1));
+    BooleanSupplier elevatorLock =
+        () ->
+            DashboardUI.Overview.getControl().getManualOverride()
+                || coralShooter.coralReady()
+                || !(elevator.getNearestHeight() == ElevatorHeight.INTAKE
+                    || elevator.getNearestHeight() == ElevatorHeight.BOTTOM);
+
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L2));
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL3())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L3));
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L4));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL3())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralShoot()).onTrue(new CoralShoot());
 

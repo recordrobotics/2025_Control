@@ -106,13 +106,13 @@ public class JoystickXboxKeypad extends AbstractControl {
   }
 
   @Override
-  public void vibrate(double value) {
-    xbox_controller.setRumble(RumbleType.kBothRumble, value);
+  public void vibrate(RumbleType type, double value) {
+    xbox_controller.setRumble(type, value);
   }
 
   @Override
-  public Boolean getElevatorL1() {
-    return keypad.getND();
+  public Boolean getAutoScore() {
+    return xbox_controller.getAButton();
   }
 
   @Override
@@ -156,6 +156,11 @@ public class JoystickXboxKeypad extends AbstractControl {
   }
 
   @Override
+  public Boolean getManualOverride() {
+    return xbox_controller.getPOV() == 0;
+  }
+
+  @Override
   public Boolean getGroundAlgae() {
     return xbox_controller.getRightBumperButton();
   }
@@ -172,7 +177,7 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   @Override
   public Boolean getBargeAlgae() {
-    return xbox_controller.getRawButton(7);
+    return xbox_controller.getPOV() == 0 && xbox_controller.getRawButton(7);
   }
 
   @Override
@@ -185,5 +190,10 @@ public class JoystickXboxKeypad extends AbstractControl {
   public AngularVelocity getManualElevatorArmVelocity() {
     double rightY = MathUtil.applyDeadband(-xbox_controller.getRightY(), 0.1);
     return Degrees.of(180).per(Seconds).times(rightY * Math.abs(rightY));
+  }
+
+  @Override
+  public Boolean getClimb() {
+    return xbox_controller.getPOV() != 0 && xbox_controller.getRawButton(7);
   }
 }

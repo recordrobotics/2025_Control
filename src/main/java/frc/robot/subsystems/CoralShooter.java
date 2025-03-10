@@ -176,6 +176,10 @@ public class CoralShooter extends KillableSubsystem
     return positionPid.atGoal();
   }
 
+  public boolean coralReady() {
+    return hasCoral() && positionAtGoal();
+  }
+
   private double lastSpeed = 0;
 
   @Override
