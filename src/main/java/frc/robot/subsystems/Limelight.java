@@ -19,11 +19,15 @@ import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
-  private int numTags = 0;
+  @AutoLogOutput private int numTags = 0;
+
   private double confidence = 0;
-  private boolean hasVision = false;
+
+  @AutoLogOutput private boolean hasVision = false;
   private String name = Constants.Limelight.LIMELIGHT_NAME;
-  private boolean limelightConnected = false;
+
+  @AutoLogOutput private boolean limelightConnected = false;
+
   private double currentConfidence = 9999999; // large number means less confident
   private PoseEstimate currentEstimate = new PoseEstimate();
 
