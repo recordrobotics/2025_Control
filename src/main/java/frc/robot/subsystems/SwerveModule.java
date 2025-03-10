@@ -296,7 +296,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     // Optimize the reference state to avoid spinning further than 90 degrees
     desiredState.optimize(getTurnWheelRotation2d());
 
-    Logger.recordOutput("DesiredState_" + turningMotorChannel, desiredState.angle.getRotations());
+    //Logger.recordOutput("DesiredState_" + turningMotorChannel, desiredState.angle.getRotations());
 
     m_goal =
         new TrapezoidProfile.State(
@@ -331,9 +331,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     io.setDriveMotorVoltage(nextDriveVoltage);
 
     // Get next setpoint from profile.
-    Logger.recordOutput("setpoint_" + turningMotorChannel, m_setpoint.position);
+    //Logger.recordOutput("setpoint_" + turningMotorChannel, m_setpoint.position);
     m_setpoint = m_profile.calculate(Constants.Swerve.kDt, m_setpoint, m_goal);
-    Logger.recordOutput("setpoint_after_" + turningMotorChannel, m_setpoint.position);
+    //Logger.recordOutput("setpoint_after_" + turningMotorChannel, m_setpoint.position);
 
     // Set setpoint of the linear system (position m, velocity m/s).
     turnLoop.setNextR(VecBuilder.fill(m_setpoint.position, m_setpoint.velocity));
@@ -346,20 +346,20 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     double nextturnVoltage = turnLoop.getU(0) + turn_kS * Math.signum(m_setpoint.velocity);
 
-    Logger.recordOutput("targetvoltage_" + turningMotorChannel, nextturnVoltage);
+    //Logger.recordOutput("targetvoltage_" + turningMotorChannel, nextturnVoltage);
 
     io.setTurnMotorVoltage(nextturnVoltage);
 
-    Logger.recordOutput("GoalPos_" + turningMotorChannel, m_goal.position);
+    //Logger.recordOutput("GoalPos_" + turningMotorChannel, m_goal.position);
 
-    Logger.recordOutput("TargetVel_" + turningMotorChannel, m_setpoint.velocity);
-    Logger.recordOutput("TargetPos_" + turningMotorChannel, m_setpoint.position);
-    Logger.recordOutput("CurrentVel_" + turningMotorChannel, getTurnWheelVelocity());
-    Logger.recordOutput(
-        "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
+    //Logger.recordOutput("TargetVel_" + turningMotorChannel, m_setpoint.velocity);
+    //Logger.recordOutput("TargetPos_" + turningMotorChannel, m_setpoint.position);
+    //Logger.recordOutput("CurrentVel_" + turningMotorChannel, getTurnWheelVelocity());
+    // Logger.recordOutput(
+    //     "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
 
-    Logger.recordOutput("TargetVel_" + driveMotorChannel, targetDriveVelocity);
-    Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
+    //Logger.recordOutput("TargetVel_" + driveMotorChannel, targetDriveVelocity);
+    //Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
   }
 
   public void simulationPeriodic() {

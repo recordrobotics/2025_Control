@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -179,10 +181,12 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
   }
 
+  @AutoLogOutput
   public PoseEstimate getPoseEstimate() {
     return currentEstimate;
   }
 
+  @AutoLogOutput
   public double getConfidence() {
     return currentConfidence;
   }
