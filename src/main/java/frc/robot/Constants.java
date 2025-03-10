@@ -153,8 +153,8 @@ public final class Constants {
     public static final double OUT_GROUND_SPEED = 8.8;
     public static final double OUT_REEF_SPEED = -2.8;
     public static final double SHOOT_BARGE_SPEED = 16;
-    public static final double INTAKE_GROUND_SPEED = -2.23;
-    public static final double INTAKE_REEF_SPEED = 2.5;
+    public static final double INTAKE_GROUND_SPEED = -4.2;
+    public static final double INTAKE_REEF_SPEED = 4.5;
     public static final double HOLD_GROUND_SPEED = -0.15;
     public static final double HOLD_REEF_SPEED = 0.3;
 
