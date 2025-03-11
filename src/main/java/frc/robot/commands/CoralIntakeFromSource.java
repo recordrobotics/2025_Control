@@ -41,8 +41,8 @@ public class CoralIntakeFromSource extends SequentialCommandGroup {
               RobotContainer.coralIntake.toggle(CoralIntakeStates.REVERSE);
             },
             RobotContainer.coralIntake),
-        new InstantCommand(
-            () -> RobotContainer.elevator.moveTo(ElevatorHeight.INTAKE), RobotContainer.elevator),
+        // start moving elevator to intake position
+        new ElevatorMove(ElevatorHeight.INTAKE).asProxy(),
         new InstantCommand(
             () -> RobotContainer.coralShooter.toggle(CoralShooterStates.INTAKE),
             RobotContainer.coralShooter),
