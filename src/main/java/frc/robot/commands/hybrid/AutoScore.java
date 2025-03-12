@@ -16,7 +16,8 @@ public class AutoScore extends SequentialCommandGroup {
     addCommands(
         Align.createForReef(direction, 0.01, 0.05).withTimeout(1.0),
         new CoralShoot(),
-        Align.createForReefBackaway(direction, 0.01, 0.05).withTimeout(1.0),
-        new ElevatorMove(ElevatorHeight.BOTTOM));
+        Align.createForReefBackaway(direction, 0.01, 0.05)
+            .withTimeout(1.0)
+            .andThen(new ElevatorMove(ElevatorHeight.BOTTOM)));
   }
 }
