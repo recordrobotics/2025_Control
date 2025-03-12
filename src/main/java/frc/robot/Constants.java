@@ -826,7 +826,7 @@ public final class Constants {
     public static final double kS = 0.076647;
 
     public static final double STARTING_HEIGHT = 0;
-    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
+    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(2.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -928,7 +928,7 @@ public final class Constants {
     public static final double ARM_UP = Units.degreesToRadians(92.82);
     public static final double ARM_INTAKE = Units.degreesToRadians(80);
     public static final double ARM_SCORE_L1 = Units.degreesToRadians(10.06);
-    public static final double ARM_DOWN = -0.98;
+    public static final double ARM_DOWN = -0.96;
     public static final double ARM_START_POS = Units.degreesToRadians(92.82);
 
     public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18
