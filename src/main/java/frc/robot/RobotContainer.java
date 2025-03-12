@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
@@ -205,16 +206,32 @@ public class RobotContainer {
         .onTrue(new InstantCommand(poseTracker::resetToLimelight).ignoringDisable(true));
 
     BooleanSupplier elevatorLock =
-        () ->
-            DashboardUI.Overview.getControl().getManualOverride()
-                || coralShooter.coralReady()
-                || !(elevator.getNearestHeight() == ElevatorHeight.INTAKE
-                    || elevator.getNearestHeight() == ElevatorHeight.BOTTOM)
-                || !((elevator.getNearestHeight() == ElevatorHeight.L4
-                        || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE)
-                    && RobotAlignPose.closestReefTo(
-                            RobotContainer.poseTracker.getEstimatedPosition(), 0.2)
-                        != null);
+        () -> {
+          boolean atBottom =
+              elevator.getNearestHeight() == ElevatorHeight.INTAKE
+                  || elevator.getNearestHeight() == ElevatorHeight.BOTTOM;
+          boolean atL4 =
+              elevator.getNearestHeight() == ElevatorHeight.L4
+                  || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE;
+
+          Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
+          RobotAlignPose closestReef = RobotAlignPose.closestReefTo(robot, 0.2);
+
+          boolean nearReef =
+              closestReef != null
+                  && Math.abs(
+                          closestReef
+                              .getPose()
+                              .getRotation()
+                              .minus(robot.getRotation())
+                              .getDegrees())
+                      < 80;
+
+          return DashboardUI.Overview.getControl().getManualOverride()
+              || (atBottom && coralShooter.coralReady())
+              || (atL4 && !nearReef)
+              || (!atBottom && !atL4);
+        };
 
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
         .and(elevatorLock)
