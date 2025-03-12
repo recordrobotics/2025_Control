@@ -100,6 +100,9 @@ public class Robot extends LoggedRobot {
 
     // Elastic layout webserver
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    // MAKE SURE FIRST CALL TO ELASTIC IS NOT IN TELEOP OR AUTO INIT!!
+    DashboardUI.Autonomous.switchTo();
   }
 
   /**
