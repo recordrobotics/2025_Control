@@ -174,7 +174,7 @@ public final class Constants {
     HIGH_REEF_ALGAE(0.916, Units.degreesToRadians(-40.26)),
     L4(1.309, Units.degreesToRadians(64.99)),
     BOTTOM(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-90)),
-    GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-28)),
+    GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-36)),
     GROUND_ALGAE_PROCESSOR(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(60.66)),
     PROCESSOR_SCORE(0.04, Units.degreesToRadians(-60)),
     BARGE_ALAGAE(1.309, Units.degreesToRadians(110));
