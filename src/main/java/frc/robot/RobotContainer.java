@@ -19,7 +19,6 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.RobotAlignPose;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.Align;
-import frc.robot.commands.BargeScore;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUp;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -242,6 +241,9 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
         .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L4));
+    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
+        .and(elevatorLock)
+        .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.BARGE_ALAGAE));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
         .and(() -> !elevatorLock.getAsBoolean())
@@ -250,6 +252,9 @@ public class RobotContainer {
         .and(() -> !elevatorLock.getAsBoolean())
         .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
         .and(() -> !elevatorLock.getAsBoolean())
         .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
 
@@ -294,9 +299,6 @@ public class RobotContainer {
         .toggleOnTrue(new ElevatorAlgaeToggled(ElevatorHeight.HIGH_REEF_ALGAE));
     new Trigger(() -> DashboardUI.Overview.getControl().getScoreAlgae())
         .onTrue(new ProcessorScore());
-
-    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
-        .toggleOnTrue(new BargeScore());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(Align.create(0.01, 0.05, false));

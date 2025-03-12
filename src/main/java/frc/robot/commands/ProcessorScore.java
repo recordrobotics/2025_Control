@@ -14,7 +14,7 @@ import frc.robot.subsystems.AlgaeGrabber.AlgaeGrabberStates;
 public class ProcessorScore extends SequentialCommandGroup {
 
   public ProcessorScore() {
-    addRequirements(RobotContainer.algaeGrabber, RobotContainer.elevatorArm);
+    addRequirements(RobotContainer.algaeGrabber);
 
     addCommands(
         new ScheduleCommand(
@@ -29,6 +29,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                 .onlyWhile(this::isScheduled)),
         Commands.either(
             new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR)
+                .asProxy()
                 .andThen(
                     new InstantCommand(
                         () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OUT_GROUND),
@@ -40,20 +41,33 @@ public class ProcessorScore extends SequentialCommandGroup {
                     new InstantCommand(
                         () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OFF),
                         RobotContainer.algaeGrabber))
-                .andThen(new ElevatorMove(ElevatorHeight.BOTTOM)),
-            new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE)
-                .andThen(
-                    new InstantCommand(
-                        () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OUT_REEF),
-                        RobotContainer.algaeGrabber))
-                .andThen(
-                    new AlgaeGrabberToProcessor()
-                        .simulateFor(new WaitCommand(Constants.AlgaeGrabber.SHOOT_TIME_REEF)))
-                .andThen(
-                    new InstantCommand(
-                        () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OFF),
-                        RobotContainer.algaeGrabber))
-                .andThen(new ElevatorMove(ElevatorHeight.BOTTOM)),
+                .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()),
+            Commands.either(
+                new InstantCommand(
+                        () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.SHOOT_BARGE),
+                        RobotContainer.algaeGrabber)
+                    .andThen(
+                        new AlgaeGrabberToProcessor()
+                            .simulateFor(new WaitCommand(Constants.AlgaeGrabber.SHOOT_TIME_BARGE)))
+                    .andThen(
+                        new InstantCommand(
+                            () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OFF),
+                            RobotContainer.algaeGrabber)),
+                new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE)
+                    .asProxy()
+                    .andThen(
+                        new InstantCommand(
+                            () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OUT_REEF),
+                            RobotContainer.algaeGrabber))
+                    .andThen(
+                        new AlgaeGrabberToProcessor()
+                            .simulateFor(new WaitCommand(Constants.AlgaeGrabber.SHOOT_TIME_REEF)))
+                    .andThen(
+                        new InstantCommand(
+                            () -> RobotContainer.algaeGrabber.toggle(AlgaeGrabberStates.OFF),
+                            RobotContainer.algaeGrabber))
+                    .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()),
+                () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE),
             () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE),
         new ScheduleCommand(
             RobotContainer.lights
