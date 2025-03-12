@@ -1,5 +1,7 @@
 package frc.robot.commands.hybrid;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,7 +16,11 @@ public class AlignToPose extends Command {
   PIDController rotPID = new PIDController(4, 0, 0.05);
   boolean doTranslation;
 
+  private Pose2d targetPose;
+
   public AlignToPose(Pose2d pose, double tolerance, double rotTol, boolean doTranslation) {
+    this.targetPose = pose;
+    
     if (doTranslation) {
       xPID.setTolerance(tolerance);
       yPID.setTolerance(tolerance);
@@ -43,6 +49,8 @@ public class AlignToPose extends Command {
     double x = xPID.calculate(pose.getX());
     double y = yPID.calculate(pose.getY());
     double rot = rotPID.calculate(pose.getRotation().getRadians());
+
+    Logger.recordOutput("AlignToPose/Target", targetPose);
 
     // rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
 
