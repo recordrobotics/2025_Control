@@ -93,7 +93,7 @@ public class JoystickXboxKeypad extends AbstractControl {
   }
 
   public Boolean getElevatorRelativeDrive() {
-    return joystick.getRawButton(8);
+    return joystick.getRawButton(8) || joystick.getRawButton(2);
   }
 
   public Boolean getCoralIntakeRelativeDrive() {

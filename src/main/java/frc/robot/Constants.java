@@ -826,7 +826,7 @@ public final class Constants {
     public static final double kS = 0.076647;
 
     public static final double STARTING_HEIGHT = 0;
-    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(4.25);
+    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(2.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);

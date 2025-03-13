@@ -26,7 +26,7 @@ public class CoralIntakeMoveL1 extends SequentialCommandGroup {
         new InstantCommand(
             () -> {
               RobotContainer.coralIntake.toggleArm(IntakeArmStates.SCORE_L1);
-              RobotContainer.coralIntake.toggle(CoralIntakeStates.OFF);
+              RobotContainer.coralIntake.toggle(CoralIntakeStates.INTAKE);
             },
             RobotContainer.coralIntake),
         new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()));
