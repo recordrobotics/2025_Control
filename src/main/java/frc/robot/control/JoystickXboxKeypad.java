@@ -28,12 +28,28 @@ public class JoystickXboxKeypad extends AbstractControl {
   @Override
   public DriveCommandData getDriveCommandData() {
     // Gets information needed to drive
+
+    var xy = getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive()));
+
+    double x = xy.getFirst() * getDirectionalSpeedLevel();
+    double y = xy.getSecond() * getDirectionalSpeedLevel();
+
+    if (getCoralIntakeRelativeDrive()) {
+      y = -y;
+    }
+
+    if (getElevatorRelativeDrive()) {
+      double temp = y;
+      y = -x;
+      x = -temp;
+    }
+
     DriveCommandData driveCommandData =
         new DriveCommandData(
-            getXY().getFirst() * getDirectionalSpeedLevel(),
-            getXY().getSecond() * getDirectionalSpeedLevel(),
+            x,
+            y,
             getSpin() * getSpinSpeedLevel(),
-            true);
+            !(getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()));
     // Returns
     return driveCommandData;
   }
@@ -42,7 +58,15 @@ public class JoystickXboxKeypad extends AbstractControl {
     return joystick.getRawButton(7) || joystick.getRawButton(9) || joystick.getRawButton(11);
   }
 
-  public Pair<Double, Double> getXY() {
+  public Boolean getElevatorRelativeDrive() {
+    return joystick.getRawButton(8) || joystick.getRawButton(2);
+  }
+
+  public Boolean getCoralIntakeRelativeDrive() {
+    return joystick.getRawButton(10);
+  }
+
+  public Pair<Double, Double> getXY(boolean orient) {
     double X =
         SimpleMath.ApplyThresholdAndSensitivity(
             joystick.getX(),
@@ -53,7 +77,9 @@ public class JoystickXboxKeypad extends AbstractControl {
             joystick.getY(),
             Constants.Control.JOYSTICK_Y_THRESHOLD,
             Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
-    return super.OrientXY(new Pair<Double, Double>(X, Y));
+
+    if (orient) return super.OrientXY(new Pair<Double, Double>(X, Y));
+    else return new Pair<Double, Double>(X, Y);
   }
 
   public Double getSpin() {
@@ -64,24 +90,42 @@ public class JoystickXboxKeypad extends AbstractControl {
         Constants.Control.JOYSTICK_SPIN_SENSITIVITY);
   }
 
+  public Boolean getHalfSpeed() {
+    return joystick.getRawButton(1);
+  }
+
   public Double getDirectionalSpeedLevel() {
     // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-    return SimpleMath.Remap(
-        joystick.getRawAxis(3),
-        1,
-        -1,
-        Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
-        Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
+    double speed =
+        SimpleMath.Remap(
+            joystick.getRawAxis(3),
+            1,
+            -1,
+            Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
+            Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
+
+    if (getHalfSpeed()) {
+      speed /= 2;
+    }
+
+    return speed;
   }
 
   public Double getSpinSpeedLevel() {
     // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-    return SimpleMath.Remap(
-        joystick.getRawAxis(3),
-        1,
-        -1,
-        Constants.Control.SPIN_SPEED_METER_LOW,
-        Constants.Control.SPIN_SPEED_METER_HIGH);
+    double speed =
+        SimpleMath.Remap(
+            joystick.getRawAxis(3),
+            1,
+            -1,
+            Constants.Control.SPIN_SPEED_METER_LOW,
+            Constants.Control.SPIN_SPEED_METER_HIGH);
+
+    if (getHalfSpeed()) {
+      speed /= 2;
+    }
+
+    return speed;
   }
 
   @Override
@@ -90,14 +134,6 @@ public class JoystickXboxKeypad extends AbstractControl {
         || joystick.getRawButtonPressed(4)
         || joystick.getRawButtonPressed(5)
         || joystick.getRawButtonPressed(6);
-  }
-
-  public Boolean getElevatorRelativeDrive() {
-    return joystick.getRawButton(8) || joystick.getRawButton(2);
-  }
-
-  public Boolean getCoralIntakeRelativeDrive() {
-    return joystick.getRawButton(10);
   }
 
   @Override
