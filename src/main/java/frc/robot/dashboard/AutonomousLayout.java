@@ -1,6 +1,7 @@
 package frc.robot.dashboard;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -8,10 +9,13 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldStartingLocation;
+import frc.robot.commands.auto.BargeLeftAuto;
 import frc.robot.utils.libraries.Elastic;
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class AutonomousLayout extends AbstractLayout {
@@ -40,6 +44,11 @@ public class AutonomousLayout extends AbstractLayout {
 
   public void setupAutoChooser() {
     autoChooser = new LoggedDashboardChooser<>("Auto Code", AutoBuilder.buildAutoChooser());
+    try {
+      autoChooser.addOption("CMD_BargeLeftOuter", new BargeLeftAuto());
+    } catch (FileVersionException | IOException | ParseException e) {
+      e.printStackTrace();
+    }
   }
 
   public void setRobotPose(Pose2d pose) {
