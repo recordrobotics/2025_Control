@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.ModuleConstants;
-import org.littletonrobotics.junction.Logger;
 
 public class SwerveModuleSim implements SwerveModuleIO {
 
@@ -107,7 +106,6 @@ public class SwerveModuleSim implements SwerveModuleIO {
 
   @Override
   public void setTurnMotorVoltage(double newValue) {
-    Logger.recordOutput("setTurnMotorVoltage_" + m_turningMotor.getDeviceID(), newValue);
     m_turningMotor.setVoltage(newValue);
   }
 
@@ -204,8 +202,6 @@ public class SwerveModuleSim implements SwerveModuleIO {
 
     var driveMotorVoltage = m_driveMotorSim.getMotorVoltageMeasure();
     var turnMotorVoltage = m_turningMotorSim.getMotorVoltageMeasure();
-
-    Logger.recordOutput("SwerveSimTurnVoltage_" + m_turningMotor.getDeviceID(), turnMotorVoltage);
 
     dcDriveMotorSim.setInputVoltage(driveMotorVoltage.in(Volts));
     dcDriveMotorSim.update(periodicDt);
