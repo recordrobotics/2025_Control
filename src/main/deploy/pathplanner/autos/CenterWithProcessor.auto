@@ -31,45 +31,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "ReefHToAlgaeStart"
+            "pathName": "ReefHtoReefGH"
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "AlgaeStartToAlgaeH"
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "Stop"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "AlgaeL2"
-                }
-              }
-            ]
+            "name": "Stop"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "ReefHToProcessor"
+            "pathName": "ReefGHToProcessor"
           }
         },
         {
