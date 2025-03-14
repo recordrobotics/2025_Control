@@ -111,12 +111,17 @@ public class CoralIntakeFromSourceSim extends SequentialCommandGroup implements 
             }));
   }
 
+  //  private int counter = 0;
+
   @Override
   public Command simulateFor(Command command) {
     if (Constants.RobotState.getMode() == Mode.REAL) {
       return command;
     } else {
-      return command.alongWith(this);
+      return command.alongWith(
+          this
+          // .onlyIf(()->counter++ > 2)
+          );
     }
   }
 }

@@ -5,6 +5,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.RobotContainer;
 import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -21,17 +22,51 @@ public class BargeLeftAuto extends SequentialCommandGroup {
         CommandUtils.finishOnInterrupt(Align.create(0.01, 0.05, true).withTimeout(1.0)),
         new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(1.0)),
-        AutoBuilder.followPath(PathPlannerPath.fromPathFile("ReefJToSourceLeftOuter")),
-        new InstantCommand(() -> RobotContainer.drivetrain.kill()),
-        CommandUtils.finishOnInterrupt(new CoralIntakeFromSource(false).withTimeout(1.0)),
-        AutoBuilder.followPath(PathPlannerPath.fromPathFile("SourceLeftOuterToReefK")),
+        new CoralIntakeFromSource(false)
+            .withDeadline(
+                AutoBuilder.followPath(
+                        PathPlannerPath.fromPathFile("ReefJToSourceLeftOuterNoElevator"))
+                    .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
+                    .andThen(new WaitCommand(0.2))
+                    .andThen(
+                        AutoBuilder.followPath(
+                            PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart")))),
+        new CoralIntakeFromSource(false)
+            .withDeadline(
+                AutoBuilder.followPath(
+                        PathPlannerPath.fromPathFile("ElevatorStartToSourceLeftOuter"))
+                    .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
+                    .andThen(new WaitCommand(0.2))
+                    .andThen(
+                        AutoBuilder.followPath(
+                            PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart"))))
+            .repeatedly()
+            .onlyWhile(() -> !RobotContainer.coralShooter.hasCoral()),
+        AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefK")),
         CommandUtils.finishOnInterrupt(Align.create(0.01, 0.05, true).withTimeout(1.0)),
         new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(1.0)),
-        AutoBuilder.followPath(PathPlannerPath.fromPathFile("ReefKToSourceLeftOuter")),
-        new InstantCommand(() -> RobotContainer.drivetrain.kill()),
-        CommandUtils.finishOnInterrupt(new CoralIntakeFromSource(false).withTimeout(1.0)),
-        AutoBuilder.followPath(PathPlannerPath.fromPathFile("SourceLeftOuterToReefL")),
+        new CoralIntakeFromSource(false)
+            .withDeadline(
+                AutoBuilder.followPath(
+                        PathPlannerPath.fromPathFile("ReefKToSourceLeftOuterNoElevator"))
+                    .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
+                    .andThen(new WaitCommand(0.2))
+                    .andThen(
+                        AutoBuilder.followPath(
+                            PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart")))),
+        new CoralIntakeFromSource(false)
+            .withDeadline(
+                AutoBuilder.followPath(
+                        PathPlannerPath.fromPathFile("ElevatorStartToSourceLeftOuter"))
+                    .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
+                    .andThen(new WaitCommand(0.2))
+                    .andThen(
+                        AutoBuilder.followPath(
+                            PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart"))))
+            .repeatedly()
+            .onlyWhile(() -> !RobotContainer.coralShooter.hasCoral()),
+        AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefL")),
         CommandUtils.finishOnInterrupt(Align.create(0.01, 0.05, true).withTimeout(1.0)),
         new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(1.0)),

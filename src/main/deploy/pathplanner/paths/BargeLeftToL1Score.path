@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.145,
-        "y": 1.909
+        "x": 6.96064299353445,
+        "y": 1.939
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.6735958090143255,
-        "y": 1.8991202366039404
+        "x": 6.489238802548776,
+        "y": 1.9291202366039404
       },
       "isLocked": false,
       "linkedName": "StartBargeRight"
@@ -60,7 +60,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 127.84708114089734
   },
   "useDefaultConstraints": false
 }
