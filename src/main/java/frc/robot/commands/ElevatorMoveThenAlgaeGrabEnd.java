@@ -27,11 +27,13 @@ public class ElevatorMoveThenAlgaeGrabEnd extends SequentialCommandGroup {
                 () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF),
                 RobotContainer.elevatorHead),
             RobotContainer.elevatorHead::hasAlgae),
-        withProxy ? Commands.either(
-                new ElevatorMove(ElevatorHeight.GROUND_ALGAE),
-                new ElevatorMove(ElevatorHeight.BOTTOM),
-                () -> targetHeight == ElevatorHeight.GROUND_ALGAE)
-            .asProxy() : Commands.either(
+        withProxy
+            ? Commands.either(
+                    new ElevatorMove(ElevatorHeight.GROUND_ALGAE),
+                    new ElevatorMove(ElevatorHeight.BOTTOM),
+                    () -> targetHeight == ElevatorHeight.GROUND_ALGAE)
+                .asProxy()
+            : Commands.either(
                 new ElevatorMove(ElevatorHeight.GROUND_ALGAE),
                 new ElevatorMove(ElevatorHeight.BOTTOM),
                 () -> targetHeight == ElevatorHeight.GROUND_ALGAE),
