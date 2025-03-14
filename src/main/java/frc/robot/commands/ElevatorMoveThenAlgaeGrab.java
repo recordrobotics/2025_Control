@@ -63,6 +63,8 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
 
   public static Command create(ElevatorHeight targetHeight, boolean withProxy) {
     var cmd = new ElevatorMoveThenAlgaeGrab(targetHeight, withProxy);
-    return cmd.handleInterrupt(cmd::handleInterrupt); // TODO WHAT?!?!?!?! ISN'T THIS DEFAULT BEHAVIOR OF COMMAND?!?!?!?!?! hahaha im going insane
+    return cmd.handleInterrupt(
+        cmd::handleInterrupt); // TODO WHAT?!?!?!?! ISN'T THIS DEFAULT BEHAVIOR OF
+    // COMMAND?!?!?!?!?! hahaha im going insane
   }
 }

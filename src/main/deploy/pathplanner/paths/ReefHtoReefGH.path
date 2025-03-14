@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.138651315791305,
-        "y": 4.4002467105251855
+        "x": 6.474000000000001,
+        "y": 4.3759999999999994
       },
       "isLocked": false,
       "linkedName": "ReefH"
@@ -20,8 +20,8 @@
         "y": 3.9079999999999995
       },
       "prevControl": {
-        "x": 6.12902960526499,
-        "y": 3.9095394736830804
+        "x": 6.4935,
+        "y": 3.9274999999999993
       },
       "nextControl": null,
       "isLocked": false,
@@ -34,7 +34,7 @@
   "eventMarkers": [
     {
       "name": "AlgaeL2",
-      "waypointRelativePos": 0.396029776674936,
+      "waypointRelativePos": 0.30272952853598245,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -46,7 +46,7 @@
   ],
   "globalConstraints": {
     "maxVelocity": 2.8,
-    "maxAcceleration": 1.0,
+    "maxAcceleration": 0.8,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
