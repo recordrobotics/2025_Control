@@ -10,7 +10,7 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
 
 public class ElevatorMoveThenAlgaeGrabEnd extends SequentialCommandGroup {
-  public ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight targetHeight) {
+  public ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight targetHeight, boolean withProxy) {
     addRequirements(RobotContainer.elevatorHead);
 
     addCommands(
@@ -27,11 +27,14 @@ public class ElevatorMoveThenAlgaeGrabEnd extends SequentialCommandGroup {
                 () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF),
                 RobotContainer.elevatorHead),
             RobotContainer.elevatorHead::hasAlgae),
-        Commands.either(
+        withProxy ? Commands.either(
                 new ElevatorMove(ElevatorHeight.GROUND_ALGAE),
                 new ElevatorMove(ElevatorHeight.BOTTOM),
                 () -> targetHeight == ElevatorHeight.GROUND_ALGAE)
-            .asProxy(),
+            .asProxy() : Commands.either(
+                new ElevatorMove(ElevatorHeight.GROUND_ALGAE),
+                new ElevatorMove(ElevatorHeight.BOTTOM),
+                () -> targetHeight == ElevatorHeight.GROUND_ALGAE),
         new ScheduleCommand(
             RobotContainer.lights
                 .elevator

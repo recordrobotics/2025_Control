@@ -15,7 +15,7 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
 
   private Command algaeGrabberLightsCommand;
 
-  private ElevatorMoveThenAlgaeGrab(ElevatorHeight targetHeight) {
+  private ElevatorMoveThenAlgaeGrab(ElevatorHeight targetHeight, boolean withProxy) {
     algaeGrabberLightsCommand =
         RobotContainer.lights.algaeGrabber.runPattern(Constants.Lights.PULSATING_ORANGE);
 
@@ -27,7 +27,7 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
                 .elevator
                 .runPattern(Constants.Lights.elevatorPattern)
                 .onlyWhile(this::isScheduled)),
-        new ElevatorMove(targetHeight).asProxy(),
+        withProxy ? new ElevatorMove(targetHeight).asProxy() : new ElevatorMove(targetHeight),
         new ScheduleCommand(algaeGrabberLightsCommand),
         new InstantCommand(
             () -> {
@@ -61,8 +61,8 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
     RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF);
   }
 
-  public static Command create(ElevatorHeight targetHeight) {
-    var cmd = new ElevatorMoveThenAlgaeGrab(targetHeight);
-    return cmd.handleInterrupt(cmd::handleInterrupt);
+  public static Command create(ElevatorHeight targetHeight, boolean withProxy) {
+    var cmd = new ElevatorMoveThenAlgaeGrab(targetHeight, withProxy);
+    return cmd.handleInterrupt(cmd::handleInterrupt); // TODO WHAT?!?!?!?! ISN'T THIS DEFAULT BEHAVIOR OF COMMAND?!?!?!?!?! hahaha im going insane
   }
 }
