@@ -51,9 +51,12 @@ public class AutoPath {
     NamedCommands.registerCommand(
         "AlgaeL2End", new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE));
     NamedCommands.registerCommand("ProcessorScore", new ProcessorScore());
-    NamedCommands.registerCommand("SourceIntake", new CoralIntakeFromSource().withTimeout(4.5));
-    NamedCommands.registerCommand("SourceIntakeStart", new CoralIntakeFromSource().withTimeout(4));
-    NamedCommands.registerCommand("SourceIntakeEnd", new CoralIntakeFromSource().withTimeout(4));
+    NamedCommands.registerCommand(
+        "SourceIntake", new CoralIntakeFromSource(false).withTimeout(4.5));
+    NamedCommands.registerCommand(
+        "SourceIntakeStart", new CoralIntakeFromSource(false).withTimeout(4));
+    NamedCommands.registerCommand(
+        "SourceIntakeEnd", new CoralIntakeFromSource(false).withTimeout(4));
     NamedCommands.registerCommand("CoralShoot", new CoralShoot().withTimeout(2));
     NamedCommands.registerCommand("CoralL1ArmMove", new CoralIntakeMoveL1().withTimeout(3));
     NamedCommands.registerCommand("CoralL1Shoot", new CoralIntakeShootL1().withTimeout(3));

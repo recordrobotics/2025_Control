@@ -273,7 +273,7 @@ public class RobotContainer {
         .toggleOnTrue(new CoralIntakeFromGroundToggled());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
-        .onTrue(new CoralIntakeFromSource());
+        .onTrue(new CoralIntakeFromSource(true));
 
     var coralScoreL1Cmd =
         Commands.either(
