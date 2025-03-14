@@ -44,7 +44,12 @@
       "linkedName": "SourceLeftOuter"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.4285714285714293,
+      "rotationDegrees": -79.08009859067779
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
