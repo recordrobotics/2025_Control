@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldStartingLocation;
 import frc.robot.commands.auto.BargeLeftAuto;
+import frc.robot.commands.auto.BargeRightAuto;
 import frc.robot.utils.libraries.Elastic;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -46,6 +47,11 @@ public class AutonomousLayout extends AbstractLayout {
     autoChooser = new LoggedDashboardChooser<>("Auto Code", AutoBuilder.buildAutoChooser());
     try {
       autoChooser.addOption("CMD_BargeLeftOuter", new BargeLeftAuto());
+    } catch (FileVersionException | IOException | ParseException e) {
+      e.printStackTrace();
+    }
+    try {
+      autoChooser.addOption("CMD_BargeRightOuter", new BargeRightAuto());
     } catch (FileVersionException | IOException | ParseException e) {
       e.printStackTrace();
     }
