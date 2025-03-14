@@ -15,11 +15,11 @@ public class ElevatorAlgaeToggled extends Command {
 
   @Override
   public void initialize() {
-    ElevatorMoveThenAlgaeGrab.create(targetHeight).handleInterrupt(this::cancel).schedule();
+    ElevatorMoveThenAlgaeGrab.create(targetHeight, false).handleInterrupt(this::cancel).schedule();
   }
 
   @Override
   public void end(boolean interrupted) {
-    new ElevatorMoveThenAlgaeGrabEnd(targetHeight).handleInterrupt(this::cancel).schedule();
+    new ElevatorMoveThenAlgaeGrabEnd(targetHeight, true).handleInterrupt(this::cancel).schedule();
   }
 }

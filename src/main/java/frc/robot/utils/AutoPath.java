@@ -49,9 +49,9 @@ public class AutoPath {
     NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));
     NamedCommands.registerCommand("ElevatorDown", new ElevatorMove(ElevatorHeight.BOTTOM));
     NamedCommands.registerCommand(
-        "AlgaeL2", ElevatorMoveThenAlgaeGrab.create(ElevatorHeight.LOW_REEF_ALGAE));
+        "AlgaeL2", CommandUtils.finishOnInterrupt(ElevatorMoveThenAlgaeGrab.create(ElevatorHeight.LOW_REEF_ALGAE, false).withTimeout(1.0)));
     NamedCommands.registerCommand(
-        "AlgaeL2End", new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE));
+        "AlgaeL2End", CommandUtils.finishOnInterrupt(new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE, false).withTimeout(1.0)));
     NamedCommands.registerCommand("ProcessorScore", new ProcessorScore());
     NamedCommands.registerCommand(
         "SourceIntake",

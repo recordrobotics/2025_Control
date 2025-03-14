@@ -17,8 +17,8 @@ public class GroundAlgaeToggled extends Command {
   @Override
   public void initialize() {
     isRunning = true;
-    ElevatorMoveThenAlgaeGrab.create(targetHeight)
-        .andThen(new ElevatorMoveThenAlgaeGrabEnd(targetHeight))
+    ElevatorMoveThenAlgaeGrab.create(targetHeight, false)
+        .andThen(new ElevatorMoveThenAlgaeGrabEnd(targetHeight, true))
         .andThen(() -> isRunning = false)
         .handleInterrupt(this::cancel)
         .schedule();
@@ -34,7 +34,7 @@ public class GroundAlgaeToggled extends Command {
     isRunning = false;
     if (interrupted) {
       new ElevatorMoveThenAlgaeGrabEnd(
-              RobotContainer.elevatorHead.hasAlgae() ? targetHeight : ElevatorHeight.BOTTOM)
+              RobotContainer.elevatorHead.hasAlgae() ? targetHeight : ElevatorHeight.BOTTOM, true)
           .handleInterrupt(this::cancel)
           .schedule();
     }
