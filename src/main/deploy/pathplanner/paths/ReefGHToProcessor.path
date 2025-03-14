@@ -32,16 +32,16 @@
     },
     {
       "anchor": {
-        "x": 6.054749999999999,
-        "y": 0.5344999999999993
+        "x": 6.156831897774692,
+        "y": 0.5261003503449888
       },
       "prevControl": {
-        "x": 6.105780547327907,
-        "y": 1.2011560050474848
+        "x": 6.2078624451026,
+        "y": 1.1927563553924734
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Processor"
     }
   ],
   "rotationTargets": [],
