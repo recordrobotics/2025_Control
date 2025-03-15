@@ -48,7 +48,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
                                 PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))),
                     () ->
                         RobotAlignPose.closestReefTo(
-                                RobotContainer.poseTracker.getEstimatedPosition(), 1)
+                                RobotContainer.poseTracker.getEstimatedPosition(), 0.7)
                             != null)
                 .repeatedly()
                 .onlyWhile(() -> !RobotContainer.coralShooter.hasCoral()));
