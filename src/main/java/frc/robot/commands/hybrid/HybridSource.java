@@ -74,6 +74,6 @@ public class HybridSource extends SequentialCommandGroup {
         AutoBuilder.pathfindThenFollowPath(shortestPath, Constants.HybridConstants.constraints)
             .asProxy(),
         new InstantCommand(lightsCommand::cancel),
-        new CoralIntakeFromSource());
+        new CoralIntakeFromSource(false));
   }
 }

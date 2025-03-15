@@ -72,7 +72,7 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
                         RobotContainer.coralShooter)),
             new InstantCommand(
                 () -> {
-                  RobotContainer.coralIntake.toggle(CoralIntakeStates.OFF);
+                  RobotContainer.coralIntake.toggle(CoralIntakeStates.INTAKE);
                 },
                 RobotContainer.coralIntake),
             () -> moveToElevator),

@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.KillSpecified;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.LocalADStarAK;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -100,6 +101,9 @@ public class Robot extends LoggedRobot {
 
     // Elastic layout webserver
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    // MAKE SURE FIRST CALL TO ELASTIC IS NOT IN TELEOP OR AUTO INIT!!
+    DashboardUI.Autonomous.switchTo();
   }
 
   /**
@@ -176,6 +180,9 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    new KillSpecified(RobotContainer.coralShooter, RobotContainer.coralIntake).schedule();
+
     m_robotContainer.teleopInit();
     hasRun = true;
 

@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.8
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "BargeLeftToL4"

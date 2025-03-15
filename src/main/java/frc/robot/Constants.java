@@ -153,10 +153,10 @@ public final class Constants {
     public static final double OUT_GROUND_SPEED = 8.8;
     public static final double OUT_REEF_SPEED = -2.8;
     public static final double SHOOT_BARGE_SPEED = 16;
-    public static final double INTAKE_GROUND_SPEED = -2.23;
-    public static final double INTAKE_REEF_SPEED = 2.5;
+    public static final double INTAKE_GROUND_SPEED = -4.2;
+    public static final double INTAKE_REEF_SPEED = 5.5;
     public static final double HOLD_GROUND_SPEED = -0.15;
-    public static final double HOLD_REEF_SPEED = 0.3;
+    public static final double HOLD_REEF_SPEED = 0.4;
 
     public static final double SHOOT_TIME_GROUND = 2.3;
     public static final double SHOOT_TIME_REEF = 0.3;
@@ -174,8 +174,8 @@ public final class Constants {
     HIGH_REEF_ALGAE(0.916, Units.degreesToRadians(-40.26)),
     L4(1.309, Units.degreesToRadians(64.99)),
     BOTTOM(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-90)),
-    GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-28)),
-    GROUND_ALGAE_PROCESSOR(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(60.66)),
+    GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-36)),
+    GROUND_ALGAE_PROCESSOR(0.04, Units.degreesToRadians(5)),
     PROCESSOR_SCORE(0.04, Units.degreesToRadians(-60)),
     BARGE_ALAGAE(1.309, Units.degreesToRadians(110));
 
@@ -308,6 +308,76 @@ public final class Constants {
       RobotAlignPose closest = null;
       double closestDistance = Double.MAX_VALUE;
       for (RobotAlignPose align : RobotAlignPose.values()) {
+        double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
+        if (distance <= maxDistance && distance < closestDistance) {
+          closest = align;
+          closestDistance = distance;
+        }
+      }
+      return closest;
+    }
+
+    public static final RobotAlignPose[] leftReefPoses = {
+      RobotAlignPose.BA,
+      RobotAlignPose.BC,
+      RobotAlignPose.BF,
+      RobotAlignPose.BH,
+      RobotAlignPose.BJ,
+      RobotAlignPose.BK,
+      RobotAlignPose.RA,
+      RobotAlignPose.RC,
+      RobotAlignPose.RF,
+      RobotAlignPose.RH,
+      RobotAlignPose.RJ,
+      RobotAlignPose.RK
+    };
+
+    public static final RobotAlignPose[] rightReefPoses = {
+      RobotAlignPose.BB,
+      RobotAlignPose.BD,
+      RobotAlignPose.BE,
+      RobotAlignPose.BG,
+      RobotAlignPose.BI,
+      RobotAlignPose.BL,
+      RobotAlignPose.RB,
+      RobotAlignPose.RD,
+      RobotAlignPose.RE,
+      RobotAlignPose.RG,
+      RobotAlignPose.RI,
+      RobotAlignPose.RL
+    };
+
+    public static final RobotAlignPose[] reefPoses = {
+      RobotAlignPose.BA,
+      RobotAlignPose.BB,
+      RobotAlignPose.BC,
+      RobotAlignPose.BD,
+      RobotAlignPose.BE,
+      RobotAlignPose.BF,
+      RobotAlignPose.BG,
+      RobotAlignPose.BH,
+      RobotAlignPose.BI,
+      RobotAlignPose.BJ,
+      RobotAlignPose.BL,
+      RobotAlignPose.BK,
+      RobotAlignPose.RA,
+      RobotAlignPose.RB,
+      RobotAlignPose.RC,
+      RobotAlignPose.RD,
+      RobotAlignPose.RE,
+      RobotAlignPose.RF,
+      RobotAlignPose.RG,
+      RobotAlignPose.RH,
+      RobotAlignPose.RI,
+      RobotAlignPose.RJ,
+      RobotAlignPose.RL,
+      RobotAlignPose.RK
+    };
+
+    public static RobotAlignPose closestReefTo(Pose2d pose, double maxDistance) {
+      RobotAlignPose closest = null;
+      double closestDistance = Double.MAX_VALUE;
+      for (RobotAlignPose align : reefPoses) {
         double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
         if (distance <= maxDistance && distance < closestDistance) {
           closest = align;
@@ -756,7 +826,7 @@ public final class Constants {
     public static final double kS = 0.076647;
 
     public static final double STARTING_HEIGHT = 0;
-    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
+    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(2.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -858,7 +928,7 @@ public final class Constants {
     public static final double ARM_UP = Units.degreesToRadians(92.82);
     public static final double ARM_INTAKE = Units.degreesToRadians(80);
     public static final double ARM_SCORE_L1 = Units.degreesToRadians(10.06);
-    public static final double ARM_DOWN = -0.98;
+    public static final double ARM_DOWN = -0.96;
     public static final double ARM_START_POS = Units.degreesToRadians(92.82);
 
     public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18

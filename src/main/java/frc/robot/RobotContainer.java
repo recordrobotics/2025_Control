@@ -1,9 +1,11 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -14,9 +16,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
+import frc.robot.Constants.RobotAlignPose;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.Align;
-import frc.robot.commands.BargeScore;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUp;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -29,13 +31,16 @@ import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.VibrateXbox;
 import frc.robot.commands.auto.PlannedAuto;
+import frc.robot.commands.hybrid.AutoScore;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.commands.simulation.PlaceRandomGroundAlgae;
 import frc.robot.commands.simulation.PlaceRandomGroundCoral;
 import frc.robot.control.*;
+import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.CoralIntake.IntakeArmStates;
@@ -54,6 +59,7 @@ import frc.robot.subsystems.io.stub.ClimberStub;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import java.util.function.BooleanSupplier;
 import org.photonvision.PhotonCamera;
 
 /**
@@ -170,6 +176,8 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     // Command to kill robot
+    // KillSpecified requires the subsystems, which cancels the commands that require them (which is
+    // all the commands)
     new Trigger(() -> DashboardUI.Overview.getControl().getKill())
         .whileTrue(
             new KillSpecified(
@@ -198,14 +206,59 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Autonomous.getLimelightRotation())
         .onTrue(new InstantCommand(poseTracker::resetToLimelight).ignoringDisable(true));
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL1())
-        .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L1));
+    BooleanSupplier elevatorLock =
+        () -> {
+          boolean atBottom =
+              elevator.getNearestHeight() == ElevatorHeight.INTAKE
+                  || elevator.getNearestHeight() == ElevatorHeight.BOTTOM;
+          boolean atL4 =
+              elevator.getNearestHeight() == ElevatorHeight.L4
+                  || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE;
+
+          Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
+          RobotAlignPose closestReef = RobotAlignPose.closestReefTo(robot, 0.2);
+
+          boolean nearReef =
+              closestReef != null
+                  && Math.abs(
+                          closestReef
+                              .getPose()
+                              .getRotation()
+                              .minus(robot.getRotation())
+                              .getDegrees())
+                      < 80;
+
+          return DashboardUI.Overview.getControl().getManualOverride()
+              || (atBottom && coralShooter.coralReady())
+              || (atL4 && !nearReef)
+              || (!atBottom && !atL4);
+        };
+
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L2));
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL3())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L3));
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
+        .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L4));
+    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
+        .and(elevatorLock)
+        .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.BARGE_ALAGAE));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL3())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
+    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
+        .and(() -> !elevatorLock.getAsBoolean())
+        .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralShoot()).onTrue(new CoralShoot());
 
@@ -222,7 +275,7 @@ public class RobotContainer {
         .toggleOnTrue(new CoralIntakeFromGroundToggled());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
-        .onTrue(new CoralIntakeFromSource());
+        .onTrue(new CoralIntakeFromSource(true));
 
     var coralScoreL1Cmd =
         Commands.either(
@@ -249,11 +302,22 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getScoreAlgae())
         .onTrue(new ProcessorScore());
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
-        .toggleOnTrue(new BargeScore());
-
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(Align.create(0.01, 0.05, false)); // TODO: make correct and units
+        .whileTrue(Align.create(0.01, 0.05, false));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+        .and(
+            () ->
+                DashboardUI.Overview.getControl().getAutoScoreDirection()
+                    == AutoScoreDirection.Left)
+        .onTrue(new AutoScore(AutoScoreDirection.Left));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+        .and(
+            () ->
+                DashboardUI.Overview.getControl().getAutoScoreDirection()
+                    == AutoScoreDirection.Right)
+        .onTrue(new AutoScore(AutoScoreDirection.Right));
 
     // Simulation control commands
     if (Constants.RobotState.getMode() == Mode.SIM) {

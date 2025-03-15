@@ -37,7 +37,7 @@
       },
       "prevControl": {
         "x": 1.6836036989674759,
-        "y": 1.6960878249907323
+        "y": 1.6960878249907325
       },
       "nextControl": null,
       "isLocked": false,
@@ -76,7 +76,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -60
+    "rotation": -59.99999999999999
   },
   "useDefaultConstraints": true
 }

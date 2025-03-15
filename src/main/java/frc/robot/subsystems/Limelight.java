@@ -17,6 +17,7 @@ import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   @AutoLogOutput private int numTags = 0;
@@ -177,14 +178,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       DashboardUI.Autonomous.setVisionPose(estimate.pose);
       currentEstimate = estimate;
       currentConfidence = confidence;
+      Logger.recordOutput("Limelight/Pose", estimate.pose);
     } else {
       hasVision = false;
       DashboardUI.Autonomous.setVisionPose(new Pose2d());
       currentConfidence = 9999999;
+      Logger.recordOutput("Limelight/Pose", new Pose2d());
     }
   }
 
-  @AutoLogOutput
   public PoseEstimate getPoseEstimate() {
     return currentEstimate;
   }

@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.DriverStationUtils;
@@ -25,7 +26,7 @@ public abstract class AbstractControl {
   public abstract Boolean getKill();
 
   // Elevator
-  public abstract Boolean getElevatorL1();
+  public abstract Boolean getAutoScore();
 
   public abstract Boolean getElevatorL2();
 
@@ -37,9 +38,13 @@ public abstract class AbstractControl {
 
   public abstract Boolean getElevatorAlgaeHigh();
 
+  public abstract Boolean getManualOverride();
+
   public abstract LinearVelocity getManualElevatorVelocity();
 
   public abstract AngularVelocity getManualElevatorArmVelocity();
+
+  public abstract AutoScoreDirection getAutoScoreDirection();
 
   // Intake coral
   public abstract Boolean getCoralGroundIntake();
@@ -59,9 +64,9 @@ public abstract class AbstractControl {
   public abstract Boolean getBargeAlgae();
 
   // Climb
-  // public abstract Boolean getClimb();
+  public abstract Boolean getClimb();
 
-  public abstract void vibrate(double value);
+  public abstract void vibrate(RumbleType type, double value);
 
   // Orient XY
   public static Pair<Double, Double> OrientXY(Pair<Double, Double> input) {
@@ -99,5 +104,11 @@ public abstract class AbstractControl {
       default:
         return angle;
     }
+  }
+
+  public enum AutoScoreDirection {
+    None,
+    Left,
+    Right
   }
 }

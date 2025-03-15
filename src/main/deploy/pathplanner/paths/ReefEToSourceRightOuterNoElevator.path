@@ -3,48 +3,53 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.5030759213649596,
-        "y": 0.6741915079831017
+        "x": 5.150317862113533,
+        "y": 2.941098537193763
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.899550089633737,
-        "y": 1.5056737800518112
+        "x": 5.373043544399603,
+        "y": 2.305820857060346
       },
       "isLocked": false,
-      "linkedName": "SourceRightOuter"
+      "linkedName": "ReefE"
     },
     {
       "anchor": {
-        "x": 3.0517499999999997,
-        "y": 4.87325
+        "x": 5.3105532786885234,
+        "y": 2.142930327868853
       },
       "prevControl": {
-        "x": 2.60757344264776,
-        "y": 4.465491640475359
+        "x": 5.17697827957549,
+        "y": 2.8492460234206134
       },
       "nextControl": {
-        "x": 3.235915288577027,
-        "y": 5.042315509443352
+        "x": 5.357008636788123,
+        "y": 1.897284445135521
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.8283563378864667,
-        "y": 5.110803062806238
+        "x": 1.5030759213649596,
+        "y": 0.6741915079831017
       },
       "prevControl": {
-        "x": 3.2093975265390413,
-        "y": 4.889898660894193
+        "x": 3.4725759213650274,
+        "y": 1.3761915079828972
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "ReefK"
+      "linkedName": "SourceRightOuter"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.6647302904564258,
+      "rotationDegrees": 53.28296304673474
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -58,13 +63,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -59.99999999999999
+    "rotation": 144.11786275379518
   },
   "reversed": false,
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 144.11786275379518
+    "rotation": 119.99999999999999
   },
   "useDefaultConstraints": true
 }

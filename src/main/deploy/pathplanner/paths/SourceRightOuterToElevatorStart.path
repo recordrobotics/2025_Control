@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6932327729739106,
-        "y": 1.3146771347638424
+        "x": 1.5030759213649596,
+        "y": 0.6741915079831017
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6932327729739107,
-        "y": 1.3146771347638422
+        "x": 2.1128982212038765,
+        "y": 1.2382493749765722
       },
       "isLocked": false,
-      "linkedName": "SourceRightInner"
+      "linkedName": "SourceRightOuter"
     },
     {
       "anchor": {
-        "x": 3.8283563378864667,
-        "y": 5.110803062806238
+        "x": 2.46675,
+        "y": 1.3649016
       },
       "prevControl": {
-        "x": 2.8283563378864667,
-        "y": 5.110803062806238
+        "x": 2.0480783239374416,
+        "y": 1.1087616757887901
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "ReefK"
+      "linkedName": "ElevatorStartRight"
     }
   ],
   "rotationTargets": [],
@@ -41,14 +41,14 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
-    "rotation": -59.99999999999999
+    "velocity": 2.5,
+    "rotation": 117.7
   },
   "reversed": false,
-  "folder": "Source and Reef",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 143.59591143692094
+    "rotation": 144.11786275379518
   },
   "useDefaultConstraints": true
 }

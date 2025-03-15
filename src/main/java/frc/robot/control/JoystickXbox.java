@@ -59,7 +59,7 @@ public class JoystickXbox extends AbstractControl {
   }
 
   public Boolean getElevatorRelativeDrive() {
-    return joystick.getRawButton(8);
+    return joystick.getRawButton(8) || joystick.getRawButton(2);
   }
 
   public Boolean getCoralIntakeRelativeDrive() {
@@ -90,24 +90,42 @@ public class JoystickXbox extends AbstractControl {
         Constants.Control.JOYSTICK_SPIN_SENSITIVITY);
   }
 
+  public Boolean getHalfSpeed() {
+    return joystick.getRawButton(1);
+  }
+
   public Double getDirectionalSpeedLevel() {
     // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-    return SimpleMath.Remap(
-        joystick.getRawAxis(3),
-        1,
-        -1,
-        Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
-        Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
+    double speed =
+        SimpleMath.Remap(
+            joystick.getRawAxis(3),
+            1,
+            -1,
+            Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
+            Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
+
+    if (getHalfSpeed()) {
+      speed /= 2;
+    }
+
+    return speed;
   }
 
   public Double getSpinSpeedLevel() {
     // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-    return SimpleMath.Remap(
-        joystick.getRawAxis(3),
-        1,
-        -1,
-        Constants.Control.SPIN_SPEED_METER_LOW,
-        Constants.Control.SPIN_SPEED_METER_HIGH);
+    double speed =
+        SimpleMath.Remap(
+            joystick.getRawAxis(3),
+            1,
+            -1,
+            Constants.Control.SPIN_SPEED_METER_LOW,
+            Constants.Control.SPIN_SPEED_METER_HIGH);
+
+    if (getHalfSpeed()) {
+      speed /= 2;
+    }
+
+    return speed;
   }
 
   @Override
@@ -124,12 +142,12 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public void vibrate(double value) {
-    xbox_controller.setRumble(RumbleType.kBothRumble, value);
+  public void vibrate(RumbleType type, double value) {
+    xbox_controller.setRumble(type, value);
   }
 
   @Override
-  public Boolean getElevatorL1() {
+  public Boolean getAutoScore() {
     return xbox_controller.getAButton();
   }
 
@@ -146,6 +164,17 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getElevatorL4() {
     return xbox_controller.getYButton();
+  }
+
+  @Override
+  public AutoScoreDirection getAutoScoreDirection() {
+    if (xbox_controller.getLeftX() < -0.5) {
+      return AutoScoreDirection.Left;
+    } else if (xbox_controller.getLeftX() > 0.5) {
+      return AutoScoreDirection.Right;
+    } else {
+      return AutoScoreDirection.None;
+    }
   }
 
   @Override
@@ -174,6 +203,11 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
+  public Boolean getManualOverride() {
+    return xbox_controller.getPOV() == 0;
+  }
+
+  @Override
   public Boolean getGroundAlgae() {
     return xbox_controller.getRightBumperButton();
   }
@@ -190,7 +224,7 @@ public class JoystickXbox extends AbstractControl {
 
   @Override
   public Boolean getBargeAlgae() {
-    return xbox_controller.getRawButton(7);
+    return xbox_controller.getPOV() == 0 && xbox_controller.getRawButton(7);
   }
 
   @Override
@@ -203,5 +237,10 @@ public class JoystickXbox extends AbstractControl {
   public AngularVelocity getManualElevatorArmVelocity() {
     double rightY = MathUtil.applyDeadband(-xbox_controller.getRightY(), 0.1);
     return Degrees.of(180).per(Seconds).times(rightY * Math.abs(rightY));
+  }
+
+  @Override
+  public Boolean getClimb() {
+    return xbox_controller.getPOV() != 0 && xbox_controller.getRawButton(7);
   }
 }

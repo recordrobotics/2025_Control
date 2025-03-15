@@ -94,7 +94,7 @@ public class CoralIntakeFromSourceSim extends SequentialCommandGroup implements 
                       coralPose,
                       () -> RobotContainer.model.elevator.getCoralIntakeEjectFinalPose(),
                       p -> coral.pose = () -> p,
-                      0.2)
+                      2.0)
                   .andThen(new CoralIntakeToElevator());
             },
             new HashSet<>()),
@@ -111,12 +111,17 @@ public class CoralIntakeFromSourceSim extends SequentialCommandGroup implements 
             }));
   }
 
+  //  private int counter = 0;
+
   @Override
   public Command simulateFor(Command command) {
     if (Constants.RobotState.getMode() == Mode.REAL) {
       return command;
     } else {
-      return command.alongWith(this);
+      return command.alongWith(
+          this
+          // .onlyIf(()->counter++ > 2)
+          );
     }
   }
 }
