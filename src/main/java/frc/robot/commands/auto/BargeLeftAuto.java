@@ -27,6 +27,9 @@ public class BargeLeftAuto extends SequentialCommandGroup {
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ReefJToSourceLeftOuterNoElevator"))
+                    .andThen(
+                        CommandUtils.finishOnInterrupt(
+                            Align.create(0.01, 0.05, true).withTimeout(0.6)))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                     .andThen(new WaitCommand(0.6))
                     .andThen(
@@ -36,6 +39,9 @@ public class BargeLeftAuto extends SequentialCommandGroup {
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ElevatorStartToSourceLeftOuter"))
+                    .andThen(
+                        CommandUtils.finishOnInterrupt(
+                            Align.create(0.01, 0.05, true).withTimeout(0.6)))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                     .andThen(new WaitCommand(0.6))
                     .andThen(
@@ -52,6 +58,9 @@ public class BargeLeftAuto extends SequentialCommandGroup {
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ReefKToSourceLeftOuterNoElevator"))
+                    .andThen(
+                        CommandUtils.finishOnInterrupt(
+                            Align.create(0.01, 0.05, true).withTimeout(0.6)))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                     .andThen(new WaitCommand(0.6))
                     .andThen(
@@ -61,6 +70,9 @@ public class BargeLeftAuto extends SequentialCommandGroup {
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ElevatorStartToSourceLeftOuter"))
+                    .andThen(
+                        CommandUtils.finishOnInterrupt(
+                            Align.create(0.01, 0.05, true).withTimeout(0.6)))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                     .andThen(new WaitCommand(0.6))
                     .andThen(
