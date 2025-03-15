@@ -34,10 +34,14 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
             nav.getAdjustedAngle(),
             getModulePositions(),
             DashboardUI.Autonomous.getStartingLocation().getPose());
+
+    SmartDashboard.putBoolean("Autonomous/TrustLimelight", false);
   }
 
   @Override
   public void periodic() {
+    boolean trustLimelight = SmartDashboard.getBoolean("Autonomous/TrustLimelight", false);
+
     poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
     poseFilter.addVisionMeasurement(
         RobotContainer.limelight.getPoseEstimate().pose,
@@ -45,7 +49,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
         VecBuilder.fill(
             RobotContainer.limelight.getConfidence(),
             RobotContainer.limelight.getConfidence(),
-            10) // some influence of limelight pose rotation
+            trustLimelight ? 10 : 9999999) // some influence of limelight pose rotation
         );
 
     SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());

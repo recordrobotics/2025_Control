@@ -294,6 +294,19 @@
               "period": 0.06,
               "data_type": "boolean"
             }
+          },
+          {
+            "title": "TrustLimelight",
+            "x": 1216.0,
+            "y": 512.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous/TrustLimelight",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
           }
         ]
       }
@@ -610,6 +623,34 @@
             "type": "Text Display",
             "properties": {
               "topic": "/Shuffleboard/Test/Encoder 3",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "CurrentHeight",
+            "x": 512.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/Elevator/CurrentHeight",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "ArmAngle",
+            "x": 640.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/ElevatorArm/ArmAngle",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
