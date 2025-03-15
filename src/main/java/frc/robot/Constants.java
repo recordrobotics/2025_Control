@@ -244,30 +244,30 @@ public final class Constants {
   // TODO find values
   public enum RobotAlignPose {
     // Reefs
-    BA(new Pose2d(3.2193371, 3.9959508, Rotation2d.fromDegrees(0)), true),
-    RA(new Pose2d(14.3289133, 4.055950800000001, Rotation2d.fromDegrees(180)), true),
-    BB(new Pose2d(3.2193371, 3.6559508000000003, Rotation2d.fromDegrees(0)), true),
-    RB(new Pose2d(14.3289133, 4.3959508000000005, Rotation2d.fromDegrees(180)), true),
-    BC(new Pose2d(3.8803178621135332, 2.911098537193763, Rotation2d.fromDegrees(60)), true),
-    RC(new Pose2d(13.667932537886468, 5.1408030628062376, Rotation2d.fromDegrees(-120)), true),
-    BD(new Pose2d(4.174766499400242, 2.7410985371937633, Rotation2d.fromDegrees(60)), true),
-    RD(new Pose2d(13.373483900599759, 5.3108030628062375, Rotation2d.fromDegrees(-120)), true),
-    BE(new Pose2d(5.150317862113533, 2.941098537193763, Rotation2d.fromDegrees(120)), true),
-    RE(new Pose2d(12.397932537886469, 5.110803062806237, Rotation2d.fromDegrees(-60)), true),
-    BF(new Pose2d(5.4447664994002425, 3.111098537193763, Rotation2d.fromDegrees(120)), true),
-    RF(new Pose2d(12.103483900599759, 4.940803062806237, Rotation2d.fromDegrees(-60)), true),
-    BG(new Pose2d(5.7593371, 4.055950800000001, Rotation2d.fromDegrees(180)), true),
-    RG(new Pose2d(11.7889133, 3.9959508, Rotation2d.fromDegrees(0)), true),
-    BH(new Pose2d(5.7593371, 4.3959508000000005, Rotation2d.fromDegrees(180)), true),
-    RH(new Pose2d(11.7889133, 3.6559508000000003, Rotation2d.fromDegrees(0)), true),
-    BI(new Pose2d(5.098356337886467, 5.1408030628062376, Rotation2d.fromDegrees(-120)), true),
-    RI(new Pose2d(12.449894062113533, 2.911098537193763, Rotation2d.fromDegrees(60)), true),
-    BJ(new Pose2d(4.8039077005997575, 5.3108030628062375, Rotation2d.fromDegrees(-120)), true),
-    RJ(new Pose2d(12.744342699400242, 2.7410985371937633, Rotation2d.fromDegrees(60)), true),
-    BK(new Pose2d(3.8283563378864667, 5.110803062806238, Rotation2d.fromDegrees(-60)), true),
-    RK(new Pose2d(13.719894062113534, 2.9410985371937626, Rotation2d.fromDegrees(120)), true),
-    BL(new Pose2d(3.533907700599758, 4.940803062806238, Rotation2d.fromDegrees(-60)), true),
-    RL(new Pose2d(14.014342699400242, 3.1110985371937625, Rotation2d.fromDegrees(120)), true),
+    BA(new Pose2d(3.2193371, 3.9859508000000003, Rotation2d.fromDegrees(0)), true),
+    RA(new Pose2d(14.3289133, 4.0659508, Rotation2d.fromDegrees(180)), true),
+    BB(new Pose2d(3.2193371, 3.6459508000000005, Rotation2d.fromDegrees(0)), true),
+    RB(new Pose2d(14.3289133, 4.4059508, Rotation2d.fromDegrees(180)), true),
+    BC(new Pose2d(3.8889781161513777, 2.9060985371937633, Rotation2d.fromDegrees(60)), true),
+    RC(new Pose2d(13.659272283848622, 5.1458030628062374, Rotation2d.fromDegrees(-120)), true),
+    BD(new Pose2d(4.183426753438086, 2.7360985371937634, Rotation2d.fromDegrees(60)), true),
+    RD(new Pose2d(13.364823646561915, 5.315803062806237, Rotation2d.fromDegrees(-120)), true),
+    BE(new Pose2d(5.158978116151378, 2.946098537193763, Rotation2d.fromDegrees(120)), true),
+    RE(new Pose2d(12.389272283848623, 5.105803062806238, Rotation2d.fromDegrees(-60)), true),
+    BF(new Pose2d(5.453426753438087, 3.116098537193763, Rotation2d.fromDegrees(120)), true),
+    RF(new Pose2d(12.094823646561913, 4.935803062806238, Rotation2d.fromDegrees(-60)), true),
+    BG(new Pose2d(5.7593371, 4.0659508, Rotation2d.fromDegrees(180)), true),
+    RG(new Pose2d(11.7889133, 3.9859508000000003, Rotation2d.fromDegrees(0)), true),
+    BH(new Pose2d(5.7593371, 4.4059508, Rotation2d.fromDegrees(180)), true),
+    RH(new Pose2d(11.7889133, 3.6459508000000005, Rotation2d.fromDegrees(0)), true),
+    BI(new Pose2d(5.089696083848622, 5.1458030628062374, Rotation2d.fromDegrees(-120)), true),
+    RI(new Pose2d(12.458554316151378, 2.9060985371937633, Rotation2d.fromDegrees(60)), true),
+    BJ(new Pose2d(4.795247446561913, 5.315803062806237, Rotation2d.fromDegrees(-120)), true),
+    RJ(new Pose2d(12.753002953438088, 2.7360985371937634, Rotation2d.fromDegrees(60)), true),
+    BK(new Pose2d(3.8196960838486222, 5.105803062806237, Rotation2d.fromDegrees(-60)), true),
+    RK(new Pose2d(13.728554316151378, 2.9460985371937634, Rotation2d.fromDegrees(120)), true),
+    BL(new Pose2d(3.5252474465619135, 4.9358030628062375, Rotation2d.fromDegrees(-60)), true),
+    RL(new Pose2d(14.023002953438088, 3.1160985371937633, Rotation2d.fromDegrees(120)), true),
     // Processors
     BProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
     RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
@@ -826,7 +826,7 @@ public final class Constants {
     public static final double kS = 0.076647;
 
     public static final double STARTING_HEIGHT = 0;
-    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(2.25);
+    public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
 
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(60);

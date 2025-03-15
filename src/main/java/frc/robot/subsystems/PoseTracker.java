@@ -45,7 +45,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
         VecBuilder.fill(
             RobotContainer.limelight.getConfidence(),
             RobotContainer.limelight.getConfidence(),
-            9999999) // big number to remove all influence of limelight pose rotation
+            10) // some influence of limelight pose rotation
         );
 
     SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
