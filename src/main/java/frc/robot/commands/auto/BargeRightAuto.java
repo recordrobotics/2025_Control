@@ -22,12 +22,12 @@ public class BargeRightAuto extends SequentialCommandGroup {
         CommandUtils.finishOnInterrupt(Align.create(0.01, 0.05, true).withTimeout(1.0)),
         new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(1.0)),
-        new CoralIntakeFromSource(false)
+        new CoralIntakeFromSource(false).beforeStarting(new WaitCommand(0.2))
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ReefEToSourceRightOuterNoElevator"))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.6))
                     .andThen(
                         AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart")))),
@@ -36,7 +36,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ElevatorStartToSourceRightOuter"))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.6))
                     .andThen(
                         AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))))
@@ -46,12 +46,12 @@ public class BargeRightAuto extends SequentialCommandGroup {
         CommandUtils.finishOnInterrupt(Align.create(0.01, 0.05, true).withTimeout(1.0)),
         new InstantCommand(() -> RobotContainer.drivetrain.kill()),
         CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(1.0)),
-        new CoralIntakeFromSource(false)
+        new CoralIntakeFromSource(false).beforeStarting(new WaitCommand(0.2))
             .withDeadline(
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ReefDToSourceRightOuterNoElevator"))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.6))
                     .andThen(
                         AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart")))),
@@ -60,7 +60,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
                 AutoBuilder.followPath(
                         PathPlannerPath.fromPathFile("ElevatorStartToSourceRightOuter"))
                     .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.6))
                     .andThen(
                         AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))))
