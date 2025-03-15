@@ -23,7 +23,7 @@ public class BargeLeftAuto extends SequentialCommandGroup {
       throws FileVersionException, IOException, ParseException {
     return new CoralIntakeFromSource(false)
         .beforeStarting(new WaitCommand(0.2))
-        .withDeadline(
+        .alongWith(
             Commands.either(
                     AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile(
