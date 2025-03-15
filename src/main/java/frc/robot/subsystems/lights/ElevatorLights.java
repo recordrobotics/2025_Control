@@ -7,6 +7,6 @@ public class ElevatorLights extends VirtualLightsSubsystem {
 
   public ElevatorLights(Lights lights) {
     super(lights, 46, 93);
-    setDefaultCommand(runPattern(Constants.Lights.ALLIANCE_COLOR).ignoringDisable(true));
+    setDefaultCommand(runPattern(Constants.Lights.ALLIANCE_COLOR_FANCY).ignoringDisable(true));
   }
 }

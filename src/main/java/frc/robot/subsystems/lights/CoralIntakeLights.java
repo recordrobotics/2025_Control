@@ -7,6 +7,6 @@ public class CoralIntakeLights extends VirtualLightsSubsystem {
 
   public CoralIntakeLights(Lights lights) {
     super(lights, 30, 45);
-    setDefaultCommand(runPattern(Constants.Lights.ALLIANCE_COLOR).ignoringDisable(true));
+    setDefaultCommand(runPattern(Constants.Lights.ALLIANCE_COLOR_FANCY).ignoringDisable(true));
   }
 }

@@ -25,6 +25,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.subsystems.CoralShooter.CoralShooterStates;
@@ -973,6 +974,16 @@ public final class Constants {
             DriverStationUtils.getCurrentAlliance() == Alliance.Red
                 ? LEDPattern.solid(Color.kRed).blend(LEDPattern.solid(Color.kBlack))
                 : LEDPattern.solid(Color.kBlue).blend(LEDPattern.solid(Color.kBlack));
+
+    public static final Supplier<LEDPattern> ALLIANCE_COLOR_FANCY =
+        () ->
+            DriverStationUtils.getCurrentAlliance() == Alliance.Red
+                ? LEDPattern.gradient(GradientType.kContinuous, Color.kDarkOrange, Color.kPurple).mask(LEDPattern.progressMaskLayer(()->0.3))
+                    .scrollAtAbsoluteSpeed(SCROLL_SPEED.times(5), LED_SPACING)
+                    .blend(LEDPattern.solid(Color.kRed))
+                : LEDPattern.gradient(GradientType.kContinuous, Color.kViolet, Color.kPurple).mask(LEDPattern.progressMaskLayer(()->0.3))
+                    .scrollAtAbsoluteSpeed(SCROLL_SPEED.times(5), LED_SPACING)
+                    .blend(LEDPattern.solid(Color.kBlue));
 
     public static final LEDPattern elevatorPattern =
         LEDPattern.solid(Color.kWhite)
