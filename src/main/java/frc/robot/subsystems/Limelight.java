@@ -32,6 +32,8 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
   private double currentConfidence = 9999999; // large number means less confident
   private PoseEstimate currentEstimate = new PoseEstimate();
 
+  private PoseEstimate unsafeEstimate = new PoseEstimate();
+
   public Limelight() {
     LimelightHelpers.setPipelineIndex(name, 0);
   }
@@ -73,6 +75,8 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     } else {
       confidence = 0.65; // mt 1
     }
+
+    unsafeEstimate = measurement;
 
     if (measurement
             .pose
@@ -181,14 +185,18 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
       Logger.recordOutput("Limelight/Pose", estimate.pose);
     } else {
       hasVision = false;
-      DashboardUI.Autonomous.setVisionPose(new Pose2d());
+      DashboardUI.Autonomous.setVisionPose(estimate.pose);
       currentConfidence = 9999999;
-      Logger.recordOutput("Limelight/Pose", new Pose2d());
+      Logger.recordOutput("Limelight/Pose", estimate.pose);
     }
   }
 
   public PoseEstimate getPoseEstimate() {
     return currentEstimate;
+  }
+
+  public PoseEstimate getUnsafePoseEstimate() {
+    return unsafeEstimate;
   }
 
   @AutoLogOutput

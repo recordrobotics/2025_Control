@@ -105,7 +105,7 @@ public class JoystickXbox extends AbstractControl {
             Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
 
     if (getHalfSpeed()) {
-      speed /= 2;
+      speed /= 3;
     }
 
     return speed;
@@ -130,10 +130,12 @@ public class JoystickXbox extends AbstractControl {
 
   @Override
   public Boolean getPoseReset() {
-    return joystick.getRawButtonPressed(3)
-        || joystick.getRawButtonPressed(4)
-        || joystick.getRawButtonPressed(5)
-        || joystick.getRawButtonPressed(6);
+    return joystick.getRawButtonPressed(3) || joystick.getRawButtonPressed(5);
+  }
+
+  @Override
+  public Boolean getLimelightReset() {
+    return joystick.getRawButtonPressed(4) || joystick.getRawButtonPressed(6);
   }
 
   @Override

@@ -83,6 +83,13 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
             RobotContainer.limelight.getPoseEstimate().pose.getRotation()));
   }
 
+  public void resetFullLimelight() {
+    setToPose(
+        new Pose2d(
+            RobotContainer.limelight.getPoseEstimate().pose.getTranslation(),
+            getEstimatedPosition().getRotation()));
+  }
+
   /**
    * Resets the pose to face elevator away from driverstation, while keeping translation the same
    */

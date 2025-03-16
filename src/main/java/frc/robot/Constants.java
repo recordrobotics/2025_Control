@@ -273,13 +273,13 @@ public final class Constants {
     BProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
     RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
 
-    BSourceOuterLeft(new Pose2d(1.574, 7.371, Rotation2d.fromDegrees(35.734)), false),
-    BSourceOuterRight(new Pose2d(1.541, 0.669, Rotation2d.fromDegrees(144.118)), false),
+    BSourceOuterLeft(new Pose2d(1.545, 7.407, Rotation2d.fromDegrees(35.734)), false),
+    BSourceOuterRight(new Pose2d(1.485, 0.656, Rotation2d.fromDegrees(144.118)), false),
     RSourceOuterLeft(
-        new Pose2d(FlippingUtil.fieldSizeX - 1.541, 0.669, Rotation2d.fromDegrees(-144.118)),
+        new Pose2d(FlippingUtil.fieldSizeX - 1.485, 0.656, Rotation2d.fromDegrees(-144.118)),
         false),
     RSourceOuterRight(
-        new Pose2d(FlippingUtil.fieldSizeX - 1.574, 7.371, Rotation2d.fromDegrees(-35.734)), false);
+        new Pose2d(FlippingUtil.fieldSizeX - 1.545, 7.407, Rotation2d.fromDegrees(-35.734)), false);
     // BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)), false),
     // BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)), false),
     // RSourceInnerLeft(

@@ -23,6 +23,8 @@ public abstract class AbstractControl {
   // Misc
   public abstract Boolean getPoseReset();
 
+  public abstract Boolean getLimelightReset();
+
   public abstract Boolean getKill();
 
   // Elevator

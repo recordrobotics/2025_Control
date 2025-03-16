@@ -201,6 +201,8 @@ public class RobotContainer {
     // Reset pose trigger
     new Trigger(() -> DashboardUI.Overview.getControl().getPoseReset())
         .onTrue(new InstantCommand(poseTracker::resetDriverPose));
+    new Trigger(() -> DashboardUI.Overview.getControl().getLimelightReset())
+        .onTrue(new InstantCommand(poseTracker::resetFullLimelight));
     new Trigger(() -> DashboardUI.Autonomous.getResetLocation())
         .onTrue(new InstantCommand(poseTracker::resetStartingPose).ignoringDisable(true));
     new Trigger(() -> DashboardUI.Autonomous.getLimelightRotation())
