@@ -28,20 +28,28 @@
       "linkedName": "ReefD"
     }
   ],
-  "rotationTargets": [],
-  "constraintZones": [],
-  "pointTowardsZones": [
+  "rotationTargets": [
     {
-      "fieldPosition": {
-        "x": 4.0,
-        "y": 3.0
-      },
-      "rotationOffset": 0.0,
-      "minWaypointRelativePos": 0.24714640198511262,
-      "maxWaypointRelativePos": 0.75,
-      "name": "Point Towards Zone"
+      "waypointRelativePos": 0.2597510373443993,
+      "rotationDegrees": 55.70699022074194
     }
   ],
+  "constraintZones": [
+    {
+      "name": "Constraints Zone",
+      "minWaypointRelativePos": 0.21141439205955523,
+      "maxWaypointRelativePos": 1.0,
+      "constraints": {
+        "maxVelocity": 0.5,
+        "maxAcceleration": 3.3,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0,
+        "nominalVoltage": 12.0,
+        "unlimited": false
+      }
+    }
+  ],
+  "pointTowardsZones": [],
   "eventMarkers": [
     {
       "name": "ElevatorL4",
@@ -56,7 +64,7 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 1.7,
+    "maxVelocity": 2.8,
     "maxAcceleration": 3.3,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
@@ -70,7 +78,7 @@
   "reversed": false,
   "folder": null,
   "idealStartingState": {
-    "velocity": 1.7,
+    "velocity": 0.0,
     "rotation": 117.7
   },
   "useDefaultConstraints": false
