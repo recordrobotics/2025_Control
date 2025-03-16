@@ -6,7 +6,7 @@ import frc.robot.RobotContainer;
 public class CoralIntakeFromGroundToggled extends Command {
 
   public CoralIntakeFromGroundToggled() {
-    addRequirements(RobotContainer.coralIntakeMoveToggleRequirement);
+    addRequirements(RobotContainer.elevatorMoveToggleRequirement);
   }
 
   @Override

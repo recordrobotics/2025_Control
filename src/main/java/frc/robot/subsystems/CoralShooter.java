@@ -176,8 +176,11 @@ public class CoralShooter extends KillableSubsystem
     return positionPid.atGoal();
   }
 
+  @AutoLogOutput
   public boolean coralReady() {
-    return Math.abs(getVelocity()) < 0.1 || (hasCoral() && positionAtGoal());
+    return (currentState != CoralShooterStates.INTAKE
+            && currentState != CoralShooterStates.POSITION)
+        || (hasCoral() && positionAtGoal());
   }
 
   private double lastSpeed = 0;

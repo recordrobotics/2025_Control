@@ -100,11 +100,6 @@ public class RobotContainer {
   public static ElevatorMoveToggleRequirement elevatorMoveToggleRequirement =
       new ElevatorMoveToggleRequirement();
 
-  public static class CoralIntakeMoveToggleRequirement extends SubsystemBase {}
-
-  public static CoralIntakeMoveToggleRequirement coralIntakeMoveToggleRequirement =
-      new CoralIntakeMoveToggleRequirement();
-
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     if (Constants.RobotState.getMode() == Mode.REAL) {
@@ -287,7 +282,7 @@ public class RobotContainer {
                 () -> coralIntake.getArmState() == IntakeArmStates.SCORE_L1),
             new CoralIntakeFromGroundUp(false),
             () -> coralIntake.getArmAngle() >= Constants.CoralIntake.ARM_SCORE_L1 - 0.1);
-    coralScoreL1Cmd.addRequirements(coralIntakeMoveToggleRequirement);
+    coralScoreL1Cmd.addRequirements(elevatorMoveToggleRequirement);
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralIntakeScoreL1())
         .onTrue(coralScoreL1Cmd);
