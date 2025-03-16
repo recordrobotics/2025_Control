@@ -279,15 +279,15 @@ public final class Constants {
         new Pose2d(FlippingUtil.fieldSizeX - 1.541, 0.669, Rotation2d.fromDegrees(-144.118)),
         false),
     RSourceOuterRight(
-        new Pose2d(FlippingUtil.fieldSizeX - 1.574, 7.371, Rotation2d.fromDegrees(-35.734)), false),
-
-    BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)), false),
-    BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)), false),
-    RSourceInnerLeft(
-        new Pose2d(FlippingUtil.fieldSizeX - 0.693, 1.315, Rotation2d.fromDegrees(-143.791)),
-        false),
-    RSourceInnerRight(
-        new Pose2d(FlippingUtil.fieldSizeX - 0.683, 6.711, Rotation2d.fromDegrees(-36.209)), false);
+        new Pose2d(FlippingUtil.fieldSizeX - 1.574, 7.371, Rotation2d.fromDegrees(-35.734)), false);
+    // BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)), false),
+    // BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)), false),
+    // RSourceInnerLeft(
+    //     new Pose2d(FlippingUtil.fieldSizeX - 0.693, 1.315, Rotation2d.fromDegrees(-143.791)),
+    //     false),
+    // RSourceInnerRight(
+    //     new Pose2d(FlippingUtil.fieldSizeX - 0.683, 6.711, Rotation2d.fromDegrees(-36.209)),
+    // false);
 
     private Pose2d pose;
     private boolean useTranslation;
@@ -978,10 +978,12 @@ public final class Constants {
     public static final Supplier<LEDPattern> ALLIANCE_COLOR_FANCY =
         () ->
             DriverStationUtils.getCurrentAlliance() == Alliance.Red
-                ? LEDPattern.gradient(GradientType.kContinuous, Color.kDarkOrange, Color.kPurple).mask(LEDPattern.progressMaskLayer(()->0.3))
+                ? LEDPattern.gradient(GradientType.kContinuous, Color.kDarkOrange, Color.kPurple)
+                    .mask(LEDPattern.progressMaskLayer(() -> 0.3))
                     .scrollAtAbsoluteSpeed(SCROLL_SPEED.times(5), LED_SPACING)
                     .blend(LEDPattern.solid(Color.kRed))
-                : LEDPattern.gradient(GradientType.kContinuous, Color.kViolet, Color.kPurple).mask(LEDPattern.progressMaskLayer(()->0.3))
+                : LEDPattern.gradient(GradientType.kContinuous, Color.kViolet, Color.kPurple)
+                    .mask(LEDPattern.progressMaskLayer(() -> 0.3))
                     .scrollAtAbsoluteSpeed(SCROLL_SPEED.times(5), LED_SPACING)
                     .blend(LEDPattern.solid(Color.kBlue));
 

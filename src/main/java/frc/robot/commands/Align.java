@@ -13,11 +13,13 @@ import frc.robot.control.AbstractControl.AutoScoreDirection;
 import java.util.Set;
 
 public class Align {
-  public static Command create(double tolerance, double rotTol, boolean forceUseTranslation) {
+  public static Command create(
+      double tolerance, double rotTol, boolean forceUseTranslation, double maxDistance) {
     return new DeferredCommand(
         () -> {
           RobotAlignPose alignPose =
-              RobotAlignPose.closestTo(RobotContainer.poseTracker.getEstimatedPosition(), 1);
+              RobotAlignPose.closestTo(
+                  RobotContainer.poseTracker.getEstimatedPosition(), maxDistance);
           if (alignPose == null) return Commands.none();
 
           return new AlignToPose(

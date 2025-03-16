@@ -18,6 +18,12 @@ public class CommandUtils {
       private boolean finished = false;
 
       @Override
+      public void initialize() {
+        finished = false;
+        super.initialize();
+      }
+
+      @Override
       public boolean isFinished() {
         return super.isFinished() || finished;
       }
