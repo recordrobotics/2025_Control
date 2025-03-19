@@ -1,8 +1,10 @@
 package frc.robot.commands.hybrid;
 
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
@@ -10,9 +12,30 @@ import frc.robot.utils.DriveCommandData;
 import org.littletonrobotics.junction.Logger;
 
 public class AlignToPose extends Command {
-  PIDController xPID = new PIDController(3, 0, 0.01);
-  PIDController yPID = new PIDController(3, 0, 0.01);
-  PIDController rotPID = new PIDController(4, 0, 0.05);
+  ProfiledPIDController xPID =
+      new ProfiledPIDController(
+          4,
+          0,
+          0.01,
+          new TrapezoidProfile.Constraints(
+              Constants.Swerve.MAX_AUTOALIGN_VELOCITY,
+              Constants.Swerve.MAX_AUTOALIGN_ACCELERATION));
+  ProfiledPIDController yPID =
+      new ProfiledPIDController(
+          4,
+          0,
+          0.01,
+          new TrapezoidProfile.Constraints(
+              Constants.Swerve.MAX_AUTOALIGN_VELOCITY,
+              Constants.Swerve.MAX_AUTOALIGN_ACCELERATION));
+  ProfiledPIDController rotPID =
+      new ProfiledPIDController(
+          4,
+          0,
+          0.05,
+          new TrapezoidProfile.Constraints(
+              Constants.Swerve.MAX_AUTOALIGN_ANGULAR_VELOCITY,
+              Constants.Swerve.MAX_AUTOALIGN_ANGULAR_ACCELERATION));
   boolean doTranslation;
 
   private Pose2d targetPose;
@@ -23,11 +46,11 @@ public class AlignToPose extends Command {
     if (doTranslation) {
       xPID.setTolerance(tolerance);
       yPID.setTolerance(tolerance);
-      xPID.setSetpoint(pose.getX());
-      yPID.setSetpoint(pose.getY());
+      xPID.setGoal(pose.getX());
+      yPID.setGoal(pose.getY());
     }
     rotPID.setTolerance(rotTol);
-    rotPID.setSetpoint(pose.getRotation().getRadians());
+    rotPID.setGoal(pose.getRotation().getRadians());
     rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     this.doTranslation = doTranslation;
@@ -36,9 +59,17 @@ public class AlignToPose extends Command {
   }
 
   @Override
+  public void initialize() {
+    Pose2d pose = RobotContainer.poseTracker.getEstimatedPosition();
+    xPID.reset(pose.getX());
+    yPID.reset(pose.getY());
+    rotPID.reset(pose.getRotation().getRadians());
+  }
+
+  @Override
   public boolean isFinished() {
     if (!doTranslation) return false;
-    return xPID.atSetpoint() && yPID.atSetpoint() && rotPID.atSetpoint();
+    return xPID.atGoal() && yPID.atGoal() && rotPID.atGoal();
   }
 
   @Override
@@ -50,8 +81,6 @@ public class AlignToPose extends Command {
     double rot = rotPID.calculate(pose.getRotation().getRadians());
 
     Logger.recordOutput("AlignToPose/Target", targetPose);
-
-    // rot = SimpleMath.slewRateLimitLinear(pose.getRotation().getRadians(), rot, 0.02, 10.5);
 
     if (doTranslation) {
       RobotContainer.drivetrain.drive(new DriveCommandData(x, y, rot, true));

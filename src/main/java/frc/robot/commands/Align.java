@@ -37,7 +37,7 @@ public class Align {
         () -> {
           Pose2d pose = RobotContainer.poseTracker.getEstimatedPosition();
 
-          double maxDistance = 1;
+          double maxDistance = 2.5;
           RobotAlignPose closest = null;
           double closestDistance = Double.MAX_VALUE;
           for (RobotAlignPose align :
@@ -64,7 +64,7 @@ public class Align {
         () -> {
           Pose2d pose = RobotContainer.poseTracker.getEstimatedPosition();
 
-          double maxDistance = 1;
+          double maxDistance = 2.5;
           RobotAlignPose closest = null;
           double closestDistance = Double.MAX_VALUE;
           for (RobotAlignPose align :

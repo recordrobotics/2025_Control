@@ -305,7 +305,7 @@ public class RobotContainer {
         .onTrue(new ProcessorScore());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(Align.create(0.01, 0.05, false, 1));
+        .whileTrue(Align.create(0.01, 0.02, false, 2.5));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
         .and(
