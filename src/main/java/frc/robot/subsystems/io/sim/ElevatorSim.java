@@ -149,8 +149,6 @@ public class ElevatorSim implements ElevatorIO {
     return motorRight.get();
   }
 
-  // TODO: weird bug where endstop.get() doesn't update in simulation
-
   @Override
   public boolean getTopEndStop() {
     if (topEndStopSimValue != null) return topEndStopSimValue.get();
