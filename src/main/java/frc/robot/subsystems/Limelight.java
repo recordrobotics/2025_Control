@@ -1,13 +1,14 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
@@ -16,6 +17,7 @@ import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
+import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -31,6 +33,15 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
   private double currentConfidence = 9999999; // large number means less confident
   private PoseEstimate currentEstimate = new PoseEstimate();
+  private int cyclesSinceLastZoomOut = 0;
+  private int cyclesDoneInZoomOut = 0;
+
+  private double lastX0 = -1;
+  private double lastX1 = 1;
+  private double lastY0 = -1;
+  private double lastY1 = 1;
+  private int[] lastTagVisible = new int[22];
+  private RawFiducial[] lastRawFiducials = new RawFiducial[22];
 
   private PoseEstimate unsafeEstimate = new PoseEstimate();
 
@@ -54,7 +65,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
     if (measurement == null || measurement_m2 == null) {
       limelightConnected = false;
-      // updateCrop(); // TODO if the limelights not connected, why update the crop
+      updateCrop(new RawFiducial[0]); // no fiducials
       return;
     } else {
       limelightConnected = true;
@@ -87,91 +98,120 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
 
     handleMeasurement(measurement, confidence);
-    // updateCrop();
+    updateCrop(measurement.rawFiducials);
   }
 
-  private void updateCrop() {
-    if (!hasVision) { // failsafe if cropping goes wrong this will be triggered and reset the crop
+  private void updateCrop(RawFiducial[] rawFiducials) {
+    RawFiducial[] origRawFiducials = rawFiducials;
+
+    // clear lastRawFiducials and lastTagVisible
+    for (int i = 0; i < lastRawFiducials.length; i++) {
+      if (lastTagVisible[i] > 0) lastRawFiducials[i] = null;
+      lastTagVisible[i]--;
+    }
+
+    // update lastRawFiducials and lastTagVisible
+    for (RawFiducial f : origRawFiducials) {
+      lastRawFiducials[f.id - 1] = f;
+      lastTagVisible[f.id - 1] = Constants.Limelight.SAVED_FRAMES;
+    }
+
+    cyclesSinceLastZoomOut++;
+    cyclesDoneInZoomOut++;
+
+    if (cyclesDoneInZoomOut < 2) {
       LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
       LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      cyclesSinceLastZoomOut = 0;
+
+      Logger.recordOutput("IsZoomedOut", true);
       return;
     }
 
-    Pose2d robotPose = RobotContainer.poseTracker.getEstimatedPosition();
-    Pose3d limelightPose3d =
-        new Pose3d(
-            new Translation3d(robotPose.getTranslation())
-                .plus(Constants.Limelight.LIMELIGHT_OFFSET),
-            new Rotation3d(
-                Degrees.of(0),
-                Constants.Limelight.LIMELIGHT_ANGLE_UP,
-                robotPose.getRotation().getMeasure()));
+    if (cyclesSinceLastZoomOut > Constants.Limelight.MAX_CYCLES_UNTIL_ZOOM_OUT
+        || rawFiducials.length == 0
+        || isGoingTooFast()) {
+      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
+      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
+      cyclesSinceLastZoomOut = 0;
+      cyclesDoneInZoomOut = 0;
 
-    boolean foundOne = false;
-    double x0 = 0;
-    double y0 = 0;
-    double x1 = 0;
-    double y1 = 0;
+      Logger.recordOutput("IsZoomedOut", true);
+      return;
+    }
 
-    for (AprilTag tag : Constants.Limelight.FIELD_LAYOUT.getTags()) {
-      Pose3d tagPose = tag.pose;
-      Rotation3d limelightToTagRotation =
-          limelightPose3d
-              .getRotation()
-              .minus(
-                  SimpleMath.translationToRotation(
-                      tagPose.getTranslation().minus(limelightPose3d.getTranslation())));
+    Logger.recordOutput("IsZoomedOut", false);
 
-      // using isNear feels cursed but if it works it works
-      boolean withinRangeVertical =
-          limelightToTagRotation
-              .getMeasureY()
-              .isNear(Degrees.of(0), Constants.Limelight.FOV_VERTICAL_FROM_CENTER);
-      boolean withinRangeHorizontal =
-          limelightToTagRotation
-              .getMeasureZ()
-              .isNear(Degrees.of(0), Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER);
+    // values that will definatly be cropped in
+    double x0 = rawFiducials[0].txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+    double x1 = rawFiducials[0].txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+    double y0 = rawFiducials[0].tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+    double y1 = rawFiducials[0].tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
 
-      if (withinRangeVertical && withinRangeHorizontal) {
-        foundOne = true;
+    for (RawFiducial f : rawFiducials) {
+      double tagX0 = f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+      double tagX1 = f.txnc / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
+      double tagY0 = f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
+      double tagY1 = f.tync / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
 
-        double tagCenterX =
-            limelightToTagRotation.getMeasureZ().in(Degrees)
-                / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Degrees);
-        double tagCenterY =
-            limelightToTagRotation.getMeasureY().in(Degrees)
-                / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Degrees);
-        double tagX0 = tagCenterX - Constants.Limelight.CROPPING_MARGIN;
-        double tagX1 = tagX0 + 2 * Constants.Limelight.CROPPING_MARGIN;
-        double tagY0 = tagCenterY - Constants.Limelight.CROPPING_MARGIN;
-        double tagY1 = tagY0 + 2 * Constants.Limelight.CROPPING_MARGIN;
+      Double angleFromCenterToEdge =
+          Math.atan(
+              (Constants.Limelight.DISTANCE_FROM_TAG_CENTER_TO_EDGE
+                      + Constants.Limelight.DISTANCE_CROPPING_MARGIN)
+                  / f.distToCamera);
 
-        if (tagX0 < x0) {
-          x0 = tagX0;
-        }
-        if (tagX1 > x1) {
-          x1 = tagX1;
-        }
-        if (tagY0 < y0) {
-          y0 = tagY0;
-        }
-        if (tagY1 > y1) {
-          y1 = tagY1;
-        }
+      double verticalMargin =
+          Constants.Limelight.ANGLE_CROPPING_MARGIN
+              + (angleFromCenterToEdge / Constants.Limelight.FOV_VERTICAL_FROM_CENTER.in(Radians));
+      double horizontalMargin =
+          Constants.Limelight.ANGLE_CROPPING_MARGIN
+              + (angleFromCenterToEdge
+                  / Constants.Limelight.FOV_HORIZONTAL_FROM_CENTER.in(Radians));
+
+      tagX0 -= horizontalMargin;
+      tagX1 += horizontalMargin;
+      tagY0 -= verticalMargin;
+      tagY1 += verticalMargin;
+
+      if (tagX0 < x0) {
+        x0 = tagX0;
+      }
+      if (tagX1 > x1) {
+        x1 = tagX1;
+      }
+      if (tagY0 < y0) {
+        y0 = tagY0;
+      }
+      if (tagY1 > y1) {
+        y1 = tagY1;
       }
     }
 
-    // Make sure x0, x1, y0, y1 are within the range of -1 to 1
-    x0 = Math.max(-1, x0);
-    x1 = Math.min(1, x1);
-    y0 = Math.max(-1, y0);
-    y1 = Math.min(1, y1);
-
-    if (!foundOne) {
-      LimelightHelpers.setCropWindow(name, -1, 1, -1, 1);
-      LimelightHelpers.SetFiducialDownscalingOverride(name, 2);
-      return;
+    // ensure values are in [-1, 1]
+    if (x0 < -1) {
+      x0 = -1;
     }
+    if (x1 > 1) {
+      x1 = 1;
+    }
+    if (y0 < -1) {
+      y0 = -1;
+    }
+    if (y1 > 1) {
+      y1 = 1;
+    }
+
+    lastX0 = x0;
+    lastY0 = y0;
+    lastX1 = x1;
+    lastY1 = y1;
+
+    // average of all x0, x1, y0, y1 values with their prevs
+    x0 = (x0 + lastX0) / 2;
+    x1 = (x1 + lastX1) / 2;
+    y0 = (y0 + lastY0) / 2;
+    y1 = (y1 + lastY1) / 2;
+
     LimelightHelpers.setCropWindow(name, x0, x1, y0, y1);
     LimelightHelpers.SetFiducialDownscalingOverride(name, 1);
   }
@@ -191,6 +231,17 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
     }
   }
 
+  private boolean isGoingTooFast() {
+    LinearVelocity translationSpeed =
+        RobotContainer.poseTracker.getEstimatedTranslationalVelocity();
+    AngularVelocity angularSpeed = RobotContainer.poseTracker.getEstimatedAngularVelocity();
+    return translationSpeed.abs(MetersPerSecond)
+            > Constants.Limelight.MAX_LINEAR_SPEED.abs(MetersPerSecond)
+        && angularSpeed.abs(RadiansPerSecond)
+            > Constants.Limelight.MAX_ANGULAR_SPEED.abs(RadiansPerSecond);
+  }
+
+  @AutoLogOutput
   public PoseEstimate getPoseEstimate() {
     return currentEstimate;
   }
