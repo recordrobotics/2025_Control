@@ -70,12 +70,9 @@ public final class Constants {
   }
 
   public final class Limelight {
-    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(23); // TODO make correct
+    public static final Angle LIMELIGHT_ANGLE_UP = Degrees.of(23);
     public static final Translation3d LIMELIGHT_OFFSET =
-        new Translation3d(
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.2), // TODO make correct
-            Meters.of(0.4)); // TODO make correct
+        new Translation3d(Meters.of(0.2), Meters.of(0.2), Meters.of(0.4));
 
     public static final String LIMELIGHT_NAME = "limelight";
     public static final AprilTagFieldLayout FIELD_LAYOUT =
@@ -242,7 +239,6 @@ public final class Constants {
     }
   }
 
-  // TODO find values
   public enum RobotAlignPose {
     // Reefs
     BA(new Pose2d(3.2193371, 3.9859508000000003, Rotation2d.fromDegrees(0)), true),
@@ -270,8 +266,8 @@ public final class Constants {
     BL(new Pose2d(3.5252474465619135, 4.9358030628062375, Rotation2d.fromDegrees(-60)), true),
     RL(new Pose2d(14.023002953438088, 3.1160985371937633, Rotation2d.fromDegrees(120)), true),
     // Processors
-    BProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
-    RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
+    BProcessor(new Pose2d(6, 0.43, Rotation2d.fromDegrees(270)), true),
+    RProcessor(new Pose2d(11.5, 7.59, Rotation2d.fromDegrees(90)), true),
 
     BSourceOuterLeft(new Pose2d(1.545, 7.407, Rotation2d.fromDegrees(35.734)), false),
     BSourceOuterRight(new Pose2d(1.485, 0.656, Rotation2d.fromDegrees(144.118)), false),
@@ -890,9 +886,9 @@ public final class Constants {
     public static final double AT_GOAL_POSITION_TOLERANCE = 0.05;
     public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.07;
 
-    public static final Time SHOOT_TIME = Seconds.of(0.3); // TODO make correct
+    public static final Time SHOOT_TIME = Seconds.of(0.3);
 
-    public static final double DEBOUNCE_TIME = 0.02; // TODO make correct
+    public static final double DEBOUNCE_TIME = 0.02;
 
     public static final double HOW_FAR_FORWARDS_FROM_THE_ELEVATOR_IS_THE_CORAL_SHOOTER = 0.25;
   }
@@ -912,11 +908,11 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 8;
     public static final double MAX_ARM_ACCELERATION = 22;
 
-    public static final double REVERSE_SPEED = 12; // TODO this is probably too slow
-    public static final double INTAKE_SPEED = -8; // TODO ^^^^^^^^^^^
-    public static final double SHOOT_SPEED = 20; // TODO ^^^^^^^^^^^
+    public static final double REVERSE_SPEED = 12;
+    public static final double INTAKE_SPEED = -8;
+    public static final double SHOOT_SPEED = 20;
 
-    public static final double INTAKE_TIME = 0.1; // TODO make correct
+    public static final double INTAKE_TIME = 0.1;
 
     public static final double sP = 4.8919;
     public static final double sI = 0;
@@ -953,7 +949,7 @@ public final class Constants {
 
     public static final double SUCCESS_FLASH_TIME = 1; // seconds
 
-    public static final LinearVelocity SCROLL_SPEED = MetersPerSecond.of(0.3); // TODO is good?
+    public static final LinearVelocity SCROLL_SPEED = MetersPerSecond.of(0.3);
     public static final Distance LED_SPACING = Meters.of(1.0 / 30.0); // 30 LEDs per meter
 
     public static final LEDPattern PULSATING_ORANGE =
@@ -1159,6 +1155,11 @@ public final class Constants {
 
     /** The max speed the robot can travel safely */
     public static final double robotMaxSpeed = 4.35;
+
+    public static final double MAX_AUTOALIGN_VELOCITY = 1.5;
+    public static final double MAX_AUTOALIGN_ACCELERATION = 3.0;
+    public static final double MAX_AUTOALIGN_ANGULAR_VELOCITY = 4.0;
+    public static final double MAX_AUTOALIGN_ANGULAR_ACCELERATION = 7.0;
 
     /** The max jerk of the robot below which the pose is certain (in G/s) */
     public static final double MaxPoseCertaintyJerk = 80;
