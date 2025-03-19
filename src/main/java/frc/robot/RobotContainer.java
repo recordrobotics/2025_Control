@@ -320,7 +320,7 @@ public class RobotContainer {
         .toggleOnTrue(new ElevatorAlgaeToggled(ElevatorHeight.HIGH_REEF_ALGAE));
     new Trigger(() -> DashboardUI.Overview.getControl().getScoreAlgae())
         .and(algaeLock)
-        .onTrue(new ProcessorScore());
+        .onTrue(new ProcessorScore(true));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getGroundAlgae())
         .and(() -> !algaeLock.getAsBoolean())
