@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -13,7 +14,7 @@ import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
 
 public class ProcessorScore extends SequentialCommandGroup {
 
-  public ProcessorScore() {
+  public ProcessorScore(boolean withProxy) {
     addRequirements(RobotContainer.elevatorHead);
 
     addCommands(
@@ -28,8 +29,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                 .runPattern(Constants.Lights.PULSATING_ORANGE)
                 .onlyWhile(this::isScheduled)),
         Commands.either(
-            new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR)
-                .asProxy()
+            maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR))
                 .andThen(
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OUT_GROUND),
@@ -41,7 +41,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF),
                         RobotContainer.elevatorHead))
-                .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()),
+                .andThen(maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
             Commands.either(
                 new InstantCommand(
                         () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.SHOOT_BARGE),
@@ -53,8 +53,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF),
                             RobotContainer.elevatorHead)),
-                new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE)
-                    .asProxy()
+                maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE))
                     .andThen(
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OUT_REEF),
@@ -66,7 +65,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.toggle(AlgaeGrabberStates.OFF),
                             RobotContainer.elevatorHead))
-                    .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()),
+                    .andThen(maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
                 () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE),
             () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE),
         new ScheduleCommand(
@@ -77,5 +76,9 @@ public class ProcessorScore extends SequentialCommandGroup {
                     RobotContainer.lights.stateVisualizer.runPattern(
                         Constants.Lights.PULSATING_GREEN))
                 .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME)));
+  }
+
+  private Command maybieProxy(boolean withProxy, Command cmd) {
+    return withProxy ? cmd.asProxy() : cmd;
   }
 }

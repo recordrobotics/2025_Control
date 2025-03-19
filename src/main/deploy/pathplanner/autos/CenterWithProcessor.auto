@@ -63,6 +63,42 @@
           "data": {
             "name": "ProcessorScore"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "ProcessorToReefEF"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 2.0
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "ReefEFToProcessor"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ProcessorScore"
+          }
         }
       ]
     }

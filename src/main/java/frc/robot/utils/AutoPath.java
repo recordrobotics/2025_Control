@@ -52,13 +52,26 @@ public class AutoPath {
         "AlgaeL2",
         CommandUtils.finishOnInterrupt(
             ElevatorMoveThenAlgaeGrab.create(ElevatorHeight.LOW_REEF_ALGAE, false)
-                .withTimeout(1.0)));
+                .withTimeout(3.0)));
     NamedCommands.registerCommand(
         "AlgaeL2End",
         CommandUtils.finishOnInterrupt(
             new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.LOW_REEF_ALGAE, false)
-                .withTimeout(1.0)));
-    NamedCommands.registerCommand("ProcessorScore", new ProcessorScore());
+                .withTimeout(2.0)));
+
+    NamedCommands.registerCommand(
+        "AlgaeL3",
+        CommandUtils.finishOnInterrupt(
+            ElevatorMoveThenAlgaeGrab.create(ElevatorHeight.HIGH_REEF_ALGAE, false)
+                .withTimeout(3.0)));
+    NamedCommands.registerCommand(
+        "AlgaeL3End",
+        CommandUtils.finishOnInterrupt(
+            new ElevatorMoveThenAlgaeGrabEnd(ElevatorHeight.HIGH_REEF_ALGAE, false)
+                .withTimeout(2.0)));
+
+    NamedCommands.registerCommand(
+        "ProcessorScore", CommandUtils.finishOnInterrupt(new ProcessorScore(false).withTimeout(2)));
     NamedCommands.registerCommand(
         "SourceIntake",
         CommandUtils.finishOnInterrupt(new CoralIntakeFromSource(false).withTimeout(4.5)));
