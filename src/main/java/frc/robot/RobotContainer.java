@@ -302,7 +302,7 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorAlgaeHigh())
         .toggleOnTrue(new ElevatorAlgaeToggled(ElevatorHeight.HIGH_REEF_ALGAE));
     new Trigger(() -> DashboardUI.Overview.getControl().getScoreAlgae())
-        .onTrue(new ProcessorScore());
+        .onTrue(new ProcessorScore(true));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(Align.create(0.01, 0.05, false, 1));
