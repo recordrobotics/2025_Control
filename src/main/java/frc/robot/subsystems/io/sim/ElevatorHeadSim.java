@@ -92,7 +92,6 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
   @Override
   public boolean getCoralDetector() {
-    // TODO: coralDetector.get() does not update
     if (coralDetectorSim != null) return coralDetectorSimValue.get();
     else return false;
   }

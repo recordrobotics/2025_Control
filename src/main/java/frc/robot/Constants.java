@@ -247,8 +247,8 @@ public final class Constants {
     BL(new Pose2d(3.5252474465619135, 4.9358030628062375, Rotation2d.fromDegrees(-60)), true),
     RL(new Pose2d(14.023002953438088, 3.1160985371937633, Rotation2d.fromDegrees(120)), true),
     // Processors
-    BProcessor(new Pose2d(6, 0.6, Rotation2d.fromDegrees(270)), true),
-    RProcessor(new Pose2d(11.5, 7.4, Rotation2d.fromDegrees(90)), true),
+    BProcessor(new Pose2d(6, 0.43, Rotation2d.fromDegrees(270)), true),
+    RProcessor(new Pose2d(11.5, 7.59, Rotation2d.fromDegrees(90)), true),
 
     BSourceOuterLeft(new Pose2d(1.545, 7.407, Rotation2d.fromDegrees(35.734)), false),
     BSourceOuterRight(new Pose2d(1.485, 0.656, Rotation2d.fromDegrees(144.118)), false),
@@ -1198,6 +1198,11 @@ public final class Constants {
 
     /** The max speed the robot can travel safely */
     public static final double robotMaxSpeed = 4.35;
+
+    public static final double MAX_AUTOALIGN_VELOCITY = 1.5;
+    public static final double MAX_AUTOALIGN_ACCELERATION = 3.0;
+    public static final double MAX_AUTOALIGN_ANGULAR_VELOCITY = 4.0;
+    public static final double MAX_AUTOALIGN_ANGULAR_ACCELERATION = 7.0;
 
     /** The max jerk of the robot below which the pose is certain (in G/s) */
     public static final double MaxPoseCertaintyJerk = 80;
