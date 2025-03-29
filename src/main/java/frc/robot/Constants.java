@@ -139,7 +139,7 @@ public final class Constants {
     LOW_REEF_ALGAE(0.4849, Units.degreesToRadians(-37.841)),
     L3(0.887, Units.degreesToRadians(-101.57)),
     HIGH_REEF_ALGAE(0.916, Units.degreesToRadians(-40.26)),
-    L4(1.309, Units.degreesToRadians(64.99)),
+    L4(1.309, Units.degreesToRadians(54.85)),
     BOTTOM(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-90)),
     GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-36)),
     GROUND_ALGAE_PROCESSOR(0.04, Units.degreesToRadians(5)),
@@ -879,7 +879,7 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 8;
     public static final double MAX_ARM_ACCELERATION = 22;
 
-    public static final double REVERSE_SPEED = 6;
+    public static final double REVERSE_SPEED = 8;
     public static final double INTAKE_SPEED = -18;
     public static final double L1_SCORE_SPEED = 20;
 
