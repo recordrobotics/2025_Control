@@ -819,7 +819,7 @@ public final class Constants {
     public static final double kP = 0.047421;
     public static final double kI = 0.0;
     public static final double kD = 0.0;
-    public static final double kP_position = 3.629;
+    public static final double kP_position = 5.629;
     public static final double kI_position = 0.0;
     public static final double kD_position = 0.132;
     public static final double kS = 0.19168;
