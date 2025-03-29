@@ -38,6 +38,6 @@ public class HybridProcessorScore extends SequentialCommandGroup {
         new ScheduleCommand(lightsCommand),
         AutoBuilder.pathfindThenFollowPath(path, Constants.HybridConstants.constraints),
         new InstantCommand(lightsCommand::cancel),
-        new ProcessorScore());
+        new ProcessorScore(true));
   }
 }

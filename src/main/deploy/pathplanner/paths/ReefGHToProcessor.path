@@ -32,16 +32,16 @@
     },
     {
       "anchor": {
-        "x": 6.054749999999999,
-        "y": 0.5344999999999993
+        "x": 6.168810303183903,
+        "y": 0.4525005781468008
       },
       "prevControl": {
-        "x": 6.105780547327907,
-        "y": 1.2011560050474848
+        "x": 6.219840850511811,
+        "y": 1.1191565831942851
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Processor"
     }
   ],
   "rotationTargets": [],
@@ -50,7 +50,7 @@
   "eventMarkers": [
     {
       "name": "AlgaeL2End",
-      "waypointRelativePos": 0.5697270471464086,
+      "waypointRelativePos": 0.5657568238213456,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
