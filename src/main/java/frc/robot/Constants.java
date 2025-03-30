@@ -112,16 +112,16 @@ public final class Constants {
     public static final double kP = 2.996;
     public static final double kI = 0;
     public static final double kD = 0.28181;
-    public static final double kG = 0.21122;
-    public static final double kS = 0.11314;
-    public static final double kV = 0.63525;
-    public static final double kA = 0.022185;
+    public static final double kG = 0.2269;
+    public static final double kS = 0.13495;
+    public static final double kV = 0.67446;
+    public static final double kA = 0.018492;
 
     public static final double START_POS = Units.degreesToRadians(-90);
     public static final double MIN_POS = Units.degreesToRadians(-103.54);
     public static final double MAX_POS = Units.degreesToRadians(113.79);
 
-    public static final double ARM_GEAR_RATIO = 36; // 16:1 * 72/32
+    public static final double ARM_GEAR_RATIO = 38.4; // 16:1 * 72/30
 
     // TODO: make correct
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0, 0.4, Rotation2d.fromDegrees(0));

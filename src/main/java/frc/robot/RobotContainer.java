@@ -342,10 +342,10 @@ public class RobotContainer {
     return autoCommand;
 
     // return new InstantCommand()
-    //     .andThen(elevator.sysIdQuasistatic(Direction.kForward).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevator.sysIdQuasistatic(Direction.kReverse).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevator.sysIdDynamic(Direction.kForward).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevator.sysIdDynamic(Direction.kReverse).andThen(new WaitCommand(0.4)));
+    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kForward).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kReverse).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdDynamic(Direction.kForward).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdDynamic(Direction.kReverse).andThen(new WaitCommand(0.4)));
   }
 
   public void testPeriodic() {
