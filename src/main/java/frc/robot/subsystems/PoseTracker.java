@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -16,7 +17,9 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
 import frc.robot.utils.DriverStationUtils;
+import frc.robot.utils.IndependentSwervePoseEstimator;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 public class PoseTracker extends SubsystemBase implements AutoCloseable {
 
@@ -25,6 +28,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
           Constants.RobotState.getMode() == Mode.REAL ? new NavSensorReal() : new NavSensorSim());
 
   private static SwerveDrivePoseEstimator poseFilter;
+  private static IndependentSwervePoseEstimator independentPoseEstimator;
 
   public PoseTracker() {
     nav.resetAngleAdjustment();
@@ -35,6 +39,22 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
             nav.getAdjustedAngle(),
             getModulePositions(),
             DashboardUI.Autonomous.getStartingLocation().getPose());
+
+    independentPoseEstimator =
+        new IndependentSwervePoseEstimator(
+            getEstimatedPosition(),
+            new SwerveModule[] {
+              RobotContainer.drivetrain.getFrontLeftModule(),
+              RobotContainer.drivetrain.getFrontRightModule(),
+              RobotContainer.drivetrain.getBackLeftModule(),
+              RobotContainer.drivetrain.getBackRightModule()
+            },
+            new Translation2d[] {
+              Constants.Swerve.frontLeftConstants.wheelLocation,
+              Constants.Swerve.frontRightConstants.wheelLocation,
+              Constants.Swerve.backLeftConstants.wheelLocation,
+              Constants.Swerve.backRightConstants.wheelLocation
+            });
 
     SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", false);
     SmartDashboard.putBoolean("Autonomous/TrustLimelightCenter", false);
@@ -47,6 +67,21 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
         SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
 
     poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
+
+    if (RobotContainer.limelight.getLeft().hasVision
+        || RobotContainer.limelight.getCenter().hasVision) {
+      // when vision is correcting the pose, have that override the independent pose estimator
+      independentPoseEstimator.reset(getEstimatedPosition());
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+    } else {
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+
+      // when no vision use independent pose estimator to correct pose
+      poseFilter.addVisionMeasurement(
+          independentPoseEstimator.getEstimatedRobotPose(),
+          Timer.getFPGATimestamp(),
+          VecBuilder.fill(0.7, 0.7, 9999999));
+    }
 
     poseFilter.addVisionMeasurement(
         RobotContainer.limelight.getLeft().currentEstimate.pose,
@@ -69,6 +104,11 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
     SmartDashboard.putNumber("pose", poseFilter.getEstimatedPosition().getRotation().getDegrees());
     DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
+
+    Logger.recordOutput(
+        "SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
+    Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
+    Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
   }
 
   private SwerveModulePosition[] getModulePositions() {
@@ -83,6 +123,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
   /** Similar to resetPose but adds an argument for the initial pose */
   public void setToPose(Pose2d pose) {
     poseFilter.resetPosition(nav.getAdjustedAngle(), getModulePositions(), pose);
+    independentPoseEstimator.reset(pose);
   }
 
   /** Resets the field relative position of the robot (mostly for testing). */

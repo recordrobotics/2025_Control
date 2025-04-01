@@ -20,6 +20,7 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -323,10 +324,15 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public void controllerPeriodic() {
+    double actualTargetDriveVelocity =
+        targetDriveVelocity
+            * Math.cos(
+                Units.rotationsToRadians(m_goal.position) - getTurnWheelRotation2d().getRadians());
+
     double nextDriveVoltage =
-        drivePID.calculate(getDriveWheelVelocity(), targetDriveVelocity)
-            + driveFF.calculateWithVelocities(lastSpeed, targetDriveVelocity);
-    lastSpeed = targetDriveVelocity;
+        drivePID.calculate(getDriveWheelVelocity(), actualTargetDriveVelocity)
+            + driveFF.calculateWithVelocities(lastSpeed, actualTargetDriveVelocity);
+    lastSpeed = actualTargetDriveVelocity;
 
     io.setDriveMotorVoltage(nextDriveVoltage);
 

@@ -46,6 +46,22 @@ public class Drivetrain extends KillableSubsystem
           Constants.Swerve.backLeftConstants.wheelLocation,
           Constants.Swerve.backRightConstants.wheelLocation);
 
+  public SwerveModule getFrontLeftModule() {
+    return m_frontLeft;
+  }
+
+  public SwerveModule getFrontRightModule() {
+    return m_frontRight;
+  }
+
+  public SwerveModule getBackLeftModule() {
+    return m_backLeft;
+  }
+
+  public SwerveModule getBackRightModule() {
+    return m_backRight;
+  }
+
   public Drivetrain() {
     if (Constants.RobotState.getMode() == Mode.REAL) {
       m_frontLeft =
@@ -154,6 +170,18 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.setDesiredState(swerveModuleStates[3]);
 
     Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
+  }
+
+  @Override
+  public void periodic() {
+    Logger.recordOutput(
+        "SwerveStates/Current",
+        new SwerveModuleState[] {
+          m_frontLeft.getModuleState(),
+          m_frontRight.getModuleState(),
+          m_backLeft.getModuleState(),
+          m_backRight.getModuleState()
+        });
   }
 
   @Override
