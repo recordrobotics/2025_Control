@@ -58,6 +58,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
 
     SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", false);
     SmartDashboard.putBoolean("Autonomous/TrustLimelightCenter", false);
+    SmartDashboard.putBoolean("Autonomous/UseISPE", true);
   }
 
   @Override
@@ -65,6 +66,7 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
     boolean trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
     boolean trustLimelightCenter =
         SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
+    boolean useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
 
     poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
 
@@ -77,10 +79,12 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
       independentPoseEstimator.update(getEstimatedPosition().getRotation());
 
       // when no vision use independent pose estimator to correct pose
-      poseFilter.addVisionMeasurement(
-          independentPoseEstimator.getEstimatedRobotPose(),
-          Timer.getFPGATimestamp(),
-          VecBuilder.fill(0.7, 0.7, 9999999));
+      if (useISPE) {
+        poseFilter.addVisionMeasurement(
+            independentPoseEstimator.getEstimatedRobotPose(),
+            Timer.getFPGATimestamp(),
+            VecBuilder.fill(0.7, 0.7, 9999999));
+      }
     }
 
     poseFilter.addVisionMeasurement(
