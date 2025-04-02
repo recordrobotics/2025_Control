@@ -4,12 +4,12 @@
     {
       "anchor": {
         "x": 3.2193371,
-        "y": 3.6459508000000005
+        "y": 3.7159508000000003
       },
       "prevControl": null,
       "nextControl": {
         "x": 3.4919410308945347,
-        "y": 3.737246948798817
+        "y": 3.807246948798817
       },
       "isLocked": false,
       "linkedName": "ReefB"
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 0
   },
   "useDefaultConstraints": true
 }

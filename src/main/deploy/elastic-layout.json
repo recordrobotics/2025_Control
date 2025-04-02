@@ -52,20 +52,6 @@
                 }
               },
               {
-                "title": "Confidence",
-                "x": 384.0,
-                "y": 384.0,
-                "width": 128.0,
-                "height": 128.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/SmartDashboard/Overview/Left/Confidence",
-                  "period": 0.06,
-                  "data_type": "double",
-                  "show_submit_button": false
-                }
-              },
-              {
                 "title": "Tag Count",
                 "x": 384.0,
                 "y": 512.0,
@@ -76,6 +62,20 @@
                   "topic": "/SmartDashboard/Overview/Left/Tag Count",
                   "period": 0.06,
                   "data_type": "int",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "Confidence",
+                "x": 384.0,
+                "y": 384.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/Overview/Left/Confidence",
+                  "period": 0.06,
+                  "data_type": "double",
                   "show_submit_button": false
                 }
               }
@@ -397,6 +397,19 @@
               "period": 0.06,
               "data_type": "boolean"
             }
+          },
+          {
+            "title": "UseISPE",
+            "x": 1024.0,
+            "y": 640.0,
+            "width": 192.0,
+            "height": 64.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous/UseISPE",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
           }
         ]
       }
@@ -451,20 +464,6 @@
                 }
               },
               {
-                "title": "Confidence",
-                "x": 384.0,
-                "y": 384.0,
-                "width": 128.0,
-                "height": 128.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/SmartDashboard/Overview/Left/Confidence",
-                  "period": 0.06,
-                  "data_type": "double",
-                  "show_submit_button": false
-                }
-              },
-              {
                 "title": "Tag Count",
                 "x": 384.0,
                 "y": 512.0,
@@ -475,6 +474,20 @@
                   "topic": "/SmartDashboard/Overview/Left/Tag Count",
                   "period": 0.06,
                   "data_type": "int",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "Confidence",
+                "x": 384.0,
+                "y": 384.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/Overview/Left/Confidence",
+                  "period": 0.06,
+                  "data_type": "double",
                   "show_submit_button": false
                 }
               }

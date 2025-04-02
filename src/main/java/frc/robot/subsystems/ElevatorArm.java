@@ -129,10 +129,10 @@ public class ElevatorArm extends KillableSubsystem
         feedforward.calculateWithVelocities(
             getArmAngle(), currentSetpoint.velocity, pid.getSetpoint().velocity);
 
-    Logger.recordOutput("ElevatorArmTargetPosition", pid.getSetpoint().position);
-    Logger.recordOutput("ElevatorArmTargetVelocity", pid.getSetpoint().velocity);
-    Logger.recordOutput("ElevatorArmSetVoltage", pidOutputArm);
-    Logger.recordOutput("ElevatorArmSetVoltageFF", feedforwardOutput);
+    // Logger.recordOutput("ElevatorArmTargetPosition", pid.getSetpoint().position);
+    // Logger.recordOutput("ElevatorArmTargetVelocity", pid.getSetpoint().velocity);
+    // Logger.recordOutput("ElevatorArmSetVoltage", pidOutputArm);
+    // Logger.recordOutput("ElevatorArmSetVoltageFF", feedforwardOutput);
 
     io.setArmVoltage(pidOutputArm + feedforwardOutput);
     currentSetpoint = pid.getSetpoint();
