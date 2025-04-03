@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 3.0
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "BargeCenterToReefH"
@@ -55,6 +61,12 @@
         {
           "type": "named",
           "data": {
+            "name": "AutoAlign"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Stop"
           }
         },
@@ -86,6 +98,12 @@
           "type": "path",
           "data": {
             "pathName": "ReefEFToProcessor"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAlign"
           }
         },
         {
