@@ -77,6 +77,7 @@ public class RobotContainer {
   public static Climber climber;
   public static Lights lights;
   public static PowerDistributionPanel pdp;
+  public static PhotonVision photonVision;
 
   public static VisionSystemSim visionSim;
 
@@ -112,6 +113,7 @@ public class RobotContainer {
       climber = new Climber(new ClimberStub(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
+      photonVision = new PhotonVision();
     } else {
       visionSim = new VisionSystemSim("main");
       visionSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
@@ -127,6 +129,7 @@ public class RobotContainer {
       climber = new Climber(new ClimberSim(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
+      photonVision = new PhotonVision();
       humanPlayerSimulation = new HumanPlayerSimulation();
     }
 
