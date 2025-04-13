@@ -81,6 +81,7 @@ public class RobotContainer {
   public static Climber climber;
   public static Lights lights;
   public static PowerDistributionPanel pdp;
+  public static PhotonVision photonVision;
 
   public static PhotonCamera camera;
 
@@ -118,6 +119,7 @@ public class RobotContainer {
       lights = new Lights();
       pdp = new PowerDistributionPanel();
       camera = new PhotonCamera("photonvision");
+      photonVision = new PhotonVision();
     } else {
       drivetrain = new Drivetrain();
       poseTracker = new PoseTracker();
@@ -130,6 +132,7 @@ public class RobotContainer {
       lights = new Lights();
       pdp = new PowerDistributionPanel();
       camera = new PhotonCamera("photonvision");
+      photonVision = new PhotonVision();
     }
 
     // Sets up auto path
