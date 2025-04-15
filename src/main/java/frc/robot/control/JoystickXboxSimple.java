@@ -1,28 +1,31 @@
 package frc.robot.control;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Centimeters;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants;
+import frc.robot.Constants.RobotAlignPose;
+import frc.robot.RobotContainer;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.SimpleMath;
 
-public class JoystickXboxKeypad extends AbstractControl {
+public class JoystickXboxSimple extends AbstractControl {
 
   private Joystick joystick;
   private XboxController xbox_controller;
-  private MacroPad keypad;
 
-  public JoystickXboxKeypad(int joystickPort, int xboxPort, int keypadPort) {
+  public JoystickXboxSimple(int joystickPort, int xboxPort) {
     joystick = new Joystick(joystickPort);
     xbox_controller = new XboxController(xboxPort);
-    keypad = new MacroPad(keypadPort);
   }
 
   @Override
@@ -36,9 +39,7 @@ public class JoystickXboxKeypad extends AbstractControl {
 
     if (getCoralIntakeRelativeDrive()) {
       y = -y;
-    }
-
-    if (getElevatorRelativeDrive()) {
+    } else if (getElevatorRelativeDrive()) {
       double temp = y;
       y = -x;
       x = -temp;
@@ -68,11 +69,6 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   public Boolean getCoralIntakeRelativeDrive() {
     return joystick.getRawButton(10);
-  }
-
-  @Override
-  public Boolean getClimbMode() {
-    return joystick.getRawButton(12);
   }
 
   public Pair<Double, Double> getXY(boolean orient) {
@@ -114,7 +110,7 @@ public class JoystickXboxKeypad extends AbstractControl {
             Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
 
     if (getHalfSpeed()) {
-      speed /= 2;
+      speed /= 3;
     }
 
     return speed;
@@ -153,6 +149,11 @@ public class JoystickXboxKeypad extends AbstractControl {
   }
 
   @Override
+  public Boolean getClimbMode() {
+    return joystick.getRawButton(12);
+  }
+
+  @Override
   public void vibrate(RumbleType type, double value) {
     xbox_controller.setRumble(type, value);
   }
@@ -164,17 +165,17 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   @Override
   public Boolean getElevatorL2() {
-    return keypad.getNC();
+    return xbox_controller.getXButton();
   }
 
   @Override
   public Boolean getElevatorL3() {
-    return keypad.getNB();
+    return xbox_controller.getBButton();
   }
 
   @Override
   public Boolean getElevatorL4() {
-    return keypad.getNA();
+    return xbox_controller.getYButton();
   }
 
   @Override
@@ -220,12 +221,12 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   @Override
   public Boolean getGroundAlgae() {
-    return xbox_controller.getRightBumperButton();
+    return false;
   }
 
   @Override
   public Boolean getScoreAlgae() {
-    return xbox_controller.getPOV() == 90;
+    return false;
   }
 
   @Override
@@ -252,6 +253,18 @@ public class JoystickXboxKeypad extends AbstractControl {
 
   @Override
   public Boolean getCoralSourceIntakeAuto() {
-    return false;
+    Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
+    RobotAlignPose closestSource = RobotAlignPose.closestSourceTo(robot, 2.3);
+
+    boolean nearSource =
+        closestSource != null
+            && Math.abs(
+                    closestSource
+                        .getFarPose()
+                        .getRotation()
+                        .minus(robot.getRotation())
+                        .getDegrees())
+                < 80;
+    return nearSource;
   }
 }
