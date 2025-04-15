@@ -449,6 +449,10 @@ public final class Constants {
       this.useTranslation = useTranslation;
     }
 
+    public Pose2d getRawPose() {
+      return pose;
+    }
+
     public Pose2d getFirstStagePose() {
       return pose.transformBy(new Transform2d(new Translation2d(-0.2 + 0.6, 0), Rotation2d.kZero));
     }

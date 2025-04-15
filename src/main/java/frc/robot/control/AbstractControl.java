@@ -57,6 +57,8 @@ public abstract class AbstractControl {
 
   public abstract Boolean getCoralSourceIntake();
 
+  public abstract Boolean getCoralSourceIntakeAuto();
+
   public abstract Boolean getCoralIntakeScoreL1();
 
   public abstract Boolean getCoralShoot();
