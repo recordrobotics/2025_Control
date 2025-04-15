@@ -247,4 +247,9 @@ public class JoystickXbox extends AbstractControl {
   public Boolean getClimb() {
     return xbox_controller.getRawButton(7);
   }
+
+  @Override
+  public Boolean getCoralSourceIntakeAuto() {
+    return false;
+  }
 }

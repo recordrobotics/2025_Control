@@ -43,7 +43,9 @@ import frc.robot.control.*;
 import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.CoralIntake.IntakeArmState;
+import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.io.real.CoralIntakeReal;
 import frc.robot.subsystems.io.real.ElevatorArmReal;
 import frc.robot.subsystems.io.real.ElevatorHeadReal;
@@ -138,7 +140,7 @@ public class RobotContainer {
     DashboardUI.Autonomous.setupAutoChooser();
 
     // Sets up Control scheme chooser
-    DashboardUI.Overview.addControls(new JoystickXbox(2, 0), new JoystickXboxKeypad(2, 0, 3));
+    DashboardUI.Overview.addControls(new JoystickXbox(2, 0), new JoystickXboxSimple(2, 0));
 
     if (Constants.RobotState.getMode() == Mode.SIM) {
       simulationController = new GenericHID(4);
@@ -291,6 +293,16 @@ public class RobotContainer {
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
         .onTrue(new CoralIntakeFromSource(true));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntakeAuto())
+        .whileTrue(
+            new CoralIntakeFromSource(true)
+                .handleInterrupt(
+                    () -> {
+                      RobotContainer.elevatorHead.toggle(CoralShooterStates.OFF);
+                      RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
+                      RobotContainer.coralIntake.toggle(CoralIntakeState.OFF);
+                    }));
 
     var coralScoreL1Cmd =
         Commands.either(

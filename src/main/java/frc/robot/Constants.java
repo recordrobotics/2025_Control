@@ -276,6 +276,10 @@ public final class Constants {
       this.useTranslation = useTranslation;
     }
 
+    public Pose2d getRawPose() {
+      return pose;
+    }
+
     public Pose2d getFirstStagePose() {
       return pose.transformBy(new Transform2d(new Translation2d(-0.2 + 0.6, 0), Rotation2d.kZero));
     }
@@ -362,11 +366,31 @@ public final class Constants {
       RobotAlignPose.RK
     };
 
+    public static final RobotAlignPose[] sourcePoses = {
+      RobotAlignPose.BSourceOuterLeft,
+      RobotAlignPose.BSourceOuterRight,
+      RobotAlignPose.RSourceOuterLeft,
+      RobotAlignPose.RSourceOuterRight
+    };
+
     public static RobotAlignPose closestReefTo(Pose2d pose, double maxDistance) {
       RobotAlignPose closest = null;
       double closestDistance = Double.MAX_VALUE;
       for (RobotAlignPose align : reefPoses) {
         double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
+        if (distance <= maxDistance && distance < closestDistance) {
+          closest = align;
+          closestDistance = distance;
+        }
+      }
+      return closest;
+    }
+
+    public static RobotAlignPose closestSourceTo(Pose2d pose, double maxDistance) {
+      RobotAlignPose closest = null;
+      double closestDistance = Double.MAX_VALUE;
+      for (RobotAlignPose align : sourcePoses) {
+        double distance = align.getRawPose().getTranslation().getDistance(pose.getTranslation());
         if (distance <= maxDistance && distance < closestDistance) {
           closest = align;
           closestDistance = distance;

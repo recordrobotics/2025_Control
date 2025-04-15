@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.RobotAlignPose;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -469,7 +471,14 @@ public class RobotModel extends SubsystemBase {
 
   @AutoLogOutput public Pose2d robot = new Pose2d();
 
+  @AutoLogOutput public Pose2d[] poses;
+
   public RobotModel() {
+    poses = new Pose2d[RobotAlignPose.values().length];
+    for (int i = 0; i < poses.length; i++) {
+      poses[i] = RobotAlignPose.values()[i].getRawPose();
+    }
+
     periodic();
   }
 
