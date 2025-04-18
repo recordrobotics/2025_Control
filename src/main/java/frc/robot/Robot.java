@@ -75,6 +75,9 @@ public class Robot extends LoggedRobot {
               LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
 
+    DriverStation.silenceJoystickConnectionWarning(
+        Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM);
+
     Logger.start();
 
     if (Constants.RobotState.MOTOR_LOGGING_ENABLED) {

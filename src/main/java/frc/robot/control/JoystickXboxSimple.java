@@ -201,7 +201,7 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getCoralSourceIntake() {
-    return xbox_controller.getLeftBumperButton();
+    return false;
   }
 
   @Override
