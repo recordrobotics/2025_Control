@@ -53,6 +53,7 @@ import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.PoweredSubsystem;
+import frc.robot.utils.RepeatConditionallyCommand;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.assists.GroundIntakeAssist;
 import frc.robot.utils.assists.IAssist;
@@ -291,14 +292,20 @@ public class RobotContainer {
         .onTrue(new CoralIntakeFromSource(true));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntakeAuto())
+        .debounce(0.2, DebounceType.kBoth)
         .whileTrue(
-            new CoralIntakeFromSource(true)
-                .handleInterrupt(
-                    () -> {
-                      RobotContainer.elevatorHead.toggle(CoralShooterStates.OFF);
-                      RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
-                      RobotContainer.coralIntake.toggle(CoralIntakeState.OFF);
-                    }));
+            new RepeatConditionallyCommand(
+                new CoralIntakeFromSource(true)
+                    .finallyDo(
+                        () -> {
+                          System.out.println("SOURCE ENDE!@!@H*&!*&@EQ#YQ#gyuaqd");
+                          RobotContainer.elevatorHead.set(CoralShooterStates.OFF);
+                          RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
+                          RobotContainer.coralIntake.set(CoralIntakeState.OFF);
+                        })
+                    .asProxy(),
+                () -> !RobotContainer.elevatorHead.hasCoral(),
+                false));
 
     var coralScoreL1Cmd =
         Commands.either(
