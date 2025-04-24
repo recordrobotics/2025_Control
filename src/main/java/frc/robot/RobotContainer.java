@@ -19,6 +19,7 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.AutoScore;
+import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -40,6 +41,7 @@ import frc.robot.control.*;
 import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.Climber.ClimberState;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.io.real.CoralIntakeReal;
@@ -185,7 +187,11 @@ public class RobotContainer {
                 .alongWith(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll())));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
-        .onTrue(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll()));
+        .onTrue(
+            Commands.either(
+                new ClimbMove(ClimberState.Climb),
+                new ClimbMove(ClimberState.Extend),
+                () -> climber.getCurrentState() == ClimberState.Extend));
 
     // Reset pose trigger
     new Trigger(() -> DashboardUI.Overview.getControl().getPoseReset())
