@@ -177,12 +177,10 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     // Command to kill robot
-    // KillSpecified requires the subsystems, which cancels the commands that require them (which is
-    // all the commands)
     new Trigger(() -> DashboardUI.Overview.getControl().getKill())
         .whileTrue(
-            new KillSpecified(
-                drivetrain, elevator, elevatorArm, elevatorHead, coralIntake, climber));
+            new KillSpecified(drivetrain, elevator, elevatorArm, elevatorHead, coralIntake, climber)
+                .alongWith(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll())));
 
     // new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
     //     .onTrue(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll()));
