@@ -15,7 +15,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.FieldPosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.ClimbMove;
-import frc.robot.commands.ClimbUp;
 import frc.robot.subsystems.Climber.ClimberState;
 import frc.robot.utils.TriggerProcessor.TriggerDistance;
 
@@ -74,6 +73,6 @@ public class HybridCage extends SequentialCommandGroup {
                 AutoBuilder.pathfindThenFollowPath(
                     shortestPath, Constants.HybridConstants.constraints)),
         new InstantCommand(lightsCommand::cancel),
-        new ClimbUp());
+        new ClimbMove(ClimberState.Climb));
   }
 }

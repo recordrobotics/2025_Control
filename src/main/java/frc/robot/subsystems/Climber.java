@@ -126,11 +126,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   }
 
   public boolean atGoal() {
-    if (currentState == ClimberState.Climb) {
-      return getArmAngle() >= Constants.Climber.CLIMBED_ANGLE.in(Radians);
-    } else {
-      return pid.atGoal();
-    }
+    return pid.atGoal();
   }
 
   public void set(ClimberState state) {
