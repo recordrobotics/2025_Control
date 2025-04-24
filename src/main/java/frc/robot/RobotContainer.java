@@ -62,6 +62,7 @@ import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.assists.GroundIntakeAssist;
 import frc.robot.utils.assists.IAssist;
 import java.util.List;
+import frc.robot.utils.libraries.Elastic;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.simulation.VisionSystemSim;
@@ -189,9 +190,10 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
         .onTrue(
             Commands.either(
-                new ClimbMove(ClimberState.Climb),
-                new ClimbMove(ClimberState.Extend),
-                () -> climber.getCurrentState() == ClimberState.Extend));
+                    new ClimbMove(ClimberState.Climb),
+                    new ClimbMove(ClimberState.Extend),
+                    () -> climber.getCurrentState() == ClimberState.Extend)
+                .alongWith(new InstantCommand(() -> Elastic.selectTab("Climb"))));
 
     // Reset pose trigger
     new Trigger(() -> DashboardUI.Overview.getControl().getPoseReset())
@@ -202,28 +204,6 @@ public class RobotContainer {
         .onTrue(new InstantCommand(poseSensorFusion::resetStartingPose).ignoringDisable(true));
     new Trigger(() -> DashboardUI.Autonomous.getLimelightRotation())
         .onTrue(new InstantCommand(poseSensorFusion::resetToLimelight).ignoringDisable(true));
-
-    // Climb mode trigger
-    // new Trigger(() -> DashboardUI.Overview.getControl().getClimbMode())
-    //     .onTrue(
-    //         new InstantCommand(
-    //                 () -> {
-    //                   if (!inClimbMode) {
-    //                     inClimbMode = true;
-    //                     Elastic.selectTab("Climb");
-    //                   } else {
-    //                     inClimbMode = false;
-    //                     DashboardUI.Overview.switchTo();
-    //                   }
-    //                 })
-    //             .andThen(
-    //                 new DeferredCommand(
-    //                     () ->
-    //                         new ClimbMove(
-    //                             climber.getCurrentState() == ClimberState.Extend
-    //                                 ? ClimberState.Park
-    //                                 : ClimberState.Extend),
-    //                     Set.of(climber))));
 
     BooleanSupplier elevatorLock =
         () -> {

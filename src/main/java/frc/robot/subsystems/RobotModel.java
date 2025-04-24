@@ -14,8 +14,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -470,14 +468,7 @@ public class RobotModel extends SubsystemBase {
               + CoralIntake.POSE_COUNT
               + Climber.POSE_COUNT];
 
-  @AutoLogOutput public Pose2d robot = new Pose2d();
-
   public RobotModel() {
-    poses = new Pose2d[RobotAlignPose.values().length];
-    for (int i = 0; i < poses.length; i++) {
-      poses[i] = RobotAlignPose.values()[i].getRawPose();
-    }
-
     periodic();
   }
 
@@ -538,3 +529,10 @@ public class RobotModel extends SubsystemBase {
       this.poseSupplier = poseSupplier;
     }
   }
+
+  private final RobotCoral robotCoral = new RobotCoral(() -> null);
+
+  public RobotCoral getRobotCoral() {
+    return robotCoral;
+  }
+}
