@@ -1213,9 +1213,9 @@ public final class Constants {
 
     // Turn max velocity and acceleration
     // Calculated from motor rpm 5000 / 60 (rps) / gear ratio (15.43)
-    public static final double TurnMaxAngularVelocity = 10; // ROTATIONS / SECOND
+    public static final double TurnMaxAngularVelocity = 5; // ROTATIONS / SECOND
     // Calculated from max velocity / time to reach (0.1)
-    public static final double TurnMaxAngularAcceleration = 5; // ROTATIONS / SECOND / SECOND
+    public static final double TurnMaxAngularAcceleration = 20; // ROTATIONS / SECOND / SECOND
 
     /** The max speed the robot can travel safely */
     public static final double robotMaxSpeed = 4.35;

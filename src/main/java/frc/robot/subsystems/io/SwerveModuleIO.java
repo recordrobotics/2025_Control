@@ -1,6 +1,8 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 
 public interface SwerveModuleIO extends AutoCloseable {
 
@@ -11,6 +13,10 @@ public interface SwerveModuleIO extends AutoCloseable {
   public void setDriveMotorVoltage(double newValue);
 
   public void setTurnMotorVoltage(double newValue);
+
+  public void setTurnMotorMotionMagic(MotionMagicVoltage request);
+
+  public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request);
 
   public double getDriveMotorVoltage();
 

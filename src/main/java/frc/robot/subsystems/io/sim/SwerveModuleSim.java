@@ -3,6 +3,8 @@ package frc.robot.subsystems.io.sim;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -107,6 +109,16 @@ public class SwerveModuleSim implements SwerveModuleIO {
   @Override
   public void setTurnMotorVoltage(double newValue) {
     m_turningMotor.setVoltage(newValue);
+  }
+
+  @Override
+  public void setTurnMotorMotionMagic(MotionMagicVoltage request) {
+    m_turningMotor.setControl(request);
+  }
+
+  @Override
+  public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {
+    m_driveMotor.setControl(request);
   }
 
   @Override
