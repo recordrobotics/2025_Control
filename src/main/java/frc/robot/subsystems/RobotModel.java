@@ -214,7 +214,7 @@ public class RobotModel extends SubsystemBase {
       poses[i] =
           new Pose3d(0, 0, 0, new Rotation3d())
               .rotateAround(
-                  new Translation3d(0, 0.334669, 0.436),
+                  new Translation3d(0, 0.3337, 0.3598),
                   new Rotation3d(Units.degreesToRadians(coralintake.getAngle()), 0, 0));
     }
 
@@ -449,7 +449,7 @@ public class RobotModel extends SubsystemBase {
       poses[i] =
           new Pose3d(0, 0, 0, new Rotation3d())
               .rotateAround(
-                  new Translation3d(-0.355, 0, 0.31),
+                  new Translation3d(-0.2921, 0, 0.4097),
                   new Rotation3d(0, Units.degreesToRadians(climber.getAngle()), 0));
     }
   }
