@@ -115,7 +115,12 @@ public class RobotModel extends SubsystemBase {
       // Second stage
       poses[i++] =
           new Pose3d(
-              new Translation3d(0, 0, elevator.getLength() - Constants.Elevator.MIN_LENGTH),
+              new Translation3d(
+                  0,
+                  0,
+                  (elevator.getLength() - Constants.Elevator.MIN_LENGTH)
+                      / Constants.Elevator.MAX_HEIGHT
+                      * 1.44),
               new Rotation3d(0, 0, 0));
     }
 
@@ -226,8 +231,8 @@ public class RobotModel extends SubsystemBase {
           robotOrigin.transformBy(
               new Transform3d(
                   0,
-                  0.334669,
-                  0.436,
+                  0.3337,
+                  0.3598,
                   new Rotation3d(Units.degreesToRadians(coralintake.getAngle()), 0, 0)));
 
       return coralIntakePose.transformBy(
@@ -308,7 +313,9 @@ public class RobotModel extends SubsystemBase {
                       new Translation3d(
                           0,
                           0,
-                          model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)),
+                          (model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)
+                              / Constants.Elevator.MAX_HEIGHT
+                              * 1.44)),
               pose.getRotation());
     }
 
@@ -318,9 +325,9 @@ public class RobotModel extends SubsystemBase {
         robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
 
       var pose =
-          new Pose3d(0.32 + 0.18, 0.2, 0.54, new Rotation3d())
+          new Pose3d(0.32 + 0.165, 0.2, 0.54, new Rotation3d())
               .rotateAround(
-                  new Translation3d(0.32, 0, 0.58),
+                  new Translation3d(0.318, 0, 0.575),
                   new Rotation3d(0, -Units.degreesToRadians(elevatorarm.getAngle()), 0));
       pose =
           new Pose3d(
@@ -329,14 +336,16 @@ public class RobotModel extends SubsystemBase {
                       new Translation3d(
                           0,
                           0,
-                          model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)),
+                          (model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)
+                              / Constants.Elevator.MAX_HEIGHT
+                              * 1.44)),
               pose.getRotation());
 
       Pose3d coralShooterPose =
           robotOrigin.transformBy(new Transform3d(pose.getTranslation(), pose.getRotation()));
 
       return coralShooterPose.transformBy(
-          new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + 22), 0)));
+          new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + 12), 0)));
     }
 
     public Pose3d getAlgaeGrabberTargetPoseTop() {

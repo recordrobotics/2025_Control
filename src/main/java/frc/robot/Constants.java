@@ -942,7 +942,7 @@ public final class Constants {
     public static final double SHOOT_TIME = 0.3;
 
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0, 0.4, Rotation2d.fromDegrees(0));
-    public static final double LENGTH = 0.431;
+    public static final double LENGTH = 0.385;
     public static final double ANGLE_OFFSET = 0;
   }
 

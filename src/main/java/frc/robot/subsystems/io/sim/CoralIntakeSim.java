@@ -42,7 +42,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
           armMotor,
           Constants.CoralIntake.ARM_GEAR_RATIO,
           Units.inchesToMeters(88),
-          -1.1,
+          -0.95,
           Math.PI / 2,
           true,
           Constants.CoralIntake.ARM_START_POS,

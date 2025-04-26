@@ -34,8 +34,8 @@ public class ElevatorSim implements ElevatorIO {
           Constants.Elevator.MAX_HEIGHT,
           true,
           0,
-          0.001,
-          0.001);
+          0.0003,
+          0.0003);
 
   private final DigitalInput bottomEndStop = new DigitalInput(RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
   private final DigitalInput topEndStop = new DigitalInput(RobotMap.Elevator.TOP_ENDSTOP_ID);
