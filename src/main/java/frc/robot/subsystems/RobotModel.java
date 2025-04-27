@@ -17,6 +17,7 @@ import frc.robot.RobotContainer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -36,12 +37,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root =
         mechanism.getRoot(
             "elevator_root",
-            Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.Elevator.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d elevator =
         root.append(
@@ -60,12 +61,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism_setpoint =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root_setpoint =
         mechanism_setpoint.getRoot(
             "elevator_root",
-            Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.Elevator.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d elevator_setpoint =
         root_setpoint.append(
@@ -166,12 +167,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root =
         mechanism.getRoot(
             "coralintake_root",
-            Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d coralintake =
         root.append(
@@ -184,12 +185,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism_setpoint =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root_setpoint =
         mechanism_setpoint.getRoot(
             "coralintake_root",
-            Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d coralintake_setpoint =
         root_setpoint.append(
@@ -251,12 +252,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root =
         mechanism.getRoot(
             "elevatorarm_root",
-            Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.ElevatorArm.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d elevatorarm =
         root.append(
@@ -269,12 +270,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism_setpoint =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root_setpoint =
         mechanism_setpoint.getRoot(
             "elevatorarm_root",
-            Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.ElevatorArm.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d elevatorarm_setpoint =
         root_setpoint.append(
@@ -406,12 +407,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root =
         mechanism.getRoot(
             "climber_root",
-            Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.Climber.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d climber =
         root.append(
@@ -424,12 +425,12 @@ public class RobotModel extends SubsystemBase {
 
     @AutoLogOutput
     private LoggedMechanism2d mechanism_setpoint =
-        new LoggedMechanism2d(Constants.Frame.BUMPER_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
+        new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
     private LoggedMechanismRoot2d root_setpoint =
         mechanism_setpoint.getRoot(
             "climber_root",
-            Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.BUMPER_WIDTH / 2.0,
+            Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
             Constants.Climber.ROOT_MECHANISM_POSE.getY());
     private LoggedMechanismLigament2d climber_setpoint =
         root_setpoint.append(
@@ -475,8 +476,6 @@ public class RobotModel extends SubsystemBase {
               + ElevatorArm.POSE_COUNT
               + CoralIntake.POSE_COUNT
               + Climber.POSE_COUNT];
-
-  @AutoLogOutput public Pose2d robot = new Pose2d();
 
   public RobotModel() {
     periodic();
@@ -539,11 +538,7 @@ public class RobotModel extends SubsystemBase {
 
   @AutoLogOutput
   private Pose3d[] getCoralPositions() {
-    Pose3d[] poses = new Pose3d[coralPositions.size()];
-    for (int i = 0; i < coralPositions.size(); i++) {
-      poses[i] = coralPositions.get(i).pose.get();
-    }
-    return poses;
+    return SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
   }
 
   public NamedAlgae[] getAlgaes() {
@@ -552,11 +547,12 @@ public class RobotModel extends SubsystemBase {
 
   @AutoLogOutput
   private Pose3d[] getAlgaePositions() {
-    Pose3d[] poses = new Pose3d[algaePositions.size()];
-    for (int i = 0; i < algaePositions.size(); i++) {
-      poses[i] = algaePositions.get(i).pose.get();
-    }
-    return poses;
+    return SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
+  }
+
+  @AutoLogOutput
+  private Pose2d getRobot() {
+    return RobotContainer.drivetrain.getSwerveDriveSimulation().getSimulatedDriveTrainPose();
   }
 
   public void addCoral(NamedCoral coral) {

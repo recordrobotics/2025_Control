@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.KillSpecified;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.LocalADStarAK;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -102,6 +103,11 @@ public class Robot extends LoggedRobot {
     // Elastic layout webserver
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
+    if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
+      // Reset simulation field
+      SimulatedArena.getInstance().resetFieldForAuto();
+    }
+
     // MAKE SURE FIRST CALL TO ELASTIC IS NOT IN TELEOP OR AUTO INIT!!
     DashboardUI.Autonomous.switchTo();
   }
@@ -159,6 +165,11 @@ public class Robot extends LoggedRobot {
     // Cancel any previous commands
     CommandScheduler.getInstance().cancelAll();
 
+    if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
+      // Reset simulation field
+      SimulatedArena.getInstance().resetFieldForAuto();
+    }
+
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -210,6 +221,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {
     m_robotContainer.simulationPeriodic();
+    SimulatedArena.getInstance().simulationPeriodic();
   }
 
   public static double getAutoStartTime() {

@@ -7,6 +7,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -14,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
 import frc.robot.utils.DriveCommandData;
@@ -21,6 +23,12 @@ import frc.robot.utils.DriveCommandDataAutoLogged;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.GyroSimulation;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -46,6 +54,36 @@ public class Drivetrain extends KillableSubsystem
           Constants.Swerve.backLeftConstants.wheelLocation,
           Constants.Swerve.backRightConstants.wheelLocation);
 
+  // Create and configure a drivetrain simulation configuration
+  private final DriveTrainSimulationConfig driveTrainSimulationConfig =
+      DriveTrainSimulationConfig.Default()
+          // Specify gyro type (for realistic gyro drifting and error simulation)
+          .withGyro(() -> new GyroSimulation(0.5, 0.05)) // navX-Micro
+          // Specify swerve module (for realistic swerve dynamics)
+          .withSwerveModule(
+              new SwerveModuleSimulationConfig(
+                  DCMotor.getKrakenX60(1), // Drive motor is a Kraken X60
+                  DCMotor.getKrakenX60(1), // Steer motor is a Kraken X60
+                  Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO, // Drive motor gear ratio.
+                  Constants.Swerve.KRAKEN_TURN_GEAR_RATIO, // Steer motor gear ratio.
+                  Volts.of(0.1),
+                  Volts.of(0.2),
+                  Inches.of(2),
+                  KilogramSquareMeters.of(0.03),
+                  COTS.WHEELS.DEFAULT_NEOPRENE_TREAD.cof // Use the COF for Neoprene Tread
+                  ))
+          // Configures the track length and track width (spacing between swerve modules)
+          .withTrackLengthTrackWidth(
+              Meters.of(Constants.Frame.ROBOT_WHEEL_DISTANCE_LENGTH),
+              Meters.of(Constants.Frame.ROBOT_WHEEL_DISTANCE_WIDTH))
+          // Configures the bumper size (dimensions of the robot bumper)
+          .withBumperSize(
+              Meters.of(Constants.Frame.FRAME_WITH_BUMPER_WIDTH),
+              Meters.of(Constants.Frame.FRAME_WITH_BUMPER_WIDTH))
+          .withRobotMass(Kilograms.of(Constants.Frame.ROBOT_MASS));
+
+  private final SwerveDriveSimulation swerveDriveSimulation;
+
   public SwerveModule getFrontLeftModule() {
     return m_frontLeft;
   }
@@ -62,8 +100,13 @@ public class Drivetrain extends KillableSubsystem
     return m_backRight;
   }
 
+  public SwerveDriveSimulation getSwerveDriveSimulation() {
+    return swerveDriveSimulation;
+  }
+
   public Drivetrain() {
     if (Constants.RobotState.getMode() == Mode.REAL) {
+      swerveDriveSimulation = null;
       m_frontLeft =
           new SwerveModule(
               Constants.Swerve.frontLeftConstants,
@@ -81,22 +124,37 @@ public class Drivetrain extends KillableSubsystem
               Constants.Swerve.backRightConstants,
               new SwerveModuleReal(Constants.Swerve.kDt, Constants.Swerve.backRightConstants));
     } else {
+      /* Create a swerve drive simulation */
+      swerveDriveSimulation =
+          new SwerveDriveSimulation(
+              // Specify Configuration
+              driveTrainSimulationConfig,
+              // Specify starting pose
+              DashboardUI.Autonomous.getStartingLocation().getPose());
+
+      // Register the drivetrain simulation to the default simulation world
+      SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
+
       m_frontLeft =
           new SwerveModule(
               Constants.Swerve.frontLeftConstants,
-              new SwerveModuleSim(Constants.Swerve.kDt, Constants.Swerve.frontLeftConstants));
+              new SwerveModuleSim(
+                  swerveDriveSimulation.getModules()[0], Constants.Swerve.frontLeftConstants));
       m_frontRight =
           new SwerveModule(
               Constants.Swerve.frontRightConstants,
-              new SwerveModuleSim(Constants.Swerve.kDt, Constants.Swerve.frontRightConstants));
+              new SwerveModuleSim(
+                  swerveDriveSimulation.getModules()[1], Constants.Swerve.frontRightConstants));
       m_backLeft =
           new SwerveModule(
               Constants.Swerve.backLeftConstants,
-              new SwerveModuleSim(Constants.Swerve.kDt, Constants.Swerve.backLeftConstants));
+              new SwerveModuleSim(
+                  swerveDriveSimulation.getModules()[2], Constants.Swerve.backLeftConstants));
       m_backRight =
           new SwerveModule(
               Constants.Swerve.backRightConstants,
-              new SwerveModuleSim(Constants.Swerve.kDt, Constants.Swerve.backRightConstants));
+              new SwerveModuleSim(
+                  swerveDriveSimulation.getModules()[3], Constants.Swerve.backRightConstants));
     }
 
     sysIdRoutineDriveMotors =

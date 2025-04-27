@@ -1133,8 +1133,12 @@ public final class Constants {
 
     public static final double ROBOT_WHEEL_DISTANCE_LENGTH = 0.5588;
 
-    public static final double BUMPER_WIDTH = 0.762;
+    public static final double FRAME_WIDTH = 0.762;
+    public static final double FRAME_WITH_BUMPER_WIDTH = FRAME_WIDTH + Inches.of(6.5).in(Meters);
     public static final double MAX_MECHANISM_HEIGHT = 2.1336;
+
+    public static final double ROBOT_MASS = 64.864; // kg
+    public static final double ROBOT_MOI = 14.547; // kg*m^2
   }
 
   public final class Swerve {
@@ -1225,8 +1229,8 @@ public final class Constants {
 
     public static final RobotConfig PPDefaultConfig =
         new RobotConfig(
-            64.864,
-            14.547,
+            Constants.Frame.ROBOT_MASS,
+            Constants.Frame.ROBOT_MOI,
             new ModuleConfig(WHEEL_DIAMETER / 2, 4.350, 1.2, DCMotor.getKrakenX60(1), 52, 1),
             frontLeftLocation,
             frontRightLocation,

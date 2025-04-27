@@ -23,14 +23,18 @@ import org.littletonrobotics.junction.Logger;
 
 public class PoseTracker extends SubsystemBase implements AutoCloseable {
 
-  public final NavSensor nav =
-      new NavSensor(
-          Constants.RobotState.getMode() == Mode.REAL ? new NavSensorReal() : new NavSensorSim());
+  public final NavSensor nav;
 
   private static SwerveDrivePoseEstimator poseFilter;
   private static IndependentSwervePoseEstimator independentPoseEstimator;
 
   public PoseTracker() {
+    nav =
+        new NavSensor(
+            Constants.RobotState.getMode() == Mode.REAL
+                ? new NavSensorReal()
+                : new NavSensorSim(
+                    RobotContainer.drivetrain.getSwerveDriveSimulation().getGyroSimulation()));
     nav.resetAngleAdjustment();
 
     poseFilter =
@@ -133,6 +137,9 @@ public class PoseTracker extends SubsystemBase implements AutoCloseable {
   /** Resets the field relative position of the robot (mostly for testing). */
   public void resetStartingPose() {
     setToPose(DashboardUI.Autonomous.getStartingLocation().getPose());
+    RobotContainer.drivetrain
+        .getSwerveDriveSimulation()
+        .setSimulationWorldPose(DashboardUI.Autonomous.getStartingLocation().getPose());
   }
 
   public void resetToLimelight() {

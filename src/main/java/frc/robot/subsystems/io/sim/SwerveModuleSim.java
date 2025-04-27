@@ -1,24 +1,22 @@
 package frc.robot.subsystems.io.sim;
 
-import static edu.wpi.first.units.Units.Volts;
-
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.ModuleConstants;
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
+import org.ironmaple.simulation.motorsims.SimulatedBattery;
+import org.ironmaple.simulation.motorsims.SimulatedMotorController;
 
 public class SwerveModuleSim implements SwerveModuleIO {
-
-  private final double periodicDt;
 
   private final TalonFX m_driveMotor;
   private final TalonFX m_turningMotor;
@@ -27,68 +25,43 @@ public class SwerveModuleSim implements SwerveModuleIO {
   private final TalonFXSimState m_driveMotorSim;
   private final TalonFXSimState m_turningMotorSim;
 
-  private final DCMotor dcDriveMotor;
-  private final DCMotor dcTurnMotor;
+  public static class TalonFXMotorControllerSim implements SimulatedMotorController {
+    public final int id;
 
-  private final DCMotorSim dcDriveMotorSim;
-  private final DCMotorSim dcTurnMotorSim;
+    private final TalonFXSimState talonFXSimState;
 
-  private final double TURN_GEAR_RATIO;
-  private final double DRIVE_GEAR_RATIO;
+    public TalonFXMotorControllerSim(TalonFX talonFX) {
+      this.id = talonFX.getDeviceID();
+      this.talonFXSimState = talonFX.getSimState();
+    }
 
-  public SwerveModuleSim(double periodicDt, ModuleConstants m) {
-    this.periodicDt = periodicDt;
+    @Override
+    public Voltage updateControlSignal(
+        Angle mechanismAngle,
+        AngularVelocity mechanismVelocity,
+        Angle encoderAngle,
+        AngularVelocity encoderVelocity) {
+      talonFXSimState.setRawRotorPosition(encoderAngle);
+      talonFXSimState.setRotorVelocity(encoderVelocity);
+      talonFXSimState.setSupplyVoltage(SimulatedBattery.getBatteryVoltage());
 
+      return talonFXSimState.getMotorVoltageMeasure();
+    }
+  }
+
+  public SwerveModuleSim(SwerveModuleSimulation moduleSimulation, ModuleConstants m) {
     m_driveMotor = new TalonFX(m.driveMotorChannel);
     m_turningMotor = new TalonFX(m.turningMotorChannel);
 
-    TURN_GEAR_RATIO = m.TURN_GEAR_RATIO;
-    DRIVE_GEAR_RATIO = m.DRIVE_GEAR_RATIO;
-
     absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel);
-
-    switch (m.driveMotorType) {
-      case Falcon:
-        dcDriveMotor = DCMotor.getFalcon500(1);
-        break;
-      case Kraken:
-        dcDriveMotor = DCMotor.getKrakenX60(1);
-        break;
-      default:
-        dcDriveMotor = DCMotor.getFalcon500(1);
-        break;
-    }
-
-    switch (m.turnMotorType) {
-      case Falcon:
-        dcTurnMotor = DCMotor.getFalcon500(1);
-        break;
-      case Kraken:
-        dcTurnMotor = DCMotor.getKrakenX60(1);
-        break;
-      default:
-        dcTurnMotor = DCMotor.getFalcon500(1);
-        break;
-    }
-
-    dcDriveMotorSim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(dcDriveMotor, 0.01, DRIVE_GEAR_RATIO),
-            dcDriveMotor,
-            0.001,
-            0.001);
-
-    dcTurnMotorSim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(dcTurnMotor, 0.001, TURN_GEAR_RATIO),
-            dcDriveMotor,
-            0.001,
-            0.001);
 
     m_driveMotorSim = m_driveMotor.getSimState();
     m_turningMotorSim = m_turningMotor.getSimState();
 
     m_turningMotorSim.Orientation = ChassisReference.Clockwise_Positive;
+
+    moduleSimulation.useDriveMotorController(new TalonFXMotorControllerSim(m_driveMotor));
+    moduleSimulation.useSteerMotorController(new TalonFXMotorControllerSim(m_turningMotor));
   }
 
   @Override
@@ -178,12 +151,12 @@ public class SwerveModuleSim implements SwerveModuleIO {
 
   @Override
   public void setDriveMechanismPosition(double newValue) {
-    m_driveMotor.setPosition(newValue);
+    // m_driveMotor.setPosition(newValue);
   }
 
   @Override
   public void setTurnMechanismPosition(double newValue) {
-    m_turningMotor.setPosition(newValue);
+    // m_turningMotor.setPosition(newValue);
   }
 
   @Override
@@ -208,25 +181,5 @@ public class SwerveModuleSim implements SwerveModuleIO {
   }
 
   @Override
-  public void simulationPeriodic() {
-    m_driveMotorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-    m_turningMotorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-    var driveMotorVoltage = m_driveMotorSim.getMotorVoltageMeasure();
-    var turnMotorVoltage = m_turningMotorSim.getMotorVoltageMeasure();
-
-    dcDriveMotorSim.setInputVoltage(driveMotorVoltage.in(Volts));
-    dcDriveMotorSim.update(periodicDt);
-
-    dcTurnMotorSim.setInputVoltage(turnMotorVoltage.in(Volts));
-    dcTurnMotorSim.update(periodicDt);
-
-    m_driveMotorSim.setRawRotorPosition(
-        dcDriveMotorSim.getAngularPosition().times(DRIVE_GEAR_RATIO));
-    m_driveMotorSim.setRotorVelocity(dcDriveMotorSim.getAngularVelocity().times(DRIVE_GEAR_RATIO));
-
-    m_turningMotorSim.setRawRotorPosition(
-        dcTurnMotorSim.getAngularPosition().times(TURN_GEAR_RATIO));
-    m_turningMotorSim.setRotorVelocity(dcTurnMotorSim.getAngularVelocity().times(TURN_GEAR_RATIO));
-  }
+  public void simulationPeriodic() {}
 }

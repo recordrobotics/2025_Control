@@ -1,59 +1,55 @@
 package frc.robot.subsystems.io.sim;
 
-import com.studica.frc.AHRS;
-import com.studica.frc.AHRS.NavXComType;
-import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
-import edu.wpi.first.math.util.Units;
-import frc.robot.RobotContainer;
+import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.subsystems.io.NavSensorIO;
+import org.ironmaple.simulation.drivesims.GyroSimulation;
 
 public class NavSensorSim implements NavSensorIO {
 
-  private final AHRS _nav = new AHRS(NavXComType.kUSB1);
+  private final GyroSimulation gyroSimulation;
+
+  public NavSensorSim(GyroSimulation gyroSimulation) {
+    this.gyroSimulation = gyroSimulation;
+  }
 
   @Override
   public void reset() {
-    _nav.reset();
+    gyroSimulation.setRotation(new Rotation2d());
   }
 
   @Override
-  public void resetDisplacement() {
-    _nav.resetDisplacement();
-  }
+  public void resetDisplacement() {}
 
   @Override
   public double getAngle() {
-    return _nav.getAngle();
+    return gyroSimulation.getGyroReading().getDegrees();
   }
 
   @Override
   public double getWorldLinearAccelX() {
-    return _nav.getWorldLinearAccelX();
+    return 0;
   }
 
   @Override
   public double getWorldLinearAccelY() {
-    return _nav.getWorldLinearAccelY();
+    return 0;
   }
 
   @Override
   public boolean isConnected() {
-    return _nav.isConnected();
+    return true;
   }
 
   @Override
-  public void close() throws Exception {
-    _nav.close();
-  }
+  public void close() throws Exception {}
 
-  private double angleRads = 0;
+  // private double angleRads = 0;
 
   @Override
   public void simulationPeriodic() {
-    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[2]");
-    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
-    angleRads += RobotContainer.drivetrain.getChassisSpeeds().omegaRadiansPerSecond * 0.02;
-    angle.set(Units.radiansToDegrees(angleRads));
+    // int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[2]");
+    // SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
+    // angleRads += RobotContainer.drivetrain.getChassisSpeeds().omegaRadiansPerSecond * 0.02;
+    // angle.set(Units.radiansToDegrees(angleRads));
   }
 }
