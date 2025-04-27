@@ -6,9 +6,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
-import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.commands.simulation.CoralIntakeFromGroundSim;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.CoralIntake.IntakeArmState;
 
@@ -42,8 +40,6 @@ public class CoralIntakeFromGround extends SequentialCommandGroup {
         // start intaking
         new InstantCommand(
             () -> RobotContainer.coralIntake.set(CoralIntakeState.INTAKE),
-            RobotContainer.coralIntake),
-        new ScheduleCommand(new CoralIntakeFromGroundSim(0.2))
-            .onlyIf(() -> Constants.RobotState.getMode() != Mode.REAL));
+            RobotContainer.coralIntake));
   }
 }

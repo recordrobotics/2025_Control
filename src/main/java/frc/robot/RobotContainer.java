@@ -34,8 +34,6 @@ import frc.robot.commands.hybrid.AutoScore;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
-import frc.robot.commands.simulation.PlaceRandomGroundAlgae;
-import frc.robot.commands.simulation.PlaceRandomGroundCoral;
 import frc.robot.control.*;
 import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
@@ -52,6 +50,7 @@ import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.subsystems.io.stub.ClimberStub;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import java.util.function.BooleanSupplier;
@@ -81,13 +80,13 @@ public class RobotContainer {
 
   public static PhotonCamera camera;
 
+  public static HumanPlayerSimulation humanPlayerSimulation;
+
   // Autonomous
   @SuppressWarnings("unused")
   private final AutoPath autoPath;
 
   private Command autoCommand;
-
-  private final GenericHID simulationController;
 
   public static class ElevatorMoveToggleRequirement extends SubsystemBase {}
 
@@ -121,12 +120,15 @@ public class RobotContainer {
       limelight = new Limelight();
       elevator = new Elevator(new ElevatorSim(Constants.Elevator.kDt));
       elevatorArm = new ElevatorArm(new ElevatorArmSim(0.02));
-      elevatorHead = new ElevatorHead(new ElevatorHeadSim(0.02));
-      coralIntake = new CoralIntake(new CoralIntakeSim(0.02));
+      elevatorHead =
+          new ElevatorHead(new ElevatorHeadSim(0.02, drivetrain.getSwerveDriveSimulation()));
+      coralIntake =
+          new CoralIntake(new CoralIntakeSim(0.02, drivetrain.getSwerveDriveSimulation()));
       climber = new Climber(new ClimberSim(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
       camera = new PhotonCamera("photonvision");
+      humanPlayerSimulation = new HumanPlayerSimulation();
     }
 
     // Sets up auto path
@@ -136,12 +138,6 @@ public class RobotContainer {
 
     // Sets up Control scheme chooser
     DashboardUI.Overview.addControls(new JoystickXbox(2, 0), new JoystickXboxKeypad(2, 0, 3));
-
-    if (Constants.RobotState.getMode() == Mode.SIM) {
-      simulationController = new GenericHID(4);
-    } else {
-      simulationController = null;
-    }
 
     // Bindings and Teleop
     configureButtonBindings();
@@ -364,12 +360,6 @@ public class RobotContainer {
     //             new ClimbUp(),
     //             new ClimbMove(ClimberState.Extend),
     //             () -> climber.getCurrentState() == ClimberState.Extend));
-
-    // Simulation control commands
-    if (Constants.RobotState.getMode() == Mode.SIM) {
-      new Trigger(() -> simulationController.getRawButton(1)).onTrue(new PlaceRandomGroundCoral());
-      new Trigger(() -> simulationController.getRawButton(2)).onTrue(new PlaceRandomGroundAlgae());
-    }
   }
 
   /**

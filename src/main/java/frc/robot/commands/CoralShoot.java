@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.commands.simulation.CoralShooterToReef;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 
 public class CoralShoot extends SequentialCommandGroup {
@@ -35,8 +34,7 @@ public class CoralShoot extends SequentialCommandGroup {
             },
             RobotContainer.elevatorHead),
         // Make sure coral left
-        new CoralShooterToReef()
-            .simulateFor(new WaitUntilCommand(() -> !RobotContainer.elevatorHead.hasCoral())),
+        new WaitUntilCommand(() -> !RobotContainer.elevatorHead.hasCoral()),
         new WaitCommand(Constants.ElevatorHead.SHOOT_TIME),
         new InstantCommand(
             () -> RobotContainer.elevatorHead.set(CoralShooterStates.OFF),

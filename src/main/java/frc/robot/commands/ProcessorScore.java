@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.commands.simulation.AlgaeGrabberToProcessor;
 import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
 
 public class ProcessorScore extends SequentialCommandGroup {
@@ -34,9 +33,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_GROUND),
                         RobotContainer.elevatorHead))
-                .andThen(
-                    new AlgaeGrabberToProcessor()
-                        .simulateFor(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_GROUND)))
+                .andThen(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_GROUND))
                 .andThen(
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
@@ -46,9 +43,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                 new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.SHOOT_BARGE),
                         RobotContainer.elevatorHead)
-                    .andThen(
-                        new AlgaeGrabberToProcessor()
-                            .simulateFor(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_BARGE)))
+                    .andThen(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_BARGE))
                     .andThen(
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
@@ -58,9 +53,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_REEF),
                             RobotContainer.elevatorHead))
-                    .andThen(
-                        new AlgaeGrabberToProcessor()
-                            .simulateFor(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_REEF)))
+                    .andThen(new WaitCommand(Constants.ElevatorHead.SHOOT_TIME_REEF))
                     .andThen(
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),

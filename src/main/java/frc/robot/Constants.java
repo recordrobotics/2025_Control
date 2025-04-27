@@ -14,12 +14,9 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
@@ -198,13 +195,13 @@ public final class Constants {
     public static final Translation2d TEAM_BLUE_PROCESSOR = new Translation2d(6.026, 0);
     public static final Translation2d TEAM_RED_PROCESSOR = new Translation2d(11.585, 8.062);
 
-    public static final Pose2d SOURCE_1 =
+    public static final Pose2d SOURCE_RL =
         new Pose2d(16.994, 0.355, Rotation2d.fromDegrees(35.988608));
-    public static final Pose2d SOURCE_2 =
+    public static final Pose2d SOURCE_RR =
         new Pose2d(16.725, 7.518, Rotation2d.fromDegrees(-215.988608));
-    public static final Pose2d SOURCE_12 =
+    public static final Pose2d SOURCE_BR =
         new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608));
-    public static final Pose2d SOURCE_13 =
+    public static final Pose2d SOURCE_BL =
         new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608));
 
     // Field width and length
@@ -212,21 +209,21 @@ public final class Constants {
     public static final double FIELD_Y_DIMENSION = 8.052; // Width
 
     public static Pose2d closestSourceTo(Pose2d pose) {
-      Pose2d closest = SOURCE_1;
-      double closestDistance = pose.getTranslation().getDistance(SOURCE_1.getTranslation());
-      double distance = pose.getTranslation().getDistance(SOURCE_2.getTranslation());
+      Pose2d closest = SOURCE_RL;
+      double closestDistance = pose.getTranslation().getDistance(SOURCE_RL.getTranslation());
+      double distance = pose.getTranslation().getDistance(SOURCE_RR.getTranslation());
       if (distance < closestDistance) {
-        closest = SOURCE_2;
+        closest = SOURCE_RR;
         closestDistance = distance;
       }
-      distance = pose.getTranslation().getDistance(SOURCE_12.getTranslation());
+      distance = pose.getTranslation().getDistance(SOURCE_BR.getTranslation());
       if (distance < closestDistance) {
-        closest = SOURCE_12;
+        closest = SOURCE_BR;
         closestDistance = distance;
       }
-      distance = pose.getTranslation().getDistance(SOURCE_13.getTranslation());
+      distance = pose.getTranslation().getDistance(SOURCE_BL.getTranslation());
       if (distance < closestDistance) {
-        closest = SOURCE_13;
+        closest = SOURCE_BL;
       }
       return closest;
     }
@@ -383,380 +380,6 @@ public final class Constants {
         }
       }
       return closest;
-    }
-  }
-
-  public enum ProcessorPose {
-    Blue(0),
-    Red(1);
-
-    private final int side;
-
-    private ProcessorPose(int side) {
-      this.side = side;
-    }
-
-    public static ProcessorPose closestTo(Pose3d pose, double maxDistance) {
-      ProcessorPose closest = null;
-      double closestDistance = Double.MAX_VALUE;
-      for (ProcessorPose processor : ProcessorPose.values()) {
-        double distance = processor.getPose().getTranslation().getDistance(pose.getTranslation());
-        if (distance <= maxDistance && distance < closestDistance) {
-          closest = processor;
-          closestDistance = distance;
-        }
-      }
-      return closest;
-    }
-
-    public Pose3d getPose() {
-      switch (side) {
-        case 0:
-          return new Pose3d(
-              new Translation3d(
-                  FieldConstants.TEAM_BLUE_PROCESSOR.getX(),
-                  FieldConstants.TEAM_BLUE_PROCESSOR.getY() - 0.3,
-                  0.35),
-              new Rotation3d(0, 0, 0));
-        case 1:
-          return new Pose3d(
-              new Translation3d(
-                  FieldConstants.TEAM_RED_PROCESSOR.getX(),
-                  FieldConstants.TEAM_RED_PROCESSOR.getY() + 0.3,
-                  0.35),
-              new Rotation3d(0, 0, Math.PI));
-        default:
-          return new Pose3d();
-      }
-    }
-  }
-
-  public enum ReefAlgaePose {
-    BABL(0, 0),
-    BABH(0, 1),
-    BCDL(1, 0),
-    BCDH(1, 1),
-    BEFL(2, 0),
-    BEFH(2, 1),
-    BGHL(3, 0),
-    BGHH(3, 1),
-    BIJL(4, 0),
-    BIJH(4, 1),
-    BKLL(5, 0),
-    BKLH(5, 1),
-    RABL(6, 0),
-    RABH(6, 1),
-    RCDL(7, 0),
-    RCDH(7, 1),
-    REFL(8, 0),
-    REFH(8, 1),
-    RGHL(9, 0),
-    RGHH(9, 1),
-    RIJL(10, 0),
-    RIJH(10, 1),
-    RKLL(11, 0),
-    RKLH(11, 1);
-
-    private final int side;
-    private final int height;
-
-    private ReefAlgaePose(int side, int height) {
-      this.side = side;
-      this.height = height;
-    }
-
-    public static ReefAlgaePose closestTo(Pose3d pose, double maxDistance) {
-      ReefAlgaePose closest = null;
-      double closestDistance = Double.MAX_VALUE;
-      for (ReefAlgaePose algae : ReefAlgaePose.values()) {
-        double distance = algae.getPose().getTranslation().getDistance(pose.getTranslation());
-        if (distance <= maxDistance && distance < closestDistance) {
-          closest = algae;
-          closestDistance = distance;
-        }
-      }
-      return closest;
-    }
-
-    private static final double RADIUS = 0.7;
-
-    public Pose3d getPose() {
-      double sideRelative = side % 6;
-      double theta = -sideRelative * Math.PI / 3;
-
-      double cx;
-      double cy;
-
-      if (side < 6) {
-        cx = FieldConstants.TEAM_BLUE_REEF_CENTER.getX();
-        cy = FieldConstants.TEAM_BLUE_REEF_CENTER.getY();
-      } else {
-        cx = FieldConstants.TEAM_RED_REEF_CENTER.getX();
-        cy = FieldConstants.TEAM_RED_REEF_CENTER.getY();
-      }
-
-      double radius = RADIUS;
-
-      double x = cx - radius * Math.cos(theta);
-      double y = cy + radius * Math.sin(theta);
-
-      double height;
-      double yaw = -theta;
-      switch (this.height) {
-        case 0:
-          height = 0.91;
-          break;
-        case 1:
-          height = 1.31;
-          break;
-        default:
-          height = 0.0;
-          break;
-      }
-
-      return new Pose3d(new Translation3d(x, y, height), new Rotation3d(0, 0, yaw));
-    }
-
-    public int getSide() {
-      return side;
-    }
-
-    public static int getDefaultHeight(int side) {
-      switch (side) {
-        case 0:
-        case 2:
-        case 4:
-        case 6:
-        case 8:
-        case 10:
-          return 1;
-        case 1:
-        case 3:
-        case 5:
-        case 7:
-        case 9:
-        case 11:
-          return 0;
-        default:
-          return 0;
-      }
-    }
-  }
-
-  public enum ReefScoringPose {
-    BA1L(0, 0, 0),
-    BA1H(0, 0, 1),
-    BA2(0, 0, 2),
-    BA3(0, 0, 3),
-    BA4(0, 0, 4),
-    BB1L(0, 1, 0),
-    BB1H(0, 1, 1),
-    BB2(0, 1, 2),
-    BB3(0, 1, 3),
-    BB4(0, 1, 4),
-    BC1L(1, 0, 0),
-    BC1H(1, 0, 1),
-    BC2(1, 0, 2),
-    BC3(1, 0, 3),
-    BC4(1, 0, 4),
-    BD1L(1, 1, 0),
-    BD1H(1, 1, 1),
-    BD2(1, 1, 2),
-    BD3(1, 1, 3),
-    BD4(1, 1, 4),
-    BE1L(2, 0, 0),
-    BE1H(2, 0, 1),
-    BE2(2, 0, 2),
-    BE3(2, 0, 3),
-    BE4(2, 0, 4),
-    BF1L(2, 1, 0),
-    BF1H(2, 1, 1),
-    BF2(2, 1, 2),
-    BF3(2, 1, 3),
-    BF4(2, 1, 4),
-    BG1L(3, 0, 0),
-    BG1H(3, 0, 1),
-    BG2(3, 0, 2),
-    BG3(3, 0, 3),
-    BG4(3, 0, 4),
-    BH1L(3, 1, 0),
-    BH1H(3, 1, 1),
-    BH2(3, 1, 2),
-    BH3(3, 1, 3),
-    BH4(3, 1, 4),
-    BI1L(4, 0, 0),
-    BI1H(4, 0, 1),
-    BI2(4, 0, 2),
-    BI3(4, 0, 3),
-    BI4(4, 0, 4),
-    BJ1L(4, 1, 0),
-    BJ1H(4, 1, 1),
-    BJ2(4, 1, 2),
-    BJ3(4, 1, 3),
-    BJ4(4, 1, 4),
-    BK1L(5, 0, 0),
-    BK1H(5, 0, 1),
-    BK2(5, 0, 2),
-    BK3(5, 0, 3),
-    BK4(5, 0, 4),
-    BL1L(5, 1, 0),
-    BL1H(5, 1, 1),
-    BL2(5, 1, 2),
-    BL3(5, 1, 3),
-    BL4(5, 1, 4),
-    RA1L(6, 0, 0),
-    RA1H(6, 0, 1),
-    RA2(6, 0, 2),
-    RA3(6, 0, 3),
-    RA4(6, 0, 4),
-    RB1L(6, 1, 0),
-    RB1H(6, 1, 1),
-    RB2(6, 1, 2),
-    RB3(6, 1, 3),
-    RB4(6, 1, 4),
-    RC1L(7, 0, 0),
-    RC1H(7, 0, 1),
-    RC2(7, 0, 2),
-    RC3(7, 0, 3),
-    RC4(7, 0, 4),
-    RD1L(7, 1, 0),
-    RD1H(7, 1, 1),
-    RD2(7, 1, 2),
-    RD3(7, 1, 3),
-    RD4(7, 1, 4),
-    RE1L(8, 0, 0),
-    RE1H(8, 0, 1),
-    RE2(8, 0, 2),
-    RE3(8, 0, 3),
-    RE4(8, 0, 4),
-    RF1L(8, 1, 0),
-    RF1H(8, 1, 1),
-    RF2(8, 1, 2),
-    RF3(8, 1, 3),
-    RF4(8, 1, 4),
-    RG1L(9, 0, 0),
-    RG1H(9, 0, 1),
-    RG2(9, 0, 2),
-    RG3(9, 0, 3),
-    RG4(9, 0, 4),
-    RH1L(9, 1, 0),
-    RH1H(9, 1, 1),
-    RH2(9, 1, 2),
-    RH3(9, 1, 3),
-    RH4(9, 1, 4),
-    RI1L(10, 0, 0),
-    RI1H(10, 0, 1),
-    RI2(10, 0, 2),
-    RI3(10, 0, 3),
-    RI4(10, 0, 4),
-    RJ1L(10, 1, 0),
-    RJ1H(10, 1, 1),
-    RJ2(10, 1, 2),
-    RJ3(10, 1, 3),
-    RJ4(10, 1, 4),
-    RK1L(11, 0, 0),
-    RK1H(11, 0, 1),
-    RK2(11, 0, 2),
-    RK3(11, 0, 3),
-    RK4(11, 0, 4),
-    RL1L(11, 1, 0),
-    RL1H(11, 1, 1),
-    RL2(11, 1, 2),
-    RL3(11, 1, 3),
-    RL4(11, 1, 4);
-
-    private final int side;
-    private final int index;
-    private final int height;
-
-    private ReefScoringPose(int side, int index, int height) {
-      this.side = side;
-      this.index = index;
-      this.height = height;
-    }
-
-    public static ReefScoringPose closestTo(Pose3d pose, double maxDistance) {
-      ReefScoringPose closest = null;
-      double closestDistance = Double.MAX_VALUE;
-      for (ReefScoringPose reef : ReefScoringPose.values()) {
-        double distance = reef.getPose().getTranslation().getDistance(pose.getTranslation());
-        if (distance <= maxDistance && distance < closestDistance) {
-          closest = reef;
-          closestDistance = distance;
-        }
-      }
-      return closest;
-    }
-
-    private static final double SIDE_LENGTH = 0.16;
-    private static final double RADIUS = 0.7;
-
-    public Pose3d getPose() {
-      double sideRelative = side % 6;
-      double theta = -sideRelative * Math.PI / 3;
-      double theta2 = theta + Math.PI / 2;
-
-      double cx;
-      double cy;
-
-      if (side < 6) {
-        cx = FieldConstants.TEAM_BLUE_REEF_CENTER.getX();
-        cy = FieldConstants.TEAM_BLUE_REEF_CENTER.getY();
-      } else {
-        cx = FieldConstants.TEAM_RED_REEF_CENTER.getX();
-        cy = FieldConstants.TEAM_RED_REEF_CENTER.getY();
-      }
-
-      double radius = RADIUS;
-      if (height == 4) {
-        radius += 0.08;
-      } else if (height == 0) {
-        radius += 0.066;
-      } else if (height == 1) {
-        radius -= 0.04;
-      }
-
-      double x = cx - radius * Math.cos(theta);
-      double y = cy + radius * Math.sin(theta);
-
-      double len = SIDE_LENGTH;
-
-      if (index == 1) len = -len;
-
-      double rx = x + len * Math.cos(theta2);
-      double ry = y - len * Math.sin(theta2);
-
-      double height;
-      double yaw = -theta;
-      double pitch = 32;
-      switch (this.height) {
-        case 0:
-          height = 0.485;
-          pitch = 0;
-          yaw = -theta2;
-          break;
-        case 1:
-          height = 0.52;
-          pitch = 0;
-          yaw = -theta2;
-          break;
-        case 2:
-          height = 0.71;
-          break;
-        case 3:
-          height = 1.11;
-          break;
-        case 4:
-          height = 1.75;
-          pitch = 90;
-          break;
-        default:
-          height = 0.0;
-          break;
-      }
-
-      return new Pose3d(
-          new Translation3d(rx, ry, height), new Rotation3d(0, Units.degreesToRadians(pitch), yaw));
     }
   }
 

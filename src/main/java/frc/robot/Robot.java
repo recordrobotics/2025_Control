@@ -168,6 +168,14 @@ public class Robot extends LoggedRobot {
     if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
       // Reset simulation field
       SimulatedArena.getInstance().resetFieldForAuto();
+      RobotContainer.humanPlayerSimulation.reset();
+
+      // Give robot preload
+      try {
+        RobotContainer.elevatorHead.getSimIO().setPreload();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     // schedule the autonomous command (example)

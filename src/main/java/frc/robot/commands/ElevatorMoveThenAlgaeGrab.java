@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.commands.simulation.AlgaeGrabberSim;
 import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
 
 public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
@@ -36,8 +35,7 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
               else RobotContainer.elevatorHead.set(AlgaeGrabberStates.INTAKE_REEF);
             },
             RobotContainer.elevatorHead),
-        new AlgaeGrabberSim(0.2)
-            .simulateFor(new WaitUntilCommand(RobotContainer.elevatorHead::hasAlgae)),
+        new WaitUntilCommand(RobotContainer.elevatorHead::hasAlgae),
         new InstantCommand(
             () -> {
               if (RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE)

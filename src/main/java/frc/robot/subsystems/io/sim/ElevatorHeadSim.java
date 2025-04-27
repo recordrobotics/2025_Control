@@ -1,11 +1,14 @@
 package frc.robot.subsystems.io.sim;
 
+import static edu.wpi.first.units.Units.*;
+
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -13,8 +16,12 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.io.ElevatorHeadIO;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
 
 public class ElevatorHeadSim implements ElevatorHeadIO {
 
@@ -37,8 +44,11 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
       SimDevice.create("DigitalInput", RobotMap.ElevatorHead.PHOTOSENSOR_ID);
   private final SimBoolean coralDetectorSimValue;
 
-  public ElevatorHeadSim(double periodicDt) {
+  private final AbstractDriveTrainSimulation drivetrainSim;
+
+  public ElevatorHeadSim(double periodicDt, AbstractDriveTrainSimulation drivetrainSim) {
     this.periodicDt = periodicDt;
+    this.drivetrainSim = drivetrainSim;
 
     motor = new SparkMax(RobotMap.ElevatorHead.MOTOR_ID, MotorType.kBrushless);
     motorSim = new SparkMaxSim(motor, wheelMotor);
@@ -105,6 +115,12 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     return wheelSimModel.getCurrentDrawAmps();
   }
 
+  public void setPreload() {
+    setCoralDetectorSim(false);
+    RobotContainer.model.getRobotCoral().poseSupplier =
+        () -> RobotContainer.model.elevatorArm.getCoralShooterTargetPose();
+  }
+
   @Override
   public void close() throws Exception {
     motor.close();
@@ -131,5 +147,38 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
             * Constants.ElevatorHead.GEAR_RATIO,
         RobotController.getBatteryVoltage(),
         periodicDt);
+
+    if (!getCoralDetector()) { // NC
+      var ejectPose =
+          RobotContainer.model
+              .elevatorArm
+              .getCoralShooterTargetPose()
+              .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
+      if (Math.abs(RobotContainer.elevatorHead.getVelocity()) > 2.4) {
+        RobotContainer.model.getRobotCoral().poseSupplier = () -> null;
+        setCoralDetectorSim(true); // NC
+
+        var angle = ejectPose.getRotation().getMeasureY();
+        if (RobotContainer.elevatorHead.getVelocity() > 0) {
+          angle = angle.unaryMinus();
+        }
+
+        SimulatedArena.getInstance()
+            .addGamePieceProjectile(
+                new ReefscapeCoralOnFly(
+                    // Obtain robot position from drive simulation
+                    drivetrainSim.getSimulatedDriveTrainPose().getTranslation(),
+                    ejectPose.toPose2d().getTranslation(),
+                    // Obtain robot speed from drive simulation
+                    drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+                    // Obtain robot facing from drive simulation
+                    drivetrainSim.getSimulatedDriveTrainPose().getRotation(),
+                    // The height at which the coral is ejected
+                    ejectPose.getMeasureZ(),
+                    // The initial speed of the coral
+                    MetersPerSecond.of(Math.abs(RobotContainer.elevatorHead.getVelocity())),
+                    angle));
+      }
+    }
   }
 }

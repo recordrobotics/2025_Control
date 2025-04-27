@@ -14,8 +14,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -127,8 +125,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getCoralIntakeEjectPose() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
       Pose3d coralPose =
           robotOrigin.transformBy(
               new Transform3d(
@@ -139,8 +136,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getCoralIntakeEjectFinalPose() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
       Pose3d coralPose =
           robotOrigin.transformBy(
               new Transform3d(
@@ -151,8 +147,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getCoralIntakeChannelPose() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
       Pose3d coralPose =
           robotOrigin.transformBy(
               new Transform3d(
@@ -226,8 +221,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getCoralTargetPose() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
       Pose3d coralIntakePose =
           robotOrigin.transformBy(
               new Transform3d(
@@ -322,8 +316,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getCoralShooterTargetPose() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
       var pose =
           new Pose3d(0.32 + 0.165, 0.2, 0.54, new Rotation3d())
@@ -346,13 +339,12 @@ public class RobotModel extends SubsystemBase {
           robotOrigin.transformBy(new Transform3d(pose.getTranslation(), pose.getRotation()));
 
       return coralShooterPose.transformBy(
-          new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + 12), 0)));
+          new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + 18), 0)));
     }
 
     public Pose3d getAlgaeGrabberTargetPoseTop() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
       var pose =
           new Pose3d(0.32 + 0.18, -0.11, 0.68, new Rotation3d())
@@ -377,8 +369,7 @@ public class RobotModel extends SubsystemBase {
 
     public Pose3d getAlgaeGrabberTargetPoseBottom() {
       Pose3d robotOrigin = new Pose3d();
-      if (RobotContainer.poseTracker != null)
-        robotOrigin = new Pose3d(RobotContainer.poseTracker.getEstimatedPosition());
+      if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
       var pose =
           new Pose3d(0.32 + 0.18, -0.11, 0.48, new Rotation3d())
@@ -499,50 +490,14 @@ public class RobotModel extends SubsystemBase {
     }
   }
 
-  public static class NamedCoral {
-    public String name;
-    public Supplier<Pose3d> pose;
-
-    public NamedCoral(String name, Pose3d pose) {
-      this.name = name;
-      this.pose = () -> pose;
-    }
-
-    public NamedCoral(String name, Supplier<Pose3d> pose) {
-      this.name = name;
-      this.pose = pose;
-    }
-  }
-
-  public static class NamedAlgae {
-    public String name;
-    public Supplier<Pose3d> pose;
-
-    public NamedAlgae(String name, Pose3d pose) {
-      this.name = name;
-      this.pose = () -> pose;
-    }
-
-    public NamedAlgae(String name, Supplier<Pose3d> pose) {
-      this.name = name;
-      this.pose = pose;
-    }
-  }
-
-  private final List<NamedCoral> coralPositions = new ArrayList<>();
-  private final List<NamedAlgae> algaePositions = new ArrayList<>();
-
-  public NamedCoral[] getCorals() {
-    return coralPositions.toArray(new NamedCoral[0]);
-  }
-
   @AutoLogOutput
   private Pose3d[] getCoralPositions() {
-    return SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
-  }
-
-  public NamedAlgae[] getAlgaes() {
-    return algaePositions.toArray(new NamedAlgae[0]);
+    var corals = SimulatedArena.getInstance().getGamePiecesByType("Coral");
+    var robotCoralPose = robotCoral.poseSupplier.get();
+    if (robotCoralPose != null) {
+      corals.add(robotCoralPose);
+    }
+    return corals.toArray(new Pose3d[0]);
   }
 
   @AutoLogOutput
@@ -551,53 +506,21 @@ public class RobotModel extends SubsystemBase {
   }
 
   @AutoLogOutput
-  private Pose2d getRobot() {
+  public Pose2d getRobot() {
     return RobotContainer.drivetrain.getSwerveDriveSimulation().getSimulatedDriveTrainPose();
   }
 
-  public void addCoral(NamedCoral coral) {
-    var c = getCoral(coral.name);
-    if (c != null) {
-      coralPositions.remove(c);
+  public static class RobotCoral {
+    public Supplier<Pose3d> poseSupplier;
+
+    public RobotCoral(Supplier<Pose3d> poseSupplier) {
+      this.poseSupplier = poseSupplier;
     }
-
-    coralPositions.add(coral);
   }
 
-  public void removeCoral(NamedCoral coral) {
-    coralPositions.remove(coral);
-  }
+  private final RobotCoral robotCoral = new RobotCoral(() -> null);
 
-  public NamedCoral getCoral(String name) {
-    for (NamedCoral coral : coralPositions) {
-      if (coral.name.equals(name)) {
-        return coral;
-      }
-    }
-
-    return null;
-  }
-
-  public void addAlgae(NamedAlgae algae) {
-    var a = getAlgae(algae.name);
-    if (a != null) {
-      algaePositions.remove(a);
-    }
-
-    algaePositions.add(algae);
-  }
-
-  public void removeAlgae(NamedAlgae algae) {
-    algaePositions.remove(algae);
-  }
-
-  public NamedAlgae getAlgae(String name) {
-    for (NamedAlgae algae : algaePositions) {
-      if (algae.name.equals(name)) {
-        return algae;
-      }
-    }
-
-    return null;
+  public RobotCoral getRobotCoral() {
+    return robotCoral;
   }
 }
