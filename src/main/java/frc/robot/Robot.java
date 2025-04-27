@@ -228,8 +228,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void simulationPeriodic() {
-    m_robotContainer.simulationPeriodic();
     SimulatedArena.getInstance().simulationPeriodic();
+    m_robotContainer.simulationPeriodic();
   }
 
   public static double getAutoStartTime() {

@@ -8,6 +8,7 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -130,6 +131,8 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     }
   }
 
+  private MedianFilter velocityFilter = new MedianFilter(10);
+
   @Override
   public void simulationPeriodic() {
     var voltage = motorSim.getAppliedOutput() * motorSim.getBusVoltage();
@@ -148,13 +151,15 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
         RobotController.getBatteryVoltage(),
         periodicDt);
 
+    velocityFilter.calculate(RobotContainer.elevatorHead.getVelocity());
+
     if (!getCoralDetector()) { // NC
       var ejectPose =
           RobotContainer.model
               .elevatorArm
               .getCoralShooterTargetPose()
               .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
-      if (Math.abs(RobotContainer.elevatorHead.getVelocity()) > 2.4) {
+      if (Math.abs(velocityFilter.lastValue()) > 1.3) {
         RobotContainer.model.getRobotCoral().poseSupplier = () -> null;
         setCoralDetectorSim(true); // NC
 

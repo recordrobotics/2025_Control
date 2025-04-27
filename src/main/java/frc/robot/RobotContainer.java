@@ -1,7 +1,8 @@
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -55,7 +56,7 @@ import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.photonvision.PhotonCamera;
+import org.photonvision.simulation.VisionSystemSim;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -78,7 +79,7 @@ public class RobotContainer {
   public static Lights lights;
   public static PowerDistributionPanel pdp;
 
-  public static PhotonCamera camera;
+  public static VisionSystemSim visionSim;
 
   public static HumanPlayerSimulation humanPlayerSimulation;
 
@@ -113,8 +114,10 @@ public class RobotContainer {
       climber = new Climber(new ClimberStub(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
-      camera = new PhotonCamera("photonvision");
     } else {
+      visionSim = new VisionSystemSim("main");
+      visionSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
+
       drivetrain = new Drivetrain();
       poseTracker = new PoseTracker();
       limelight = new Limelight();
@@ -127,7 +130,6 @@ public class RobotContainer {
       climber = new Climber(new ClimberSim(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
-      camera = new PhotonCamera("photonvision");
       humanPlayerSimulation = new HumanPlayerSimulation();
     }
 
@@ -147,12 +149,6 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(new ManualSwerve());
     elevator.setDefaultCommand(new ManualElevator());
     elevatorArm.setDefaultCommand(new ManualElevatorArm());
-
-    // camera exposure fix
-    camera.setDriverMode(false);
-    NetworkTableInstance.getDefault().flush();
-    camera.setDriverMode(true);
-    NetworkTableInstance.getDefault().flush();
   }
 
   public void teleopInit() {
@@ -386,6 +382,7 @@ public class RobotContainer {
 
   public void simulationPeriodic() {
     updateSimulationBattery(drivetrain, elevator, elevatorHead, coralIntake);
+    visionSim.update(model.getRobot());
   }
 
   public void updateSimulationBattery(PoweredSubsystem... subsystems) {

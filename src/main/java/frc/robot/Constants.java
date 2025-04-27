@@ -15,8 +15,11 @@ import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
@@ -82,6 +85,15 @@ public final class Constants {
   public final class Limelight {
     public static final String LIMELIGHT_LEFT_NAME = "limelight-left";
     public static final String LIMELIGHT_CENTER_NAME = "limelight-center";
+
+    public static final Transform3d leftTransformRobotToCamera =
+        new Transform3d(
+            new Translation3d(0.311558, -0.330204, 0.246383),
+            new Rotation3d(0, Units.degreesToRadians(-21), 0));
+    public static final Transform3d centerTransformRobotToCamera =
+        new Transform3d(
+            new Translation3d(0.219412, 0.050800, 0.156247),
+            new Rotation3d(0, Units.degreesToRadians(-27), 0));
   }
 
   public final class Climber {

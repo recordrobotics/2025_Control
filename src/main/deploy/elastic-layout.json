@@ -988,6 +988,45 @@
               "data_type": "double",
               "show_submit_button": false
             }
+          },
+          {
+            "title": "HumanPlayerStrategy",
+            "x": 768.0,
+            "y": 0.0,
+            "width": 416.0,
+            "height": 128.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/HumanPlayerStrategy",
+              "period": 0.06,
+              "sort_options": false
+            }
+          },
+          {
+            "title": "limelight-center-processed",
+            "x": 544.0,
+            "y": 128.0,
+            "width": 544.0,
+            "height": 416.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/limelight-center-processed",
+              "period": 0.06,
+              "rotation_turns": 0
+            }
+          },
+          {
+            "title": "limelight-left-processed",
+            "x": 0.0,
+            "y": 128.0,
+            "width": 544.0,
+            "height": 416.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/limelight-left-processed",
+              "period": 0.06,
+              "rotation_turns": 0
+            }
           }
         ]
       }
