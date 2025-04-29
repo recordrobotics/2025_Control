@@ -12,9 +12,9 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.RobotAlignPose;
 import frc.robot.RobotContainer;
-import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralShoot;
+import frc.robot.commands.ReefAlign;
 import frc.robot.utils.CommandUtils;
 import frc.robot.utils.RepeatConditionallyCommand;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
 
   private Command alignWithVision() { // TODO use RobotContainer.hasVision when it is tested
     return new RepeatConditionallyCommand(
-        Align.create(1.5, false, false),
+        ReefAlign.alignClosest(),
         () ->
             !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
                 || RobotContainer.poseSensorFusion.getCenterCamera().hasVision()),
@@ -55,7 +55,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
                                 "Reef" + reefLetter + "ToSourceRightOuterNoElevator"))
                         .andThen(
                             CommandUtils.finishOnInterrupt(
-                                Align.create(1.5, false, false)
+                                ReefAlign.alignClosest()
                                     .withTimeout(0.1)
                                     .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
                         .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
@@ -67,7 +67,7 @@ public class BargeRightAuto extends SequentialCommandGroup {
                             PathPlannerPath.fromPathFile("ElevatorStartToSourceRightOuter"))
                         .andThen(
                             CommandUtils.finishOnInterrupt(
-                                Align.create(1.5, false, false)
+                                ReefAlign.alignClosest()
                                     .withTimeout(0.1)
                                     .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
                         .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))

@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralIntakeMoveL1;
 import frc.robot.commands.CoralIntakeShootL1;
@@ -20,6 +19,7 @@ import frc.robot.commands.ElevatorMove;
 import frc.robot.commands.ElevatorMoveThenAlgaeGrab;
 import frc.robot.commands.ElevatorMoveThenAlgaeGrabEnd;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.ReefAlign;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import org.littletonrobotics.junction.Logger;
 
@@ -45,7 +45,7 @@ public class AutoPath {
         "AutoAlign",
         CommandUtils.finishOnInterrupt(
             new RepeatConditionallyCommand(
-                    Align.create(2.5, false, false),
+                    ReefAlign.alignClosest(),
                     () ->
                         !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
                             || RobotContainer.poseSensorFusion
