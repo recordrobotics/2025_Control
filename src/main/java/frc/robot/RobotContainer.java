@@ -4,6 +4,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.util.Units;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -17,9 +18,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
-import frc.robot.Constants.RobotAlignPose;
+import frc.robot.Constants.Game.CoralLevel;
+import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
-import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -32,6 +33,7 @@ import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
 import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.ReefAlign;
 import frc.robot.commands.VibrateXbox;
 import frc.robot.commands.auto.PlannedAuto;
 import frc.robot.commands.hybrid.AutoScore;
@@ -39,7 +41,6 @@ import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
-import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.CoralIntake.IntakeArmState;
@@ -229,10 +230,10 @@ public class RobotContainer {
                   || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE;
 
           Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
-          RobotAlignPose closestReef = RobotAlignPose.closestReefTo(robot, 0.2);
+          CoralPosition closestReef = CoralPosition.closestTo(robot);
 
           boolean nearReef =
-              closestReef != null
+              closestReef.getFarPose().getTranslation().getDistance(robot.getTranslation()) < 0.2
                   && Math.abs(
                           closestReef
                               .getFarPose()
@@ -338,12 +339,7 @@ public class RobotContainer {
         .onTrue(new VibrateXbox(RumbleType.kLeftRumble, 1).withTimeout(0.1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(
-            Align.create(2.5, true, false).andThen(Align.create(2.5, false, false).repeatedly()));
-
-    new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlignNear())
-        .whileTrue(
-            Align.create(2.5, true, true).andThen(Align.create(2.5, false, true).repeatedly()));
+        .whileTrue(ReefAlign.alignClosest().repeatedly());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
         .and(
@@ -415,6 +411,19 @@ public class RobotContainer {
   @AutoLogOutput
   public static boolean hasVision() { // TODO test then put in the CMD autos
     return hasVision.getAsBoolean();
+  }
+
+  public static CoralLevel getCurrentCoralLevel() {
+    if (Math.abs(coralIntake.getArmAngle() - Constants.CoralIntake.ARM_SCORE_L1)
+        < Units.degreesToRadians(15)) {
+      return CoralLevel.L1;
+    }
+    for (CoralLevel level : CoralLevel.values()) {
+      if (elevator.getNearestHeight() == level.getHeight()) {
+        return level;
+      }
+    }
+    return null;
   }
 
   /** frees up all hardware allocations */
