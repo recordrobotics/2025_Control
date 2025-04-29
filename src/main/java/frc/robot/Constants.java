@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.LEDReader;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
+import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
@@ -50,6 +51,138 @@ import java.util.function.Supplier;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public final class Game {
+    public static enum AlgaeLevel {
+      LOW,
+      HIGH
+    }
+
+    public static enum AlgaePosition {
+      AB,
+      CD,
+      EF,
+      GH,
+      IJ,
+      KL
+    }
+
+    public static enum CoralLevel {
+      L1(ElevatorHeight.L1),
+      L2(ElevatorHeight.L2),
+      L3(ElevatorHeight.L3),
+      L4(ElevatorHeight.L4);
+
+      private ElevatorHeight height;
+
+      private CoralLevel(ElevatorHeight height) {
+        this.height = height;
+      }
+
+      public ElevatorHeight getHeight() {
+        return height;
+      }
+    }
+
+    public static enum CoralPosition {
+      A(new Pose2d(2.4993371000000004, 4.0181723, Rotation2d.fromDegrees(0))),
+      B(new Pose2d(2.4993371000000004, 3.6695533000000005, Rotation2d.fromDegrees(0))),
+      C(new Pose2d(3.5010734786033373, 2.2986709964689673, Rotation2d.fromDegrees(60))),
+      D(new Pose2d(3.802986388845264, 2.1243614964689677, Rotation2d.fromDegrees(60))),
+      E(new Pose2d(5.491073478603337, 2.306449496468968, Rotation2d.fromDegrees(120))),
+      F(new Pose2d(5.792986388845264, 2.4807589964689676, Rotation2d.fromDegrees(120))),
+      G(new Pose2d(6.4793371, 4.0337293, Rotation2d.fromDegrees(180))),
+      H(new Pose2d(6.4793371, 4.3823483, Rotation2d.fromDegrees(180))),
+      I(new Pose2d(5.477600721396662, 5.753230603531033, Rotation2d.fromDegrees(-120))),
+      J(new Pose2d(5.175687811154734, 5.927540103531033, Rotation2d.fromDegrees(-120))),
+      K(new Pose2d(3.487600721396663, 5.745452103531033, Rotation2d.fromDegrees(-60))),
+      L(new Pose2d(3.185687811154736, 5.571142603531033, Rotation2d.fromDegrees(-60)));
+
+      private Pose2d pose;
+
+      private CoralPosition(Pose2d pose) {
+        this.pose = pose;
+      }
+
+      public Pose2d getFirstStagePose() {
+        return pose.transformBy(
+            new Transform2d(new Translation2d(-0.2 + 0.6, 0), Rotation2d.kZero));
+      }
+
+      public Pose2d getPose(CoralLevel level) {
+        switch (level) {
+          case L1:
+            return new Pose2d(); // TODO
+          case L2:
+          case L3:
+            return pose.transformBy(
+                new Transform2d(new Translation2d(0.1 + 0.6, 0), Rotation2d.kZero));
+          case L4:
+            return pose.transformBy(
+                new Transform2d(new Translation2d(0.05 + 0.6, 0), Rotation2d.kZero));
+          default:
+            return pose; // this is bad
+        }
+      }
+
+      public Pose2d getNearPose() {
+        return pose.transformBy(new Transform2d(new Translation2d(0.1 + 0.6, 0), Rotation2d.kZero));
+      }
+
+      public Pose2d getFarPose() {
+        return pose.transformBy(
+            new Transform2d(new Translation2d(0.05 + 0.6, 0), Rotation2d.kZero));
+      }
+
+      public static CoralPosition closestTo(Pose2d pose) {
+        CoralPosition closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        for (CoralPosition align : CoralPosition.values()) {
+          double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
+          if (distance < closestDistance) {
+            closest = align;
+            closestDistance = distance;
+          }
+        }
+        return closest;
+      }
+    }
+
+    public static enum SourcePosition {
+      OuterLeft(new Pose2d(1.472, 7.386, Rotation2d.fromDegrees(35.734))),
+      OuterRight(new Pose2d(1.464, 0.644, Rotation2d.fromDegrees(144.118))),
+      InnerLeft(new Pose2d(0.691, 6.812, Rotation2d.fromDegrees(35.734))),
+      InnerRight(new Pose2d(0.657, 1.211, Rotation2d.fromDegrees(144.118)));
+
+      private Pose2d pose;
+
+      private SourcePosition(Pose2d pose) {
+        this.pose = pose;
+      }
+
+      public Pose2d getPose() {
+        return pose;
+      }
+
+      public static SourcePosition closestTo(Pose2d pose) {
+        SourcePosition closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        for (SourcePosition align : SourcePosition.values()) {
+          double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
+          if (distance < closestDistance) {
+            closest = align;
+            closestDistance = distance;
+          }
+        }
+        return closest;
+      }
+    }
+
+    public static enum Alliance {
+      BLUE,
+      RED
+    }
+  }
+
   public final class Align {
     public static final double MAX_VELOCITY = 1.5; // m/s
     public static final double MAX_ACCELERATION = 3.0; // m/s^2
@@ -58,6 +191,8 @@ public final class Constants {
 
     public static final double translationalTolerance = 0.01; // Meters
     public static final double rotationalTolerance = 0.02; // Radians
+
+    public static final double MAX_REEF_ALIGN_DISTANCE = 2.5; // Meters
   }
 
   public final class PhotonVision {
@@ -91,7 +226,8 @@ public final class Constants {
   }
 
   public final class HybridConstants {
-    // Create the constraints to use while pathfinding. The constraints defined in the path will
+    // Create the constraints to use while pathfinding. The constraints defined in
+    // the path will
     // only be used for the path. docs are here:
     // http://gabybot.com/RobotCoreDoc/classcom_1_1pathplanner_1_1lib_1_1path_1_1_path_constraints.html
     public static final PathConstraints constraints =
@@ -283,31 +419,6 @@ public final class Constants {
   }
 
   public enum RobotAlignPose {
-    // Reefs
-    BA(new Pose2d(2.4993371000000004, 4.0181723, Rotation2d.fromDegrees(0)), true),
-    RA(new Pose2d(15.0489133, 4.033729300000001, Rotation2d.fromDegrees(180)), true),
-    BB(new Pose2d(2.4993371000000004, 3.6695533000000005, Rotation2d.fromDegrees(0)), true),
-    RB(new Pose2d(15.0489133, 4.3823483, Rotation2d.fromDegrees(180)), true),
-    BC(new Pose2d(3.5010734786033373, 2.2986709964689673, Rotation2d.fromDegrees(60)), true),
-    RC(new Pose2d(14.047176921396662, 5.753230603531033, Rotation2d.fromDegrees(-120)), true),
-    BD(new Pose2d(3.802986388845264, 2.1243614964689677, Rotation2d.fromDegrees(60)), true),
-    RD(new Pose2d(13.745264011154736, 5.927540103531033, Rotation2d.fromDegrees(-120)), true),
-    BE(new Pose2d(5.491073478603337, 2.306449496468968, Rotation2d.fromDegrees(120)), true),
-    RE(new Pose2d(12.057176921396664, 5.745452103531033, Rotation2d.fromDegrees(-60)), true),
-    BF(new Pose2d(5.792986388845264, 2.4807589964689676, Rotation2d.fromDegrees(120)), true),
-    RF(new Pose2d(11.755264011154736, 5.571142603531033, Rotation2d.fromDegrees(-60)), true),
-    BG(new Pose2d(6.4793371, 4.0337293, Rotation2d.fromDegrees(180)), true),
-    RG(new Pose2d(11.0689133, 4.018172300000001, Rotation2d.fromDegrees(0)), true),
-    BH(new Pose2d(6.4793371, 4.3823483, Rotation2d.fromDegrees(180)), true),
-    RH(new Pose2d(11.0689133, 3.6695533000000005, Rotation2d.fromDegrees(0)), true),
-    BI(new Pose2d(5.477600721396662, 5.753230603531033, Rotation2d.fromDegrees(-120)), true),
-    RI(new Pose2d(12.070649678603338, 2.2986709964689673, Rotation2d.fromDegrees(60)), true),
-    BJ(new Pose2d(5.175687811154734, 5.927540103531033, Rotation2d.fromDegrees(-120)), true),
-    RJ(new Pose2d(12.372562588845266, 2.1243614964689677, Rotation2d.fromDegrees(60)), true),
-    BK(new Pose2d(3.487600721396663, 5.745452103531033, Rotation2d.fromDegrees(-60)), true),
-    RK(new Pose2d(14.060649678603337, 2.306449496468968, Rotation2d.fromDegrees(120)), true),
-    BL(new Pose2d(3.185687811154736, 5.571142603531033, Rotation2d.fromDegrees(-60)), true),
-    RL(new Pose2d(14.362562588845265, 2.4807589964689676, Rotation2d.fromDegrees(120)), true),
     // Processors
     BProcessor(new Pose2d(6, 0.43, Rotation2d.fromDegrees(270)), true),
     RProcessor(new Pose2d(11.5, 7.59, Rotation2d.fromDegrees(90)), true),
@@ -319,13 +430,17 @@ public final class Constants {
         false),
     RSourceOuterRight(
         new Pose2d(FlippingUtil.fieldSizeX - 1.367, 7.274, Rotation2d.fromDegrees(-35.734)), false);
-    // BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)), false),
-    // BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)), false),
+    // BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)),
+    // false),
+    // BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)),
+    // false),
     // RSourceInnerLeft(
-    //     new Pose2d(FlippingUtil.fieldSizeX - 0.693, 1.315, Rotation2d.fromDegrees(-143.791)),
-    //     false),
+    // new Pose2d(FlippingUtil.fieldSizeX - 0.693, 1.315,
+    // Rotation2d.fromDegrees(-143.791)),
+    // false),
     // RSourceInnerRight(
-    //     new Pose2d(FlippingUtil.fieldSizeX - 0.683, 6.711, Rotation2d.fromDegrees(-36.209)),
+    // new Pose2d(FlippingUtil.fieldSizeX - 0.683, 6.711,
+    // Rotation2d.fromDegrees(-36.209)),
     // false);
 
     private Pose2d pose;
@@ -365,67 +480,10 @@ public final class Constants {
       return closest;
     }
 
-    public static final RobotAlignPose[] leftReefPoses = {
-      RobotAlignPose.BA,
-      RobotAlignPose.BC,
-      RobotAlignPose.BF,
-      RobotAlignPose.BH,
-      RobotAlignPose.BJ,
-      RobotAlignPose.BK,
-      RobotAlignPose.RA,
-      RobotAlignPose.RC,
-      RobotAlignPose.RF,
-      RobotAlignPose.RH,
-      RobotAlignPose.RJ,
-      RobotAlignPose.RK
-    };
-
-    public static final RobotAlignPose[] rightReefPoses = {
-      RobotAlignPose.BB,
-      RobotAlignPose.BD,
-      RobotAlignPose.BE,
-      RobotAlignPose.BG,
-      RobotAlignPose.BI,
-      RobotAlignPose.BL,
-      RobotAlignPose.RB,
-      RobotAlignPose.RD,
-      RobotAlignPose.RE,
-      RobotAlignPose.RG,
-      RobotAlignPose.RI,
-      RobotAlignPose.RL
-    };
-
-    public static final RobotAlignPose[] reefPoses = {
-      RobotAlignPose.BA,
-      RobotAlignPose.BB,
-      RobotAlignPose.BC,
-      RobotAlignPose.BD,
-      RobotAlignPose.BE,
-      RobotAlignPose.BF,
-      RobotAlignPose.BG,
-      RobotAlignPose.BH,
-      RobotAlignPose.BI,
-      RobotAlignPose.BJ,
-      RobotAlignPose.BL,
-      RobotAlignPose.BK,
-      RobotAlignPose.RA,
-      RobotAlignPose.RB,
-      RobotAlignPose.RC,
-      RobotAlignPose.RD,
-      RobotAlignPose.RE,
-      RobotAlignPose.RF,
-      RobotAlignPose.RG,
-      RobotAlignPose.RH,
-      RobotAlignPose.RI,
-      RobotAlignPose.RJ,
-      RobotAlignPose.RL,
-      RobotAlignPose.RK
-    };
-
-    public static RobotAlignPose closestReefTo(Pose2d pose, double maxDistance) {
-      RobotAlignPose closest = null;
+    public static CoralPosition closestReefTo(Pose2d pose, double maxDistance) {
+      CoralPosition closest = null;
       double closestDistance = Double.MAX_VALUE;
-      for (RobotAlignPose align : reefPoses) {
+      for (CoralPosition align : CoralPosition.values()) {
         double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
         if (distance <= maxDistance && distance < closestDistance) {
           closest = align;
@@ -502,16 +560,20 @@ public final class Constants {
     public static final double STD_ENCODER_VELOCITY = 0.001; // m/s
 
     public static final double REGULATOR_POSITION_ERROR_TOLERANCE =
-        0.03; // (m) tolerance for error, decrease to make regulator more aggressive
+        0.03; // (m) tolerance for error, decrease to make
+    // regulator more aggressive
     public static final double REGULATOR_VELOCITY_ERROR_TOLERANCE =
-        0.63514; // (m/s) tolerance for error, decrease to make regulator more aggressive
+        0.63514; // (m/s) tolerance for error, decrease to
+    // make regulator more aggressive
 
     public static final double REGULATOR_CONTROL_EFFORT_TOLERANCE =
-        12.0; // (V) max control effort, decrease to make regulator more lazy
+        12.0; // (V) max control effort, decrease to make
+    // regulator more lazy
 
     public static final double GEAR_RATIO = 13.4321 / 2.0 /* compensation for second stage ratio */;
     public static final double DRUM_RADIUS = Units.inchesToMeters(0.8783343);
-    // 2 * pi * r / gear ratio because same as getting distance a wheel moved, just vertically
+    // 2 * pi * r / gear ratio because same as getting distance a wheel moved, just
+    // vertically
     public static final double METERS_PER_ROTATION = DRUM_RADIUS * 2 * Math.PI / GEAR_RATIO;
 
     public static final double AT_GOAL_POSITION_TOLERANCE = REGULATOR_POSITION_ERROR_TOLERANCE;
