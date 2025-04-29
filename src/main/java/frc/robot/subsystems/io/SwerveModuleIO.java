@@ -32,17 +32,17 @@ public interface SwerveModuleIO extends AutoCloseable {
 
   public double getAbsoluteEncoder();
 
-  public double getTurnMotorPosition();
+  public double getTurnMechanismPosition();
 
-  public double getTurnMotorVelocity();
+  public double getTurnMechanismVelocity();
 
-  public double getDriveMotorPosition();
+  public double getDriveMechanismPosition();
 
-  public double getDriveMotorVelocity();
+  public double getDriveMechanismVelocity();
 
-  public void setDriveMotorPosition(double newValue);
+  public void setDriveMechanismPosition(double newValue);
 
-  public void setTurnMotorPosition(double newValue);
+  public void setTurnMechanismPosition(double newValue);
 
   public double getDriveMotorCurrentDrawAmps();
 

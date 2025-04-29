@@ -65,30 +65,30 @@ public class SwerveModuleStub implements SwerveModuleIO {
   }
 
   @Override
-  public double getTurnMotorPosition() {
+  public double getTurnMechanismPosition() {
     return 0;
   }
 
   @Override
-  public double getTurnMotorVelocity() {
+  public double getTurnMechanismVelocity() {
     return 0;
   }
 
   @Override
-  public double getDriveMotorPosition() {
+  public double getDriveMechanismPosition() {
     return 0;
   }
 
   @Override
-  public double getDriveMotorVelocity() {
+  public double getDriveMechanismVelocity() {
     return 0;
   }
 
   @Override
-  public void setDriveMotorPosition(double newValue) {}
+  public void setDriveMechanismPosition(double newValue) {}
 
   @Override
-  public void setTurnMotorPosition(double newValue) {}
+  public void setTurnMechanismPosition(double newValue) {}
 
   @Override
   public void close() throws Exception {}

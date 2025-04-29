@@ -11,7 +11,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.dashboard.DashboardUI;
@@ -33,8 +32,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   private double targetDriveVelocity;
   private double targetTurnPosition;
-
-  private final Notifier m_notifier;
 
   private final double TURN_GEAR_RATIO;
   private final double DRIVE_GEAR_RATIO;
@@ -69,12 +66,12 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     // set slot 0 gains
     var slot0Configs_drive = driveConfig.Slot0;
-    slot0Configs_drive.kS = m.DRIVE_KS; // Add 0.25 V output to overcome static friction
-    slot0Configs_drive.kV = m.DRIVE_KV; // A velocity target of 1 rps results in 0.12 V output
-    slot0Configs_drive.kA = m.DRIVE_KA; // An acceleration of 1 rps/s requires 0.01 V output
-    slot0Configs_drive.kP = 0.1; // A position error of 2.5 rotations results in 12 V output
-    slot0Configs_drive.kI = 0; // no output for integrated error
-    slot0Configs_drive.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+    slot0Configs_drive.kS = m.DRIVE_KS;
+    slot0Configs_drive.kV = m.DRIVE_KV;
+    slot0Configs_drive.kA = m.DRIVE_KA;
+    slot0Configs_drive.kP = 0.1;
+    slot0Configs_drive.kI = 0;
+    slot0Configs_drive.kD = 0;
     driveConfig.Feedback.SensorToMechanismRatio = DRIVE_GEAR_RATIO;
 
     // set Motion Magic settings
@@ -95,23 +92,21 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     var turnConfig = new TalonFXConfiguration();
 
     // set slot 0 gains
-    var slot0Configs = turnConfig.Slot0;
-    slot0Configs.kS = m.TURN_KS; // Add 0.25 V output to overcome static friction
-    slot0Configs.kV = m.TURN_KV; // A velocity target of 1 rps results in 0.12 V output
-    slot0Configs.kA = m.TURN_KA; // An acceleration of 1 rps/s requires 0.01 V output
-    slot0Configs.kP = 4; // A position error of 2.5 rotations results in 12 V output
-    slot0Configs.kI = 0; // no output for integrated error
-    slot0Configs.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+    var slot0Configs_turn = turnConfig.Slot0;
+    slot0Configs_turn.kS = m.TURN_KS;
+    slot0Configs_turn.kV = m.TURN_KV;
+    slot0Configs_turn.kA = m.TURN_KA;
+    slot0Configs_turn.kP = 4;
+    slot0Configs_turn.kI = 0;
+    slot0Configs_turn.kD = 0.1;
     turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
     turnConfig.Feedback.SensorToMechanismRatio = TURN_GEAR_RATIO;
 
     // set Motion Magic settings
-    var motionMagicConfigs = turnConfig.MotionMagic;
-    motionMagicConfigs.MotionMagicCruiseVelocity =
-        m.TurnMaxAngularVelocity; // 80; // Target cruise velocity of 80 rps
-    motionMagicConfigs.MotionMagicAcceleration =
-        m.TurnMaxAngularAcceleration; // 160; // Target acceleration of 160 rps/s (0.5 seconds)
-    motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
+    var motionMagicConfigs_turn = turnConfig.MotionMagic;
+    motionMagicConfigs_turn.MotionMagicCruiseVelocity = m.TurnMaxAngularVelocity;
+    motionMagicConfigs_turn.MotionMagicAcceleration = m.TurnMaxAngularAcceleration;
+    motionMagicConfigs_turn.MotionMagicJerk = 1600;
 
     io.applyTurnTalonFXConfig(
         turnConfig
@@ -133,15 +128,12 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     io.setDriveMotorVoltage(0);
     io.setTurnMotorVoltage(0);
 
-    // Corrects for offset in absolute motor position
-    io.setTurnMotorPosition(getAbsWheelTurnOffset() / TURN_GEAR_RATIO);
-    turnRequest = new MotionMagicVoltage(getAbsWheelTurnOffset() / TURN_GEAR_RATIO);
+    // Corrects for offset in absolute wheel position
+    io.setTurnMechanismPosition(getAbsWheelTurnOffset());
+    turnRequest = new MotionMagicVoltage(getAbsWheelTurnOffset());
     driveRequest = new MotionMagicVelocityVoltage(0);
 
     SmartDashboard.putNumber("SwerveTurn_" + turningMotorChannel, 0);
-
-    m_notifier = new Notifier(this::controllerPeriodic);
-    // m_notifier.startPeriodic(Constants.Swerve.kDt);
   }
 
   /**
@@ -151,8 +143,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
    */
   private double getAbsWheelTurnOffset() {
     double absEncoderPosition = (io.getAbsoluteEncoder() - turningEncoderOffset + 1) % 1;
-    double absWheelPositionOffset = absEncoderPosition * TURN_GEAR_RATIO;
-    return absWheelPositionOffset;
+    return absEncoderPosition;
   }
 
   /**
@@ -161,15 +152,10 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
    * @return The raw rotations of the turning motor (rotation 2d object).
    */
   public Rotation2d getTurnWheelRotation2d() {
-    // Get the turning motor's current position in rotations
-    double numMotorRotations = io.getTurnMotorPosition();
-
-    // Convert motor rotations to radians
-    double motorRadians = numMotorRotations * 2 * Math.PI;
-
-    // Adjust for the gear ratio to get wheel radians
-    double wheelRadians = motorRadians;
-
+    // Get the wheel's current turn position in rotations
+    double numWheelRotations = io.getTurnMechanismPosition();
+    // Convert wheel rotations to radians
+    double wheelRadians = numWheelRotations * 2 * Math.PI;
     // Create a Rotation2d object from the wheel's angle in radians
     Rotation2d wheelRotation = new Rotation2d(wheelRadians);
 
@@ -178,17 +164,14 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   public double getTurnWheelVelocity() {
     // RPS
-    double turnMotorRotationsPerSecond = io.getTurnMotorVelocity();
-    return turnMotorRotationsPerSecond;
+    double turnWheelRotationsPerSecond = io.getTurnMechanismVelocity();
+    return turnWheelRotationsPerSecond;
   }
 
   // meters per second
   public double getDriveWheelVelocity() {
     // Get the drive motor velocity in rotations per second
-    double driveMotorRotationsPerSecond = io.getDriveMotorVelocity();
-
-    // Calculate wheel rotations per second by adjusting for the gear ratio
-    double driveWheelRotationsPerSecond = driveMotorRotationsPerSecond;
+    double driveWheelRotationsPerSecond = io.getDriveMechanismVelocity();
 
     // Calculate the distance the wheel travels per rotation (circumference)
     double wheelCircumference = WHEEL_DIAMETER * Math.PI;
@@ -200,11 +183,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public double getDriveWheelDistance() {
-    // Get the drive motor's current position in rotations
-    double numRotationsDriveMotor = io.getDriveMotorPosition();
-
-    // Adjust for the gear ratio to get the number of wheel rotations
-    double numRotationsDriveWheel = numRotationsDriveMotor;
+    // Get the drive wheel's current position in rotations
+    double numRotationsDriveWheel = io.getDriveMechanismPosition();
 
     // Calculate the wheel's circumference
     double wheelCircumference = Math.PI * WHEEL_DIAMETER;
@@ -233,8 +213,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     return new SwerveModulePosition(getDriveWheelDistance(), getTurnWheelRotation2d());
   }
 
-  double lastSpeed = 0;
-
   /**
    * Sets the desired state for the module.
    *
@@ -244,24 +222,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     // Optimize the reference state to avoid spinning further than 90 degrees
     desiredState.optimize(getTurnWheelRotation2d());
 
-    // Logger.recordOutput("DesiredState_" + turningMotorChannel,
-    // desiredState.angle.getRotations());
-
     targetTurnPosition = desiredState.angle.getRotations();
-
-    // m_goal =
-    //     new TrapezoidProfile.State(
-    //         SmartDashboard.getNumber("SwerveTurn_" + turningMotorChannel, 0), 0);
-
     targetDriveVelocity = desiredState.speedMetersPerSecond;
-
-    // ShuffleboardUI.Autonomous.putSwerveVelocityData(
-    //   m_driveMotor.getDeviceID(), getDriveWheelVelocity(), drivePIDController.getSetpoint());
-
-    // ShuffleboardUI.Autonomous.putSwerveVelocityData(
-    //     m_driveMotor.getDeviceID(),
-    //     getTurnWheelRotation2d().getRotations(),
-    //     desiredState.angle.getRotations());
 
     controllerPeriodic();
   }
@@ -273,45 +235,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
                 Units.rotationsToRadians(targetTurnPosition)
                     - getTurnWheelRotation2d().getRadians());
 
-    // double nextDriveVoltage =
-    //     drivePID.calculate(getDriveWheelVelocity(), actualTargetDriveVelocity)
-    //         + driveFF.calculateWithVelocities(lastSpeed, actualTargetDriveVelocity);
-    // lastSpeed = actualTargetDriveVelocity;
-
     io.setDriveMotorMotionMagic(driveRequest.withVelocity(actualTargetDriveVelocity));
-
     io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));
-
-    // // Get next setpoint from profile.
-    // // Logger.recordOutput("setpoint_" + turningMotorChannel, m_setpoint.position);
-    // m_setpoint = m_profile.calculate(Constants.Swerve.kDt, m_setpoint, m_goal);
-    // // Logger.recordOutput("setpoint_after_" + turningMotorChannel, m_setpoint.position);
-
-    // // Set setpoint of the linear system (position m, velocity m/s).
-    // turnLoop.setNextR(VecBuilder.fill(m_setpoint.position, m_setpoint.velocity));
-
-    // // Correct our Kalman filter's state vector estimate with encoder data.
-    // turnLoop.correct(
-    //     VecBuilder.fill(getTurnWheelRotation2d().getRotations(), getTurnWheelVelocity()));
-
-    // turnLoop.predict(Constants.Swerve.kDt);
-
-    // double nextturnVoltage = turnLoop.getU(0) + turn_kS * Math.signum(m_setpoint.velocity);
-
-    // // Logger.recordOutput("targetvoltage_" + turningMotorChannel, nextturnVoltage);
-
-    // io.setTurnMotorVoltage(nextturnVoltage);
-
-    // Logger.recordOutput("GoalPos_" + turningMotorChannel, m_goal.position);
-
-    // Logger.recordOutput("TargetVel_" + turningMotorChannel, m_setpoint.velocity);
-    // Logger.recordOutput("TargetPos_" + turningMotorChannel, m_setpoint.position);
-    // Logger.recordOutput("CurrentVel_" + turningMotorChannel, getTurnWheelVelocity());
-    // Logger.recordOutput(
-    //     "CurrentPos_" + turningMotorChannel, getTurnWheelRotation2d().getRotations());
-
-    // Logger.recordOutput("TargetVel_" + driveMotorChannel, targetDriveVelocity);
-    // Logger.recordOutput("CurrentVel_" + driveMotorChannel, getDriveWheelVelocity());
   }
 
   public void simulationPeriodic() {
@@ -334,7 +259,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   public void setTurnMotorVoltsSysIdOnly(double volts) {
     io.setTurnMotorVoltage(volts);
-    ;
   }
 
   public double getTurnMotorVoltsSysIdOnly() {
@@ -354,7 +278,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   /** frees up all hardware allocations */
   public void close() throws Exception {
-    m_notifier.close();
     io.close();
   }
 

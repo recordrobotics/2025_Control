@@ -92,32 +92,32 @@ public class SwerveModuleReal implements SwerveModuleIO {
   }
 
   @Override
-  public double getTurnMotorPosition() {
+  public double getTurnMechanismPosition() {
     return m_turningMotor.getPosition().getValueAsDouble();
   }
 
   @Override
-  public double getTurnMotorVelocity() {
+  public double getTurnMechanismVelocity() {
     return m_turningMotor.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public double getDriveMotorPosition() {
+  public double getDriveMechanismPosition() {
     return m_driveMotor.getPosition().getValueAsDouble();
   }
 
   @Override
-  public double getDriveMotorVelocity() {
+  public double getDriveMechanismVelocity() {
     return m_driveMotor.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public void setDriveMotorPosition(double newValue) {
+  public void setDriveMechanismPosition(double newValue) {
     m_driveMotor.setPosition(newValue);
   }
 
   @Override
-  public void setTurnMotorPosition(double newValue) {
+  public void setTurnMechanismPosition(double newValue) {
     m_turningMotor.setPosition(newValue);
   }
 
