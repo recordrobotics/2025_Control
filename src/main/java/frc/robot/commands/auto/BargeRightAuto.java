@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.Constants.RobotAlignPose;
+import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralShoot;
@@ -76,9 +76,14 @@ public class BargeRightAuto extends SequentialCommandGroup {
                             AutoBuilder.followPath(
                                 PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))),
                     () ->
-                        RobotAlignPose.closestReefTo(
-                                RobotContainer.poseSensorFusion.getEstimatedPosition(), 0.7)
-                            != null)
+                        CoralPosition.closestTo(RobotContainer.poseSensorFusion.getEstimatedPosition())
+                                .getFirstStagePose()
+                                .getTranslation()
+                                .getDistance(
+                                    RobotContainer.poseSensorFusion
+                                        .getEstimatedPosition()
+                                        .getTranslation())
+                            < 0.7)
                 .repeatedly()
                 .onlyWhile(() -> !RobotContainer.elevatorHead.hasCoral()));
   }

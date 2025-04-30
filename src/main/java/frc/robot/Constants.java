@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj.LEDReader;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
-import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
@@ -124,20 +123,12 @@ public final class Constants {
         }
       }
 
-      public Pose2d getNearPose() {
-        return pose.transformBy(new Transform2d(new Translation2d(0.1 + 0.6, 0), Rotation2d.kZero));
-      }
-
-      public Pose2d getFarPose() {
-        return pose.transformBy(
-            new Transform2d(new Translation2d(0.05 + 0.6, 0), Rotation2d.kZero));
-      }
-
       public static CoralPosition closestTo(Pose2d pose) {
         CoralPosition closest = null;
         double closestDistance = Double.MAX_VALUE;
         for (CoralPosition align : CoralPosition.values()) {
-          double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
+          double distance =
+              align.getFirstStagePose().getTranslation().getDistance(pose.getTranslation());
           if (distance < closestDistance) {
             closest = align;
             closestDistance = distance;
@@ -471,19 +462,6 @@ public final class Constants {
       RobotAlignPose closest = null;
       double closestDistance = Double.MAX_VALUE;
       for (RobotAlignPose align : RobotAlignPose.values()) {
-        double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
-        if (distance <= maxDistance && distance < closestDistance) {
-          closest = align;
-          closestDistance = distance;
-        }
-      }
-      return closest;
-    }
-
-    public static CoralPosition closestReefTo(Pose2d pose, double maxDistance) {
-      CoralPosition closest = null;
-      double closestDistance = Double.MAX_VALUE;
-      for (CoralPosition align : CoralPosition.values()) {
         double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
         if (distance <= maxDistance && distance < closestDistance) {
           closest = align;

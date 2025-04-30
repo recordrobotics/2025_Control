@@ -37,6 +37,7 @@ import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
+import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.Climber.ClimberState;
@@ -232,10 +233,11 @@ public class RobotContainer {
           CoralPosition closestReef = CoralPosition.closestTo(robot);
 
           boolean nearReef =
-              closestReef.getFarPose().getTranslation().getDistance(robot.getTranslation()) < 0.2
+              closestReef.getFirstStagePose().getTranslation().getDistance(robot.getTranslation())
+                      < 0.2
                   && Math.abs(
                           closestReef
-                              .getFarPose()
+                              .getFirstStagePose()
                               .getRotation()
                               .minus(robot.getRotation())
                               .getDegrees())
