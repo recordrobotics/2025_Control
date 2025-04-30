@@ -18,6 +18,7 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
+import frc.robot.utils.DCMotors;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.DriveCommandDataAutoLogged;
 import frc.robot.utils.KillableSubsystem;
@@ -63,7 +64,7 @@ public class Drivetrain extends KillableSubsystem
           .withSwerveModule(
               new SwerveModuleSimulationConfig(
                   DCMotor.getKrakenX60(1), // Drive motor is a Kraken X60
-                  DCMotor.getKrakenX60(1), // Steer motor is a Kraken X60
+                  DCMotors.getKrakenX44(1), // Steer motor is a Kraken X44
                   Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO, // Drive motor gear ratio.
                   Constants.Swerve.KRAKEN_TURN_GEAR_RATIO, // Steer motor gear ratio.
                   Volts.of(0.1),
