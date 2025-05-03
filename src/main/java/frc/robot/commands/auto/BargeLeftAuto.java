@@ -35,7 +35,7 @@ public class BargeLeftAuto extends SequentialCommandGroup {
         Set.of());
   }
 
-  private Command alignWithVision() { // TODO use RobotContainer.hasVision when it is tested
+  private Command alignWithVision() {
     return Align.create(1.5, true, false)
         .andThen(
             new RepeatConditionallyCommand(
