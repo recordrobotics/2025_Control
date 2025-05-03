@@ -51,6 +51,9 @@ import java.util.function.Supplier;
  */
 public final class Constants {
   public final class Game {
+    public static final AprilTagFieldLayout APRILTAG_LAYOUT =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+
     public static enum AlgaeLevel {
       LOW,
       HIGH
