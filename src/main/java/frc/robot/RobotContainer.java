@@ -1,7 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
@@ -127,7 +125,7 @@ public class RobotContainer {
       pdp = new PowerDistributionPanel();
     } else {
       visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
+      visionSim.addAprilTags(Constants.Game.APRILTAG_LAYOUT);
 
       drivetrain = new Drivetrain();
       poseTracker = new PoseTracker();

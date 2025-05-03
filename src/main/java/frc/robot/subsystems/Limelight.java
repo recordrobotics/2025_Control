@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -120,7 +118,7 @@ public class Limelight extends SubsystemBase implements ShuffleboardPublisher {
 
         photonEstimator =
             new PhotonPoseEstimator(
-                AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark),
+                Constants.Game.APRILTAG_LAYOUT,
                 PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
                 robotToCamera);
       }
