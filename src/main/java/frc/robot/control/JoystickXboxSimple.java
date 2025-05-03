@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants;
-import frc.robot.Constants.RobotAlignPose;
+import frc.robot.Constants.Game.SourcePosition;
 import frc.robot.RobotContainer;
 import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.SimpleMath;
@@ -254,16 +254,12 @@ public class JoystickXboxSimple extends AbstractControl {
   @Override
   public Boolean getCoralSourceIntakeAuto() {
     Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
-    RobotAlignPose closestSource = RobotAlignPose.closestSourceTo(robot, 2.3);
+    SourcePosition closestSource = SourcePosition.closestTo(robot);
 
     boolean nearSource =
-        closestSource != null
+        closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < 2.3
             && Math.abs(
-                    closestSource
-                        .getFarPose()
-                        .getRotation()
-                        .minus(robot.getRotation())
-                        .getDegrees())
+                    closestSource.getPose().getRotation().minus(robot.getRotation()).getDegrees())
                 < 80;
     return nearSource;
   }
