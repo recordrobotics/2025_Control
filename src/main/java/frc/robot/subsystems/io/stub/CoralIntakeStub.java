@@ -1,6 +1,7 @@
 package frc.robot.subsystems.io.stub;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import frc.robot.subsystems.io.CoralIntakeIO;
 
 public class CoralIntakeStub implements CoralIntakeIO {
@@ -26,6 +27,9 @@ public class CoralIntakeStub implements CoralIntakeIO {
 
   @Override
   public void setArmPosition(double newValue) {}
+
+  @Override
+  public void setArmMotionMagic(MotionMagicVoltage request) {}
 
   @Override
   public double getWheelVoltage() {

@@ -1,6 +1,7 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 
 public interface CoralIntakeIO extends AutoCloseable {
 
@@ -13,6 +14,8 @@ public interface CoralIntakeIO extends AutoCloseable {
   public void setWheelPosition(double newValue);
 
   public void setArmPosition(double newValue);
+
+  public void setArmMotionMagic(MotionMagicVoltage request);
 
   public double getWheelPosition();
 

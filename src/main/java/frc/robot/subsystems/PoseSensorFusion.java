@@ -3,11 +3,13 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +27,10 @@ import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
 import frc.robot.utils.camera.PhotonVisionCamera;
+import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -57,6 +63,8 @@ public class PoseSensorFusion extends SubsystemBase
           Constants.PhotonVision.PHOTON_SOURCE_NAME,
           CameraType.SVPROGlobalShutter,
           Constants.PhotonVision.sourceTransformRobotToCamera);
+
+  private final HashSet<VisionDebouncer> visionDebouncers = new HashSet<>();
 
   public PoseSensorFusion() {
     nav =
@@ -131,6 +139,11 @@ public class PoseSensorFusion extends SubsystemBase
     centerCamera.logValues("Center");
     l1Camera.logValues("L1");
     sourceCamera.logValues("Source");
+    
+    for (VisionDebouncer debouncer : visionDebouncers) {
+      debouncer.update();
+    }
+
 
     Logger.recordOutput(
         "SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
@@ -217,6 +230,43 @@ public class PoseSensorFusion extends SubsystemBase
                 : new Rotation2d(0)));
   }
 
+  public enum CameraTarget {
+    Left,
+    Center,
+    All;
+
+    boolean contains(CameraTarget camera) {
+      return this == camera || this == All;
+    }
+  }
+
+  public VisionDebouncer registerVisionCheck(CameraTarget camera) {
+    return registerVisionCheck(camera, null);
+  }
+
+  public VisionDebouncer registerVisionCheck(
+      CameraTarget camera, double debounceTime, Debouncer.DebounceType debounceType) {
+    return registerVisionCheck(camera, null, debounceTime, debounceType);
+  }
+
+  public VisionDebouncer registerVisionCheck(CameraTarget camera, int... tagIds) {
+    return registerVisionCheck(camera, tagIds, 0.5, Debouncer.DebounceType.kBoth);
+  }
+
+  private int nextVisionId = 1;
+
+  public VisionDebouncer registerVisionCheck(
+      CameraTarget camera, int[] tagIds, double debounceTime, Debouncer.DebounceType debounceType) {
+    VisionDebouncer vision =
+        new VisionDebouncer(nextVisionId, debounceTime, debounceType, camera, tagIds);
+    visionDebouncers.add(vision);
+    return vision;
+  }
+
+  public void releaseVisionCheck(VisionDebouncer visionDebouncer) {
+    visionDebouncers.remove(visionDebouncer);
+  }
+
   public void close() throws Exception {
     nav.close();
   }
@@ -240,5 +290,139 @@ public class PoseSensorFusion extends SubsystemBase
     DashboardUI.Overview.setConfidenceCenter(() -> centerCamera.getUnprocessedConfidence());
     DashboardUI.Overview.setHasVisionCenter(() -> centerCamera.hasVision());
     DashboardUI.Overview.setLimelightConnectedCenter(() -> centerCamera.isConnected());
+  }
+
+  public class VisionDebouncer {
+    private final Debouncer debouncer;
+    private CameraTarget camera;
+    private int[] tagIds;
+
+    private final int id;
+
+    private boolean result = false;
+    private double lastAccessTime;
+
+    private VisionDebouncer(
+        int id,
+        double debounceTime,
+        Debouncer.DebounceType debounceType,
+        CameraTarget camera,
+        int[] tagIds) {
+      this.id = id;
+      this.camera = camera;
+      this.tagIds = tagIds;
+      debouncer = new Debouncer(debounceTime, debounceType);
+      lastAccessTime = Timer.getTimestamp();
+    }
+
+    private void update() {
+      boolean rawInput = false;
+
+      if (camera.contains(CameraTarget.Left)) {
+        rawInput |= RobotContainer.poseSensorFusion.getLeftCamera().hasVision();
+      }
+
+      if (camera.contains(CameraTarget.Center)) {
+        rawInput |= RobotContainer.poseSensorFusion.getCenterCamera().hasVision();
+      }
+
+      if (tagIds != null && rawInput) {
+        ArrayList<Integer> visionTags = new ArrayList<>();
+        if (camera.contains(CameraTarget.Left)) {
+          for (RawVisionFiducial tag : RobotContainer.poseSensorFusion.getLeftCamera().getCurrentEstimate().rawFiducials) {
+            visionTags.add(tag.id);
+          }
+        }
+
+        if (camera.contains(CameraTarget.Center)) {
+          for (RawVisionFiducial tag :
+              RobotContainer.poseSensorFusion.getCenterCamera().getCurrentEstimate().rawFiducials) {
+            visionTags.add(tag.id);
+          }
+        }
+
+        for (int tagId : tagIds) {
+          if (!visionTags.contains(tagId)) {
+            rawInput = false;
+            break;
+          }
+        }
+      }
+
+      result = debouncer.calculate(rawInput);
+
+      double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
+      if (timeSinceLastAccessed > 1.0) {
+        DriverStation.reportWarning(
+            "Detected abandoned "
+                + toString()
+                + " last accessed "
+                + (int) Math.floor(timeSinceLastAccessed)
+                + " seconds ago.",
+            false);
+      }
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("VisionDebouncer{");
+      sb.append("id=").append(id);
+      sb.append(", camera=").append(camera);
+      sb.append(", tagIds=");
+      if (tagIds != null) {
+        for (int tagId : tagIds) {
+          sb.append(tagId).append(" ");
+        }
+      }
+      sb.append(", value=").append(result);
+      sb.append('}');
+      return sb.toString();
+    }
+
+    public boolean hasVision() {
+      lastAccessTime = Timer.getTimestamp();
+      return result;
+    }
+
+    public void setCamera(CameraTarget camera) {
+      this.camera = camera;
+    }
+
+    public void setTagIds(int[] tagIds) {
+      this.tagIds = tagIds;
+    }
+
+    public CameraTarget getCamera() {
+      return camera;
+    }
+
+    public int[] getTagIds() {
+      return tagIds;
+    }
+
+    public void setDebounceTime(double time) {
+      debouncer.setDebounceTime(time);
+    }
+
+    public void setDebounceType(Debouncer.DebounceType debounceType) {
+      debouncer.setDebounceType(debounceType);
+    }
+
+    public double getDebounceTime() {
+      return debouncer.getDebounceTime();
+    }
+
+    public Debouncer.DebounceType getDebounceType() {
+      return debouncer.getDebounceType();
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    public void release() {
+      RobotContainer.poseSensorFusion.releaseVisionCheck(this);
+    }
   }
 }

@@ -578,12 +578,12 @@ public final class Constants {
     public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
 
-    public static final double kP = 0.037121;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
-    public static final double kS = 0.1709;
-    public static final double kV = 0.61705;
-    public static final double kA = 0.039556;
+    public static final double wheel_kP = 0.037121;
+    public static final double wheel_kI = 0.0;
+    public static final double wheel_kD = 0.0;
+    public static final double wheel_kS = 0.1709;
+    public static final double wheel_kV = 0.61705;
+    public static final double wheel_kA = 0.039556;
 
     public static final double MAX_ARM_VELOCITY = 8;
     public static final double MAX_ARM_ACCELERATION = 22;
@@ -596,13 +596,13 @@ public final class Constants {
 
     public static final double PUSH_OUT_RAMP_TIME = 0.5;
 
-    public static final double sP = 4.8919;
-    public static final double sI = 0;
-    public static final double sD = 0.11072;
-    public static final double sG = 0.37793;
-    public static final double sS = 0.30532;
-    public static final double sV = 0.79648;
-    public static final double sA = 0.038737;
+    public static final double arm_kP = 4.8919;
+    public static final double arm_kI = 0;
+    public static final double arm_kD = 0.11072;
+    public static final double arm_kG = 0.37793;
+    public static final double arm_kS = 0.30532;
+    public static final double arm_kV = 0.79648;
+    public static final double arm_kA = 0.038737;
 
     public static final double ARM_UP = Units.degreesToRadians(80.19);
     public static final double ARM_PUSH = Units.degreesToRadians(84.19);

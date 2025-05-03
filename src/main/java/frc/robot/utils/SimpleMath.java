@@ -120,4 +120,8 @@ public class SimpleMath {
     }
     return next;
   }
+
+  public static boolean isWithinTolerance(double value, double target, double tolerance) {
+    return Math.abs(value - target) <= tolerance;
+  }
 }

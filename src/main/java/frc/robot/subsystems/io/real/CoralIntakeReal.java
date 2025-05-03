@@ -1,6 +1,7 @@
 package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -35,6 +36,11 @@ public class CoralIntakeReal implements CoralIntakeIO {
   @Override
   public void setArmVoltage(double outputVolts) {
     arm.setVoltage(outputVolts);
+  }
+
+  @Override
+  public void setArmMotionMagic(MotionMagicVoltage request) {
+    arm.setControl(request);
   }
 
   @Override
