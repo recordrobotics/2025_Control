@@ -12,7 +12,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.RobotAlignPose;
 import frc.robot.Constants.RobotState.Mode;
@@ -361,16 +363,16 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    if (autoCommand == null) {
-      autoCommand = new PlannedAuto();
-    }
-    return autoCommand;
+    // if (autoCommand == null) {
+    //   autoCommand = new PlannedAuto();
+    // }
+    // return autoCommand;
 
-    // return new InstantCommand()
-    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kForward).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kReverse).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevatorArm.sysIdDynamic(Direction.kForward).andThen(new WaitCommand(0.4)))
-    //     .andThen(elevatorArm.sysIdDynamic(Direction.kReverse).andThen(new WaitCommand(0.4)));
+    return new InstantCommand()
+        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward).andThen(new WaitCommand(0.4)))
+        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse).andThen(new WaitCommand(0.4)))
+        .andThen(coralIntake.sysIdDynamicArm(Direction.kForward).andThen(new WaitCommand(0.4)))
+        .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse).andThen(new WaitCommand(0.4)));
   }
 
   public void testPeriodic() {
