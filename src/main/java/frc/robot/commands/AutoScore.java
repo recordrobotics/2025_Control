@@ -1,4 +1,4 @@
-package frc.robot.commands.hybrid;
+package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -6,9 +6,6 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
-import frc.robot.commands.CoralShoot;
-import frc.robot.commands.ElevatorMove;
-import frc.robot.commands.ReefAlign;
 import frc.robot.dashboard.DashboardUI;
 
 public class AutoScore extends SequentialCommandGroup {
