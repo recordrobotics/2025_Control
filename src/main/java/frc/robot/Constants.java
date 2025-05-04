@@ -182,7 +182,7 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 12;
     public static final double MAX_ARM_ACCELERATION = 40;
 
-    public static final double kP = 2.996;
+    public static final double kP = 9.9645;
     public static final double kI = 0;
     public static final double kD = 0.28181;
     public static final double kG = 0.53175;

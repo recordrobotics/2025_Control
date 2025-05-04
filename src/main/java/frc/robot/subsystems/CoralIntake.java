@@ -240,7 +240,7 @@ public class CoralIntake extends KillableSubsystem
 
   @Override
   public void periodic() {
-    toggleArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
+    // toggleArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
 
     if (currentIntakeState == CoralIntakeState.PUSH_OUT) {
       // push and pull ramp

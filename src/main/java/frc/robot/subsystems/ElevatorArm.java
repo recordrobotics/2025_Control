@@ -5,10 +5,11 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -23,6 +24,8 @@ import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
+
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -31,25 +34,36 @@ public class ElevatorArm extends KillableSubsystem
 
   private final ElevatorArmIO io;
   private final SysIdRoutine sysIdRoutine;
-  private final ProfiledPIDController pid =
-      new ProfiledPIDController(
-          Constants.ElevatorArm.kP,
-          Constants.ElevatorArm.kI,
-          Constants.ElevatorArm.kD,
-          new TrapezoidProfile.Constraints(
-              Constants.ElevatorArm.MAX_ARM_VELOCITY, Constants.ElevatorArm.MAX_ARM_ACCELERATION));
-  private final ArmFeedforward feedforward =
-      new ArmFeedforward(
-          Constants.ElevatorArm.kS,
-          Constants.ElevatorArm.kG,
-          Constants.ElevatorArm.kV,
-          Constants.ElevatorArm.kA);
+
+  private final MotionMagicVoltage armRequest;
 
   public ElevatorArm(ElevatorArmIO io) {
     this.io = io;
 
+    var armConfig = new TalonFXConfiguration();
+
+    // set slot 0 gains
+    var slot0Configs_arm = armConfig.Slot0;
+    slot0Configs_arm.kS = Constants.ElevatorArm.kS;
+    slot0Configs_arm.kV = Constants.ElevatorArm.kV;
+    slot0Configs_arm.kA = Constants.ElevatorArm.kA;
+    slot0Configs_arm.kG = Constants.ElevatorArm.kG;
+    slot0Configs_arm.kP = Constants.ElevatorArm.kP;
+    slot0Configs_arm.kI = Constants.ElevatorArm.kI;
+    slot0Configs_arm.kD = Constants.ElevatorArm.kD;
+    slot0Configs_arm.GravityType = GravityTypeValue.Arm_Cosine;
+    armConfig.Feedback.SensorToMechanismRatio = Constants.ElevatorArm.ARM_GEAR_RATIO;
+
+    // set Motion Magic settings
+    var motionMagicConfigs_arm = armConfig.MotionMagic;
+    motionMagicConfigs_arm.MotionMagicCruiseVelocity = Constants.ElevatorArm.MAX_ARM_VELOCITY;
+    motionMagicConfigs_arm.MotionMagicAcceleration = Constants.ElevatorArm.MAX_ARM_ACCELERATION;
+    motionMagicConfigs_arm.MotionMagicJerk = 1600;
+    motionMagicConfigs_arm.MotionMagicExpo_kV = Constants.ElevatorArm.kV;
+    motionMagicConfigs_arm.MotionMagicExpo_kA = Constants.ElevatorArm.kA;
+
     io.applyArmTalonFXConfig(
-        new TalonFXConfiguration()
+      armConfig
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(InvertedValue.Clockwise_Positive)
@@ -61,14 +75,10 @@ public class ElevatorArm extends KillableSubsystem
                     .withSupplyCurrentLimitEnable(true)
                     .withStatorCurrentLimitEnable(true)));
 
-    io.setArmPosition(
-        Constants.ElevatorArm.ARM_GEAR_RATIO
-            * Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    armRequest =
+        new MotionMagicVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
     set(ElevatorHeight.BOTTOM.getArmAngle());
-
-    pid.setTolerance(0.15, 1.05);
-
-    pid.reset(getArmAngle());
 
     sysIdRoutine =
         new SysIdRoutine(
@@ -92,12 +102,23 @@ public class ElevatorArm extends KillableSubsystem
 
   @AutoLogOutput
   public double getArmAngle() {
-    return io.getArmPosition() / Constants.ElevatorArm.ARM_GEAR_RATIO * 2 * Math.PI;
+    return io.getArmPosition() * 2 * Math.PI;
   }
 
   @AutoLogOutput
   public double getArmVelocity() {
-    return io.getArmVelocity() / Constants.ElevatorArm.ARM_GEAR_RATIO * 2 * Math.PI;
+    return io.getArmVelocity() * 2 * Math.PI;
+  }
+
+  /** Used for sysid as units have to be in rotations in the logs */
+  @AutoLogOutput
+  public double getArmAngleRotations() {
+    return io.getArmPosition();
+  }
+
+  @AutoLogOutput
+  public double getArmVelocityRotations() {
+    return io.getArmVelocity();
   }
 
   @AutoLogOutput
@@ -106,36 +127,20 @@ public class ElevatorArm extends KillableSubsystem
   }
 
   public void set(double angleRadians) {
-    pid.setGoal(angleRadians);
+    currentSetpoint.position = angleRadians;
+    io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
   }
 
   public boolean atGoal() {
-    return pid.atGoal();
-  }
-
-  public void setGoal(TrapezoidProfile.State goal) {
-    pid.setGoal(goal);
+    return SimpleMath.isWithinTolerance(getArmAngle(), currentSetpoint.position, 0.15)
+        && SimpleMath.isWithinTolerance(getArmVelocity(), 0, 1.05);
   }
 
   private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
 
   @Override
   public void periodic() {
-    // set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
-
-    double pidOutputArm = pid.calculate(getArmAngle());
-
-    double feedforwardOutput =
-        feedforward.calculateWithVelocities(
-            getArmAngle(), currentSetpoint.velocity, pid.getSetpoint().velocity);
-
-    // Logger.recordOutput("ElevatorArmTargetPosition", pid.getSetpoint().position);
-    // Logger.recordOutput("ElevatorArmTargetVelocity", pid.getSetpoint().velocity);
-    // Logger.recordOutput("ElevatorArmSetVoltage", pidOutputArm);
-    // Logger.recordOutput("ElevatorArmSetVoltageFF", feedforwardOutput);
-
-    io.setArmVoltage(pidOutputArm + feedforwardOutput);
-    currentSetpoint = pid.getSetpoint();
+    set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
 
     // Update mechanism
     RobotContainer.model.elevatorArm.update(getArmAngle());
