@@ -15,7 +15,6 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralShoot;
 import frc.robot.commands.ReefAlign;
-import frc.robot.commands.hybrid.SourceAlign;
 import frc.robot.utils.CommandUtils;
 import frc.robot.utils.RepeatConditionallyCommand;
 import java.io.IOException;
@@ -54,11 +53,7 @@ public class BargeLeftAuto extends SequentialCommandGroup {
                     AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile(
                                 "Reef" + reefLetter + "ToSourceLeftOuterNoElevator"))
-                        .andThen(
-                            CommandUtils.finishOnInterrupt(
-                                SourceAlign.create(true)
-                                    .withTimeout(0.1)
-                                    .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
+                        .andThen(() -> sourceStart = Timer.getTimestamp())
                         .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                         .andThen(sourceWait())
                         .andThen(
@@ -66,11 +61,7 @@ public class BargeLeftAuto extends SequentialCommandGroup {
                                 PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart"))),
                     AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("ElevatorStartToSourceLeftOuter"))
-                        .andThen(
-                            CommandUtils.finishOnInterrupt(
-                                SourceAlign.create(true)
-                                    .withTimeout(0.1)
-                                    .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
+                        .andThen(() -> sourceStart = Timer.getTimestamp())
                         .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
                         .andThen(sourceWait())
                         .andThen(
