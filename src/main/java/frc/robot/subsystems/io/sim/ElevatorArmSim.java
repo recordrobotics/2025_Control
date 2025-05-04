@@ -1,6 +1,8 @@
 package frc.robot.subsystems.io.sim;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.io.ElevatorArmIO;
+import frc.robot.utils.DCMotors;
 
 public class ElevatorArmSim implements ElevatorArmIO {
 
@@ -21,14 +24,14 @@ public class ElevatorArmSim implements ElevatorArmIO {
 
   private final TalonFXSimState armSim;
 
-  private final DCMotor armMotor = DCMotor.getKrakenX60(1);
+  private final DCMotor armMotor = DCMotors.getKrakenX44(1);
 
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
-          LinearSystemId.createDCMotorSystem(Constants.ElevatorArm.kV, Constants.ElevatorArm.kA),
+          LinearSystemId.createSingleJointedArmSystem(armMotor, 0.1, Constants.ElevatorArm.ARM_GEAR_RATIO),
           armMotor,
           Constants.ElevatorArm.ARM_GEAR_RATIO,
-          Units.inchesToMeters(14.4966),
+          Units.inchesToMeters(18.4966),
           Units.degreesToRadians(-105),
           Units.degreesToRadians(115),
           true,
@@ -57,6 +60,11 @@ public class ElevatorArmSim implements ElevatorArmIO {
   @Override
   public void setArmPosition(double newValue) {
     arm.setPosition(newValue);
+  }
+
+  @Override
+  public void setArmMotionMagic(MotionMagicVoltage request)  {
+    arm.setControl(request);
   }
 
   @Override

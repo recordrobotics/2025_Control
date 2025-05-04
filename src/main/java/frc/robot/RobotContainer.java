@@ -363,16 +363,16 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // if (autoCommand == null) {
-    //   autoCommand = new PlannedAuto();
-    // }
-    // return autoCommand;
+    if (autoCommand == null) {
+      autoCommand = new PlannedAuto();
+    }
+    return autoCommand;
 
-    return new InstantCommand()
-        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kForward).andThen(new WaitCommand(0.4)))
-        .andThen(coralIntake.sysIdQuasistaticArm(Direction.kReverse).andThen(new WaitCommand(0.4)))
-        .andThen(coralIntake.sysIdDynamicArm(Direction.kForward).andThen(new WaitCommand(0.4)))
-        .andThen(coralIntake.sysIdDynamicArm(Direction.kReverse).andThen(new WaitCommand(0.4)));
+    // return new InstantCommand()
+    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kForward).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdQuasistatic(Direction.kReverse).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdDynamic(Direction.kForward).andThen(new WaitCommand(0.4)))
+    //     .andThen(elevatorArm.sysIdDynamic(Direction.kReverse).andThen(new WaitCommand(0.4)));
   }
 
   public void testPeriodic() {

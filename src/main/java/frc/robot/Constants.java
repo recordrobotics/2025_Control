@@ -164,13 +164,13 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 12;
     public static final double MAX_ARM_ACCELERATION = 40;
 
-    public static final double kP = 2.996;
+    public static final double kP = 9.9645;
     public static final double kI = 0;
-    public static final double kD = 0.28181;
-    public static final double kG = 0.2269;
-    public static final double kS = 0.13495;
-    public static final double kV = 0.67446;
-    public static final double kA = 0.018492;
+    public static final double kD = 0.45072;
+    public static final double kG = 0.33312;
+    public static final double kS = 0.098829;
+    public static final double kV = 3.4641;
+    public static final double kA = 0.095739;
 
     public static final double START_POS = Units.degreesToRadians(-90);
     public static final double MIN_POS = Units.degreesToRadians(-103.54);
