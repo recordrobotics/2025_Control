@@ -1,9 +1,7 @@
 package frc.robot.subsystems.io.stub;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-
 import frc.robot.subsystems.io.ElevatorArmIO;
 
 public class ElevatorArmStub implements ElevatorArmIO {
@@ -26,7 +24,7 @@ public class ElevatorArmStub implements ElevatorArmIO {
 
   @Override
   public void setArmMotionMagic(MotionMagicVoltage request) {}
-  
+
   @Override
   public double getArmPosition() {
     return 0;

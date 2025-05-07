@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -25,7 +24,6 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -63,7 +61,7 @@ public class ElevatorArm extends KillableSubsystem
     motionMagicConfigs_arm.MotionMagicExpo_kA = Constants.ElevatorArm.kA;
 
     io.applyArmTalonFXConfig(
-      armConfig
+        armConfig
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(InvertedValue.Clockwise_Positive)
@@ -76,8 +74,7 @@ public class ElevatorArm extends KillableSubsystem
                     .withStatorCurrentLimitEnable(true)));
 
     io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
-    armRequest =
-        new MotionMagicVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    armRequest = new MotionMagicVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
     set(ElevatorHeight.BOTTOM.getArmAngle());
 
     sysIdRoutine =
