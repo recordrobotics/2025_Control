@@ -18,11 +18,13 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
-import frc.robot.utils.CameraType;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
-import frc.robot.utils.LimelightCamera;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.camera.CameraType;
+import frc.robot.utils.camera.IVisionCamera;
+import frc.robot.utils.camera.LimelightCamera;
+import frc.robot.utils.camera.PhotonVisionCamera;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -44,6 +46,17 @@ public class PoseSensorFusion extends SubsystemBase
           Constants.Limelight.LIMELIGHT_CENTER_NAME,
           CameraType.Limelight2,
           Constants.Limelight.centerTransformRobotToCamera);
+
+  private PhotonVisionCamera l1Camera =
+      new PhotonVisionCamera(
+          Constants.PhotonVision.PHOTON_L1_NAME,
+          CameraType.SVPROGlobalShutter,
+          Constants.PhotonVision.l1TransformRobotToCamera);
+  private PhotonVisionCamera sourceCamera =
+      new PhotonVisionCamera(
+          Constants.PhotonVision.PHOTON_SOURCE_NAME,
+          CameraType.SVPROGlobalShutter,
+          Constants.PhotonVision.sourceTransformRobotToCamera);
 
   public PoseSensorFusion() {
     nav =
@@ -91,7 +104,7 @@ public class PoseSensorFusion extends SubsystemBase
 
     poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
 
-    if (leftCamera.hasVision || centerCamera.hasVision) {
+    if (leftCamera.hasVision() || centerCamera.hasVision()) {
       // when vision is correcting the pose, have that override the independent pose estimator
       independentPoseEstimator.reset(getEstimatedPosition());
       independentPoseEstimator.update(getEstimatedPosition().getRotation());
@@ -109,19 +122,30 @@ public class PoseSensorFusion extends SubsystemBase
 
     leftCamera.updateEstimation(trustLimelightLeft);
     centerCamera.updateEstimation(trustLimelightCenter);
-    DashboardUI.Autonomous.setVisionPoseLeft(leftCamera.unsafeEstimate.pose);
-    DashboardUI.Autonomous.setVisionPoseCenter(centerCamera.unsafeEstimate.pose);
+    l1Camera.updateEstimation(false);
+    sourceCamera.updateEstimation(false);
+
+    updateDashboard(leftCamera, centerCamera, l1Camera, sourceCamera);
+
     leftCamera.logValues("Left");
     centerCamera.logValues("Center");
-
-    SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
-    SmartDashboard.putNumber("pose", poseFilter.getEstimatedPosition().getRotation().getDegrees());
-    DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
+    l1Camera.logValues("L1");
+    sourceCamera.logValues("Source");
 
     Logger.recordOutput(
         "SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
     Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
     Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
+  }
+
+  private void updateDashboard(IVisionCamera... cameras) {
+    for (IVisionCamera camera : cameras) {
+      DashboardUI.Autonomous.setVisionPose(camera.getName(), camera.getUnsafeEstimate().pose);
+    }
+
+    SmartDashboard.putNumber("pose", poseFilter.getEstimatedPosition().getRotation().getDegrees());
+    SmartDashboard.putNumber("gyro", nav.getAdjustedAngle().getDegrees());
+    DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
   }
 
   private SwerveModulePosition[] getModulePositions() {
@@ -155,18 +179,18 @@ public class PoseSensorFusion extends SubsystemBase
     setToPose(
         new Pose2d(
             getEstimatedPosition().getTranslation(),
-            leftCamera.currentEstimate.pose.getRotation()));
+            leftCamera.getCurrentEstimate().pose.getRotation()));
   }
 
   public void resetFullLimelight() {
     Translation2d translation;
 
-    if (leftCamera.hasVision) {
-      translation = leftCamera.currentEstimate.pose.getTranslation();
-    } else if (centerCamera.hasVision) {
-      translation = centerCamera.currentEstimate.pose.getTranslation();
+    if (leftCamera.hasVision()) {
+      translation = leftCamera.getCurrentEstimate().pose.getTranslation();
+    } else if (centerCamera.hasVision()) {
+      translation = centerCamera.getCurrentEstimate().pose.getTranslation();
     } else {
-      translation = leftCamera.currentEstimate.pose.getTranslation();
+      translation = leftCamera.getCurrentEstimate().pose.getTranslation();
     }
 
     setToPose(new Pose2d(translation, getEstimatedPosition().getRotation()));
@@ -199,14 +223,14 @@ public class PoseSensorFusion extends SubsystemBase
 
   @Override
   public void setupShuffleboard() {
-    DashboardUI.Overview.setTagNumLeft(() -> leftCamera.numTags);
+    DashboardUI.Overview.setTagNumLeft(() -> leftCamera.getNumTags());
     DashboardUI.Overview.setConfidenceLeft(() -> leftCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionLeft(() -> leftCamera.hasVision);
-    DashboardUI.Overview.setLimelightConnectedLeft(() -> leftCamera.limelightConnected);
+    DashboardUI.Overview.setHasVisionLeft(() -> leftCamera.hasVision());
+    DashboardUI.Overview.setLimelightConnectedLeft(() -> leftCamera.isConnected());
 
-    DashboardUI.Overview.setTagNumCenter(() -> centerCamera.numTags);
+    DashboardUI.Overview.setTagNumCenter(() -> centerCamera.getNumTags());
     DashboardUI.Overview.setConfidenceCenter(() -> centerCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionCenter(() -> centerCamera.hasVision);
-    DashboardUI.Overview.setLimelightConnectedCenter(() -> centerCamera.limelightConnected);
+    DashboardUI.Overview.setHasVisionCenter(() -> centerCamera.hasVision());
+    DashboardUI.Overview.setLimelightConnectedCenter(() -> centerCamera.isConnected());
   }
 }

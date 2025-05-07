@@ -47,9 +47,11 @@ public class AutoPath {
             new RepeatConditionallyCommand(
                     Align.create(2.5, false, false),
                     () ->
-                        !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision
-                            || RobotContainer.poseSensorFusion.getCenterCamera()
-                                .hasVision), // TODO make this a Supplier<boolean> in robotcontainer
+                        !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
+                            || RobotContainer.poseSensorFusion
+                                .getCenterCamera()
+                                .hasVision()), // TODO make this a Supplier<boolean> in
+                    // robotcontainer
                     true)
                 .withTimeout(1.5)));
     NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));

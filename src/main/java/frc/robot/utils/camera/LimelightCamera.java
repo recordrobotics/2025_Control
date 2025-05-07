@@ -1,4 +1,4 @@
-package frc.robot.utils;
+package frc.robot.utils.camera;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -9,6 +9,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
@@ -23,18 +24,18 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 
-public class LimelightCamera {
+public class LimelightCamera implements IVisionCamera {
 
-  public int numTags = 0;
+  private int numTags = 0;
   private double confidence = 0;
-  public boolean hasVision = false;
-  public boolean limelightConnected = false;
+  private boolean hasVision = false;
+  private boolean limelightConnected = false;
 
-  public double currentConfidence = 9999999; // large number means less confident
-  public PoseEstimate currentEstimate = new PoseEstimate();
-  public PoseEstimate unsafeEstimate = new PoseEstimate();
+  private double currentConfidence = 9999999; // large number means less confident
+  private VisionCameraEstimate currentEstimate = new VisionCameraEstimate();
+  private VisionCameraEstimate unsafeEstimate = new VisionCameraEstimate();
 
-  public String name;
+  private String name;
 
   private final double MT1_CONFIDENCE;
   private final double MT2_CONFIDENCE;
@@ -46,6 +47,38 @@ public class LimelightCamera {
   private PhotonCamera fakeCamera;
   private PhotonPoseEstimator photonEstimator;
   private CameraType type;
+
+  public boolean isConnected() {
+    return limelightConnected;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public CameraType getCameraType() {
+    return type;
+  }
+
+  public boolean hasVision() {
+    return hasVision;
+  }
+
+  public int getNumTags() {
+    return numTags;
+  }
+
+  public VisionCameraEstimate getCurrentEstimate() {
+    return currentEstimate;
+  }
+
+  public VisionCameraEstimate getUnsafeEstimate() {
+    return unsafeEstimate;
+  }
+
+  public double getConfidence() {
+    return currentConfidence;
+  }
 
   public double getUnprocessedConfidence() {
     return confidence;
@@ -79,19 +112,6 @@ public class LimelightCamera {
               PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
               robotToCamera);
     }
-  }
-
-  public LimelightCamera(
-      String name,
-      double mt1_confidence,
-      double mt2_confidence,
-      double mt1_max_dist,
-      double max_pose_error) {
-    this.name = name;
-    this.MT1_CONFIDENCE = mt1_confidence;
-    this.MT2_CONFIDENCE = mt2_confidence;
-    this.MT1_MAX_DIST = mt1_max_dist;
-    this.MAX_POSE_ERROR = max_pose_error;
   }
 
   public void setPipeline(int pipeline) {
@@ -227,7 +247,7 @@ public class LimelightCamera {
       confidence = MT1_CONFIDENCE;
     }
 
-    unsafeEstimate = measurement;
+    unsafeEstimate = new VisionCameraEstimate(measurement);
 
     if (measurement
             .pose
@@ -239,7 +259,7 @@ public class LimelightCamera {
 
     if (confidence > 0) {
       hasVision = true;
-      currentEstimate = measurement;
+      currentEstimate = new VisionCameraEstimate(measurement);
       currentConfidence = confidence;
       RobotContainer.poseSensorFusion.addVisionMeasurement(
           currentEstimate.pose,

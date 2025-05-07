@@ -15,8 +15,6 @@ import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -24,8 +22,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
@@ -65,16 +61,22 @@ public final class Constants {
   }
 
   public final class PhotonVision {
-    public static final String cameraName =
-        "photonvisionapriltags"; // name of camera, not the coprocessor
     public static final AprilTagFieldLayout tagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
-    public static final Transform3d robotToCam =
-        new Transform3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0)); // TODO
-    public static final Matrix<N3, N1> singleTagStdDevs =
-        new Matrix<N3, N1>(Nat.N3(), Nat.N1(), new double[] {0.1, 0.1, 0.1}); // TODO
-    public static final Matrix<N3, N1> multiTagStdDevs =
-        new Matrix<N3, N1>(Nat.N3(), Nat.N1(), new double[] {0.1, 0.1, 0.1}); // TODO
+
+    public static final String PHOTON_L1_NAME = "photon-l1";
+    public static final String PHOTON_SOURCE_NAME = "photon-source";
+
+    public static final Transform3d l1TransformRobotToCamera =
+        new Transform3d(
+            new Translation3d(0.311558, -0.330204, 0.246383),
+            new Rotation3d(0, Units.degreesToRadians(-21), 0));
+    public static final Transform3d sourceTransformRobotToCamera =
+        new Transform3d(
+            new Translation3d(0.219412, 0.050800, 0.156247),
+            new Rotation3d(0, Units.degreesToRadians(-27), 0));
+
+    public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
   }
 
   public final class HybridConstants {

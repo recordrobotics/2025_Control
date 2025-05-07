@@ -61,12 +61,8 @@ public class AutonomousLayout extends AbstractLayout {
     field.setRobotPose(pose);
   }
 
-  public void setVisionPoseLeft(Pose2d pose) {
-    field.getObject("VisionLeft").setPose(pose);
-  }
-
-  public void setVisionPoseCenter(Pose2d pose) {
-    field.getObject("VisionCenter").setPose(pose);
+  public void setVisionPose(String name, Pose2d pose) {
+    field.getObject(name).setPose(pose);
   }
 
   public void putSwerveVelocityData(int id, double current, double target) {
