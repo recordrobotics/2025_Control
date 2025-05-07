@@ -1,7 +1,6 @@
 package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import frc.robot.RobotMap;
@@ -36,7 +35,7 @@ public class ElevatorArmReal implements ElevatorArmIO {
   }
 
   @Override
-  public void setArmMotionMagic(MotionMagicVoltage request)  {
+  public void setArmMotionMagic(MotionMagicVoltage request) {
     arm.setControl(request);
   }
 

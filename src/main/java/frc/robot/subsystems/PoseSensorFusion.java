@@ -28,7 +28,6 @@ import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
 import frc.robot.utils.camera.PhotonVisionCamera;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -139,11 +138,10 @@ public class PoseSensorFusion extends SubsystemBase
     centerCamera.logValues("Center");
     l1Camera.logValues("L1");
     sourceCamera.logValues("Source");
-    
+
     for (VisionDebouncer debouncer : visionDebouncers) {
       debouncer.update();
     }
-
 
     Logger.recordOutput(
         "SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
@@ -329,7 +327,8 @@ public class PoseSensorFusion extends SubsystemBase
       if (tagIds != null && rawInput) {
         ArrayList<Integer> visionTags = new ArrayList<>();
         if (camera.contains(CameraTarget.Left)) {
-          for (RawVisionFiducial tag : RobotContainer.poseSensorFusion.getLeftCamera().getCurrentEstimate().rawFiducials) {
+          for (RawVisionFiducial tag :
+              RobotContainer.poseSensorFusion.getLeftCamera().getCurrentEstimate().rawFiducials) {
             visionTags.add(tag.id);
           }
         }
