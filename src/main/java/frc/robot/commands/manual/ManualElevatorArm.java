@@ -3,7 +3,6 @@ package frc.robot.commands.manual;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -32,18 +31,7 @@ public class ManualElevatorArm extends Command {
     angle += manualElevatorArmVelocity.times(Milliseconds.of(20)).in(Radians);
     angle = MathUtil.clamp(angle, Constants.ElevatorArm.MIN_POS, Constants.ElevatorArm.MAX_POS);
 
-    TrapezoidProfile.State goal =
-        new TrapezoidProfile.State(angle, manualElevatorArmVelocity.in(RadiansPerSecond));
-
-    if (goal.position
-        < Constants.ElevatorArm.MIN_POS + Constants.ElevatorArm.MANUAL_CONTROL_MARGIN.in(Meters)) {
-      goal.velocity = Math.max(goal.velocity, 0);
-    } else if (goal.position
-        > Constants.ElevatorArm.MAX_POS - Constants.ElevatorArm.MANUAL_CONTROL_MARGIN.in(Meters)) {
-      goal.velocity = Math.min(goal.velocity, 0);
-    }
-
-    RobotContainer.elevatorArm.setGoal(goal);
+    RobotContainer.elevatorArm.set(angle);
   }
 
   // Returns true when the command should end.

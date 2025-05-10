@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.sim.SparkMaxSim;
@@ -22,6 +23,7 @@ import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.commands.simulation.CoralIntakeToElevator;
 import frc.robot.subsystems.io.CoralIntakeIO;
+import frc.robot.utils.DCMotors;
 import frc.robot.utils.IntakeSimulationUtils;
 import frc.robot.utils.ProjectileSimulationUtils;
 import org.ironmaple.simulation.IntakeSimulation;
@@ -41,21 +43,23 @@ public class CoralIntakeSim implements CoralIntakeIO {
   private final TalonFXSimState armSim;
 
   private final DCMotor wheelMotor = DCMotor.getNeo550(1);
-  private final DCMotor armMotor = DCMotor.getKrakenX60(1);
+  private final DCMotor armMotor = DCMotors.getKrakenX44(1);
 
   private final DCMotorSim wheelSimModel =
       new DCMotorSim(
-          LinearSystemId.createDCMotorSystem(Constants.CoralIntake.kV, Constants.CoralIntake.kA),
+          LinearSystemId.createDCMotorSystem(
+              Constants.CoralIntake.wheel_kV, Constants.CoralIntake.wheel_kA),
           wheelMotor,
           0.01,
           0.01);
 
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
-          LinearSystemId.createDCMotorSystem(Constants.CoralIntake.sV, Constants.CoralIntake.sA),
+          LinearSystemId.createSingleJointedArmSystem(
+              armMotor, 0.179, Constants.CoralIntake.ARM_GEAR_RATIO),
           armMotor,
           Constants.CoralIntake.ARM_GEAR_RATIO,
-          Units.inchesToMeters(88),
+          Units.inchesToMeters(17.02),
           -0.95,
           Math.PI / 2,
           true,
@@ -115,6 +119,11 @@ public class CoralIntakeSim implements CoralIntakeIO {
   @Override
   public void setArmPosition(double newValue) {
     arm.setPosition(newValue);
+  }
+
+  @Override
+  public void setArmMotionMagic(MotionMagicVoltage request) {
+    arm.setControl(request);
   }
 
   @Override

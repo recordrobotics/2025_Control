@@ -164,13 +164,13 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 12;
     public static final double MAX_ARM_ACCELERATION = 40;
 
-    public static final double kP = 2.996;
+    public static final double kP = 9.9645;
     public static final double kI = 0;
-    public static final double kD = 0.28181;
-    public static final double kG = 0.2269;
-    public static final double kS = 0.13495;
-    public static final double kV = 0.67446;
-    public static final double kA = 0.018492;
+    public static final double kD = 0.45072;
+    public static final double kG = 0.33312;
+    public static final double kS = 0.098829;
+    public static final double kV = 3.4641;
+    public static final double kA = 0.095739;
 
     public static final double START_POS = Units.degreesToRadians(-90);
     public static final double MIN_POS = Units.degreesToRadians(-103.54);
@@ -560,12 +560,12 @@ public final class Constants {
     public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(10);
     public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
 
-    public static final double kP = 0.037121;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
-    public static final double kS = 0.1709;
-    public static final double kV = 0.61705;
-    public static final double kA = 0.039556;
+    public static final double wheel_kP = 0.037121;
+    public static final double wheel_kI = 0.0;
+    public static final double wheel_kD = 0.0;
+    public static final double wheel_kS = 0.1709;
+    public static final double wheel_kV = 0.61705;
+    public static final double wheel_kA = 0.039556;
 
     public static final double MAX_ARM_VELOCITY = 8;
     public static final double MAX_ARM_ACCELERATION = 22;
@@ -578,13 +578,13 @@ public final class Constants {
 
     public static final double PUSH_OUT_RAMP_TIME = 0.5;
 
-    public static final double sP = 4.8919;
-    public static final double sI = 0;
-    public static final double sD = 0.11072;
-    public static final double sG = 0.23377;
-    public static final double sS = 0.063707;
-    public static final double sV = 1.0261;
-    public static final double sA = 0.053656;
+    public static final double arm_kP = 9.9888;
+    public static final double arm_kI = 0;
+    public static final double arm_kD = 0.34081;
+    public static final double arm_kG = 0.43655;
+    public static final double arm_kS = 0.064445;
+    public static final double arm_kV = 5.0418;
+    public static final double arm_kA = 0.15268;
 
     public static final double ARM_UP = Units.degreesToRadians(80.19);
     public static final double ARM_PUSH = Units.degreesToRadians(84.19);
