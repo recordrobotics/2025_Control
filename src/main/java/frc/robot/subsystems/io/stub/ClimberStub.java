@@ -50,6 +50,9 @@ public class ClimberStub implements ClimberIO {
   }
 
   @Override
+  public void setRatchet(double value) {}
+
+  @Override
   public void simulationPeriodic() {}
 
   @Override

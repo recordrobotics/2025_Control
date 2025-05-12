@@ -19,6 +19,8 @@ public interface ClimberIO extends AutoCloseable {
 
   public double getVoltage();
 
+  public void setRatchet(double value);
+
   public double getCurrentDrawAmps();
 
   public void simulationPeriodic();
