@@ -152,21 +152,12 @@ public final class Constants {
     public static final double kV = 0.67446;
     public static final double kA = 0.018492;
 
-    public static final Voltage CLIMB_RAMP_VOLTAGE_START = Volts.of(3.0); // TODO: make correct
-    public static final Voltage CLIMB_RAMP_VOLTAGE_END = Volts.of(10.0); // TODO: make correct
-    public static final Voltage CLIMB_HOLD_VOLTAGE = Volts.of(1); // TODO: make correct
-    public static final Time CLIMB_RAMP_TIME = Seconds.of(1.0); // TODO: make correct
-
-    public static final Angle START_ANGLE = Degrees.of(45); // TODO: make correct
-    public static final Angle PARK_ANGLE = START_ANGLE;
-    public static final Angle EXTENDED_ANGLE = Degrees.of(90); // TODO: make correct
-    public static final Angle CLIMBED_ANGLE = Degrees.of(0); // TODO: make correct
+    public static final Angle START_ROTATIONS = Rotations.of(0);
+    public static final Angle PARK_ROTATIONS = START_ROTATIONS;
+    public static final Angle EXTENDED_ROTATIONS = Rotations.of(2); // TODO: make correct
+    public static final Angle CLIMBED_ROTATIONS = Rotations.of(1); // TODO: make correct
 
     public static final double GEAR_RATIO = 48; // 48:1 gearbox
-    public static final double DRUM_RADIUS = Units.inchesToMeters(0.8783343);
-    public static final double ARM_ATTACHMENT_RADIUS = Units.inchesToMeters(0.8783343);
-
-    public static final double ARM_RADIANS_PER_ROTATION = DRUM_RADIUS * 2 * Math.PI / GEAR_RATIO;
 
     // TODO: make correct
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0, 0.4, Rotation2d.fromDegrees(0));

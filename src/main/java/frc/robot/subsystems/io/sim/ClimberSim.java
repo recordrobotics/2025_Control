@@ -5,10 +5,15 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.hal.PWMJNI;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
@@ -24,6 +29,10 @@ public class ClimberSim implements ClimberIO {
 
   private final DCMotor dcMotor = DCMotor.getKrakenX60(1);
 
+  private final Servo ratchet;
+  private final SimDevice ratchetSim;
+  private final SimDouble ratchetValue;
+
   private final SingleJointedArmSim simModel =
       new SingleJointedArmSim(
           LinearSystemId.createDCMotorSystem(Constants.Climber.kV, Constants.Climber.kA),
@@ -33,7 +42,7 @@ public class ClimberSim implements ClimberIO {
           Units.degreesToRadians(-90),
           Units.degreesToRadians(150),
           true,
-          Constants.Climber.START_ANGLE.in(Radians),
+          Constants.Climber.START_ROTATIONS.in(Radians),
           0.001,
           0.001);
 
@@ -42,6 +51,16 @@ public class ClimberSim implements ClimberIO {
 
     motor = new TalonFX(RobotMap.Climber.MOTOR_ID);
     motorSim = motor.getSimState();
+
+    ratchet = new Servo(RobotMap.Climber.RATCHET_SERVO_ID);
+    ratchetSim = SimDevice.create("Servo", RobotMap.Climber.RATCHET_SERVO_ID);
+
+    if (ratchetSim != null) ratchetValue = ratchetSim.createDouble("Value", Direction.kOutput, 0);
+    else ratchetValue = null;
+
+    if (ratchetSim != null)
+      PWMJNI.setDIOSimDevice(ratchet.getHandle(), ratchetSim.getNativeHandle());
+    else ratchet.close();
   }
 
   @Override
@@ -90,8 +109,18 @@ public class ClimberSim implements ClimberIO {
   }
 
   @Override
+  public void setRatchet(double value) {
+    if (ratchetSim != null) {
+      ratchetValue.set(value);
+    }
+
+    ratchet.set(value);
+  }
+
+  @Override
   public void close() throws Exception {
     motor.close();
+    ratchet.close();
   }
 
   @Override
@@ -104,7 +133,7 @@ public class ClimberSim implements ClimberIO {
     simModel.update(periodicDt);
 
     motorSim.setRawRotorPosition(
-        (simModel.getAngleRads() - Constants.Climber.START_ANGLE.in(Radians))
+        (simModel.getAngleRads() - Constants.Climber.START_ROTATIONS.in(Radians))
             * Constants.Climber.GEAR_RATIO);
     motorSim.setRotorVelocity(simModel.getVelocityRadPerSec() * Constants.Climber.GEAR_RATIO);
   }

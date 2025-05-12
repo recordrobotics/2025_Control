@@ -2,6 +2,7 @@ package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.wpilibj.Servo;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.io.ClimberIO;
 
@@ -11,11 +12,13 @@ public class ClimberReal implements ClimberIO {
   private final double periodicDt;
 
   private final TalonFX motor;
+  private final Servo ratchet;
 
   public ClimberReal(double periodicDt) {
     this.periodicDt = periodicDt;
 
     motor = new TalonFX(RobotMap.Climber.MOTOR_ID);
+    ratchet = new Servo(RobotMap.Climber.RATCHET_SERVO_ID);
   }
 
   @Override
@@ -64,8 +67,14 @@ public class ClimberReal implements ClimberIO {
   }
 
   @Override
+  public void setRatchet(double value) {
+    ratchet.set(value);
+  }
+
+  @Override
   public void close() throws Exception {
     motor.close();
+    ratchet.close();
   }
 
   @Override

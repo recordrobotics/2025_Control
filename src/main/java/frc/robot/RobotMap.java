@@ -28,5 +28,6 @@ public final class RobotMap {
 
   public static final class Climber {
     public static final int MOTOR_ID = 17;
+    public static final int RATCHET_SERVO_ID = 1;
   }
 }
