@@ -18,14 +18,15 @@ public class ReefAlign {
     return new DeferredCommand(
         () -> {
           CoralPosition alignPose =
-              CoralPosition.closestTo(RobotContainer.poseTracker.getEstimatedPosition());
+              CoralPosition.closestTo(RobotContainer.poseSensorFusion.getEstimatedPosition());
 
           CoralLevel level = RobotContainer.getCurrentCoralLevel();
 
           if (alignPose
                   .getPose(level)
                   .getTranslation()
-                  .getDistance(RobotContainer.poseTracker.getEstimatedPosition().getTranslation())
+                  .getDistance(
+                      RobotContainer.poseSensorFusion.getEstimatedPosition().getTranslation())
               > Constants.Align.MAX_REEF_ALIGN_DISTANCE) return Commands.none();
 
           return alignTarget(alignPose, level, false, true);
