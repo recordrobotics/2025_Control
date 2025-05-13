@@ -253,7 +253,7 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getCoralSourceIntakeAuto() {
-    Pose2d robot = RobotContainer.poseTracker.getEstimatedPosition();
+    Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
     SourcePosition closestSource = SourcePosition.closestTo(robot);
 
     boolean nearSource =
