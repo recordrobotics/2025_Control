@@ -1,6 +1,7 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 
 public interface ClimberIO extends AutoCloseable {
   public void applyTalonFXConfig(TalonFXConfiguration configuration);
@@ -8,6 +9,8 @@ public interface ClimberIO extends AutoCloseable {
   public void setVoltage(double outputVolts);
 
   public void setPosition(double newValue);
+
+  public void setMotionMagic(MotionMagicVoltage request);
 
   public double getPosition();
 
