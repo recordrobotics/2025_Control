@@ -5,9 +5,9 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -25,6 +25,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   private final ClimberIO io;
   private final SysIdRoutine sysIdRoutine;
+  private final MotionMagicVoltage armRequest;
 
   private ClimberState currentState = ClimberState.Park;
 
@@ -62,6 +63,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
                     .withStatorCurrentLimitEnable(true)));
 
     io.setPosition(Constants.Climber.START_ROTATIONS.in(Rotations));
+    armRequest = new MotionMagicVoltage(Constants.Climber.START_ROTATIONS.in(Rotations));
     set(ClimberState.Park);
 
     sysIdRoutine =
@@ -74,6 +76,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
             new SysIdRoutine.Mechanism((v) -> io.setVoltage(v.in(Volts)), null, this));
 
     SmartDashboard.putNumber("Climber", Constants.Climber.START_ROTATIONS.in(Rotations));
+    SmartDashboard.putBoolean("Ratchet", false);
   }
 
   public enum ClimberState {
@@ -84,6 +87,8 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   @Override
   public void periodic() {
+    io.setRatchet(SmartDashboard.getBoolean("Ratchet", false) ? 1 : 0);
+
     // Update mechanism
     RobotContainer.model.climber.update(getRotations());
     RobotContainer.model.climber.updateSetpoint(getRotations()); // TODO add setpoint
@@ -103,14 +108,16 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     currentState = state;
     switch (state) {
       case Park:
-        pid.setGoal(Constants.Climber.PARK_ANGLE.in(Radians));
+        io.setRatchet(0);
+        // io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
         break;
       case Extend:
-        pid.setGoal(Constants.Climber.EXTENDED_ANGLE.in(Radians));
+        io.setRatchet(0);
+        io.setMotionMagic(
+            armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
         break;
       case Climb:
-        climbStartTime = Timer.getTimestamp();
-        pid.setGoal(Constants.Climber.CLIMBED_ANGLE.in(Radians));
+        io.setRatchet(1);
         break;
     }
   }
