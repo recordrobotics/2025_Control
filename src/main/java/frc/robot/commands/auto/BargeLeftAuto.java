@@ -50,7 +50,8 @@ public class BargeLeftAuto extends SequentialCommandGroup {
                             AutoBuilder.followPath(
                                 PathPlannerPath.fromPathFile("SourceLeftOuterToElevatorStart"))),
                     () ->
-                        CoralPosition.closestTo(RobotContainer.poseSensorFusion.getEstimatedPosition())
+                        CoralPosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition())
                                 .getFirstStagePose()
                                 .getTranslation()
                                 .getDistance(

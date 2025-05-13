@@ -18,7 +18,7 @@ public class PathAlign {
     // rotation.
     List<Waypoint> waypoints =
         PathPlannerPath.waypointsFromPoses(
-            RobotContainer.poseTracker.getEstimatedPosition(),
+            RobotContainer.poseSensorFusion.getEstimatedPosition(),
             target.transformBy(new Transform2d(-0.2, 0, Rotation2d.kZero)),
             target);
 
