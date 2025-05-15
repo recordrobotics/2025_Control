@@ -187,6 +187,10 @@ public final class Constants {
     public static final double rotationalTolerance = 0.02; // Radians
 
     public static final double MAX_REEF_ALIGN_DISTANCE = 2.5; // Meters
+
+    public static final PathConstraints PATH_CONSTRAINTS =
+        new PathConstraints(
+            MAX_VELOCITY, MAX_ACCELERATION, MAX_ANGULAR_VELOCITY, MAX_ANGULAR_ACCELERATION);
   }
 
   public final class PhotonVision {

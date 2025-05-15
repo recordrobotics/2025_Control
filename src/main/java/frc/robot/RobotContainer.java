@@ -1,8 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 // WPILib imports
@@ -33,8 +30,6 @@ import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
 import frc.robot.commands.ReefAlign;
 import frc.robot.commands.VibrateXbox;
-import frc.robot.commands.auto.PlannedAuto;
-import frc.robot.commands.AutoScore;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
