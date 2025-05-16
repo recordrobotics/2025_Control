@@ -87,7 +87,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   @Override
   public void periodic() {
-    io.setRatchet(SmartDashboard.getBoolean("Ratchet", false) ? 1 : 0);
+    io.setRatchet(SmartDashboard.getBoolean("Ratchet", false) ? 0.4 : 0);
 
     // Update mechanism
     RobotContainer.model.climber.update(getRotations());
