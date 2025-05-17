@@ -121,6 +121,29 @@ public class SimpleMath {
     return next;
   }
 
+  public static Translation2d povToVector(int pov) {
+    switch (pov) {
+      case 0:
+        return new Translation2d(0, 1);
+      case 45:
+        return new Translation2d(1, 1);
+      case 90:
+        return new Translation2d(1, 0);
+      case 135:
+        return new Translation2d(1, -1);
+      case 180:
+        return new Translation2d(0, -1);
+      case 225:
+        return new Translation2d(-1, -1);
+      case 270:
+        return new Translation2d(-1, 0);
+      case 315:
+        return new Translation2d(-1, 1);
+      default:
+        return new Translation2d(0, 0);
+    }
+  }
+
   public static boolean isWithinTolerance(double value, double target, double tolerance) {
     return Math.abs(value - target) <= tolerance;
   }

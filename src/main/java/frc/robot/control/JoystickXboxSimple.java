@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,6 +13,8 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Game.SourcePosition;
 import frc.robot.RobotContainer;
@@ -25,9 +26,20 @@ public class JoystickXboxSimple extends AbstractControl {
   private Joystick joystick;
   private XboxController xbox_controller;
 
+  private ReefLevelSwitchValue reefswitch = ReefLevelSwitchValue.L4;
+
   public JoystickXboxSimple(int joystickPort, int xboxPort) {
     joystick = new Joystick(joystickPort);
     xbox_controller = new XboxController(xboxPort);
+
+    new Trigger(() -> xbox_controller.getAButtonPressed())
+        .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L1));
+    new Trigger(() -> xbox_controller.getXButtonPressed())
+        .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L2));
+    new Trigger(() -> xbox_controller.getBButtonPressed())
+        .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L3));
+    new Trigger(() -> xbox_controller.getYButtonPressed())
+        .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L4));
   }
 
   private Transform2d lastVelocity = new Transform2d();
@@ -77,15 +89,15 @@ public class JoystickXboxSimple extends AbstractControl {
   }
 
   public Boolean getAutoAlign() {
-    return joystick.getRawButton(9) || joystick.getRawButton(11);
+    return false;
   }
 
   public Boolean getAutoAlignNear() {
-    return joystick.getRawButton(7) || joystick.getRawButton(12);
+    return false;
   }
 
   public Boolean getElevatorRelativeDrive() {
-    return joystick.getRawButton(8) || joystick.getRawButton(2);
+    return joystick.getRawButton(8);
   }
 
   public Boolean getCoralIntakeRelativeDrive() {
@@ -117,7 +129,7 @@ public class JoystickXboxSimple extends AbstractControl {
   }
 
   public Boolean getHalfSpeed() {
-    return joystick.getRawButton(1);
+    return false;
   }
 
   public Double getDirectionalSpeedLevel() {
@@ -156,22 +168,17 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getPoseReset() {
-    return joystick.getRawButtonPressed(3) || joystick.getRawButtonPressed(5);
+    return joystick.getRawButtonPressed(5);
   }
 
   @Override
   public Boolean getLimelightReset() {
-    return joystick.getRawButtonPressed(4) || joystick.getRawButtonPressed(6);
+    return joystick.getRawButtonPressed(6);
   }
 
   @Override
   public Boolean getKill() {
-    return xbox_controller.getRawButton(8);
-  }
-
-  @Override
-  public Boolean getClimbMode() {
-    return joystick.getRawButton(12);
+    return joystick.getRawButton(4);
   }
 
   @Override
@@ -181,43 +188,42 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getAutoScore() {
-    return xbox_controller.getAButton();
+    return joystick.getRawButton(1);
   }
 
   @Override
   public Boolean getElevatorL2() {
-    return xbox_controller.getXButton();
+    return false;
   }
 
   @Override
   public Boolean getElevatorL3() {
-    return xbox_controller.getBButton();
+    return false;
   }
 
   @Override
   public Boolean getElevatorL4() {
-    return xbox_controller.getYButton();
-  }
-
-  @Override
-  public AutoScoreDirection getAutoScoreDirection() {
-    if (xbox_controller.getLeftX() < -0.5) {
-      return AutoScoreDirection.Left;
-    } else if (xbox_controller.getLeftX() > 0.5) {
-      return AutoScoreDirection.Right;
-    } else {
-      return AutoScoreDirection.None;
-    }
+    return false;
   }
 
   @Override
   public Boolean getCoralShoot() {
-    return xbox_controller.getPOV() == 270;
+    return false;
   }
 
   @Override
   public Boolean getCoralGroundIntake() {
-    return xbox_controller.getLeftTriggerAxis() > 0.3;
+    return false;
+  }
+
+  @Override
+  public Boolean getCoralGroundIntakeSimple() {
+    return joystick.getRawButton(2);
+  }
+
+  @Override
+  public Boolean getReefAlgaeSimple() {
+    return joystick.getRawButton(3);
   }
 
   @Override
@@ -227,17 +233,22 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getElevatorAlgaeLow() {
-    return xbox_controller.getRightTriggerAxis() > 0.3 && xbox_controller.getPOV() != 0;
+    return false;
   }
 
   @Override
   public Boolean getElevatorAlgaeHigh() {
-    return xbox_controller.getRightTriggerAxis() > 0.3 && xbox_controller.getPOV() == 0;
+    return false;
+  }
+
+  @Override
+  public ReefLevelSwitchValue getReefLevelSwitchValue() {
+    return reefswitch;
   }
 
   @Override
   public Boolean getManualOverride() {
-    return xbox_controller.getPOV() == 0;
+    return false;
   }
 
   @Override
@@ -252,24 +263,24 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public Boolean getCoralIntakeScoreL1() {
-    return xbox_controller.getPOV() == 180;
+    return false;
   }
 
   @Override
   public LinearVelocity getManualElevatorVelocity() {
-    double leftY = MathUtil.applyDeadband(-xbox_controller.getLeftY(), 0.1);
-    return Centimeters.of(50).per(Seconds).times(leftY * Math.abs(leftY));
+    double axis = SimpleMath.povToVector(joystick.getPOV()).getY();
+    return Centimeters.of(50).per(Seconds).times(axis);
   }
 
   @Override
   public AngularVelocity getManualElevatorArmVelocity() {
-    double rightY = MathUtil.applyDeadband(-xbox_controller.getRightY(), 0.1);
-    return Degrees.of(180).per(Seconds).times(rightY * Math.abs(rightY));
+    double axis = SimpleMath.povToVector(joystick.getPOV()).getY();
+    return Degrees.of(180).per(Seconds).times(axis);
   }
 
   @Override
   public Boolean getClimb() {
-    return xbox_controller.getRawButton(7);
+    return joystick.getRawButton(7);
   }
 
   @Override

@@ -168,18 +168,13 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public Boolean getClimbMode() {
-    return joystick.getRawButton(12);
-  }
-
-  @Override
   public void vibrate(RumbleType type, double value) {
     xbox_controller.setRumble(type, value);
   }
 
   @Override
   public Boolean getAutoScore() {
-    return xbox_controller.getAButton();
+    return false;
   }
 
   @Override
@@ -198,17 +193,6 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public AutoScoreDirection getAutoScoreDirection() {
-    if (xbox_controller.getLeftX() < -0.5) {
-      return AutoScoreDirection.Left;
-    } else if (xbox_controller.getLeftX() > 0.5) {
-      return AutoScoreDirection.Right;
-    } else {
-      return AutoScoreDirection.None;
-    }
-  }
-
-  @Override
   public Boolean getCoralShoot() {
     return xbox_controller.getPOV() == 270;
   }
@@ -216,6 +200,11 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getCoralGroundIntake() {
     return xbox_controller.getLeftTriggerAxis() > 0.3;
+  }
+
+  @Override
+  public Boolean getCoralGroundIntakeSimple() {
+    return false;
   }
 
   @Override
@@ -234,6 +223,11 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
+  public ReefLevelSwitchValue getReefLevelSwitchValue() {
+    return ReefLevelSwitchValue.None;
+  }
+
+  @Override
   public Boolean getManualOverride() {
     return xbox_controller.getPOV() == 0;
   }
@@ -241,6 +235,11 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getGroundAlgae() {
     return xbox_controller.getRightBumperButton();
+  }
+
+  @Override
+  public Boolean getReefAlgaeSimple() {
+    return false;
   }
 
   @Override
