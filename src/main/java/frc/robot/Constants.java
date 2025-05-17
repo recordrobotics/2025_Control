@@ -194,9 +194,6 @@ public final class Constants {
   }
 
   public final class PhotonVision {
-    public static final AprilTagFieldLayout tagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
-
     public static final String PHOTON_L1_NAME = "photon-l1";
     public static final String PHOTON_SOURCE_NAME = "photon-source";
     public static final String PHOTON_CORAL_INTAKE = "coral-intake";
