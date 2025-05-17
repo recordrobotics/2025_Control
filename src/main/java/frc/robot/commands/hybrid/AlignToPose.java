@@ -12,6 +12,7 @@ import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.assists.DrivetrainControl;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class AlignToPose extends Command {
@@ -38,19 +39,19 @@ public class AlignToPose extends Command {
               Constants.Align.MAX_ANGULAR_VELOCITY, Constants.Align.MAX_ANGULAR_ACCELERATION));
   boolean doTranslation;
 
-  private Pose2d targetPose;
+  private Supplier<Pose2d> targetPose;
 
-  public AlignToPose(Pose2d pose, boolean doTranslation) {
+  public AlignToPose(Supplier<Pose2d> pose, boolean doTranslation) {
     this.targetPose = pose;
 
     if (doTranslation) {
       xPID.setTolerance(Constants.Align.translationalTolerance);
       yPID.setTolerance(Constants.Align.translationalTolerance);
-      xPID.setGoal(pose.getX());
-      yPID.setGoal(pose.getY());
+      xPID.setGoal(pose.get().getX());
+      yPID.setGoal(pose.get().getY());
     }
     rotPID.setTolerance(Constants.Align.rotationalTolerance);
-    rotPID.setGoal(pose.getRotation().getRadians());
+    rotPID.setGoal(pose.get().getRotation().getRadians());
     rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     this.doTranslation = doTranslation;
@@ -76,11 +77,13 @@ public class AlignToPose extends Command {
   public void execute() {
     Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
 
-    double x = xPID.calculate(pose.getX());
-    double y = yPID.calculate(pose.getY());
-    double rot = rotPID.calculate(pose.getRotation().getRadians());
+    double x = xPID.calculate(pose.getX(), targetPose.get().getX());
+    double y = yPID.calculate(pose.getY(), targetPose.get().getY());
+    double rot =
+        rotPID.calculate(
+            pose.getRotation().getRadians(), targetPose.get().getRotation().getRadians());
 
-    Logger.recordOutput("AlignToPose/Target", targetPose);
+    Logger.recordOutput("AlignToPose/Target", targetPose.get());
     Logger.recordOutput("AlignToPose/AtGoal/X", xPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Y", yPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Rot", rotPID.atGoal());

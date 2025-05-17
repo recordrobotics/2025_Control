@@ -6,6 +6,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.assists.DrivetrainControl;
@@ -15,8 +16,6 @@ public abstract class AbstractControl {
   public abstract DrivetrainControl getDrivetrainControl();
 
   public abstract Boolean getAutoAlign();
-
-  public abstract Boolean getAutoAlignNear();
 
   public abstract Boolean getElevatorRelativeDrive();
 
@@ -28,8 +27,6 @@ public abstract class AbstractControl {
   public abstract Boolean getLimelightReset();
 
   public abstract Boolean getKill();
-
-  public abstract Boolean getClimbMode();
 
   // Elevator
   public abstract Boolean getAutoScore();
@@ -50,12 +47,16 @@ public abstract class AbstractControl {
 
   public abstract AngularVelocity getManualElevatorArmVelocity();
 
-  public abstract AutoScoreDirection getAutoScoreDirection();
+  public abstract ReefLevelSwitchValue getReefLevelSwitchValue();
 
   // Intake coral
   public abstract Boolean getCoralGroundIntake();
 
+  public abstract Boolean getCoralGroundIntakeSimple();
+
   public abstract Boolean getCoralSourceIntake();
+
+  public abstract Boolean getCoralSourceIntakeAuto();
 
   public abstract Boolean getCoralIntakeScoreL1();
 
@@ -65,6 +66,8 @@ public abstract class AbstractControl {
   public abstract Boolean getGroundAlgae();
 
   // Score algae
+  public abstract Boolean getReefAlgaeSimple();
+
   public abstract Boolean getScoreAlgae();
 
   // Climb
@@ -110,9 +113,26 @@ public abstract class AbstractControl {
     }
   }
 
-  public enum AutoScoreDirection {
+  public enum ReefLevelSwitchValue {
     None,
-    Left,
-    Right
+    L1,
+    L2,
+    L3,
+    L4;
+
+    public CoralLevel toCoralLevel() {
+      switch (this) {
+        case L1:
+          return CoralLevel.L1;
+        case L2:
+          return CoralLevel.L2;
+        case L3:
+          return CoralLevel.L3;
+        case L4:
+          return CoralLevel.L4;
+        default: // None is L4 to preserve default far-align behavior
+          return CoralLevel.L4;
+      }
+    }
   }
 }

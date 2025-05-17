@@ -98,14 +98,14 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     photonEstimatorClose =
         new PhotonPoseEstimator(
-            Constants.PhotonVision.tagLayout,
+            Constants.Game.APRILTAG_LAYOUT,
             PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             robotToCamera);
     photonEstimatorClose.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
     photonEstimatorFar =
         new PhotonPoseEstimator(
-            Constants.PhotonVision.tagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCamera);
+            Constants.Game.APRILTAG_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCamera);
     photonEstimatorFar.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
     if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {

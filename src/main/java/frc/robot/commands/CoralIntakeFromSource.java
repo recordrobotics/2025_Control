@@ -14,6 +14,7 @@ import frc.robot.utils.CommandUtils;
 public class CoralIntakeFromSource extends SequentialCommandGroup {
   public CoralIntakeFromSource(boolean useProxy) {
     addCommands(
+        new InstantCommand(() -> System.out.println("SOURCE START")),
         new ScheduleCommand(
             RobotContainer.lights
                 .elevator

@@ -28,7 +28,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                 .runPattern(Constants.Lights.PULSATING_ORANGE)
                 .onlyWhile(this::isScheduled)),
         Commands.either(
-            maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR))
+            maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR))
                 .andThen(
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_GROUND),
@@ -38,7 +38,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                     new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                         RobotContainer.elevatorHead))
-                .andThen(maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
+                .andThen(maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
             Commands.either(
                 new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.SHOOT_BARGE),
@@ -48,7 +48,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                             RobotContainer.elevatorHead)),
-                maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE))
+                maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE))
                     .andThen(
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_REEF),
@@ -58,7 +58,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         new InstantCommand(
                             () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                             RobotContainer.elevatorHead))
-                    .andThen(maybieProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
+                    .andThen(maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
                 () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE),
             () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE),
         new ScheduleCommand(
@@ -71,7 +71,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                 .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME)));
   }
 
-  private Command maybieProxy(boolean withProxy, Command cmd) {
+  private Command maybeProxy(boolean withProxy, Command cmd) {
     return withProxy ? cmd.asProxy() : cmd;
   }
 }

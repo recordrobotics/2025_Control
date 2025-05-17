@@ -3,41 +3,27 @@ package frc.robot.commands.auto;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.Constants.RobotAlignPose;
+import frc.robot.Constants.Auto;
+import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
-import frc.robot.commands.Align;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralShoot;
+import frc.robot.commands.ReefAlign;
 import frc.robot.utils.CommandUtils;
 import frc.robot.utils.RepeatConditionallyCommand;
 import java.io.IOException;
-import java.util.Set;
 import org.json.simple.parser.ParseException;
 
 public class BargeRightAuto extends SequentialCommandGroup {
 
-  private static final double SOURCE_TIMEOUT = 0.8;
-  private static double sourceStart;
-
-  private Command sourceWait() {
-    return new DeferredCommand(
-        () -> {
-          double time = Timer.getTimestamp() - sourceStart;
-          return new WaitCommand(time > SOURCE_TIMEOUT ? 0 : SOURCE_TIMEOUT - time);
-        },
-        Set.of());
-  }
-
   private Command alignWithVision() { // TODO use RobotContainer.hasVision when it is tested
     return new RepeatConditionallyCommand(
-        Align.create(1.5, false, false),
+        ReefAlign.alignClosest(),
         () ->
             !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
                 || RobotContainer.poseSensorFusion.getCenterCamera().hasVision()),
@@ -53,32 +39,26 @@ public class BargeRightAuto extends SequentialCommandGroup {
                     AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile(
                                 "Reef" + reefLetter + "ToSourceRightOuterNoElevator"))
-                        .andThen(
-                            CommandUtils.finishOnInterrupt(
-                                Align.create(1.5, false, false)
-                                    .withTimeout(0.1)
-                                    .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
-                        .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                        .andThen(sourceWait())
+                        .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
                         .andThen(
                             AutoBuilder.followPath(
                                 PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))),
                     AutoBuilder.followPath(
                             PathPlannerPath.fromPathFile("ElevatorStartToSourceRightOuter"))
-                        .andThen(
-                            CommandUtils.finishOnInterrupt(
-                                Align.create(1.5, false, false)
-                                    .withTimeout(0.1)
-                                    .beforeStarting(() -> sourceStart = Timer.getTimestamp())))
-                        .andThen(new InstantCommand(() -> RobotContainer.drivetrain.kill()))
-                        .andThen(sourceWait())
+                        .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
                         .andThen(
                             AutoBuilder.followPath(
                                 PathPlannerPath.fromPathFile("SourceRightOuterToElevatorStart"))),
                     () ->
-                        RobotAlignPose.closestReefTo(
-                                RobotContainer.poseSensorFusion.getEstimatedPosition(), 0.7)
-                            != null)
+                        CoralPosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition())
+                                .getFirstStagePose()
+                                .getTranslation()
+                                .getDistance(
+                                    RobotContainer.poseSensorFusion
+                                        .getEstimatedPosition()
+                                        .getTranslation())
+                            < 0.7)
                 .repeatedly()
                 .onlyWhile(() -> !RobotContainer.elevatorHead.hasCoral()));
   }

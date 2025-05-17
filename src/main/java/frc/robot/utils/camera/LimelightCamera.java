@@ -1,7 +1,5 @@
 package frc.robot.utils.camera;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -108,7 +106,7 @@ public class LimelightCamera implements IVisionCamera {
 
       photonEstimator =
           new PhotonPoseEstimator(
-              AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark),
+              Constants.Game.APRILTAG_LAYOUT,
               PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
               robotToCamera);
     }
