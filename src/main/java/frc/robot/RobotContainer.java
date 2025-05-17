@@ -79,6 +79,8 @@ public class RobotContainer {
   public static Lights lights;
   public static PowerDistributionPanel pdp;
 
+  public static CoralDetection coralDetection;
+
   public static VisionSystemSim visionSim;
 
   public static HumanPlayerSimulation humanPlayerSimulation;
@@ -113,6 +115,7 @@ public class RobotContainer {
       climber = new Climber(new ClimberStub(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
+      coralDetection = new CoralDetection();
     } else {
       visionSim = new VisionSystemSim("main");
       visionSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
@@ -128,6 +131,9 @@ public class RobotContainer {
       climber = new Climber(new ClimberSim(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
+      coralDetection = new CoralDetection();
+      // uncomment to use an external photonvision client for coral detection simulation
+      // coralDetection.setSimulationMode(CoralDetection.CoralDetectionSimulationMode.PHOTONVISION);
       humanPlayerSimulation = new HumanPlayerSimulation();
     }
 

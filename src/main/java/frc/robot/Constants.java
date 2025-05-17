@@ -66,6 +66,7 @@ public final class Constants {
 
     public static final String PHOTON_L1_NAME = "photon-l1";
     public static final String PHOTON_SOURCE_NAME = "photon-source";
+    public static final String PHOTON_CORAL_INTAKE = "coral-intake";
 
     public static final Transform3d l1TransformRobotToCamera =
         new Transform3d(
@@ -75,6 +76,16 @@ public final class Constants {
         new Transform3d(
             new Translation3d(0.019276, 0.370521, 0.197763),
             new Rotation3d(0, Units.degreesToRadians(-18.951), Units.degreesToRadians(-90)));
+    public static final Transform3d groundIntakeTransformRobotToCamera =
+        new Transform3d(
+            new Translation3d(Meters.of(0.2), Meters.of(-0.372571), Inches.of(31)),
+            new Rotation3d(
+                Degrees.of(0), Degrees.of(-22), Degrees.of(90))); // TODO: change to cad value
+
+    public static final Distance CORAL_ID_DISTANCE = Inches.of(8);
+    public static final Time CORAL_TIMEOUT = Seconds.of(0.5);
+
+    public static final int CORAL_ID = 1;
 
     public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
   }
