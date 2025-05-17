@@ -19,7 +19,6 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
-import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
@@ -39,7 +38,6 @@ import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
-import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.Climber.ClimberState;
@@ -62,8 +60,8 @@ import frc.robot.utils.RepeatConditionallyCommand;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.assists.GroundIntakeAssist;
 import frc.robot.utils.assists.IAssist;
-import java.util.List;
 import frc.robot.utils.libraries.Elastic;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.simulation.VisionSystemSim;
@@ -287,8 +285,7 @@ public class RobotContainer {
                         () -> {
                           System.out.println("SOURCE ENDE!@!@H*&!*&@EQ#YQ#gyuaqd");
                           RobotContainer.elevatorHead.set(CoralShooterStates.OFF);
-                          RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
-                          RobotContainer.coralIntake.set(CoralIntakeState.OFF);
+                          RobotContainer.coralIntake.set(CoralIntakeState.UP);
                         })
                     .asProxy(),
                 () -> !RobotContainer.elevatorHead.hasCoral(),
@@ -344,19 +341,19 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest().repeatedly());
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
-        .and(
-            () ->
-                DashboardUI.Overview.getControl().getAutoScoreDirection()
-                    == AutoScoreDirection.Left)
-        .onTrue(new AutoScore(AutoScoreDirection.Left));
+    // new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+    //     .and(
+    //         () ->
+    //             DashboardUI.Overview.getControl().getAutoScoreDirection()
+    //                 == AutoScoreDirection.Left)
+    //     .onTrue(new AutoScore(AutoScoreDirection.Left));
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
-        .and(
-            () ->
-                DashboardUI.Overview.getControl().getAutoScoreDirection()
-                    == AutoScoreDirection.Right)
-        .onTrue(new AutoScore(AutoScoreDirection.Right));
+    // new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+    //     .and(
+    //         () ->
+    //             DashboardUI.Overview.getControl().getAutoScoreDirection()
+    //                 == AutoScoreDirection.Right)
+    //     .onTrue(new AutoScore(AutoScoreDirection.Right));
 
     // new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
     //     .onTrue(
