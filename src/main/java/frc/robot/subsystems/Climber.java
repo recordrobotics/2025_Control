@@ -5,22 +5,22 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ClimberIO;
 import frc.robot.subsystems.io.sim.ClimberSim;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -28,26 +28,35 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   private final ClimberIO io;
   private final SysIdRoutine sysIdRoutine;
-  private final ProfiledPIDController pid =
-      new ProfiledPIDController(
-          Constants.Climber.kP,
-          Constants.Climber.kI,
-          Constants.Climber.kD,
-          new TrapezoidProfile.Constraints(
-              Constants.Climber.MAX_ARM_VELOCITY, Constants.Climber.MAX_ARM_ACCELERATION));
-  private final ArmFeedforward feedforward =
-      new ArmFeedforward(
-          Constants.Climber.kS, Constants.Climber.kG, Constants.Climber.kV, Constants.Climber.kA);
+  private final MotionMagicVoltage armRequest;
 
   private ClimberState currentState = ClimberState.Park;
-
-  private double climbStartTime = 0;
 
   public Climber(ClimberIO io) {
     this.io = io;
 
+    var config = new TalonFXConfiguration();
+
+    // set slot 0 gains
+    var slot0Configs = config.Slot0;
+    slot0Configs.kS = Constants.Climber.kS;
+    slot0Configs.kV = Constants.Climber.kV;
+    slot0Configs.kA = Constants.Climber.kA;
+    slot0Configs.kG = Constants.Climber.kG;
+    slot0Configs.kP = Constants.Climber.kP;
+    slot0Configs.kI = Constants.Climber.kI;
+    slot0Configs.kD = Constants.Climber.kD;
+    slot0Configs.GravityType = GravityTypeValue.Elevator_Static;
+    config.Feedback.SensorToMechanismRatio = Constants.Climber.GEAR_RATIO;
+
+    // set Motion Magic settings
+    var motionMagicConfigs = config.MotionMagic;
+    motionMagicConfigs.MotionMagicCruiseVelocity = Constants.Climber.MAX_ARM_VELOCITY;
+    motionMagicConfigs.MotionMagicAcceleration = Constants.Climber.MAX_ARM_ACCELERATION;
+    motionMagicConfigs.MotionMagicJerk = 1600;
+
     io.applyTalonFXConfig(
-        new TalonFXConfiguration()
+        config
             .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
             .withCurrentLimits(
                 new CurrentLimitsConfigs()
@@ -56,13 +65,9 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
                     .withSupplyCurrentLimitEnable(true)
                     .withStatorCurrentLimitEnable(true)));
 
-    io.setPosition(
-        Constants.Climber.START_ANGLE.in(Radians) / Constants.Climber.ARM_RADIANS_PER_ROTATION);
+    io.setPosition(Constants.Climber.START_ROTATIONS.in(Rotations));
+    armRequest = new MotionMagicVoltage(Constants.Climber.START_ROTATIONS.in(Rotations));
     set(ClimberState.Park);
-
-    pid.setTolerance(0.15, 1.05);
-
-    pid.reset(Constants.Climber.START_ANGLE.in(Radians));
 
     sysIdRoutine =
         new SysIdRoutine(
@@ -73,7 +78,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
                 (state -> Logger.recordOutput("Climber/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> io.setVoltage(v.in(Volts)), null, this));
 
-    SmartDashboard.putNumber("Climber", Constants.Climber.START_ANGLE.in(Radians));
+    SmartDashboard.putNumber("Climber", Constants.Climber.START_ROTATIONS.in(Rotations));
   }
 
   public enum ClimberState {
@@ -82,54 +87,45 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     Climb
   }
 
-  private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
+  private boolean ratchetEngaged = false;
+  private double lastClimbVoltage = 0.0;
+  private double lastExpectedKVTime = 0;
 
   @Override
   public void periodic() {
-    pid.setGoal(SmartDashboard.getNumber("Climber", Constants.Climber.START_ANGLE.in(Radians)));
 
     if (currentState == ClimberState.Climb) {
-      double rampT =
-          MathUtil.clamp(
-              (Timer.getTimestamp() - climbStartTime)
-                  / Constants.Climber.CLIMB_RAMP_TIME.in(Seconds),
-              0,
-              1);
-      double rampedVoltage =
-          MathUtil.interpolate(
-              Constants.Climber.CLIMB_RAMP_VOLTAGE_START.in(Volts),
-              Constants.Climber.CLIMB_RAMP_VOLTAGE_END.in(Volts),
-              rampT);
-      if (atGoal()) {
-        io.setVoltage(Constants.Climber.CLIMB_HOLD_VOLTAGE.in(Volts));
-      } else {
-        io.setVoltage(rampedVoltage);
+      lastClimbVoltage =
+          SimpleMath.slewRateLimitLinear(
+              lastClimbVoltage, atGoal() ? 0 : 12, 0.02, Constants.Climber.CLIMB_VOLTAGE_SLEW_RATE);
+
+      if (getEstimatedkV() >= Constants.Climber.CLIMB_EXPECTED_KV_MIN) {
+        lastExpectedKVTime = Timer.getFPGATimestamp();
       }
-    } else {
-      double pidOutputArm = pid.calculate(getArmAngle());
 
-      double feedforwardOutput =
-          feedforward.calculateWithVelocities(
-              getArmAngle(), currentSetpoint.velocity, pid.getSetpoint().velocity);
-
-      Logger.recordOutput("Climber/PID", pidOutputArm);
-      Logger.recordOutput("Climber/FF", feedforwardOutput);
-      Logger.recordOutput("Climber/Setpoint", currentSetpoint.position);
-
-      io.setVoltage(pidOutputArm + feedforwardOutput);
-      currentSetpoint = pid.getSetpoint();
+      if (Timer.getFPGATimestamp() - lastExpectedKVTime
+          > Constants.Climber.CLIMB_EXPECTED_KV_TIMEOUT.in(Seconds)) {
+        // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
+        lastClimbVoltage = 0;
+        io.setVoltage(0);
+        set(ClimberState.Park);
+      } else {
+        io.setVoltage(lastClimbVoltage);
+      }
     }
 
     // Update mechanism
-    RobotContainer.model.climber.update(getArmAngle());
-    RobotContainer.model.climber.updateSetpoint(currentSetpoint.position);
+    RobotContainer.model.climber.update(getRotations());
   }
 
+  @AutoLogOutput
   public boolean atGoal() {
     if (currentState == ClimberState.Climb) {
-      return getArmAngle() >= Constants.Climber.CLIMBED_ANGLE.in(Radians);
+      return getRotations() <= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
+    } else if (currentState == ClimberState.Extend) {
+      return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)) < 0.01;
     } else {
-      return pid.atGoal();
+      return Math.abs(getRotations() - Constants.Climber.PARK_ROTATIONS.in(Rotations)) < 0.01;
     }
   }
 
@@ -137,14 +133,21 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     currentState = state;
     switch (state) {
       case Park:
-        pid.setGoal(Constants.Climber.PARK_ANGLE.in(Radians));
+        io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
+        ratchetEngaged = false;
+        io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
         break;
       case Extend:
-        pid.setGoal(Constants.Climber.EXTENDED_ANGLE.in(Radians));
+        io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
+        ratchetEngaged = false;
+        io.setMotionMagic(
+            armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
         break;
       case Climb:
-        climbStartTime = Timer.getTimestamp();
-        pid.setGoal(Constants.Climber.CLIMBED_ANGLE.in(Radians));
+        io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
+        lastClimbVoltage = 0.0;
+        lastExpectedKVTime = Timer.getFPGATimestamp();
+        ratchetEngaged = true;
         break;
     }
   }
@@ -155,18 +158,22 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   }
 
   @AutoLogOutput
-  public double getArmAngle() {
-    return io.getPosition() * Constants.Climber.ARM_RADIANS_PER_ROTATION;
+  public double getRotations() {
+    return io.getPosition();
   }
 
   @AutoLogOutput
-  public double getArmVelocity() {
-    return io.getVelocity() * Constants.Climber.ARM_RADIANS_PER_ROTATION;
+  public double getVelocity() {
+    return io.getVelocity();
   }
 
   @AutoLogOutput
   public double getArmSetTo() {
     return io.getVoltage();
+  }
+
+  public double getEstimatedkV() {
+    return io.getVelocity() / io.getVoltage();
   }
 
   @Override
@@ -191,7 +198,15 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   }
 
   @Override
-  public void setupShuffleboard() {}
+  public void setupShuffleboard() {
+    DashboardUI.Test.addToggle("Climber Ratchet", () -> ratchetEngaged)
+        .subscribe(
+            v -> {
+              ratchetEngaged = v;
+              io.setRatchet(
+                  v ? Constants.Climber.RATCHET_ENGAGED : Constants.Climber.RATCHET_DISENGAGED);
+            });
+  }
 
   @Override
   public void kill() {
