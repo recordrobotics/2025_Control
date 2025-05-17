@@ -38,6 +38,7 @@ public class TestLayout {
   }
 
   private final Map<GenericEntry, PeriodicNotifier<Double>> sliderMap = new HashMap<>();
+  private final Map<GenericEntry, PeriodicNotifier<Boolean>> toggleMap = new HashMap<>();
   private final Map<GenericEntry, PeriodicNotifier<Rotation2d>> headingMap = new HashMap<>();
   private final Map<String, ComplexWidget> motorMap = new HashMap<>();
 
@@ -59,6 +60,23 @@ public class TestLayout {
       var entry = ((SimpleWidget) existingWidget.get()).getEntry();
       entry.setValue(value);
     }
+  }
+
+  public PeriodicNotifier<Boolean> addToggle(String name, BooleanSupplier value) {
+    var existingWidget =
+        getTab().getComponents().stream().filter((v) -> v.getTitle().equals(name)).findFirst();
+
+    if (existingWidget.isPresent()) {
+      var entry = ((SimpleWidget) existingWidget.get()).getEntry();
+      return toggleMap.get(entry);
+    }
+
+    GenericEntry entry =
+        getTab().add(name, value).withWidget(BuiltInWidgets.kToggleSwitch).getEntry();
+
+    var notifier = new PeriodicNotifier<Boolean>();
+    toggleMap.put(entry, notifier);
+    return notifier;
   }
 
   public PeriodicNotifier<Double> addSlider(String name, double value, double min, double max) {

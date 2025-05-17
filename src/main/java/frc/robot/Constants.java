@@ -147,15 +147,25 @@ public final class Constants {
     public static final double kP = 2.996; // TODO: tune sysid
     public static final double kI = 0;
     public static final double kD = 0.28181;
-    public static final double kG = 0.2269;
+    public static final double kG = 0;
     public static final double kS = 0.13495;
     public static final double kV = 0.67446;
     public static final double kA = 0.018492;
+
+    public static final double CLIMB_VOLTAGE_SLEW_RATE =
+        12.0 / 0.3; /* Go from 0 - 12 in 0.3 seconds */
+
+    public static final double CLIMB_EXPECTED_KV_MIN =
+        4.0; // TODO: tune by plotting kv during climb
+    public static final Time CLIMB_EXPECTED_KV_TIMEOUT = Seconds.of(0.3);
 
     public static final Angle START_ROTATIONS = Rotations.of(0);
     public static final Angle PARK_ROTATIONS = START_ROTATIONS;
     public static final Angle EXTENDED_ROTATIONS = Rotations.of(2); // TODO: make correct
     public static final Angle CLIMBED_ROTATIONS = Rotations.of(1); // TODO: make correct
+
+    public static final double RATCHET_ENGAGED = 0.4;
+    public static final double RATCHET_DISENGAGED = 0;
 
     public static final double GEAR_RATIO = 48; // 48:1 gearbox
 

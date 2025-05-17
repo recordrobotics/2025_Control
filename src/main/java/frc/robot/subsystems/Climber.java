@@ -8,16 +8,19 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ClimberIO;
 import frc.robot.subsystems.io.sim.ClimberSim;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -76,7 +79,6 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
             new SysIdRoutine.Mechanism((v) -> io.setVoltage(v.in(Volts)), null, this));
 
     SmartDashboard.putNumber("Climber", Constants.Climber.START_ROTATIONS.in(Rotations));
-    SmartDashboard.putBoolean("Ratchet", false);
   }
 
   public enum ClimberState {
@@ -85,18 +87,41 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     Climb
   }
 
+  private boolean ratchetEngaged = false;
+  private double lastClimbVoltage = 0.0;
+  private double lastExpectedKVTime = 0;
+
   @Override
   public void periodic() {
-    io.setRatchet(SmartDashboard.getBoolean("Ratchet", false) ? 0.4 : 0);
+
+    if (currentState == ClimberState.Climb) {
+      lastClimbVoltage =
+          SimpleMath.slewRateLimitLinear(
+              lastClimbVoltage, atGoal() ? 0 : 12, 0.02, Constants.Climber.CLIMB_VOLTAGE_SLEW_RATE);
+
+      if (getEstimatedkV() >= Constants.Climber.CLIMB_EXPECTED_KV_MIN) {
+        lastExpectedKVTime = Timer.getFPGATimestamp();
+      }
+
+      if (Timer.getFPGATimestamp() - lastExpectedKVTime
+          > Constants.Climber.CLIMB_EXPECTED_KV_TIMEOUT.in(Seconds)) {
+        // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
+        lastClimbVoltage = 0;
+        io.setVoltage(0);
+        set(ClimberState.Park);
+      } else {
+        io.setVoltage(lastClimbVoltage);
+      }
+    }
 
     // Update mechanism
     RobotContainer.model.climber.update(getRotations());
-    RobotContainer.model.climber.updateSetpoint(getRotations()); // TODO add setpoint
   }
 
+  @AutoLogOutput
   public boolean atGoal() {
     if (currentState == ClimberState.Climb) {
-      return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
+      return getRotations() <= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
     } else if (currentState == ClimberState.Extend) {
       return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)) < 0.01;
     } else {
@@ -108,16 +133,21 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     currentState = state;
     switch (state) {
       case Park:
-        io.setRatchet(0);
-        // io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
+        io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
+        ratchetEngaged = false;
+        io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
         break;
       case Extend:
-        io.setRatchet(0);
+        io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
+        ratchetEngaged = false;
         io.setMotionMagic(
             armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
         break;
       case Climb:
-        io.setRatchet(1);
+        io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
+        lastClimbVoltage = 0.0;
+        lastExpectedKVTime = Timer.getFPGATimestamp();
+        ratchetEngaged = true;
         break;
     }
   }
@@ -142,6 +172,10 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     return io.getVoltage();
   }
 
+  public double getEstimatedkV() {
+    return io.getVelocity() / io.getVoltage();
+  }
+
   @Override
   public void simulationPeriodic() {
     io.simulationPeriodic();
@@ -164,7 +198,15 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   }
 
   @Override
-  public void setupShuffleboard() {}
+  public void setupShuffleboard() {
+    DashboardUI.Test.addToggle("Climber Ratchet", () -> ratchetEngaged)
+        .subscribe(
+            v -> {
+              ratchetEngaged = v;
+              io.setRatchet(
+                  v ? Constants.Climber.RATCHET_ENGAGED : Constants.Climber.RATCHET_DISENGAGED);
+            });
+  }
 
   @Override
   public void kill() {
