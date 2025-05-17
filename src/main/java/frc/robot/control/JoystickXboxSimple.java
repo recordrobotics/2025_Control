@@ -7,6 +7,8 @@ import static edu.wpi.first.units.Units.Seconds;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -15,8 +17,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants;
 import frc.robot.Constants.Game.SourcePosition;
 import frc.robot.RobotContainer;
-import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.assists.DrivetrainControl;
 
 public class JoystickXboxSimple extends AbstractControl {
 
@@ -28,8 +30,11 @@ public class JoystickXboxSimple extends AbstractControl {
     xbox_controller = new XboxController(xboxPort);
   }
 
+  private Transform2d lastVelocity = new Transform2d();
+  private Transform2d lastAcceleration = new Transform2d();
+
   @Override
-  public DriveCommandData getDriveCommandData() {
+  public DrivetrainControl getDrivetrainControl() {
     // Gets information needed to drive
 
     var xy = getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive()));
@@ -45,14 +50,30 @@ public class JoystickXboxSimple extends AbstractControl {
       x = -temp;
     }
 
-    DriveCommandData driveCommandData =
-        new DriveCommandData(
-            x,
-            y,
-            getSpin() * getSpinSpeedLevel(),
-            !(getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()));
-    // Returns
-    return driveCommandData;
+    Transform2d velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
+    Transform2d acceleration =
+        new Transform2d(
+                velocity.getTranslation().minus(lastVelocity.getTranslation()).div(0.02),
+                velocity.getRotation().minus(lastVelocity.getRotation()))
+            .div(0.02);
+    Transform2d jerk =
+        new Transform2d(
+                acceleration.getTranslation().minus(lastAcceleration.getTranslation()).div(0.02),
+                acceleration.getRotation().minus(lastAcceleration.getRotation()))
+            .div(0.02);
+
+    lastVelocity = velocity;
+    lastAcceleration = acceleration;
+
+    if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()) {
+      return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
+    } else {
+      return DrivetrainControl.createFieldRelative(
+          velocity,
+          acceleration,
+          jerk,
+          RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation());
+    }
   }
 
   public Boolean getAutoAlign() {
