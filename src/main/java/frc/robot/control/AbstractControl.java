@@ -29,8 +29,6 @@ public abstract class AbstractControl {
 
   public abstract Boolean getKill();
 
-  public abstract Boolean getClimbMode();
-
   // Elevator
   public abstract Boolean getAutoScore();
 
@@ -50,10 +48,12 @@ public abstract class AbstractControl {
 
   public abstract AngularVelocity getManualElevatorArmVelocity();
 
-  public abstract AutoScoreDirection getAutoScoreDirection();
+  public abstract ReefLevelSwitchValue getReefLevelSwitchValue();
 
   // Intake coral
   public abstract Boolean getCoralGroundIntake();
+
+  public abstract Boolean getCoralGroundIntakeSimple();
 
   public abstract Boolean getCoralSourceIntake();
 
@@ -67,6 +67,8 @@ public abstract class AbstractControl {
   public abstract Boolean getGroundAlgae();
 
   // Score algae
+  public abstract Boolean getReefAlgaeSimple();
+
   public abstract Boolean getScoreAlgae();
 
   // Climb
@@ -112,9 +114,11 @@ public abstract class AbstractControl {
     }
   }
 
-  public enum AutoScoreDirection {
+  public enum ReefLevelSwitchValue {
     None,
-    Left,
-    Right
+    L1,
+    L2,
+    L3,
+    L4;
   }
 }

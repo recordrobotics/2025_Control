@@ -17,7 +17,9 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.ClimbMove;
+import frc.robot.commands.CoralIntakeFromGround;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
+import frc.robot.commands.CoralIntakeFromGroundUp;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralIntakeMoveL1;
@@ -269,6 +271,10 @@ public class RobotContainer {
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntake())
         .toggleOnTrue(new CoralIntakeFromGroundToggled());
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntakeSimple())
+        .onTrue(new CoralIntakeFromGround())
+        .onFalse(new CoralIntakeFromGroundUp());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
         .onTrue(new CoralIntakeFromSource(true));
