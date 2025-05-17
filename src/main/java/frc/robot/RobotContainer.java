@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,6 +18,8 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.RobotAlignPose;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.Align;
+import frc.robot.commands.ClimbMove;
+import frc.robot.commands.ClimbUp;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
 import frc.robot.commands.CoralIntakeFromSource;
@@ -40,17 +41,18 @@ import frc.robot.control.*;
 import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.Climber.ClimberState;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.io.real.ClimberReal;
+import frc.robot.subsystems.io.real.CoralIntakeReal;
+import frc.robot.subsystems.io.real.ElevatorArmReal;
+import frc.robot.subsystems.io.real.ElevatorHeadReal;
+import frc.robot.subsystems.io.real.ElevatorReal;
 import frc.robot.subsystems.io.sim.ClimberSim;
 import frc.robot.subsystems.io.sim.CoralIntakeSim;
 import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
-import frc.robot.subsystems.io.stub.CoralIntakeStub;
-import frc.robot.subsystems.io.stub.ElevatorArmStub;
-import frc.robot.subsystems.io.stub.ElevatorHeadStub;
-import frc.robot.subsystems.io.stub.ElevatorStub;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.PoweredSubsystem;
@@ -113,10 +115,10 @@ public class RobotContainer {
     if (Constants.RobotState.getMode() == Mode.REAL) {
       drivetrain = new Drivetrain();
       poseSensorFusion = new PoseSensorFusion();
-      elevator = new Elevator(new ElevatorStub(Constants.Elevator.kDt));
-      elevatorArm = new ElevatorArm(new ElevatorArmStub(0.02));
-      elevatorHead = new ElevatorHead(new ElevatorHeadStub(0.02));
-      coralIntake = new CoralIntake(new CoralIntakeStub(0.02));
+      elevator = new Elevator(new ElevatorReal(Constants.Elevator.kDt));
+      elevatorArm = new ElevatorArm(new ElevatorArmReal(0.02));
+      elevatorHead = new ElevatorHead(new ElevatorHeadReal(0.02));
+      coralIntake = new CoralIntake(new CoralIntakeReal(0.02));
       climber = new Climber(new ClimberReal(0.02));
       lights = new Lights();
       pdp = new PowerDistributionPanel();
@@ -184,8 +186,8 @@ public class RobotContainer {
             new KillSpecified(
                 drivetrain, elevator, elevatorArm, elevatorHead, coralIntake, climber));
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
-        .onTrue(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll()));
+    // new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
+    //     .onTrue(new InstantCommand(() -> CommandScheduler.getInstance().cancelAll()));
 
     // Reset pose trigger
     new Trigger(() -> DashboardUI.Overview.getControl().getPoseReset())
@@ -359,12 +361,12 @@ public class RobotContainer {
                     == AutoScoreDirection.Right)
         .onTrue(new AutoScore(AutoScoreDirection.Right));
 
-    // new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
-    //     .onTrue(
-    //         Commands.either(
-    //             new ClimbUp(),
-    //             new ClimbMove(ClimberState.Extend),
-    //             () -> climber.getCurrentState() == ClimberState.Extend));
+    new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
+        .onTrue(
+            Commands.either(
+                new ClimbUp(),
+                new ClimbMove(ClimberState.Extend),
+                () -> climber.getCurrentState() == ClimberState.Extend));
   }
 
   /**
