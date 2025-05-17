@@ -6,6 +6,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.assists.DrivetrainControl;
@@ -15,8 +16,6 @@ public abstract class AbstractControl {
   public abstract DrivetrainControl getDrivetrainControl();
 
   public abstract Boolean getAutoAlign();
-
-  public abstract Boolean getAutoAlignNear();
 
   public abstract Boolean getElevatorRelativeDrive();
 
@@ -120,5 +119,20 @@ public abstract class AbstractControl {
     L2,
     L3,
     L4;
+
+    public CoralLevel toCoralLevel() {
+      switch (this) {
+        case L1:
+          return CoralLevel.L1;
+        case L2:
+          return CoralLevel.L2;
+        case L3:
+          return CoralLevel.L3;
+        case L4:
+          return CoralLevel.L4;
+        default: // None is L4 to preserve default far-align behavior
+          return CoralLevel.L4;
+      }
+    }
   }
 }

@@ -75,10 +75,10 @@ public class JoystickXbox extends AbstractControl {
   }
 
   public Boolean getAutoAlign() {
-    return joystick.getRawButton(9) || joystick.getRawButton(11);
+    return joystick.getRawButton(9) || joystick.getRawButton(11) || getAutoAlignNear();
   }
 
-  public Boolean getAutoAlignNear() {
+  private Boolean getAutoAlignNear() {
     return joystick.getRawButton(7) || joystick.getRawButton(12);
   }
 
@@ -224,7 +224,7 @@ public class JoystickXbox extends AbstractControl {
 
   @Override
   public ReefLevelSwitchValue getReefLevelSwitchValue() {
-    return ReefLevelSwitchValue.None;
+    return getAutoAlignNear() ? ReefLevelSwitchValue.L2 : ReefLevelSwitchValue.None;
   }
 
   @Override

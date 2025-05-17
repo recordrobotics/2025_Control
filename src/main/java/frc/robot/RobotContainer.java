@@ -2,7 +2,6 @@ package frc.robot;
 
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.util.Units;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -13,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
-import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.ClimbMove;
@@ -332,6 +330,8 @@ public class RobotContainer {
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest().repeatedly());
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore());
   }
 
   /**
@@ -373,19 +373,6 @@ public class RobotContainer {
 
   public static boolean isInClimbMode() {
     return inClimbMode;
-  }
-
-  public static CoralLevel getCurrentCoralLevel() {
-    if (Math.abs(coralIntake.getArmAngle() - Constants.CoralIntake.ARM_SCORE_L1)
-        < Units.degreesToRadians(15)) {
-      return CoralLevel.L1;
-    }
-    for (CoralLevel level : CoralLevel.values()) {
-      if (elevator.getNearestHeight() == level.getHeight()) {
-        return level;
-      }
-    }
-    return null;
   }
 
   /** frees up all hardware allocations */

@@ -12,6 +12,7 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.hybrid.AlignToPose;
+import frc.robot.dashboard.DashboardUI;
 import java.util.Set;
 
 public class ReefAlign {
@@ -21,8 +22,7 @@ public class ReefAlign {
           CoralPosition alignPose =
               CoralPosition.closestTo(RobotContainer.poseSensorFusion.getEstimatedPosition());
 
-          CoralLevel level =
-              RobotContainer.getCurrentCoralLevel(); // TODO rn it crashes if this is null
+          var level = DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel();
 
           if (alignPose
                   .getPose(level)
