@@ -2,13 +2,16 @@ package frc.robot.commands.hybrid;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
-import frc.robot.utils.DriveCommandData;
+import frc.robot.utils.assists.DrivetrainControl;
 import org.littletonrobotics.junction.Logger;
 
 public class AlignToPose extends Command {
@@ -82,23 +85,27 @@ public class AlignToPose extends Command {
     Logger.recordOutput("AlignToPose/AtGoal/Y", yPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Rot", rotPID.atGoal());
 
-    if (doTranslation) {
-      RobotContainer.drivetrain.drive(new DriveCommandData(x, y, rot, true));
-    } else {
-      AbstractControl controls = DashboardUI.Overview.getControl();
-      DriveCommandData driveCommandData = controls.getDriveCommandData();
+    AbstractControl controls = DashboardUI.Overview.getControl();
+    DrivetrainControl drivetrainControl = controls.getDrivetrainControl();
 
-      RobotContainer.drivetrain.drive(
-          new DriveCommandData(
-              driveCommandData.xSpeed,
-              driveCommandData.ySpeed,
-              rot,
-              driveCommandData.fieldRelative));
+    if (doTranslation) {
+      drivetrainControl.applyWeightedVelocity(
+          DrivetrainControl.fieldToRobot(
+              new Transform2d(x, y, new Rotation2d(rot)),
+              RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation()),
+          1.0);
+    } else {
+      drivetrainControl.applyWeightedVelocity(
+          new Transform2d(
+              drivetrainControl.getTargetVelocity().getTranslation(), new Rotation2d(rot)),
+          1.0);
     }
+
+    RobotContainer.drivetrain.drive(drivetrainControl.toChassisSpeeds());
   }
 
   @Override
   public void end(boolean interrupted) {
-    RobotContainer.drivetrain.drive(new DriveCommandData());
+    RobotContainer.drivetrain.drive(new ChassisSpeeds());
   }
 }

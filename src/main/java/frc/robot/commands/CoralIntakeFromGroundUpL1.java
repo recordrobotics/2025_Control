@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
-import frc.robot.subsystems.CoralIntake.IntakeArmState;
 
 public class CoralIntakeFromGroundUpL1 extends SequentialCommandGroup {
   public CoralIntakeFromGroundUpL1() {
@@ -20,7 +19,7 @@ public class CoralIntakeFromGroundUpL1 extends SequentialCommandGroup {
             }),
         // raise the arm
         new InstantCommand(
-            () -> RobotContainer.coralIntake.toggleArm(IntakeArmState.UP),
+            () -> RobotContainer.coralIntake.set(CoralIntakeState.UP),
             RobotContainer.coralIntake,
             RobotContainer.coralIntakeMoveToggleRequirement),
         new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()),
@@ -29,11 +28,6 @@ public class CoralIntakeFromGroundUpL1 extends SequentialCommandGroup {
                 .coralIntake
                 .runPattern(Constants.Lights.PULSATING_ORANGE)
                 .onlyWhile(this::isScheduled)),
-        new InstantCommand(
-            () -> {
-              RobotContainer.coralIntake.set(CoralIntakeState.OFF);
-            },
-            RobotContainer.coralIntake),
         new ScheduleCommand(
             RobotContainer.lights
                 .elevator

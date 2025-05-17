@@ -8,7 +8,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.DashboardUI;
-import frc.robot.utils.DriveCommandData;
+import frc.robot.utils.assists.DrivetrainControl;
+import org.littletonrobotics.junction.Logger;
 
 /** An example command that uses an example subsystem. */
 public class ManualSwerve extends Command {
@@ -29,8 +30,20 @@ public class ManualSwerve extends Command {
   public void execute() {
     AbstractControl controls = DashboardUI.Overview.getControl();
 
-    DriveCommandData driveCommandData = controls.getDriveCommandData();
-    RobotContainer.drivetrain.drive(driveCommandData);
+    DrivetrainControl drivetrainControl = controls.getDrivetrainControl();
+
+    int applyCount = 0;
+    for (var assist : RobotContainer.assits) {
+      if (assist.isEnabled()) {
+        if (assist.apply(drivetrainControl)) {
+          applyCount++;
+        }
+      }
+    }
+
+    Logger.recordOutput("ManualSwerve/AssistsApplied", applyCount);
+
+    RobotContainer.drivetrain.drive(drivetrainControl.toChassisSpeeds());
   }
 
   // Called once the command ends or is interrupted.

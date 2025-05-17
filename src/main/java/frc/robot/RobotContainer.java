@@ -40,7 +40,7 @@ import frc.robot.control.*;
 import frc.robot.control.AbstractControl.AutoScoreDirection;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
-import frc.robot.subsystems.CoralIntake.IntakeArmState;
+import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.io.real.CoralIntakeReal;
 import frc.robot.subsystems.io.real.ElevatorArmReal;
 import frc.robot.subsystems.io.real.ElevatorHeadReal;
@@ -55,6 +55,9 @@ import frc.robot.utils.AutoPath;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.assists.GroundIntakeAssist;
+import frc.robot.utils.assists.IAssist;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.simulation.VisionSystemSim;
@@ -103,6 +106,8 @@ public class RobotContainer {
 
   @AutoLogOutput private static boolean inClimbMode = false;
 
+  public static final List<IAssist> assits = List.of(new GroundIntakeAssist());
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     if (Constants.RobotState.getMode() == Mode.REAL) {
@@ -143,7 +148,7 @@ public class RobotContainer {
     DashboardUI.Autonomous.setupAutoChooser();
 
     // Sets up Control scheme chooser
-    DashboardUI.Overview.addControls(new JoystickXbox(2, 0), new JoystickXboxKeypad(2, 0, 3));
+    DashboardUI.Overview.addControls(new JoystickXbox(2, 0));
 
     // Bindings and Teleop
     configureButtonBindings();
@@ -290,11 +295,11 @@ public class RobotContainer {
             Commands.either(
                 new CoralIntakeShootL1().asProxy(),
                 new CoralIntakeMoveL1().asProxy(),
-                () -> coralIntake.getArmState() == IntakeArmState.SCORE_L1),
+                () -> coralIntake.getState() == CoralIntakeState.L1_DOWN),
             new CoralIntakeFromGroundUpL1()
                 .asProxy()
                 .beforeStarting(() -> CoralIntakeFromGroundToggled.isGoingToL1 = true),
-            () -> coralIntake.getArmAngle() >= Constants.CoralIntake.ARM_SCORE_L1 - 0.1);
+            () -> coralIntake.getState() != CoralIntakeState.GROUND);
     // coralScoreL1Cmd.addRequirements(coralIntakeMoveToggleRequirement);
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralIntakeScoreL1())

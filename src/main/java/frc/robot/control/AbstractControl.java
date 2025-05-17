@@ -7,12 +7,12 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.dashboard.DashboardUI;
-import frc.robot.utils.DriveCommandData;
 import frc.robot.utils.DriverStationUtils;
+import frc.robot.utils.assists.DrivetrainControl;
 
 public abstract class AbstractControl {
   // Movement
-  public abstract DriveCommandData getDriveCommandData();
+  public abstract DrivetrainControl getDrivetrainControl();
 
   public abstract Boolean getAutoAlign();
 

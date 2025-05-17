@@ -14,13 +14,10 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
-import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
 import frc.robot.utils.DCMotors;
-import frc.robot.utils.DriveCommandData;
-import frc.robot.utils.DriveCommandDataAutoLogged;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
@@ -41,8 +38,6 @@ public class Drivetrain extends KillableSubsystem
   private final SwerveModule m_frontRight;
   private final SwerveModule m_backLeft;
   private final SwerveModule m_backRight;
-
-  private DriveCommandDataAutoLogged driveCommandDataAutoLogged = new DriveCommandDataAutoLogged();
 
   private final SysIdRoutine sysIdRoutineDriveMotors;
   private final SysIdRoutine sysIdRoutineTurnMotors;
@@ -190,34 +185,10 @@ public class Drivetrain extends KillableSubsystem
    *     to convert the joystick x and y components to the field coordinate system if fieldRelative
    *     is true.
    */
-  public void drive(DriveCommandData driveCommandData) {
-    // Data from driveCommandData
-    boolean fieldRelative = driveCommandData.fieldRelative;
-    double xSpeed = driveCommandData.xSpeed;
-    double ySpeed = driveCommandData.ySpeed;
-    double rot = driveCommandData.rot;
+  public void drive(ChassisSpeeds nonDiscreteSpeeds) {
+    nonDiscreteSpeeds = ChassisSpeeds.discretize(nonDiscreteSpeeds, 0.02);
 
-    // Calculates swerveModuleStates given optimal ChassisSpeeds given by control
-    // scheme
-
-    driveCommandDataAutoLogged.fieldRelative = fieldRelative;
-    driveCommandDataAutoLogged.xSpeed = xSpeed;
-    driveCommandDataAutoLogged.ySpeed = ySpeed;
-    driveCommandDataAutoLogged.rot = rot;
-    Logger.processInputs("Drive/Input", driveCommandDataAutoLogged);
-
-    ChassisSpeeds chassisSpeeds =
-        fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed,
-                ySpeed,
-                rot,
-                RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation())
-            : new ChassisSpeeds(xSpeed, ySpeed, rot);
-
-    chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02);
-
-    SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
+    SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(nonDiscreteSpeeds);
 
     // Desaturates wheel speeds
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.robotMaxSpeed);
@@ -347,7 +318,7 @@ public class Drivetrain extends KillableSubsystem
    */
   @Override
   public void kill() {
-    drive(new DriveCommandData(0, 0, 0, false));
+    drive(new ChassisSpeeds());
     m_frontLeft.stop();
     m_frontRight.stop();
     m_backLeft.stop();
@@ -392,14 +363,14 @@ public class Drivetrain extends KillableSubsystem
   public Command sysIdQuasistaticDriveMotors(SysIdRoutine.Direction direction) {
     return sysIdRoutineDriveMotors
         .quasistatic(direction)
-        .raceWith(Commands.run(() -> drive(new DriveCommandData())));
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
     // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 
   public Command sysIdDynamicDriveMotors(SysIdRoutine.Direction direction) {
     return sysIdRoutineDriveMotors
         .dynamic(direction)
-        .raceWith(Commands.run(() -> drive(new DriveCommandData())));
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
     // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 

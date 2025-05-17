@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
-import frc.robot.subsystems.CoralIntake.IntakeArmState;
 
 public class CoralIntakeMoveL1 extends SequentialCommandGroup {
 
@@ -25,8 +24,7 @@ public class CoralIntakeMoveL1 extends SequentialCommandGroup {
                 .onlyWhile(this::isScheduled)),
         new InstantCommand(
             () -> {
-              RobotContainer.coralIntake.toggleArm(IntakeArmState.SCORE_L1);
-              RobotContainer.coralIntake.set(CoralIntakeState.OFF);
+              RobotContainer.coralIntake.set(CoralIntakeState.L1_DOWN);
             },
             RobotContainer.coralIntake),
         new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()));

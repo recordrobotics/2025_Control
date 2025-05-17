@@ -109,12 +109,7 @@ public class AutoPath {
 
         // Method that will drive the robot given ROBOT RELATIVE speeds
         (speeds, feedforwards) -> {
-          RobotContainer.drivetrain.drive(
-              new DriveCommandData(
-                  speeds.vxMetersPerSecond,
-                  speeds.vyMetersPerSecond,
-                  speeds.omegaRadiansPerSecond,
-                  false));
+          RobotContainer.drivetrain.drive(speeds);
         },
         Constants.Swerve.PPDriveController,
         config,

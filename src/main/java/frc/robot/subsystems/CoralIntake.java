@@ -61,8 +61,7 @@ public class CoralIntake extends KillableSubsystem
       new SimpleMotorFeedforward(
           Constants.CoralIntake.kS, Constants.CoralIntake.kV, Constants.CoralIntake.kA);
 
-  private IntakeArmState currentArmtate = IntakeArmState.UP;
-  private CoralIntakeState currentIntakeState = CoralIntakeState.OFF;
+  private CoralIntakeState currentIntakeState = CoralIntakeState.UP;
 
   private double intakePushAndPullRampStart = 0;
 
@@ -88,8 +87,7 @@ public class CoralIntake extends KillableSubsystem
     io.setArmPosition(
         Constants.CoralIntake.ARM_GEAR_RATIO
             * Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
-    set(CoralIntakeState.OFF);
-    toggleArm(IntakeArmState.UP);
+    set(CoralIntakeState.UP);
 
     armPID.setTolerance(0.15, 1.05);
 
@@ -129,19 +127,13 @@ public class CoralIntake extends KillableSubsystem
   private final SysIdRoutine sysIdRoutineArm;
 
   public enum CoralIntakeState {
-    SOURCE,
-    PUSH_AND_PULL,
-    INTAKE,
-    L1_SCORE,
-    OFF;
-  }
-
-  public enum IntakeArmState {
     UP,
-    PUSH,
-    INTAKE,
-    SCORE_L1,
-    DOWN;
+    SOURCE,
+    PUSH_READY,
+    PUSH_OUT,
+    GROUND,
+    L1_SCORE,
+    L1_DOWN;
   }
 
   @AutoLogOutput
@@ -174,20 +166,16 @@ public class CoralIntake extends KillableSubsystem
     return io.getArmVoltage();
   }
 
-  public IntakeArmState getArmState() {
-    return currentArmtate;
-  }
-
-  public CoralIntakeState getIntakeState() {
+  public CoralIntakeState getState() {
     return currentIntakeState;
   }
 
   /** Set the current shooter speed on both wheels to speed */
-  public void set(double speed) {
+  public void setWheel(double speed) {
     pid.setSetpoint(speed);
   }
 
-  public void toggleArm(double angleRadians) {
+  public void setArm(double angleRadians) {
     armPID.setGoal(angleRadians);
   }
 
@@ -195,50 +183,40 @@ public class CoralIntake extends KillableSubsystem
     return armPID.atGoal();
   }
 
-  public void toggleArm(IntakeArmState state) {
-    currentArmtate = state;
-    switch (state) {
-      case UP:
-        toggleArm(Constants.CoralIntake.ARM_UP);
-        break;
-      case PUSH:
-        toggleArm(Constants.CoralIntake.ARM_PUSH);
-        break;
-      case DOWN:
-        toggleArm(Constants.CoralIntake.ARM_DOWN);
-        break;
-      case INTAKE:
-        toggleArm(Constants.CoralIntake.ARM_INTAKE);
-        break;
-      case SCORE_L1:
-        toggleArm(Constants.CoralIntake.ARM_SCORE_L1);
-        break;
-      default:
-        io.setArmVoltage(0);
-        break;
-    }
-  }
-
-  /** Set the shooter speed to the preset ShooterStates state */
   public void set(CoralIntakeState state) {
     currentIntakeState = state;
     switch (state) {
       case SOURCE:
-        set(Constants.CoralIntake.SOURCE_SPEED);
+        setWheel(Constants.CoralIntake.SOURCE_SPEED);
+        setArm(Constants.CoralIntake.ARM_INTAKE);
         break;
-      case PUSH_AND_PULL:
+      case PUSH_READY:
+        setWheel(0);
+        setArm(Constants.CoralIntake.ARM_PUSH);
+      case PUSH_OUT:
         intakePushAndPullRampStart = Timer.getTimestamp();
-        set(Constants.CoralIntake.PUSH_OUT_SPEED);
+        setWheel(Constants.CoralIntake.PUSH_OUT_SPEED);
+        setArm(Constants.CoralIntake.ARM_PUSH);
         break;
-      case INTAKE:
-        set(Constants.CoralIntake.INTAKE_SPEED);
+      case GROUND:
+        setWheel(Constants.CoralIntake.INTAKE_SPEED);
+        setArm(Constants.CoralIntake.ARM_DOWN);
         break;
       case L1_SCORE:
-        set(Constants.CoralIntake.L1_SCORE_SPEED);
+        setWheel(Constants.CoralIntake.L1_SCORE_SPEED);
+        setArm(Constants.CoralIntake.ARM_SCORE_L1);
         break;
-      case OFF: // Off
+      case L1_DOWN:
+        setWheel(0);
+        setArm(Constants.CoralIntake.ARM_SCORE_L1);
+        break;
+      case UP:
+        setWheel(0);
+        setArm(Constants.CoralIntake.ARM_UP);
+        break;
       default: // should never happen
-        set(0);
+        io.setArmVoltage(0);
+        setWheel(0);
         break;
     }
   }
@@ -250,7 +228,7 @@ public class CoralIntake extends KillableSubsystem
   public void periodic() {
     // toggleArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
 
-    if (currentIntakeState == CoralIntakeState.PUSH_AND_PULL) {
+    if (currentIntakeState == CoralIntakeState.PUSH_OUT) {
       // push and pull ramp
       double rampT =
           MathUtil.clamp(
@@ -263,7 +241,7 @@ public class CoralIntake extends KillableSubsystem
               Constants.CoralIntake.PUSH_OUT_SPEED,
               Constants.CoralIntake.PULL_THROUGH_SPEED,
               rampT);
-      set(rampedSpeed);
+      setWheel(rampedSpeed);
     }
 
     double pidOutput = pid.calculate(getWheelVelocity());
@@ -320,12 +298,12 @@ public class CoralIntake extends KillableSubsystem
             io.getArmPosition(),
             Constants.CoralIntake.ARM_DOWN,
             Constants.CoralIntake.ARM_UP)
-        .subscribe(this::toggleArm);
+        .subscribe(this::setArm);
   }
 
   @Override
   public void kill() {
-    set(CoralIntakeState.OFF);
+    setWheel(0);
     // io.setWheelVoltage(0);
     // io.setArmVoltage(0);
   }

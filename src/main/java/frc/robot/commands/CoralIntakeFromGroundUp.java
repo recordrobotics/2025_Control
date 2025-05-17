@@ -8,7 +8,6 @@ import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.commands.simulation.CoralIntakeToElevator;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
-import frc.robot.subsystems.CoralIntake.IntakeArmState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 
 public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
@@ -21,7 +20,7 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
     addCommands(
         // raise the arm
         new InstantCommand(
-            () -> RobotContainer.coralIntake.toggleArm(IntakeArmState.PUSH),
+            () -> RobotContainer.coralIntake.set(CoralIntakeState.PUSH_READY),
             RobotContainer.coralIntake),
         new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()),
         new WaitUntilCommand(() -> RobotContainer.elevator.atGoal()),
@@ -37,7 +36,7 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
             .andThen(
                 // push coral out
                 new InstantCommand(
-                    () -> RobotContainer.coralIntake.set(CoralIntakeState.PUSH_AND_PULL),
+                    () -> RobotContainer.coralIntake.set(CoralIntakeState.PUSH_OUT),
                     RobotContainer.coralIntake))
             .andThen(
                 // wait for elevator to have coral
@@ -47,8 +46,7 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
             .andThen(
                 new InstantCommand(
                     () -> {
-                      RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
-                      RobotContainer.coralIntake.set(CoralIntakeState.OFF);
+                      RobotContainer.coralIntake.set(CoralIntakeState.UP);
                     },
                     RobotContainer.coralIntake))
             .andThen(

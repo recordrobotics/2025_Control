@@ -130,6 +130,13 @@ public final class Constants {
     public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
   }
 
+  public final class Assits {
+    public static final Distance GROUND_ASSIST_MAX_CORAL_DISTANCE = Meters.of(2);
+    public static final Angle GROUND_ASSIST_MAX_ANGLE_ERROR = Degrees.of(60);
+    public static final double GROUND_ASSIST_ROTATION_P = 5.0;
+    public static final double GROUND_ASSIST_TRANSLATION_P = 9.0;
+  }
+
   public final class Climber {
     public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(40);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(100);

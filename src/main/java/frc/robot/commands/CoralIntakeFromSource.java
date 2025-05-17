@@ -8,7 +8,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
-import frc.robot.subsystems.CoralIntake.IntakeArmState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.utils.CommandUtils;
 
@@ -37,7 +36,6 @@ public class CoralIntakeFromSource extends SequentialCommandGroup {
                 .onlyWhile(this::isScheduled)),
         new InstantCommand(
             () -> {
-              RobotContainer.coralIntake.toggleArm(IntakeArmState.INTAKE);
               RobotContainer.coralIntake.set(CoralIntakeState.SOURCE);
             },
             RobotContainer.coralIntake),
@@ -50,8 +48,7 @@ public class CoralIntakeFromSource extends SequentialCommandGroup {
         new WaitUntilCommand(() -> RobotContainer.elevatorHead.hasCoral()),
         new InstantCommand(
             () -> {
-              RobotContainer.coralIntake.toggleArm(IntakeArmState.UP);
-              RobotContainer.coralIntake.set(CoralIntakeState.OFF);
+              RobotContainer.coralIntake.set(CoralIntakeState.UP);
             },
             RobotContainer.coralIntake),
         // move coral a set distance
