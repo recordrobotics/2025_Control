@@ -28,7 +28,7 @@ public class ElevatorArmSim implements ElevatorArmIO {
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
           LinearSystemId.createSingleJointedArmSystem(
-              armMotor, 0.1, Constants.ElevatorArm.ARM_GEAR_RATIO),
+              armMotor, 0.0254, Constants.ElevatorArm.ARM_GEAR_RATIO),
           armMotor,
           Constants.ElevatorArm.ARM_GEAR_RATIO,
           Units.inchesToMeters(18.4966),

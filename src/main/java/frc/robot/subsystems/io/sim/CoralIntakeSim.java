@@ -56,7 +56,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
           LinearSystemId.createSingleJointedArmSystem(
-              armMotor, 0.179, Constants.CoralIntake.ARM_GEAR_RATIO),
+              armMotor, 0.001, Constants.CoralIntake.ARM_GEAR_RATIO),
           armMotor,
           Constants.CoralIntake.ARM_GEAR_RATIO,
           Units.inchesToMeters(17.02),
