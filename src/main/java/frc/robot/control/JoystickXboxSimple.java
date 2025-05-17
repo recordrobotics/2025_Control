@@ -97,11 +97,17 @@ public class JoystickXboxSimple extends AbstractControl {
   }
 
   public Boolean getElevatorRelativeDrive() {
-    return joystick.getRawButton(8);
+    return joystick.getRawButton(8)
+        || (getAutoScore()
+            && getReefLevelSwitchValue()
+                != ReefLevelSwitchValue.L1); // elevator relative when auto score
   }
 
   public Boolean getCoralIntakeRelativeDrive() {
-    return joystick.getRawButton(10);
+    return joystick.getRawButton(10)
+        || (getAutoScore()
+            && getReefLevelSwitchValue()
+                == ReefLevelSwitchValue.L1); // coral relative when auto score
   }
 
   public Pair<Double, Double> getXY(boolean orient) {
@@ -129,7 +135,7 @@ public class JoystickXboxSimple extends AbstractControl {
   }
 
   public Boolean getHalfSpeed() {
-    return false;
+    return getAutoScore(); // half speed auto enabled when scoring
   }
 
   public Double getDirectionalSpeedLevel() {

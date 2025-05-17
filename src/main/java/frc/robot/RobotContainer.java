@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.RobotState.Mode;
+import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGround;
 import frc.robot.commands.CoralIntakeFromGroundToggled;
@@ -63,6 +65,7 @@ import frc.robot.utils.assists.GroundIntakeAssist;
 import frc.robot.utils.assists.IAssist;
 import frc.robot.utils.libraries.Elastic;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.simulation.VisionSystemSim;
@@ -334,7 +337,17 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest().repeatedly());
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore());
+    new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
+        .onTrue(
+            Commands.either(
+                new DeferredCommand(
+                    () ->
+                        new AutoScore(
+                            CoralPosition.closestTo(
+                                RobotContainer.poseSensorFusion.getEstimatedPosition())),
+                    Set.of()),
+                new ProcessorScore(false),
+                () -> elevatorHead.hasCoral()));
   }
 
   /**
