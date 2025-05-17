@@ -37,6 +37,7 @@ import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
+import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.Climber.ClimberState;
@@ -241,9 +242,6 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
         .and(elevatorLock)
         .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.L4));
-    // new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
-    //     .and(elevatorLock)
-    //     .toggleOnTrue(new ElevatorReefToggled(ElevatorHeight.BARGE_ALAGAE));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL2())
         .and(() -> !elevatorLock.getAsBoolean())
@@ -254,27 +252,21 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getElevatorL4())
         .and(() -> !elevatorLock.getAsBoolean())
         .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
-    // new Trigger(() -> DashboardUI.Overview.getControl().getBargeAlgae())
-    //     .and(() -> !elevatorLock.getAsBoolean())
-    //     .onTrue(new VibrateXbox(RumbleType.kRightRumble, 1).withTimeout(0.1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralShoot()).onTrue(new CoralShoot());
-
-    // new Trigger(() -> DashboardUI.Overview.getControl().getCoralShootL1())
-    //     .onTrue(HybridScoreCoral.deferred(ElevatorHeight.L1));
-    // new Trigger(() -> DashboardUI.Overview.getControl().getCoralShootL2())
-    //     .onTrue(HybridScoreCoral.deferred(ElevatorHeight.L2));
-    // new Trigger(() -> DashboardUI.Overview.getControl().getCoralShootL3())
-    //     .onTrue(HybridScoreCoral.deferred(ElevatorHeight.L3));
-    // new Trigger(() -> DashboardUI.Overview.getControl().getCoralShootL4())
-    //     .onTrue(HybridScoreCoral.deferred(ElevatorHeight.L4));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntake())
         .toggleOnTrue(new CoralIntakeFromGroundToggled());
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntakeSimple())
         .onTrue(new CoralIntakeFromGround())
-        .onFalse(new CoralIntakeFromGroundUp());
+        .onFalse(
+            Commands.either(
+                new CoralIntakeFromGroundUpL1(),
+                new CoralIntakeFromGroundUp(),
+                () ->
+                    DashboardUI.Overview.getControl().getReefLevelSwitchValue()
+                        == ReefLevelSwitchValue.L1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
         .onTrue(new CoralIntakeFromSource(true));
@@ -309,9 +301,6 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralIntakeScoreL1())
         .onTrue(coralScoreL1Cmd.asProxy());
 
-    // new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
-    //     .onTrue(HybridSource.deferred());
-
     BooleanSupplier algaeLock =
         () -> DashboardUI.Overview.getControl().getManualOverride() || !elevatorHead.hasCoral();
 
@@ -343,27 +332,6 @@ public class RobotContainer {
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest().repeatedly());
-
-    // new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
-    //     .and(
-    //         () ->
-    //             DashboardUI.Overview.getControl().getAutoScoreDirection()
-    //                 == AutoScoreDirection.Left)
-    //     .onTrue(new AutoScore(AutoScoreDirection.Left));
-
-    // new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
-    //     .and(
-    //         () ->
-    //             DashboardUI.Overview.getControl().getAutoScoreDirection()
-    //                 == AutoScoreDirection.Right)
-    //     .onTrue(new AutoScore(AutoScoreDirection.Right));
-
-    new Trigger(() -> DashboardUI.Overview.getControl().getClimb())
-        .onTrue(
-            Commands.either(
-                new ClimbUp(),
-                new ClimbMove(ClimberState.Extend),
-                () -> climber.getCurrentState() == ClimberState.Extend));
   }
 
   /**
