@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
+import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.Game.SourcePosition;
 import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
@@ -292,7 +293,7 @@ public class JoystickXboxSimple extends AbstractControl {
   @Override
   public Boolean getCoralSourceIntakeAuto() {
     Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
-    SourcePosition closestSource = SourcePosition.closestTo(robot);
+    SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());
 
     boolean nearSource =
         closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < 2.3

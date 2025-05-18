@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralPosition;
+import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
@@ -219,7 +220,7 @@ public class RobotContainer {
                   || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE;
 
           Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
-          CoralPosition closestReef = CoralPosition.closestTo(robot);
+          CoralPosition closestReef = IGamePosition.closestTo(robot, CoralPosition.values());
 
           boolean nearReef =
               closestReef.getFirstStagePose().getTranslation().getDistance(robot.getTranslation())
@@ -346,16 +347,18 @@ public class RobotContainer {
             new DeferredCommand(
                 () ->
                     new AutoScore(
-                        CoralPosition.closestTo(
-                            RobotContainer.poseSensorFusion.getEstimatedPosition())),
+                        IGamePosition.closestTo(
+                            RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                            CoralPosition.values())),
                 Set.of()))
         .onFalse(
             Commands.either(
                 new CoralShoot()
                     .andThen(
                         ReefAlign.alignTarget(
-                                CoralPosition.closestTo(
-                                    RobotContainer.poseSensorFusion.getEstimatedPosition()),
+                                IGamePosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                    CoralPosition.values()),
                                 () ->
                                     DashboardUI.Overview.getControl()
                                         .getReefLevelSwitchValue()

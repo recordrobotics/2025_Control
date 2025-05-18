@@ -475,6 +475,14 @@ public class RobotModel extends SubsystemBase {
   @Override
   public void periodic() {
     updatePoses(elevator, elevatorArm, coralIntake, climber);
+
+    // Logger.recordOutput(
+    //     "IGamePositions",
+    //     IGamePosition.aggregatePositions(
+    //         Constants.Game.CoralPosition.values(),
+    //         Constants.Game.AlgaePosition.values(),
+    //         Constants.Game.SourcePosition.values(),
+    //         Constants.Game.ProcessorPosition.values()));
   }
 
   private void updatePoses(RobotMechanism... mechanisms) {

@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
+import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.hybrid.AlignToPose;
 import frc.robot.dashboard.DashboardUI;
@@ -21,7 +22,8 @@ public class ReefAlign {
     return new DeferredCommand(
         () -> {
           CoralPosition alignPose =
-              CoralPosition.closestTo(RobotContainer.poseSensorFusion.getEstimatedPosition());
+              IGamePosition.closestTo(
+                  RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values());
 
           var level = DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel();
 

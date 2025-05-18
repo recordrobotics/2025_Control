@@ -1,12 +1,12 @@
 package frc.robot.utils;
 
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.robot.Constants;
 
 public class SimpleMath {
 
@@ -59,17 +59,11 @@ public class SimpleMath {
     return Math.signum(input) * proportion * sensitivity;
   }
 
-  public static Translation2d MirrorLocation(Translation2d location) {
-    double mirrored_x = Constants.FieldConstants.FIELD_X_DIMENSION - location.getX();
-    double mirrored_y = location.getY();
-    return new Translation2d(mirrored_x, mirrored_y);
-  }
-
   public static boolean isPoseInField(Pose2d pose) {
     return pose.getX() >= 0
         && pose.getY() >= 0
-        && pose.getX() <= Constants.FieldConstants.FIELD_X_DIMENSION
-        && pose.getY() <= Constants.FieldConstants.FIELD_Y_DIMENSION;
+        && pose.getX() <= FlippingUtil.fieldSizeX
+        && pose.getY() <= FlippingUtil.fieldSizeY;
   }
 
   /**

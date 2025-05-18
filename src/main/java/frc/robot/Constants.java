@@ -37,8 +37,9 @@ import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ModuleConstants.MotorLocation;
 import frc.robot.utils.ModuleConstants.MotorType;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -54,18 +55,80 @@ public final class Constants {
     public static final AprilTagFieldLayout APRILTAG_LAYOUT =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
+    public interface IGamePosition {
+      public Pose2d getPose();
+
+      public static <E extends IGamePosition> E closestTo(Pose2d pose, E[] values) {
+        E closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        for (E pos : values) {
+          double distance = pos.getPose().getTranslation().getDistance(pose.getTranslation());
+          if (distance < closestDistance) {
+            closest = pos;
+            closestDistance = distance;
+          }
+        }
+        return closest;
+      }
+
+      public static Pose2d[] aggregatePositions(IGamePosition[]... values) {
+        List<Pose2d> poses = new ArrayList<>();
+        for (IGamePosition[] value : values) {
+          for (IGamePosition pos : value) {
+            poses.add(pos.getPose());
+          }
+        }
+        return poses.toArray(new Pose2d[0]);
+      }
+    }
+
     public static enum AlgaeLevel {
       LOW,
       HIGH
     }
 
-    public static enum AlgaePosition {
-      AB,
-      CD,
-      EF,
-      GH,
-      IJ,
-      KL
+    public static enum AlgaePosition implements IGamePosition {
+      BlueAB(AlgaeLevel.HIGH, 18),
+      BlueCD(AlgaeLevel.LOW, 17),
+      BlueEF(AlgaeLevel.HIGH, 22),
+      BlueGH(AlgaeLevel.LOW, 21),
+      BlueIJ(AlgaeLevel.HIGH, 20),
+      BlueKL(AlgaeLevel.LOW, 19),
+
+      RedAB(AlgaeLevel.HIGH, 7),
+      RedCD(AlgaeLevel.LOW, 8),
+      RedEF(AlgaeLevel.HIGH, 9),
+      RedGH(AlgaeLevel.LOW, 10),
+      RedIJ(AlgaeLevel.HIGH, 11),
+      RedKL(AlgaeLevel.LOW, 6);
+
+      private AlgaeLevel level;
+      private Pose2d pose;
+
+      private AlgaePosition(AlgaeLevel level, int apriltagId) {
+        this.level = level;
+        this.pose = calculatePoseFromAprilTag(apriltagId);
+      }
+
+      private static Pose2d calculatePoseFromAprilTag(int apriltagId) {
+        return APRILTAG_LAYOUT
+            .getTagPose(apriltagId)
+            .get()
+            .toPose2d()
+            .transformBy(
+                new Transform2d(
+                    Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2 + Centimeters.of(6).in(Meters),
+                    0,
+                    Rotation2d.k180deg));
+      }
+
+      public AlgaeLevel getLevel() {
+        return level;
+      }
+
+      public Pose2d getPose() {
+        return pose;
+      }
     }
 
     public static enum CoralLevel {
@@ -85,29 +148,60 @@ public final class Constants {
       }
     }
 
-    public static enum CoralPosition {
-      A(new Pose2d(2.4993371000000004, 4.0181723, Rotation2d.fromDegrees(0))),
-      B(new Pose2d(2.4993371000000004, 3.6695533000000005, Rotation2d.fromDegrees(0))),
-      C(new Pose2d(3.5010734786033373, 2.2986709964689673, Rotation2d.fromDegrees(60))),
-      D(new Pose2d(3.802986388845264, 2.1243614964689677, Rotation2d.fromDegrees(60))),
-      E(new Pose2d(5.491073478603337, 2.306449496468968, Rotation2d.fromDegrees(120))),
-      F(new Pose2d(5.792986388845264, 2.4807589964689676, Rotation2d.fromDegrees(120))),
-      G(new Pose2d(6.4793371, 4.0337293, Rotation2d.fromDegrees(180))),
-      H(new Pose2d(6.4793371, 4.3823483, Rotation2d.fromDegrees(180))),
-      I(new Pose2d(5.477600721396662, 5.753230603531033, Rotation2d.fromDegrees(-120))),
-      J(new Pose2d(5.175687811154734, 5.927540103531033, Rotation2d.fromDegrees(-120))),
-      K(new Pose2d(3.487600721396663, 5.745452103531033, Rotation2d.fromDegrees(-60))),
-      L(new Pose2d(3.185687811154736, 5.571142603531033, Rotation2d.fromDegrees(-60)));
+    private static double REEF_SEGMENT_OFFSET = 0.1743095;
+    private static double SHOOTER_OFFSET = 0.182088;
+
+    public static enum CoralPosition implements IGamePosition {
+      BlueA(18, 0),
+      BlueB(18, 1),
+      BlueC(17, 0),
+      BlueD(17, 1),
+      BlueE(22, 0),
+      BlueF(22, 1),
+      BlueG(21, 0),
+      BlueH(21, 1),
+      BlueI(20, 0),
+      BlueJ(20, 1),
+      BlueK(19, 0),
+      BlueL(19, 1),
+
+      RedA(7, 0),
+      RedB(7, 1),
+      RedC(8, 0),
+      RedD(8, 1),
+      RedE(9, 0),
+      RedF(9, 1),
+      RedG(10, 0),
+      RedH(10, 1),
+      RedI(11, 0),
+      RedJ(11, 1),
+      RedK(6, 0),
+      RedL(6, 1);
 
       private Pose2d pose;
 
-      private CoralPosition(Pose2d pose) {
-        this.pose = pose;
+      private CoralPosition(int apriltagId, int side) {
+        this.pose = calculatePoseFromAprilTag(apriltagId, side);
+      }
+
+      private static Pose2d calculatePoseFromAprilTag(int apriltagId, int side) {
+        return APRILTAG_LAYOUT
+            .getTagPose(apriltagId)
+            .get()
+            .toPose2d()
+            .transformBy(
+                new Transform2d(
+                    Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
+                    (side == 0 ? -REEF_SEGMENT_OFFSET : REEF_SEGMENT_OFFSET) + SHOOTER_OFFSET,
+                    Rotation2d.k180deg));
       }
 
       public Pose2d getFirstStagePose() {
-        return pose.transformBy(
-            new Transform2d(new Translation2d(-0.2 + 0.6, 0), Rotation2d.kZero));
+        return pose.transformBy(new Transform2d(-0.2, 0, Rotation2d.kZero));
+      }
+
+      public Pose2d getPose() {
+        return getFirstStagePose();
       }
 
       public Pose2d getPose(CoralLevel level) {
@@ -116,36 +210,32 @@ public final class Constants {
             return new Pose2d(); // TODO
           case L2:
           case L3:
-            return pose.transformBy(
-                new Transform2d(new Translation2d(0.1 + 0.6, 0), Rotation2d.kZero));
+            return pose.transformBy(new Transform2d(-0.1, 0, Rotation2d.kZero));
           case L4:
-            return pose.transformBy(
-                new Transform2d(new Translation2d(0.05 + 0.6, 0), Rotation2d.kZero));
+            return pose.transformBy(new Transform2d(-0.05, 0, Rotation2d.kZero));
           default:
             return pose; // this is bad
         }
       }
-
-      public static CoralPosition closestTo(Pose2d pose) {
-        CoralPosition closest = null;
-        double closestDistance = Double.MAX_VALUE;
-        for (CoralPosition align : CoralPosition.values()) {
-          double distance =
-              align.getFirstStagePose().getTranslation().getDistance(pose.getTranslation());
-          if (distance < closestDistance) {
-            closest = align;
-            closestDistance = distance;
-          }
-        }
-        return closest;
-      }
     }
 
-    public static enum SourcePosition {
-      OuterLeft(new Pose2d(1.472, 7.386, Rotation2d.fromDegrees(35.734))),
-      OuterRight(new Pose2d(1.464, 0.644, Rotation2d.fromDegrees(144.118))),
-      InnerLeft(new Pose2d(0.691, 6.812, Rotation2d.fromDegrees(35.734))),
-      InnerRight(new Pose2d(0.657, 1.211, Rotation2d.fromDegrees(144.118)));
+    public static enum SourcePosition implements IGamePosition {
+      BlueOuterLeft(13, 1),
+      BlueOuterRight(12, 1),
+      BlueInnerLeft(13, 0),
+      BlueInnerRight(12, 0),
+
+      // Coral is only used for simulation, no point in making a april tag version
+      BlueCoralLeft(new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608))),
+      BlueCoralRight(new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608))),
+
+      RedOuterLeft(1, 1),
+      RedOuterRight(2, 1),
+      RedInnerLeft(1, 0),
+      RedInnerRight(2, 0),
+
+      RedCoralLeft(BlueCoralLeft),
+      RedCoralRight(BlueCoralRight);
 
       private Pose2d pose;
 
@@ -153,27 +243,78 @@ public final class Constants {
         this.pose = pose;
       }
 
+      private SourcePosition(int apriltagId, int side) {
+        this.pose = calculatePoseFromAprilTag(apriltagId, side);
+      }
+
+      private static Pose2d calculatePoseFromAprilTag(int apriltagId, int side) {
+        return APRILTAG_LAYOUT
+            .getTagPose(apriltagId)
+            .get()
+            .toPose2d()
+            .transformBy(
+                new Transform2d(
+                    Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
+                    (side == 0
+                        ? -Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2
+                        : Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2),
+                    Rotation2d.k180deg));
+      }
+
+      private SourcePosition(SourcePosition blueSide) {
+        this.pose = FlippingUtil.flipFieldPose(blueSide.getPose());
+      }
+
       public Pose2d getPose() {
         return pose;
       }
-
-      public static SourcePosition closestTo(Pose2d pose) {
-        SourcePosition closest = null;
-        double closestDistance = Double.MAX_VALUE;
-        for (SourcePosition align : SourcePosition.values()) {
-          double distance = align.getPose().getTranslation().getDistance(pose.getTranslation());
-          if (distance < closestDistance) {
-            closest = align;
-            closestDistance = distance;
-          }
-        }
-        return closest;
-      }
     }
 
-    public static enum Alliance {
-      BLUE,
-      RED
+    public static enum ProcessorPosition implements IGamePosition {
+      BlueProcessor(16),
+      RedProcessor(3);
+
+      private Pose2d pose;
+
+      private ProcessorPosition(int apriltagId) {
+        this.pose = calculatePoseFromAprilTag(apriltagId);
+      }
+
+      private static Pose2d calculatePoseFromAprilTag(int apriltagId) {
+        return APRILTAG_LAYOUT
+            .getTagPose(apriltagId)
+            .get()
+            .toPose2d()
+            .transformBy(
+                new Transform2d(
+                    Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2, 0, Rotation2d.k180deg));
+      }
+
+      public Pose2d getPose() {
+        return pose;
+      }
+    }
+  }
+
+  public enum FieldStartingLocation {
+    BargeLeft(new Pose2d(7.004, 6.171, Rotation2d.fromDegrees(-152.840))),
+    BargeCenter(new Pose2d(7.145, 4.026, Rotation2d.fromDegrees(180.000))),
+    BargeRight(new Pose2d(6.961, 1.939, Rotation2d.fromDegrees(127.847))),
+    ReefTest(new Pose2d(2.082, 4.053, Rotation2d.fromDegrees(-120))),
+    ProccessorTest(new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90)));
+
+    private final Pose2d m_transformRed;
+    private final Pose2d m_transformBlue;
+
+    private FieldStartingLocation(Pose2d poseBlue) {
+      m_transformRed = FlippingUtil.flipFieldPose(poseBlue);
+      m_transformBlue = poseBlue;
+    }
+
+    public Pose2d getPose() {
+      return DriverStationUtils.getCurrentAlliance() == Alliance.Red
+          ? m_transformRed
+          : m_transformBlue;
     }
   }
 
@@ -234,15 +375,6 @@ public final class Constants {
 
     public static final double processorTriggerDistance = 3.0; // Meters
     public static final double reefTriggerDistance = 3.0; // Meters
-
-    public static final Map<String, Boolean> isAlgaeInHighPosition =
-        Map.of(
-            "AB", true,
-            "CD", false,
-            "EF", true,
-            "GH", false,
-            "IJ", true,
-            "KL", false);
   }
 
   public final class Limelight {
@@ -343,7 +475,6 @@ public final class Constants {
     LOW_REEF_ALGAE(0.4849, Units.degreesToRadians(-37.841)),
     L3(0.868, Units.degreesToRadians(-101.59)),
     HIGH_REEF_ALGAE(0.916, Units.degreesToRadians(-40.26)),
-    // L4(1.299, Units.degreesToRadians(64.85)),
     L4(1.309, Units.degreesToRadians(54.85)),
     BOTTOM(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-90)),
     GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-36)),
@@ -370,157 +501,6 @@ public final class Constants {
     public double getDifference(double height, double angle) {
       return Math.abs(this.height - height) / 0.1
           + Math.abs(this.armAngleRadians - angle) / Units.degreesToRadians(4);
-    }
-  }
-
-  public final class FieldConstants {
-    public static final Translation2d TEAM_BLUE_REEF_CENTER = new Translation2d(4.489, 4.028);
-    public static final Translation2d TEAM_RED_REEF_CENTER = new Translation2d(13.059, 4.028);
-    public static final Translation2d TEAM_BLUE_PROCESSOR = new Translation2d(6.026, 0);
-    public static final Translation2d TEAM_RED_PROCESSOR = new Translation2d(11.585, 8.062);
-
-    public static final Pose2d SOURCE_RL =
-        new Pose2d(16.994, 0.355, Rotation2d.fromDegrees(35.988608));
-    public static final Pose2d SOURCE_RR =
-        new Pose2d(16.725, 7.518, Rotation2d.fromDegrees(-215.988608));
-    public static final Pose2d SOURCE_BR =
-        new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608));
-    public static final Pose2d SOURCE_BL =
-        new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608));
-
-    // Field width and length
-    public static final double FIELD_X_DIMENSION = 17.548; // Length
-    public static final double FIELD_Y_DIMENSION = 8.052; // Width
-
-    public static Pose2d closestSourceTo(Pose2d pose) {
-      Pose2d closest = SOURCE_RL;
-      double closestDistance = pose.getTranslation().getDistance(SOURCE_RL.getTranslation());
-      double distance = pose.getTranslation().getDistance(SOURCE_RR.getTranslation());
-      if (distance < closestDistance) {
-        closest = SOURCE_RR;
-        closestDistance = distance;
-      }
-      distance = pose.getTranslation().getDistance(SOURCE_BR.getTranslation());
-      if (distance < closestDistance) {
-        closest = SOURCE_BR;
-        closestDistance = distance;
-      }
-      distance = pose.getTranslation().getDistance(SOURCE_BL.getTranslation());
-      if (distance < closestDistance) {
-        closest = SOURCE_BL;
-      }
-      return closest;
-    }
-  }
-
-  public enum RobotAlignPose {
-    // Processors
-    BProcessor(new Pose2d(6, 0.43, Rotation2d.fromDegrees(270)), true),
-    RProcessor(new Pose2d(11.5, 7.59, Rotation2d.fromDegrees(90)), true),
-
-    BSourceOuterLeft(new Pose2d(1.367, 7.274, Rotation2d.fromDegrees(35.734)), false),
-    BSourceOuterRight(new Pose2d(1.211, 0.872, Rotation2d.fromDegrees(144.118)), false),
-    RSourceOuterLeft(
-        new Pose2d(FlippingUtil.fieldSizeX - 1.211, 0.872, Rotation2d.fromDegrees(-144.118)),
-        false),
-    RSourceOuterRight(
-        new Pose2d(FlippingUtil.fieldSizeX - 1.367, 7.274, Rotation2d.fromDegrees(-35.734)), false);
-    // BSourceInnerLeft(new Pose2d(0.683, 6.711, Rotation2d.fromDegrees(36.209)),
-    // false),
-    // BSourceInnerRight(new Pose2d(0.693, 1.315, Rotation2d.fromDegrees(143.596)),
-    // false),
-    // RSourceInnerLeft(
-    // new Pose2d(FlippingUtil.fieldSizeX - 0.693, 1.315,
-    // Rotation2d.fromDegrees(-143.791)),
-    // false),
-    // RSourceInnerRight(
-    // new Pose2d(FlippingUtil.fieldSizeX - 0.683, 6.711,
-    // Rotation2d.fromDegrees(-36.209)),
-    // false);
-
-    private Pose2d pose;
-    private boolean useTranslation;
-
-    private RobotAlignPose(Pose2d pose, boolean useTranslation) {
-      this.pose = pose;
-      this.useTranslation = useTranslation;
-    }
-
-    public Pose2d getRawPose() {
-      return pose;
-    }
-
-    public Pose2d getFirstStagePose() {
-      return pose.transformBy(new Transform2d(new Translation2d(-0.2 + 0.6, 0), Rotation2d.kZero));
-    }
-
-    public Pose2d getNearPose() {
-      return pose.transformBy(new Transform2d(new Translation2d(0.1 + 0.6, 0), Rotation2d.kZero));
-    }
-
-    public Pose2d getFarPose() {
-      return pose.transformBy(new Transform2d(new Translation2d(0.05 + 0.6, 0), Rotation2d.kZero));
-    }
-
-    public boolean useTranslation() {
-      return useTranslation;
-    }
-
-    public static RobotAlignPose closestTo(Pose2d pose, double maxDistance) {
-      RobotAlignPose closest = null;
-      double closestDistance = Double.MAX_VALUE;
-      for (RobotAlignPose align : RobotAlignPose.values()) {
-        double distance = align.getFarPose().getTranslation().getDistance(pose.getTranslation());
-        if (distance <= maxDistance && distance < closestDistance) {
-          closest = align;
-          closestDistance = distance;
-        }
-      }
-      return closest;
-    }
-  }
-
-  public enum FieldPosition {
-    ReefCenter(
-        Constants.FieldConstants.TEAM_RED_REEF_CENTER,
-        Constants.FieldConstants.TEAM_BLUE_REEF_CENTER),
-
-    Processor(
-        Constants.FieldConstants.TEAM_RED_PROCESSOR, Constants.FieldConstants.TEAM_BLUE_PROCESSOR);
-
-    private Translation2d red;
-    private Translation2d blue;
-
-    private FieldPosition(Translation2d red, Translation2d blue) {
-      this.red = red;
-      this.blue = blue;
-    }
-
-    public Translation2d getPose() {
-      if (DriverStationUtils.getCurrentAlliance() == Alliance.Red) return red;
-      else return blue;
-    }
-  }
-
-  public enum FieldStartingLocation {
-    BargeLeft(new Pose2d(7.004, 6.171, Rotation2d.fromDegrees(-152.840))),
-    BargeCenter(new Pose2d(7.145, 4.026, Rotation2d.fromDegrees(180.000))),
-    BargeRight(new Pose2d(6.961, 1.939, Rotation2d.fromDegrees(127.847))),
-    ReefTest(new Pose2d(2.082, 4.053, Rotation2d.fromDegrees(-120))),
-    ProccessorTest(new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90)));
-
-    private final Pose2d m_transformRed;
-    private final Pose2d m_transformBlue;
-
-    private FieldStartingLocation(Pose2d poseBlue) {
-      m_transformRed = FlippingUtil.flipFieldPose(poseBlue);
-      m_transformBlue = poseBlue;
-    }
-
-    public Pose2d getPose() {
-      return DriverStationUtils.getCurrentAlliance() == Alliance.Red
-          ? m_transformRed
-          : m_transformBlue;
     }
   }
 
@@ -857,7 +837,7 @@ public final class Constants {
 
     public static final double ROBOT_WHEEL_DISTANCE_LENGTH = 0.5588;
 
-    public static final double FRAME_WIDTH = 0.762;
+    public static final double FRAME_WIDTH = Inches.of(30).in(Meters);
     public static final double FRAME_WITH_BUMPER_WIDTH = FRAME_WIDTH + Inches.of(6.5).in(Meters);
     public static final double MAX_MECHANISM_HEIGHT = 2.1336;
 
