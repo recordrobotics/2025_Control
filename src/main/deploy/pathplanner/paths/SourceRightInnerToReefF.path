@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 5.792986388845264,
-        "y": 2.4807589964689676
+        "x": 5.845164288845264,
+        "y": 2.3851703510481723
       },
       "prevControl": {
-        "x": 4.792986388845264,
-        "y": 2.4807589964689676
+        "x": 4.845164288845264,
+        "y": 2.3851703510481723
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 120
+    "rotation": 120.00000000000001
   },
   "reversed": false,
   "folder": "Source and Reef",
