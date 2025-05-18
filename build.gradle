@@ -189,3 +189,5 @@ gversion {
     timeZone     = "America/New_York" // Use preferred time zone
     indent       = "  "
 }
+
+project.compileJava.finalizedBy(pathgenerator)
