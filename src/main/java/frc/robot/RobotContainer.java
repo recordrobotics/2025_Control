@@ -26,6 +26,7 @@ import frc.robot.commands.CoralIntakeMoveL1;
 import frc.robot.commands.CoralIntakeShootL1;
 import frc.robot.commands.CoralShoot;
 import frc.robot.commands.ElevatorAlgaeToggled;
+import frc.robot.commands.ElevatorMove;
 import frc.robot.commands.ElevatorReefToggled;
 import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
@@ -337,13 +338,41 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
         .onTrue(
             Commands.either(
-                new DeferredCommand(
-                    () ->
-                        new AutoScore(
-                            CoralPosition.closestTo(
-                                RobotContainer.poseSensorFusion.getEstimatedPosition())),
-                    Set.of()),
-                new ProcessorScore(false),
+                Commands.none(), new ProcessorScore(false), () -> elevatorHead.hasCoral()))
+        .whileTrue(
+            new DeferredCommand(
+                () ->
+                    new AutoScore(
+                        CoralPosition.closestTo(
+                            RobotContainer.poseSensorFusion.getEstimatedPosition())),
+                Set.of()))
+        .onFalse(
+            Commands.either(
+                new CoralShoot()
+                    .andThen(
+                        ReefAlign.alignTarget(
+                                CoralPosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition()),
+                                () ->
+                                    DashboardUI.Overview.getControl()
+                                        .getReefLevelSwitchValue()
+                                        .toCoralLevel(),
+                                true,
+                                false) // back away
+                            .withTimeout(1.0)
+                            .finallyDo(() -> RobotContainer.drivetrain.kill())
+                            .asProxy()
+                            .alongWith(
+                                new DeferredCommand(
+                                        () ->
+                                            new WaitCommand(
+                                                RobotContainer.elevator.getNearestHeight()
+                                                        == ElevatorHeight.L4
+                                                    ? 0.3
+                                                    : 0),
+                                        Set.of())
+                                    .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()))),
+                Commands.none(),
                 () -> elevatorHead.hasCoral()));
   }
 
