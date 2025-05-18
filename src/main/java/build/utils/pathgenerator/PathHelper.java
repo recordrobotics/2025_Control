@@ -7,6 +7,12 @@ import java.io.File;
 public final class PathHelper {
   private PathHelper() {}
 
+  private static int counter = 0;
+
+  public static int getCounter() {
+    return counter;
+  }
+
   public static void editLinkedWaypoint(String name, Pose2d pose) {
     for (File path :
         new File(FileUtils.getLaunchDirectory(), "src/main/deploy/pathplanner/paths").listFiles()) {
@@ -18,7 +24,8 @@ public final class PathHelper {
         if (waypoint.get("linkedName") != null
             && name.equals(waypoint.get("linkedName").asText())) {
 
-          System.out.println("Editing waypoint " + name + " in " + path.getName());
+          counter++;
+          // System.out.println("Editing waypoint " + name + " in " + path.getName());
 
           if (waypoint.has("nextControl") && waypoint.get("nextControl").isObject()) {
 

@@ -22,5 +22,8 @@ public final class Main {
               .getFirstStagePose()
               .transformBy(new Transform2d(FIRST_STAGE_OFFSET, Meters.of(0), Rotation2d.kZero)));
     }
+
+    System.out.println(
+        "PathGenerator finished with " + PathHelper.getCounter() + " waypoints updated.");
   }
 }
