@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -72,13 +73,14 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     sysIdRoutine =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(2.0).per(Second),
-                Volts.of(1.5),
-                Seconds.of(1.3),
+                Volts.of(4.0).per(Second),
+                Volts.of(3.5),
+                Seconds.of(1.0),
                 (state -> Logger.recordOutput("Climber/SysIdTestState", state.toString()))),
             new SysIdRoutine.Mechanism((v) -> io.setVoltage(v.in(Volts)), null, this));
 
     SmartDashboard.putNumber("Climber", Constants.Climber.START_ROTATIONS.in(Rotations));
+    SmartDashboard.putBoolean("Ratchet", false);
   }
 
   public enum ClimberState {
@@ -93,7 +95,6 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   @Override
   public void periodic() {
-
     if (currentState == ClimberState.Climb) {
       lastClimbVoltage =
           SimpleMath.slewRateLimitLinear(
@@ -104,7 +105,8 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
       }
 
       if (Timer.getFPGATimestamp() - lastExpectedKVTime
-          > Constants.Climber.CLIMB_EXPECTED_KV_TIMEOUT.in(Seconds)) {
+              > Constants.Climber.CLIMB_EXPECTED_KV_TIMEOUT.in(Seconds)
+          && !atGoal()) {
         // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
         lastClimbVoltage = 0;
         io.setVoltage(0);
@@ -121,7 +123,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   @AutoLogOutput
   public boolean atGoal() {
     if (currentState == ClimberState.Climb) {
-      return getRotations() <= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
+      return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
     } else if (currentState == ClimberState.Extend) {
       return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)) < 0.01;
     } else {
@@ -172,8 +174,10 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     return io.getVoltage();
   }
 
+  @AutoLogOutput
   public double getEstimatedkV() {
-    return io.getVelocity() / io.getVoltage();
+    if (MathUtil.isNear(0, io.getVelocity(), 0.2)) return 0;
+    return io.getVoltage() / io.getVelocity();
   }
 
   @Override
