@@ -69,6 +69,11 @@ task(replayWatch, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task(pathgenerator, type: JavaExec) {
+    mainClass = "build.utils.pathgenerator.Main"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 5.
 dependencies {
@@ -132,13 +137,11 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
-
-
 spotless {
     java {
         target fileTree('.') {
             include '**/*.java'
-            exclude '**/build/**', '**/build-*/**', '**/Main.java', '**/BuildConstants.java' // Main has ascii art, don't touch
+            exclude 'build/**', '**/build-*/**', 'src/main/java/frc/robot/Main.java', '**/BuildConstants.java' // Main has ascii art, don't touch
         }
         toggleOffOn()
         googleJavaFormat()
@@ -176,7 +179,6 @@ spotless {
         endWithNewline()
     }
 }
-
 
 project.compileJava.dependsOn(createVersionFile)
 gversion {

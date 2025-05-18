@@ -87,6 +87,8 @@ public final class Constants {
       HIGH
     }
 
+    public static final Distance ALGAE_OFFSET = Meters.of(-0.1055532306);
+
     public static enum AlgaePosition implements IGamePosition {
       BlueAB(AlgaeLevel.HIGH, 18),
       BlueCD(AlgaeLevel.LOW, 17),
@@ -118,7 +120,7 @@ public final class Constants {
             .transformBy(
                 new Transform2d(
                     Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2 + Centimeters.of(6).in(Meters),
-                    0,
+                    ALGAE_OFFSET.in(Meters),
                     Rotation2d.k180deg));
       }
 
@@ -148,8 +150,8 @@ public final class Constants {
       }
     }
 
-    private static double REEF_SEGMENT_OFFSET = 0.1743095;
-    private static double SHOOTER_OFFSET = 0.182088;
+    private static Distance REEF_SEGMENT_OFFSET = Meters.of(0.1743095);
+    private static Distance SHOOTER_OFFSET = Meters.of(0.182088);
 
     public static enum CoralPosition implements IGamePosition {
       BlueA(18, 0),
@@ -192,7 +194,8 @@ public final class Constants {
             .transformBy(
                 new Transform2d(
                     Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
-                    (side == 0 ? -REEF_SEGMENT_OFFSET : REEF_SEGMENT_OFFSET) + SHOOTER_OFFSET,
+                    (side == 0 ? -REEF_SEGMENT_OFFSET.in(Meters) : REEF_SEGMENT_OFFSET.in(Meters))
+                        + SHOOTER_OFFSET.in(Meters),
                     Rotation2d.k180deg));
       }
 
