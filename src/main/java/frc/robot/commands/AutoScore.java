@@ -3,8 +3,8 @@ package frc.robot.commands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -55,7 +55,8 @@ public class AutoScore extends SequentialCommandGroup {
                                     .toCoralLevel()
                                     .getHeight())
                             .asProxy())),
-        new InstantCommand(() -> System.out.println("coral sshotoer")),
+        new WaitUntilCommand(
+            () -> RobotState.isAutonomous() || !DashboardUI.Overview.getControl().getAutoScore()),
         new CoralShoot()
             .andThen(
                 () ->
