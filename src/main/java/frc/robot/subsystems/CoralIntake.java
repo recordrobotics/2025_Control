@@ -178,6 +178,7 @@ public class CoralIntake extends KillableSubsystem
     return io.getArmVoltage();
   }
 
+  @AutoLogOutput
   public CoralIntakeState getState() {
     return currentIntakeState;
   }
@@ -207,6 +208,7 @@ public class CoralIntake extends KillableSubsystem
       case PUSH_READY:
         setWheel(Constants.CoralIntake.INTAKE_SPEED);
         setArm(Constants.CoralIntake.ARM_PUSH);
+        break;
       case PUSH_OUT:
         intakePushAndPullRampStart = Timer.getTimestamp();
         setWheel(Constants.CoralIntake.PUSH_OUT_SPEED);
