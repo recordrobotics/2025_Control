@@ -28,8 +28,7 @@ public class CoralIntakeFromGround extends SequentialCommandGroup {
         new InstantCommand(
             () -> RobotContainer.coralIntake.set(CoralIntakeState.GROUND),
             RobotContainer.coralIntake),
-        // start moving elevator to intake position
-        new ScheduleCommand(new ElevatorMove(ElevatorHeight.INTAKE)),
+        new ElevatorMove(ElevatorHeight.INTAKE),
         new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()),
         new ScheduleCommand(
             RobotContainer.lights

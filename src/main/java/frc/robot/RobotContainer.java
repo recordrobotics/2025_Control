@@ -262,7 +262,10 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntake())
         .toggleOnTrue(new CoralIntakeFromGroundToggled());
 
-    new Trigger(() -> DashboardUI.Overview.getControl().getCoralGroundIntakeSimple())
+    new Trigger(
+            () ->
+                DashboardUI.Overview.getControl().getCoralGroundIntakeSimple()
+                    && !elevatorHead.hasCoral())
         .onTrue(new CoralIntakeFromGround())
         .onFalse(
             Commands.either(
@@ -343,11 +346,16 @@ public class RobotContainer {
                 new DeferredCommand(
                     () ->
                         new AutoScore(
-                            IGamePosition.closestTo(
-                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                                CoralPosition.values())),
+                                IGamePosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                    CoralPosition.values()))
+                            .handleInterrupt(
+                                () -> {
+                                  System.out.println("AutoScore interrupted!!! :(");
+                                })
+                            .asProxy(),
                     Set.of()),
-                new ProcessorScore(false),
+                new ProcessorScore(false).asProxy(),
                 () -> elevatorHead.hasCoral()));
   }
 

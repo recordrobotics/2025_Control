@@ -205,7 +205,7 @@ public class CoralIntake extends KillableSubsystem
         setArm(Constants.CoralIntake.ARM_INTAKE);
         break;
       case PUSH_READY:
-        setWheel(0);
+        setWheel(Constants.CoralIntake.INTAKE_SPEED);
         setArm(Constants.CoralIntake.ARM_PUSH);
       case PUSH_OUT:
         intakePushAndPullRampStart = Timer.getTimestamp();

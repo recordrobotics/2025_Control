@@ -448,7 +448,7 @@ public final class Constants {
     public static final double MAX_ARM_VELOCITY = 12;
     public static final double MAX_ARM_ACCELERATION = 40;
 
-    public static final double kP = 2.996;
+    public static final double kP = 15;
     public static final double kI = 0;
     public static final double kD = 0.28181;
     public static final double kG = 0.53175;
@@ -627,7 +627,7 @@ public final class Constants {
 
     public static final double PUSH_OUT_RAMP_TIME = 0.5;
 
-    public static final double arm_kP = 4.8919;
+    public static final double arm_kP = 34.8919;
     public static final double arm_kI = 0;
     public static final double arm_kD = 0.11072;
     public static final double arm_kG = 0.37793;
