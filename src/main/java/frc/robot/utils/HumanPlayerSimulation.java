@@ -98,13 +98,13 @@ public class HumanPlayerSimulation extends SubsystemBase {
     private Pose2d getSourcePose() {
       switch (source) {
         case RedLeft:
-          return Constants.Game.SourcePosition.RedCoralLeft.getPose();
+          return Constants.Game.SourceCoralSpawnPosition.RedCoralLeft.getPose();
         case RedRight:
-          return Constants.Game.SourcePosition.RedCoralRight.getPose();
+          return Constants.Game.SourceCoralSpawnPosition.RedCoralRight.getPose();
         case BlueLeft:
-          return Constants.Game.SourcePosition.BlueCoralLeft.getPose();
+          return Constants.Game.SourceCoralSpawnPosition.BlueCoralLeft.getPose();
         case BlueRight:
-          return Constants.Game.SourcePosition.BlueCoralRight.getPose();
+          return Constants.Game.SourceCoralSpawnPosition.BlueCoralRight.getPose();
         default:
           throw new IllegalArgumentException("Invalid source: " + source);
       }

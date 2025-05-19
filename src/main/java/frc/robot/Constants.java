@@ -222,23 +222,38 @@ public final class Constants {
       }
     }
 
+    public static enum SourceCoralSpawnPosition implements IGamePosition {
+      // Coral is only used for simulation, no point in making a april tag version
+      BlueCoralLeft(new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608))),
+      BlueCoralRight(new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608))),
+      RedCoralLeft(BlueCoralLeft),
+      RedCoralRight(BlueCoralRight);
+
+      private Pose2d pose;
+
+      private SourceCoralSpawnPosition(Pose2d pose) {
+        this.pose = pose;
+      }
+
+      private SourceCoralSpawnPosition(SourceCoralSpawnPosition blueSide) {
+        this.pose = FlippingUtil.flipFieldPose(blueSide.getPose());
+      }
+
+      public Pose2d getPose() {
+        return pose;
+      }
+    }
+
     public static enum SourcePosition implements IGamePosition {
       BlueOuterLeft(13, 1),
       BlueOuterRight(12, 1),
       BlueInnerLeft(13, 0),
       BlueInnerRight(12, 0),
 
-      // Coral is only used for simulation, no point in making a april tag version
-      BlueCoralLeft(new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608))),
-      BlueCoralRight(new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608))),
-
       RedOuterLeft(1, 1),
       RedOuterRight(2, 1),
       RedInnerLeft(1, 0),
-      RedInnerRight(2, 0),
-
-      RedCoralLeft(BlueCoralLeft),
-      RedCoralRight(BlueCoralRight);
+      RedInnerRight(2, 0);
 
       private Pose2d pose;
 
@@ -261,11 +276,7 @@ public final class Constants {
                     (side == 0
                         ? -Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2
                         : Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2),
-                    Rotation2d.k180deg));
-      }
-
-      private SourcePosition(SourcePosition blueSide) {
-        this.pose = FlippingUtil.flipFieldPose(blueSide.getPose());
+                    Rotation2d.kCCW_90deg));
       }
 
       public Pose2d getPose() {
