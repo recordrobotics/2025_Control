@@ -298,8 +298,14 @@ public class JoystickXboxSimple extends AbstractControl {
     boolean nearSource =
         closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < 2.3
             && Math.abs(
-                    closestSource.getPose().getRotation().minus(robot.getRotation()).getDegrees())
+                    closestSource
+                        .getPose()
+                        .getRotation()
+                        .minus(robot.getRotation())
+                        .getMeasure()
+                        .abs(Degrees))
                 < 80;
+
     return nearSource;
   }
 }
