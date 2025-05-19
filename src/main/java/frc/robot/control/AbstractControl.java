@@ -12,6 +12,9 @@ import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.assists.DrivetrainControl;
 
 public abstract class AbstractControl {
+
+  public abstract void update();
+
   // Movement
   public abstract DrivetrainControl getDrivetrainControl();
 

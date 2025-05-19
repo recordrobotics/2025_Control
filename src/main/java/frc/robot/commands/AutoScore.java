@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -31,7 +32,7 @@ public class AutoScore extends SequentialCommandGroup {
                                 .toCoralLevel(),
                         false,
                         true) // align until inturupted
-                    .withTimeout(1.0)
+                    .withTimeout(2.5)
                     .asProxy())
             .alongWith(
                 new WaitUntilCommand(
@@ -43,42 +44,63 @@ public class AutoScore extends SequentialCommandGroup {
                           Pose2d pose = reefPole.getPose(level);
 
                           return RobotContainer.poseSensorFusion
-                                  .getEstimatedPosition()
-                                  .getTranslation()
-                                  .getDistance(pose.getTranslation())
-                              < 0.3;
+                                      .getEstimatedPosition()
+                                      .getTranslation()
+                                      .getDistance(pose.getTranslation())
+                                  < 0.3
+                              || ReefAlign.wasInterrupted();
                         })
                     .andThen(
-                        new ElevatorMove(
-                                DashboardUI.Overview.getControl()
-                                    .getReefLevelSwitchValue()
-                                    .toCoralLevel()
-                                    .getHeight())
-                            .asProxy())),
-        new WaitUntilCommand(
-            () -> RobotState.isAutonomous() || !DashboardUI.Overview.getControl().getAutoScore()),
-        new CoralShoot()
-            .andThen(
-                () ->
-                    backawayTargetPose =
-                        RobotContainer.poseSensorFusion
-                            .getEstimatedPosition()
-                            .transformBy(new Transform2d(-0.5, 0, Rotation2d.kZero)))
-            .andThen(
-                CommandUtils.finishOnInterrupt(
-                        new AlignToPose(() -> backawayTargetPose, true) // back away
-                            .withTimeout(1.0)
-                            .asProxy())
-                    .finallyDo(() -> RobotContainer.drivetrain.kill())
-                    .alongWith(
                         new DeferredCommand(
-                                () ->
-                                    new WaitCommand(
-                                        RobotContainer.elevator.getNearestHeight()
-                                                == ElevatorHeight.L4
-                                            ? 0.3
-                                            : 0),
-                                Set.of())
-                            .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()))));
+                            () ->
+                                new ElevatorMove(
+                                        DashboardUI.Overview.getControl()
+                                            .getReefLevelSwitchValue()
+                                            .toCoralLevel()
+                                            .getHeight())
+                                    .asProxy(),
+                            Set.of())))
+            .onlyWhile(
+                () ->
+                    RobotState.isAutonomous() || DashboardUI.Overview.getControl().getAutoScore()),
+        Commands.either(
+            new WaitUntilCommand(
+                    () ->
+                        RobotState.isAutonomous()
+                            || !DashboardUI.Overview.getControl().getAutoScore())
+                .andThen(
+                    new CoralShoot()
+                        .andThen(
+                            () ->
+                                backawayTargetPose =
+                                    RobotContainer.poseSensorFusion
+                                        .getEstimatedPosition()
+                                        .transformBy(new Transform2d(-0.5, 0, Rotation2d.kZero)))
+                        .andThen(
+                            CommandUtils.finishOnInterrupt(
+                                    new AlignToPose(() -> backawayTargetPose) // back away
+                                        .withTimeout(1.0)
+                                        .asProxy())
+                                .finallyDo(() -> RobotContainer.drivetrain.kill())
+                                .alongWith(
+                                    new DeferredCommand(
+                                            () ->
+                                                new WaitCommand(
+                                                    RobotContainer.elevator.getNearestHeight()
+                                                            == ElevatorHeight.L4
+                                                        ? 0.3
+                                                        : 0),
+                                            Set.of())
+                                        .andThen(
+                                            new ElevatorMove(ElevatorHeight.BOTTOM).asProxy())))),
+            new ElevatorMove(ElevatorHeight.BOTTOM).asProxy(),
+            () ->
+                RobotState.isAutonomous()
+                    || DashboardUI.Overview.getControl().getAutoScore()
+                    || RobotContainer.elevator.getNearestHeight()
+                        == DashboardUI.Overview.getControl()
+                            .getReefLevelSwitchValue()
+                            .toCoralLevel()
+                            .getHeight()));
   }
 }

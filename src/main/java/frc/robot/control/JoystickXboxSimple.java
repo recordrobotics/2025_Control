@@ -45,11 +45,12 @@ public class JoystickXboxSimple extends AbstractControl {
 
   private Transform2d lastVelocity = new Transform2d();
   private Transform2d lastAcceleration = new Transform2d();
+  private Transform2d velocity = new Transform2d();
+  private Transform2d acceleration = new Transform2d();
+  private Transform2d jerk = new Transform2d();
 
   @Override
-  public DrivetrainControl getDrivetrainControl() {
-    // Gets information needed to drive
-
+  public void update() {
     var xy = getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive()));
 
     double x = xy.getFirst() * getDirectionalSpeedLevel();
@@ -63,13 +64,13 @@ public class JoystickXboxSimple extends AbstractControl {
       x = -temp;
     }
 
-    Transform2d velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
-    Transform2d acceleration =
+    velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
+    acceleration =
         new Transform2d(
                 velocity.getTranslation().minus(lastVelocity.getTranslation()).div(0.02),
                 velocity.getRotation().minus(lastVelocity.getRotation()))
             .div(0.02);
-    Transform2d jerk =
+    jerk =
         new Transform2d(
                 acceleration.getTranslation().minus(lastAcceleration.getTranslation()).div(0.02),
                 acceleration.getRotation().minus(lastAcceleration.getRotation()))
@@ -77,7 +78,10 @@ public class JoystickXboxSimple extends AbstractControl {
 
     lastVelocity = velocity;
     lastAcceleration = acceleration;
+  }
 
+  @Override
+  public DrivetrainControl getDrivetrainControl() {
     if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()) {
       return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
     } else {

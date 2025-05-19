@@ -133,6 +133,9 @@ public class Robot extends LoggedRobot {
     // and running subsystem periodic() methods. This must be called from the
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
+
+    DashboardUI.Overview.getControl().update();
+
     CommandScheduler.getInstance().run();
 
     // Return to normal thread priority
