@@ -44,14 +44,20 @@ public class AlignToPose extends Command {
   public AlignToPose(Supplier<Pose2d> pose, boolean doTranslation) {
     this.targetPose = pose;
 
+    var p = pose.get();
+
     if (doTranslation) {
       xPID.setTolerance(Constants.Align.translationalTolerance);
       yPID.setTolerance(Constants.Align.translationalTolerance);
-      xPID.setGoal(pose.get().getX());
-      yPID.setGoal(pose.get().getY());
+      if (p != null) {
+        xPID.setGoal(p.getX());
+        yPID.setGoal(p.getY());
+      }
     }
     rotPID.setTolerance(Constants.Align.rotationalTolerance);
-    rotPID.setGoal(pose.get().getRotation().getRadians());
+    if (p != null) {
+      rotPID.setGoal(p.getRotation().getRadians());
+    }
     rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     this.doTranslation = doTranslation;
@@ -65,6 +71,15 @@ public class AlignToPose extends Command {
     xPID.reset(pose.getX());
     yPID.reset(pose.getY());
     rotPID.reset(pose.getRotation().getRadians());
+
+    var p = targetPose.get();
+    if (p != null) {
+      if (doTranslation) {
+        xPID.setGoal(p.getX());
+        yPID.setGoal(p.getY());
+      }
+      rotPID.setGoal(p.getRotation().getRadians());
+    }
   }
 
   @Override
@@ -77,13 +92,19 @@ public class AlignToPose extends Command {
   public void execute() {
     Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
 
-    double x = xPID.calculate(pose.getX(), targetPose.get().getX());
-    double y = yPID.calculate(pose.getY(), targetPose.get().getY());
-    double rot =
-        rotPID.calculate(
-            pose.getRotation().getRadians(), targetPose.get().getRotation().getRadians());
+    var p = targetPose.get();
 
-    Logger.recordOutput("AlignToPose/Target", targetPose.get());
+    double x = 0;
+    double y = 0;
+    double rot = 0;
+
+    if (p != null) {
+      x = xPID.calculate(pose.getX(), p.getX());
+      y = yPID.calculate(pose.getY(), p.getY());
+      rot = rotPID.calculate(pose.getRotation().getRadians(), p.getRotation().getRadians());
+    }
+
+    Logger.recordOutput("AlignToPose/Target", p);
     Logger.recordOutput("AlignToPose/AtGoal/X", xPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Y", yPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Rot", rotPID.atGoal());

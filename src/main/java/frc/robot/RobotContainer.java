@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralPosition;
@@ -29,7 +28,6 @@ import frc.robot.commands.CoralIntakeMoveL1;
 import frc.robot.commands.CoralIntakeShootL1;
 import frc.robot.commands.CoralShoot;
 import frc.robot.commands.ElevatorAlgaeToggled;
-import frc.robot.commands.ElevatorMove;
 import frc.robot.commands.ElevatorReefToggled;
 import frc.robot.commands.GroundAlgaeToggled;
 // Local imports
@@ -342,43 +340,14 @@ public class RobotContainer {
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
         .onTrue(
             Commands.either(
-                Commands.none(), new ProcessorScore(false), () -> elevatorHead.hasCoral()))
-        .whileTrue(
-            new DeferredCommand(
-                () ->
-                    new AutoScore(
-                        IGamePosition.closestTo(
-                            RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                            CoralPosition.values())),
-                Set.of()))
-        .onFalse(
-            Commands.either(
-                new CoralShoot()
-                    .andThen(
-                        ReefAlign.alignTarget(
-                                IGamePosition.closestTo(
-                                    RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                                    CoralPosition.values()),
-                                () ->
-                                    DashboardUI.Overview.getControl()
-                                        .getReefLevelSwitchValue()
-                                        .toCoralLevel(),
-                                true,
-                                false) // back away
-                            .withTimeout(1.0)
-                            .finallyDo(() -> RobotContainer.drivetrain.kill())
-                            .asProxy()
-                            .alongWith(
-                                new DeferredCommand(
-                                        () ->
-                                            new WaitCommand(
-                                                RobotContainer.elevator.getNearestHeight()
-                                                        == ElevatorHeight.L4
-                                                    ? 0.3
-                                                    : 0),
-                                        Set.of())
-                                    .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy()))),
-                Commands.none(),
+                new DeferredCommand(
+                    () ->
+                        new AutoScore(
+                            IGamePosition.closestTo(
+                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                CoralPosition.values())),
+                    Set.of()),
+                new ProcessorScore(false),
                 () -> elevatorHead.hasCoral()));
   }
 
