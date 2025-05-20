@@ -17,15 +17,8 @@ public class AlignToPose extends Command {
 
   private static DrivetrainControl drivetrainControl = null;
 
-  ProfiledPIDController xPID =
+  ProfiledPIDController tPID =
       new ProfiledPIDController( // meters
-          9,
-          0,
-          0.01,
-          new TrapezoidProfile.Constraints(
-              Constants.Align.MAX_VELOCITY, Constants.Align.MAX_ACCELERATION));
-  ProfiledPIDController yPID = // meters
-      new ProfiledPIDController(
           9,
           0,
           0.01,
@@ -46,11 +39,9 @@ public class AlignToPose extends Command {
 
     var p = pose.get();
 
-    xPID.setTolerance(Constants.Align.translationalTolerance);
-    yPID.setTolerance(Constants.Align.translationalTolerance);
+    tPID.setTolerance(Constants.Align.translationalTolerance);
     if (p != null) {
-      xPID.setGoal(p.getX());
-      yPID.setGoal(p.getY());
+      tPID.setGoal(p.getX());
     }
 
     rotPID.setTolerance(Constants.Align.rotationalTolerance);
@@ -65,21 +56,23 @@ public class AlignToPose extends Command {
   @Override
   public void initialize() {
     Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-    xPID.reset(pose.getX());
-    yPID.reset(pose.getY());
+    tPID.reset(pose.getX());
     rotPID.reset(pose.getRotation().getRadians());
 
     var p = targetPose.get();
     if (p != null) {
-      xPID.setGoal(p.getX());
-      yPID.setGoal(p.getY());
+      tPID.setGoal(p.getX());
       rotPID.setGoal(p.getRotation().getRadians());
     }
   }
 
+  private double getTPidGoal() {
+    return 1;
+  }
+
   @Override
   public boolean isFinished() {
-    return xPID.atGoal() && yPID.atGoal() && rotPID.atGoal();
+    return tPID.atGoal() && rotPID.atGoal();
   }
 
   @Override
@@ -93,14 +86,12 @@ public class AlignToPose extends Command {
     double rot = 0;
 
     if (p != null) {
-      x = xPID.calculate(pose.getX(), p.getX());
-      y = yPID.calculate(pose.getY(), p.getY());
+      x = tPID.calculate(pose.getX(), p.getX());
       rot = rotPID.calculate(pose.getRotation().getRadians(), p.getRotation().getRadians());
     }
 
     Logger.recordOutput("AlignToPose/Target", p);
-    Logger.recordOutput("AlignToPose/AtGoal/X", xPID.atGoal());
-    Logger.recordOutput("AlignToPose/AtGoal/Y", yPID.atGoal());
+    Logger.recordOutput("AlignToPose/AtGoal/T", tPID.atGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Rot", rotPID.atGoal());
 
     drivetrainControl =

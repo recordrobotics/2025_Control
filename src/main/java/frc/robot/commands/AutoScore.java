@@ -33,7 +33,6 @@ public class AutoScore extends SequentialCommandGroup {
                             DashboardUI.Overview.getControl()
                                 .getReefLevelSwitchValue()
                                 .toCoralLevel(),
-                        false,
                         true)
                     .handleInterrupt(() -> alignTimeout = true) // align until inturupted
                     .withTimeout(2.5)
@@ -80,7 +79,7 @@ public class AutoScore extends SequentialCommandGroup {
                                 backawayTargetPose =
                                     RobotContainer.poseSensorFusion
                                         .getEstimatedPosition()
-                                        .transformBy(new Transform2d(-0.5, 0, Rotation2d.kZero)))
+                                        .transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero)))
                         .andThen(
                             CommandUtils.finishOnInterrupt(
                                     new AlignToPose(() -> backawayTargetPose) // back away

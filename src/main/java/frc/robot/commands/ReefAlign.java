@@ -42,18 +42,14 @@ public class ReefAlign {
           return alignTarget(
               alignPose,
               () -> DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel(),
-              false,
               true);
         },
         Set.of(RobotContainer.drivetrain));
   }
 
   public static Command alignTarget(
-      CoralPosition pole, Supplier<CoralLevel> level, boolean isBackaway, boolean continueAlign) {
+      CoralPosition pole, Supplier<CoralLevel> level, boolean continueAlign) {
     Pose2d targetPose = pole.getPose(level.get());
-    if (isBackaway) {
-      targetPose = targetPose.transformBy(new Transform2d(-0.5, 0, Rotation2d.kZero));
-    }
 
     Pose2d pathTarget = targetPose.transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero));
 
@@ -62,11 +58,7 @@ public class ReefAlign {
             PathAlign.createForReef(pathTarget),
             new AlignToPose(
                 () -> {
-                  Pose2d pose = pole.getPose(level.get());
-                  if (isBackaway) {
-                    pose = pose.transformBy(new Transform2d(-0.5, 0, Rotation2d.kZero));
-                  }
-                  return pose;
+                  return pole.getPose(level.get());
                 }))
         .raceWith(
             new WaitUntilCommand(
