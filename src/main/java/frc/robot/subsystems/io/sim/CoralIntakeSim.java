@@ -87,7 +87,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
             width.in(Meters),
             lengthExtended.in(Meters),
             IntakeSimulation.IntakeSide.LEFT); // apparently it's on the left in maplesim
-    intakeRect.translate(Inches.of(-3.3999).in(Meters), 0);
+    intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
     intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);
   }

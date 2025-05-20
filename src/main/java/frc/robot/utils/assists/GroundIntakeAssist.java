@@ -30,7 +30,13 @@ public class GroundIntakeAssist implements IAssist {
       return false;
     }
 
-    var robotPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+    var robotPose =
+        RobotContainer.poseSensorFusion
+            .getEstimatedPosition()
+            .transformBy(
+                new Transform2d(
+                    Constants.CoralIntake.INTAKE_X_OFFSET, Meters.zero(), Rotation2d.kZero));
+
     var driverVector =
         DrivetrainControl.robotToField(control.getDriverVelocity(), robotPose.getRotation())
             .getTranslation();
