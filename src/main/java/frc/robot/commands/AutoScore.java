@@ -34,10 +34,10 @@ public class AutoScore extends SequentialCommandGroup {
                                 .getReefLevelSwitchValue()
                                 .toCoralLevel(),
                         false,
-                        true) // align until inturupted
+                        true)
+                    .handleInterrupt(() -> alignTimeout = true) // align until inturupted
                     .withTimeout(2.5)
-                    .asProxy()
-                    .handleInterrupt(() -> alignTimeout = true))
+                    .asProxy())
             .alongWith(
                 new WaitUntilCommand(
                         () -> {
