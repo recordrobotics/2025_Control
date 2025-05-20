@@ -1,13 +1,14 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -30,6 +31,11 @@ import frc.robot.utils.camera.PhotonVisionCamera;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -102,35 +108,64 @@ public class PoseSensorFusion extends SubsystemBase
     SmartDashboard.putBoolean("Autonomous/UseISPE", true);
   }
 
-  @Override
-  public void periodic() {
-    boolean trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
-    boolean trustLimelightCenter =
-        SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
-    boolean useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
+  public record DeferredPoseEstimation(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {}
 
-    poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
+  private ConcurrentSkipListSet<DeferredPoseEstimation> deferredPoseEstimations =
+      new ConcurrentSkipListSet<>((a, b) -> Double.compare(a.timestampSeconds, b.timestampSeconds));
 
-    if (leftCamera.hasVision() || centerCamera.hasVision()) {
-      // when vision is correcting the pose, have that override the independent pose estimator
-      independentPoseEstimator.reset(getEstimatedPosition());
-      independentPoseEstimator.update(getEstimatedPosition().getRotation());
-    } else {
-      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+  public void addVisionMeasurement(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {
+    deferredPoseEstimations.add(
+        new DeferredPoseEstimation(
+            visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs));
+  }
 
-      // when no vision use independent pose estimator to correct pose
-      if (useISPE) {
-        poseFilter.addVisionMeasurement(
-            independentPoseEstimator.getEstimatedRobotPose(),
-            Timer.getFPGATimestamp(),
-            VecBuilder.fill(0.7, 0.7, 9999999));
+  private boolean trustLimelightLeft;
+  private boolean trustLimelightCenter;
+  private boolean useISPE;
+
+  private ExecutorService executor = Executors.newSingleThreadExecutor();
+  private Future<?> calculationFuture = null;
+
+  public void startCalculation() {
+    deferredPoseEstimations.clear();
+
+    trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
+    trustLimelightCenter = SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
+    useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
+
+    calculationFuture = executor.submit(this::calculationLoop);
+  }
+
+  private double updateTimestamp;
+  private Rotation2d updateNav;
+  private SwerveModulePosition[] updatePositions;
+
+  public void endCalculation() {
+    if (updatePositions != null) {
+      poseFilter.updateWithTime(updateTimestamp, updateNav, updatePositions);
+    }
+
+    if (calculationFuture != null) {
+      try {
+        calculationFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
       }
     }
 
-    leftCamera.updateEstimation(trustLimelightLeft);
-    centerCamera.updateEstimation(trustLimelightCenter);
-    l1Camera.updateEstimation(false);
-    sourceCamera.updateEstimation(false);
+    while (!deferredPoseEstimations.isEmpty()) {
+      DeferredPoseEstimation estimation = deferredPoseEstimations.pollFirst();
+      poseFilter.addVisionMeasurement(
+          estimation.visionRobotPoseMeters,
+          estimation.timestampSeconds,
+          estimation.visionMeasurementStdDevs);
+    }
 
     updateDashboard(leftCamera, centerCamera, l1Camera, sourceCamera);
 
@@ -149,6 +184,36 @@ public class PoseSensorFusion extends SubsystemBase
     Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
   }
 
+  @Override
+  public void periodic() {}
+
+  public void calculationLoop() {
+    updateTimestamp = Timer.getFPGATimestamp();
+    updateNav = nav.getAdjustedAngle();
+    updatePositions = getModulePositions();
+
+    if (leftCamera.hasVision() || centerCamera.hasVision()) {
+      // when vision is correcting the pose, have that override the independent pose estimator
+      independentPoseEstimator.reset(getEstimatedPosition());
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+    } else {
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+
+      // when no vision use independent pose estimator to correct pose
+      if (useISPE) {
+        addVisionMeasurement(
+            independentPoseEstimator.getEstimatedRobotPose(),
+            Timer.getFPGATimestamp(),
+            VecBuilder.fill(0.7, 0.7, 9999999));
+      }
+    }
+
+    leftCamera.updateEstimation(trustLimelightLeft);
+    centerCamera.updateEstimation(trustLimelightCenter);
+    l1Camera.updateEstimation(false);
+    sourceCamera.updateEstimation(false);
+  }
+
   private void updateDashboard(IVisionCamera... cameras) {
     for (IVisionCamera camera : cameras) {
       DashboardUI.Autonomous.setVisionPose(camera.getName(), camera.getUnsafeEstimate().pose);
@@ -161,10 +226,6 @@ public class PoseSensorFusion extends SubsystemBase
 
   private SwerveModulePosition[] getModulePositions() {
     return RobotContainer.drivetrain.getModulePositions();
-  }
-
-  public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Vector<N3> confidence) {
-    poseFilter.addVisionMeasurement(pose, timestampSeconds, confidence);
   }
 
   @AutoLogOutput(key = "Odometry/Robot")

@@ -136,6 +136,10 @@ public class Robot extends LoggedRobot {
 
     DashboardUI.Overview.getControl().update();
 
+    // End and start reversed to make sure we get latest data before command scheduler
+    RobotContainer.poseSensorFusion.endCalculation();
+    RobotContainer.poseSensorFusion.startCalculation();
+
     CommandScheduler.getInstance().run();
 
     // Return to normal thread priority
