@@ -24,7 +24,7 @@ public class BargeLeftAuto extends SequentialCommandGroup {
 
   private Command alignWithVision() { // TODO use RobotContainer.hasVision when it is tested
     return new RepeatConditionallyCommand(
-        ReefAlign.alignClosest(),
+        ReefAlign.alignClosest(false),
         () ->
             !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
                 || RobotContainer.poseSensorFusion.getCenterCamera().hasVision()),

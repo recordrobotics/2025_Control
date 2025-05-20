@@ -345,7 +345,7 @@ public class RobotContainer {
         .onTrue(new VibrateXbox(RumbleType.kLeftRumble, 1).withTimeout(0.1));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-        .whileTrue(ReefAlign.alignClosest().repeatedly());
+        .whileTrue(ReefAlign.alignClosest(true));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
         .onTrue(

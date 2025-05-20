@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 public class ReefAlign {
   private static boolean wasInterrupted = false;
 
-  public static Command alignClosest() {
+  public static Command alignClosest(boolean repeatedly) {
     return new DeferredCommand(
         () -> {
           CoralPosition alignPose =
@@ -42,27 +43,34 @@ public class ReefAlign {
           return alignTarget(
               alignPose,
               () -> DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel(),
-              true);
+              repeatedly);
         },
         Set.of(RobotContainer.drivetrain));
   }
 
   public static Command alignTarget(
-      CoralPosition pole, Supplier<CoralLevel> level, boolean continueAlign) {
+      CoralPosition pole, Supplier<CoralLevel> level, boolean repeatedly) {
     Pose2d targetPose = pole.getPose(level.get());
 
     Pose2d pathTarget = targetPose.transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero));
 
+    Command alignCmd =
+        new AlignToPose(
+            () -> {
+              return pole.getPose(level.get());
+            });
+
+    if (repeatedly) alignCmd = alignCmd.repeatedly();
+
     return new SequentialCommandGroup(
             new InstantCommand(() -> wasInterrupted = false),
             PathAlign.createForReef(pathTarget),
-            new AlignToPose(
-                () -> {
-                  return pole.getPose(level.get());
-                }))
+            alignCmd)
         .raceWith(
             new WaitUntilCommand(
                     () -> {
+                      if (RobotState.isAutonomous()) return false;
+
                       if (AlignToPose.getDrivetrainControl() == null) return false;
 
                       var driverVelocity =

@@ -33,7 +33,7 @@ public class AutoScore extends SequentialCommandGroup {
                             DashboardUI.Overview.getControl()
                                 .getReefLevelSwitchValue()
                                 .toCoralLevel(),
-                        true)
+                        false)
                     .handleInterrupt(() -> alignTimeout = true) // align until inturupted
                     .withTimeout(2.5)
                     .asProxy())

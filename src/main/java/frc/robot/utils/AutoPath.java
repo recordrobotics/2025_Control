@@ -45,7 +45,7 @@ public class AutoPath {
         "AutoAlign",
         CommandUtils.finishOnInterrupt(
             new RepeatConditionallyCommand(
-                    ReefAlign.alignClosest(),
+                    ReefAlign.alignClosest(false),
                     () ->
                         !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
                             || RobotContainer.poseSensorFusion
