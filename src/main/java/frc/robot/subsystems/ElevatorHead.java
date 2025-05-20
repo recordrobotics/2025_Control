@@ -20,10 +20,11 @@ import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorHeadIO;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorHead extends KillableSubsystem
@@ -111,7 +112,7 @@ public class ElevatorHead extends KillableSubsystem
     OFF;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
     return io.getVelocity()
         / 60.0
@@ -120,7 +121,7 @@ public class ElevatorHead extends KillableSubsystem
         * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* RPM -> RPS */
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getPosition() {
     return io.getPosition()
         / Constants.ElevatorHead.GEAR_RATIO
@@ -128,7 +129,7 @@ public class ElevatorHead extends KillableSubsystem
         * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* Rotations -> Meters */
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVoltage() {
     return io.getVoltage();
   }
@@ -234,17 +235,17 @@ public class ElevatorHead extends KillableSubsystem
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public boolean hasAlgae() {
     return hasAlgae;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public CoralShooterStates getCurrentCoralShooterState() {
     return currentState;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public boolean hasCoral() {
     return debounced_value;
   }

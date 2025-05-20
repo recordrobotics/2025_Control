@@ -20,11 +20,12 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorArmIO;
 import frc.robot.subsystems.io.sim.ElevatorArmSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorArm extends KillableSubsystem
@@ -97,28 +98,28 @@ public class ElevatorArm extends KillableSubsystem
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngle() {
     return io.getArmPosition() * 2 * Math.PI;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocity() {
     return io.getArmVelocity() * 2 * Math.PI;
   }
 
   /** Used for sysid as units have to be in rotations in the logs */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngleRotations() {
     return io.getArmPosition();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocityRotations() {
     return io.getArmVelocity();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
     return io.getArmVoltage();
   }

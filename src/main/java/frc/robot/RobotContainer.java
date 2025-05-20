@@ -68,7 +68,6 @@ import frc.robot.utils.libraries.Elastic;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.simulation.VisionSystemSim;
 
 /**
@@ -112,8 +111,6 @@ public class RobotContainer {
 
   public static CoralIntakeMoveToggleRequirement coralIntakeMoveToggleRequirement =
       new CoralIntakeMoveToggleRequirement();
-
-  @AutoLogOutput private static boolean inClimbMode = false;
 
   public static final List<IAssist> assits = List.of(new GroundIntakeAssist());
 
@@ -169,13 +166,9 @@ public class RobotContainer {
     elevatorArm.setDefaultCommand(new ManualElevatorArm());
   }
 
-  public void teleopInit() {
-    inClimbMode = false;
-  }
+  public void teleopInit() {}
 
-  public void disabledInit() {
-    inClimbMode = false;
-  }
+  public void disabledInit() {}
 
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
@@ -401,10 +394,6 @@ public class RobotContainer {
 
     // RoboRioSim.setVInVoltage(
     //     MathUtil.clamp(BatterySim.calculateDefaultBatteryLoadedVoltage(currents), 0, 13));
-  }
-
-  public static boolean isInClimbMode() {
-    return inClimbMode;
   }
 
   /** frees up all hardware allocations */

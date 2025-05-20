@@ -32,7 +32,9 @@ import edu.wpi.first.wpilibj.LEDReader;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
+import frc.robot.subsystems.Climber.ClimberState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
+import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ModuleConstants.MotorLocation;
@@ -764,7 +766,10 @@ public final class Constants {
                     .blend(LEDPattern.solid(Color.kBlue));
 
     public static final Supplier<LEDPattern> ALLIANCE_COLOR_FANCY_WITH_CLIMB =
-        () -> RobotContainer.isInClimbMode() ? CLIMB_PATTERN : ALLIANCE_COLOR_FANCY.get();
+        () ->
+            RobotContainer.climber.getCurrentState() != ClimberState.Park
+                ? CLIMB_PATTERN
+                : ALLIANCE_COLOR_FANCY.get();
 
     public static final LEDPattern elevatorPattern =
         LEDPattern.solid(Color.kWhite)
@@ -989,6 +994,9 @@ public final class Constants {
     }
 
     public static final boolean MOTOR_LOGGING_ENABLED = false;
+
+    public static final AutoLogLevel.Level AUTO_LOG_LEVEL =
+        RobotBase.isReal() ? AutoLogLevel.Level.Real : AutoLogLevel.Level.Sim;
 
     public static enum Mode {
       REAL,

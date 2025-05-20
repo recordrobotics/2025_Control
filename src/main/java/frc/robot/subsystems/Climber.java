@@ -18,11 +18,12 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ClimberIO;
 import frc.robot.subsystems.io.sim.ClimberSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Climber extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
@@ -83,7 +84,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     SmartDashboard.putBoolean("Ratchet", false);
   }
 
-  public enum ClimberState {
+  public static enum ClimberState {
     Park,
     Extend,
     Climb
@@ -120,7 +121,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     RobotContainer.model.climber.update(getRotations());
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public boolean atGoal() {
     if (currentState == ClimberState.Climb) {
       return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
@@ -154,27 +155,27 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public ClimberState getCurrentState() {
     return currentState;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getRotations() {
     return io.getPosition();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
     return io.getVelocity();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
     return io.getVoltage();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public double getEstimatedkV() {
     if (MathUtil.isNear(0, io.getVelocity(), 0.2)) return 0;
     return io.getVoltage() / io.getVelocity();

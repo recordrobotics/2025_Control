@@ -21,6 +21,8 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
 import frc.robot.utils.ShuffleboardPublisher;
@@ -36,7 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class PoseSensorFusion extends SubsystemBase
@@ -228,7 +229,7 @@ public class PoseSensorFusion extends SubsystemBase
     return RobotContainer.drivetrain.getModulePositions();
   }
 
-  @AutoLogOutput(key = "Odometry/Robot")
+  @AutoLogLevel(key = "Odometry/Robot", level = Level.Real)
   public Pose2d getEstimatedPosition() {
     return poseFilter.getEstimatedPosition();
   }

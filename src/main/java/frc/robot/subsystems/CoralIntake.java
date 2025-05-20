@@ -26,11 +26,12 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.CoralIntakeIO;
 import frc.robot.subsystems.io.sim.CoralIntakeSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class CoralIntake extends KillableSubsystem
@@ -137,48 +138,48 @@ public class CoralIntake extends KillableSubsystem
     L1_DOWN;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getWheelVelocity() {
     return io.getWheelVelocity() / 60.0 / Constants.CoralIntake.WHEEL_GEAR_RATIO; /* RPM -> RPS */
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getWheelPosition() {
     return io.getWheelPosition() / Constants.CoralIntake.WHEEL_GEAR_RATIO;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getWheelSetTo() {
     return io.getWheelVoltage();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngle() {
     return io.getArmPosition() * 2 * Math.PI;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocity() {
     return io.getArmVelocity() * 2 * Math.PI;
   }
 
   /** Used for sysid as units have to be in rotations in the logs */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngleRotations() {
     return io.getArmPosition();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocityRotations() {
     return io.getArmVelocity();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
     return io.getArmVoltage();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public CoralIntakeState getState() {
     return currentIntakeState;
   }

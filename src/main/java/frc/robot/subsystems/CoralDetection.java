@@ -14,10 +14,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import java.util.ArrayList;
 import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -114,7 +115,7 @@ public class CoralDetection extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public Pose3d[] getCorals() {
     if (Constants.RobotState.getMode() == Mode.REAL
         || simulationMode == CoralDetectionSimulationMode.PHOTONVISION) {

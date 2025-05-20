@@ -26,11 +26,12 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorIO;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import java.util.Arrays;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
@@ -148,27 +149,27 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   /** Height of the elevator in meters */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getCurrentHeight() {
     return getCurrentRotation() * Constants.Elevator.METERS_PER_ROTATION;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getCurrentVelocity() {
     return getCurrentRotationalVelocity() * Constants.Elevator.METERS_PER_ROTATION;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getCurrentVoltage() {
     return (io.getLeftMotorVoltage() + io.getRightMotorVoltage()) / 2;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   private boolean getBottomEndStopPressed() {
     return io.getBottomEndStop();
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   private boolean getTopEndStopPressed() {
     return io.getTopEndStop();
   }
@@ -236,7 +237,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     set(height.getHeight());
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public ElevatorHeight getNearestHeight() {
     double currentHeight = getCurrentHeight();
     double currentArmAngle = RobotContainer.elevatorArm.getArmAngle();

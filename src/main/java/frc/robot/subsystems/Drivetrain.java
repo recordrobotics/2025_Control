@@ -17,6 +17,8 @@ import frc.robot.Constants.RobotState.Mode;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DCMotors;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
@@ -27,7 +29,6 @@ import org.ironmaple.simulation.drivesims.GyroSimulation;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 /** Represents a swerve drive style drivetrain. */
@@ -242,7 +243,7 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorVolts() {
     // average of all drive motors .get() values
     return (m_frontLeft.getDriveMotorVoltsSysIdOnly()
@@ -252,7 +253,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorPosition() {
     // average
     return (m_frontLeft.getDriveWheelDistance()
@@ -262,7 +263,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorVelocity() {
     // average
     return (m_frontLeft.getDriveWheelVelocity()
@@ -279,7 +280,7 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorVolts() {
     // average of all turn motors .get() values
     return (m_frontLeft.getTurnMotorVoltsSysIdOnly()
@@ -289,7 +290,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorPosition() {
     // average
     return (m_frontLeft.getTurnWheelRotation2d().getRotations()
@@ -299,7 +300,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorVelocity() {
     // average
     return (m_frontLeft.getTurnWheelVelocity()
@@ -333,7 +334,7 @@ public class Drivetrain extends KillableSubsystem
    *
    * @return The current relative chassis speeds as a ChassisSpeeds object.
    */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public ChassisSpeeds getChassisSpeeds() {
     return m_kinematics.toChassisSpeeds(
         m_frontLeft.getModuleState(),
