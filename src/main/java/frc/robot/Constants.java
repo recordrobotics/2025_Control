@@ -355,17 +355,16 @@ public final class Constants {
 
     public static final Transform3d l1TransformRobotToCamera =
         new Transform3d(
-            new Translation3d(-0.122023, -0.372571, 0.197230),
+            new Translation3d(-0.031750, -0.373120, 0.196097),
             new Rotation3d(0, Units.degreesToRadians(-12.894), Units.degreesToRadians(90)));
     public static final Transform3d sourceTransformRobotToCamera =
         new Transform3d(
-            new Translation3d(0.019276, 0.370521, 0.197763),
+            new Translation3d(-0.006350, 0.370769, 0.197020),
             new Rotation3d(0, Units.degreesToRadians(-18.951), Units.degreesToRadians(-90)));
     public static final Transform3d groundIntakeTransformRobotToCamera =
         new Transform3d(
-            new Translation3d(Meters.of(0.2), Meters.of(-0.372571), Inches.of(31)),
-            new Rotation3d(
-                Degrees.of(0), Degrees.of(-22), Degrees.of(90))); // TODO: change to cad value
+            new Translation3d(Meters.of(0.142850), Meters.of(-0.369435), Meters.of(0.526114)),
+            new Rotation3d(Degrees.of(0), Degrees.of(-20), Degrees.of(90 + 25)));
 
     public static final Distance CORAL_ID_DISTANCE = Inches.of(8);
     public static final Time CORAL_TIMEOUT = Seconds.of(0.5);
