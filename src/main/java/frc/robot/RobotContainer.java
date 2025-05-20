@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
@@ -266,11 +267,14 @@ public class RobotContainer {
             () ->
                 DashboardUI.Overview.getControl().getCoralGroundIntakeSimple()
                     && !elevatorHead.hasCoral())
-        .onTrue(new CoralIntakeFromGround())
+        .onTrue(
+            new CoralIntakeFromGround().withInterruptBehavior(InterruptionBehavior.kCancelIncoming))
         .onFalse(
             Commands.either(
-                new CoralIntakeFromGroundUpL1(),
-                new CoralIntakeFromGroundUp(),
+                new CoralIntakeFromGroundUpL1()
+                    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
+                new CoralIntakeFromGroundUp()
+                    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
                 () ->
                     DashboardUI.Overview.getControl().getReefLevelSwitchValue()
                         == ReefLevelSwitchValue.L1));
@@ -283,6 +287,7 @@ public class RobotContainer {
         .whileTrue(
             new RepeatConditionallyCommand(
                 new CoralIntakeFromSource(true)
+                    .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
                     .finallyDo(
                         () -> {
                           System.out.println("SOURCE ENDE!@!@H*&!*&@EQ#YQ#gyuaqd");
@@ -290,7 +295,9 @@ public class RobotContainer {
                           RobotContainer.coralIntake.set(CoralIntakeState.UP);
                         })
                     .asProxy(),
-                () -> !RobotContainer.elevatorHead.hasCoral(),
+                () ->
+                    !RobotContainer.elevatorHead.hasCoral()
+                        && !DashboardUI.Overview.getControl().getCoralGroundIntakeSimple(),
                 false));
 
     var coralScoreL1Cmd =

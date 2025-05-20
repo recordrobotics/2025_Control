@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -20,9 +21,11 @@ import java.util.Set;
 public class AutoScore extends SequentialCommandGroup {
 
   private Pose2d backawayTargetPose = null;
+  private boolean alignTimeout = false;
 
   public AutoScore(CoralPosition reefPole) {
     addCommands(
+        new InstantCommand(() -> alignTimeout = false),
         CommandUtils.finishOnInterrupt(
                 ReefAlign.alignTarget(
                         reefPole,
@@ -33,7 +36,8 @@ public class AutoScore extends SequentialCommandGroup {
                         false,
                         true) // align until inturupted
                     .withTimeout(2.5)
-                    .asProxy())
+                    .asProxy()
+                    .handleInterrupt(() -> alignTimeout = true))
             .alongWith(
                 new WaitUntilCommand(
                         () -> {
@@ -48,7 +52,8 @@ public class AutoScore extends SequentialCommandGroup {
                                       .getTranslation()
                                       .getDistance(pose.getTranslation())
                                   < 0.3
-                              || ReefAlign.wasInterrupted();
+                              || ReefAlign.wasInterrupted()
+                              || alignTimeout;
                         })
                     .andThen(
                         new DeferredCommand(
