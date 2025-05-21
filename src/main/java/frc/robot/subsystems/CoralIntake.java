@@ -32,6 +32,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class CoralIntake extends KillableSubsystem
@@ -193,7 +194,9 @@ public class CoralIntake extends KillableSubsystem
 
   public void setArm(double angleRadians) {
     currentSetpoint.position = angleRadians;
-    // io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CoralIntakeArm) {
+      io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    }
   }
 
   public boolean armAtGoal() {
@@ -265,7 +268,11 @@ public class CoralIntake extends KillableSubsystem
 
     double pidOutput = pid.calculate(getWheelVelocity());
     double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
-    io.setWheelVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CoralIntakeWheel) {
+      io.setWheelVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+    }
+
     lastSpeed = pid.getSetpoint();
 
     // Update mechanism

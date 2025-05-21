@@ -23,6 +23,7 @@ import frc.robot.utils.DCMotors;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SysIdManager;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
@@ -40,7 +41,8 @@ public class Drivetrain extends KillableSubsystem
   private final SwerveModule m_backLeft;
   private final SwerveModule m_backRight;
 
-  private final SysIdRoutine sysIdRoutineDriveMotors;
+  private final SysIdRoutine sysIdRoutineDriveMotorsSpin;
+  private final SysIdRoutine sysIdRoutineDriveMotorsForward;
   private final SysIdRoutine sysIdRoutineTurnMotors;
 
   // Creates swerve kinematics
@@ -154,7 +156,7 @@ public class Drivetrain extends KillableSubsystem
                   swerveDriveSimulation.getModules()[3], Constants.Swerve.backRightConstants));
     }
 
-    sysIdRoutineDriveMotors =
+    sysIdRoutineDriveMotorsSpin =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
@@ -163,7 +165,18 @@ public class Drivetrain extends KillableSubsystem
                 Seconds.of(1.5),
                 (state ->
                     Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotors, null, this));
+            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsSpin, null, this));
+
+    sysIdRoutineDriveMotorsForward =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                Volts.of(3.0).per(Second),
+                Volts.of(3.0),
+                Seconds.of(1.5),
+                (state ->
+                    Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsForward, null, this));
 
     sysIdRoutineTurnMotors =
         new SysIdRoutine(
@@ -195,10 +208,13 @@ public class Drivetrain extends KillableSubsystem
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.robotMaxSpeed);
 
     // Sets state for each module
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_backLeft.setDesiredState(swerveModuleStates[2]);
-    m_backRight.setDesiredState(swerveModuleStates[3]);
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainSpin
+        && SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainForward) {
+      m_frontLeft.setDesiredState(swerveModuleStates[0]);
+      m_frontRight.setDesiredState(swerveModuleStates[1]);
+      m_backLeft.setDesiredState(swerveModuleStates[2]);
+      m_backRight.setDesiredState(swerveModuleStates[3]);
+    }
 
     Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
   }
@@ -223,19 +239,26 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.simulationPeriodic();
   }
 
-  public void SysIdOnlyDriveMotors(Voltage volts) {
-
-    // SwerveModuleState state = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
-
+  public void SysIdOnlyDriveMotorsSpin(Voltage volts) {
     m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(360 - 45)));
     m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
     m_backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 45)));
     m_backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 - 45)));
 
-    // m_frontLeft.setDesiredState(state);
-    // m_frontRight.setDesiredState(state);
-    // m_backLeft.setDesiredState(state);
-    // m_backRight.setDesiredState(state);
+    m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+  }
+
+  public void SysIdOnlyDriveMotorsForward(Voltage volts) {
+
+    SwerveModuleState state = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
+
+    m_frontLeft.setDesiredState(state);
+    m_frontRight.setDesiredState(state);
+    m_backLeft.setDesiredState(state);
+    m_backRight.setDesiredState(state);
 
     m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
     m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
@@ -361,18 +384,28 @@ public class Drivetrain extends KillableSubsystem
     };
   }
 
-  public Command sysIdQuasistaticDriveMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineDriveMotors
+  public Command sysIdQuasistaticDriveMotorsSpin(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsSpin
         .quasistatic(direction)
         .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
-    // run pids with zero velocity for 0.5 seconds in order to align wheels;
   }
 
-  public Command sysIdDynamicDriveMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineDriveMotors
+  public Command sysIdDynamicDriveMotorsSpin(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsSpin
         .dynamic(direction)
         .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
-    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  }
+
+  public Command sysIdQuasistaticDriveMotorsForward(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsForward
+        .quasistatic(direction)
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+  }
+
+  public Command sysIdDynamicDriveMotorsForward(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsForward
+        .dynamic(direction)
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
   }
 
   public Command sysIdQuasistaticTurnMotors(SysIdRoutine.Direction direction) {

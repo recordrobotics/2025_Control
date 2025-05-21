@@ -39,6 +39,8 @@ import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.ModuleConstants.MotorLocation;
 import frc.robot.utils.ModuleConstants.MotorType;
+import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdRoutine;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -652,7 +654,10 @@ public final class Constants {
     public static final double ARM_INTAKE = Units.degreesToRadians(77.08);
     public static final double ARM_SCORE_L1 = Units.degreesToRadians(22.35);
     public static final double ARM_DOWN = Units.degreesToRadians(-49.5);
-    public static final double ARM_START_POS = ARM_DOWN; // Units.degreesToRadians(89.3);
+    public static final double ARM_START_POS =
+        SysIdManager.getSysIdRoutine() == SysIdRoutine.CoralIntakeArm
+            ? ARM_DOWN
+            : Units.degreesToRadians(89.3);
 
     public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18
 
@@ -996,7 +1001,11 @@ public final class Constants {
     public static final boolean MOTOR_LOGGING_ENABLED = false;
 
     public static final AutoLogLevel.Level AUTO_LOG_LEVEL =
-        RobotBase.isReal() ? AutoLogLevel.Level.Sysid : AutoLogLevel.Level.Sim;
+        RobotBase.isReal()
+            ? (SysIdManager.getSysIdRoutine() != SysIdRoutine.None
+                ? AutoLogLevel.Level.Sysid
+                : AutoLogLevel.Level.Real)
+            : AutoLogLevel.Level.Sim;
 
     public static enum Mode {
       REAL,

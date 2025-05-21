@@ -24,6 +24,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class Climber extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
@@ -138,13 +139,19 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
       case Park:
         io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
         ratchetEngaged = false;
-        io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
+
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+          io.setMotionMagic(
+              armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
+        }
         break;
       case Extend:
         io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
         ratchetEngaged = false;
-        io.setMotionMagic(
-            armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+          io.setMotionMagic(
+              armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
+        }
         break;
       case Climb:
         io.setRatchet(Constants.Climber.RATCHET_ENGAGED);

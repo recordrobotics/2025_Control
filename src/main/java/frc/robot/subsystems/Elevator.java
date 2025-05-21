@@ -31,6 +31,7 @@ import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SysIdManager;
 import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 
@@ -202,12 +203,14 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
             + Constants.Elevator.kG
             + Constants.Elevator.kS * Math.signum(m_setpoint.velocity);
 
-    if (Math.abs(getCurrentVelocity()) < 0.26
-        || ((!getTopEndStopPressed() || nextVoltage <= 0)
-            && (!getBottomEndStopPressed() || nextVoltage >= 0))) {
-      setBothMotors(nextVoltage);
-    } else {
-      setBothMotors(0);
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Elevator) {
+      if (Math.abs(getCurrentVelocity()) < 0.26
+          || ((!getTopEndStopPressed() || nextVoltage <= 0)
+              && (!getBottomEndStopPressed() || nextVoltage >= 0))) {
+        setBothMotors(nextVoltage);
+      } else {
+        setBothMotors(0);
+      }
     }
 
     // Update mechanism

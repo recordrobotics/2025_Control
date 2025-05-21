@@ -17,6 +17,8 @@ import frc.robot.commands.KillSpecified;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.LocalADStarAK;
+import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdRoutine;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -158,8 +160,7 @@ public class Robot extends LoggedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    // TODO: reenable when doing sysid - allows logs to be saved on disable
-    if (hasRun) {
+    if (SysIdManager.getSysIdRoutine() != SysIdRoutine.None && hasRun) {
       Logger.end();
       SignalLogger.stop();
     }

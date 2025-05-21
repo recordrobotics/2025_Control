@@ -26,6 +26,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorArm extends KillableSubsystem
@@ -127,7 +128,9 @@ public class ElevatorArm extends KillableSubsystem
 
   public void set(double angleRadians) {
     currentSetpoint.position = angleRadians;
-    io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorArm) {
+      io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    }
   }
 
   public boolean atGoal() {
@@ -139,7 +142,7 @@ public class ElevatorArm extends KillableSubsystem
 
   @Override
   public void periodic() {
-    set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
+    // set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
 
     // Update mechanism
     RobotContainer.model.elevatorArm.update(getArmAngle());

@@ -17,6 +17,8 @@ import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdRoutine;
 
 public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, PoweredSubsystem {
 
@@ -233,7 +235,10 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
                     - getTurnWheelRotation2d().getRadians());
 
     io.setDriveMotorMotionMagic(driveRequest.withVelocity(actualTargetDriveVelocity));
-    io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));
+
+    if (SysIdManager.getSysIdRoutine() != SysIdRoutine.DrivetrainTurn) {
+      io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));
+    }
   }
 
   public void simulationPeriodic() {
