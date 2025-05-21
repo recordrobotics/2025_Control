@@ -413,11 +413,15 @@ public class PoseSensorFusion extends SubsystemBase
       this.id = id;
       this.camera = camera;
       this.tagIds = tagIds;
-      debouncer = new Debouncer(debounceTime, debounceType);
+
+      debouncer = new Debouncer(0, debounceType);
+      debouncer.calculate(getRaw());
+      debouncer.setDebounceTime(debounceTime);
+
       lastAccessTime = Timer.getTimestamp();
     }
 
-    private void update() {
+    private boolean getRaw() {
       boolean rawInput = false;
       ArrayList<Integer> visionTags = new ArrayList<>();
 
@@ -441,6 +445,12 @@ public class PoseSensorFusion extends SubsystemBase
           }
         }
       }
+
+      return rawInput;
+    }
+
+    private void update() {
+      boolean rawInput = getRaw();
 
       result = debouncer.calculate(rawInput);
 
