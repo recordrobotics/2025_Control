@@ -457,9 +457,9 @@ public class RobotModel extends SubsystemBase {
   }
 
   public final Elevator elevator = new Elevator();
-  public final CoralIntake coralIntake = new CoralIntake();
   public final ElevatorArm elevatorArm = new ElevatorArm(this);
   public final Climber climber = new Climber();
+  public final CoralIntake coralIntake = new CoralIntake();
 
   @AutoLogLevel(level = Level.Real)
   public Pose3d[] mechanismPoses =

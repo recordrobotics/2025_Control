@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotContainer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class SysIdManager {
 
@@ -25,32 +26,40 @@ public class SysIdManager {
 
   public static enum SysIdRoutine {
     None,
-    Climber(RobotContainer.climber::sysIdQuasistatic, RobotContainer.climber::sysIdDynamic),
+    Climber(
+        () -> RobotContainer.climber::sysIdQuasistatic, () -> RobotContainer.climber::sysIdDynamic),
     CoralIntakeArm(
-        RobotContainer.coralIntake::sysIdQuasistaticArm,
-        RobotContainer.coralIntake::sysIdDynamicArm),
+        () -> RobotContainer.coralIntake::sysIdQuasistaticArm,
+        () -> RobotContainer.coralIntake::sysIdDynamicArm),
     CoralIntakeWheel(
-        RobotContainer.coralIntake::sysIdQuasistaticWheel,
-        RobotContainer.coralIntake::sysIdDynamicWheel),
+        () -> RobotContainer.coralIntake::sysIdQuasistaticWheel,
+        () -> RobotContainer.coralIntake::sysIdDynamicWheel),
     DrivetrainTurn(
-        RobotContainer.drivetrain::sysIdQuasistaticTurnMotors,
-        RobotContainer.drivetrain::sysIdDynamicTurnMotors),
+        () -> RobotContainer.drivetrain::sysIdQuasistaticTurnMotors,
+        () -> RobotContainer.drivetrain::sysIdDynamicTurnMotors),
     DrivetrainSpin(
-        RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsSpin,
-        RobotContainer.drivetrain::sysIdDynamicDriveMotorsSpin),
+        () -> RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsSpin,
+        () -> RobotContainer.drivetrain::sysIdDynamicDriveMotorsSpin),
     DrivetrainForward(
-        RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsForward,
-        RobotContainer.drivetrain::sysIdDynamicDriveMotorsForward),
-    Elevator(RobotContainer.elevator::sysIdQuasistatic, RobotContainer.elevator::sysIdDynamic),
-    ElevatorArm(RobotContainer.elevator::sysIdQuasistatic, RobotContainer.elevator::sysIdDynamic),
+        () -> RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsForward,
+        () -> RobotContainer.drivetrain::sysIdDynamicDriveMotorsForward),
+    Elevator(
+        () -> RobotContainer.elevator::sysIdQuasistatic,
+        () -> RobotContainer.elevator::sysIdDynamic),
+    ElevatorArm(
+        () -> RobotContainer.elevator::sysIdQuasistatic,
+        () -> RobotContainer.elevator::sysIdDynamic),
     ElevatorHead(
-        RobotContainer.elevatorHead::sysIdQuasistatic, RobotContainer.elevatorHead::sysIdDynamic);
+        () -> RobotContainer.elevatorHead::sysIdQuasistatic,
+        () -> RobotContainer.elevatorHead::sysIdDynamic);
 
     private final boolean enabled;
-    private final Function<Direction, Command> quasistatic;
-    private final Function<Direction, Command> dynamic;
+    private final Supplier<Function<Direction, Command>> quasistatic;
+    private final Supplier<Function<Direction, Command>> dynamic;
 
-    SysIdRoutine(Function<Direction, Command> quasistatic, Function<Direction, Command> dynamic) {
+    SysIdRoutine(
+        Supplier<Function<Direction, Command>> quasistatic,
+        Supplier<Function<Direction, Command>> dynamic) {
       this.quasistatic = quasistatic;
       this.dynamic = dynamic;
       enabled = true;
@@ -68,7 +77,7 @@ public class SysIdManager {
 
     public Command createCommand() {
       if (enabled) {
-        return SysIdManager.createCommand(quasistatic, dynamic);
+        return SysIdManager.createCommand(quasistatic.get(), dynamic.get());
       } else {
         return Commands.none();
       }

@@ -80,17 +80,17 @@ import org.photonvision.simulation.VisionSystemSim;
  */
 public class RobotContainer {
 
-  public static final RobotModel model = new RobotModel();
-
   public static Drivetrain drivetrain;
   public static PoseSensorFusion poseSensorFusion;
   public static Elevator elevator;
   public static ElevatorArm elevatorArm;
   public static ElevatorHead elevatorHead;
-  public static CoralIntake coralIntake;
   public static Climber climber;
   public static Lights lights;
   public static PowerDistributionPanel pdp;
+  public static CoralIntake coralIntake;
+
+  public static RobotModel model;
 
   public static CoralDetection coralDetection;
 
@@ -149,6 +149,8 @@ public class RobotContainer {
       // coralDetection.setSimulationMode(CoralDetection.CoralDetectionSimulationMode.PHOTONVISION);
       humanPlayerSimulation = new HumanPlayerSimulation();
     }
+
+    model = new RobotModel();
 
     // Sets up auto path
     autoPath = new AutoPath();
