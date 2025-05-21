@@ -185,9 +185,11 @@ public final class Constants {
       RedL(6, 1);
 
       private Pose2d pose;
+      public final int apriltagId;
 
       private CoralPosition(int apriltagId, int side) {
         this.pose = calculatePoseFromAprilTag(apriltagId, side);
+        this.apriltagId = apriltagId;
       }
 
       private static Pose2d calculatePoseFromAprilTag(int apriltagId, int side) {

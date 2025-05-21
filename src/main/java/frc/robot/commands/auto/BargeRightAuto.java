@@ -3,6 +3,7 @@ package frc.robot.commands.auto;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -15,6 +16,8 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.CoralIntakeFromSource;
 import frc.robot.commands.CoralShoot;
 import frc.robot.commands.ReefAlign;
+import frc.robot.subsystems.PoseSensorFusion.CameraTarget;
+import frc.robot.subsystems.PoseSensorFusion.VisionDebouncer;
 import frc.robot.utils.CommandUtils;
 import frc.robot.utils.RepeatConditionallyCommand;
 import java.io.IOException;
@@ -23,12 +26,21 @@ import org.json.simple.parser.ParseException;
 public class BargeRightAuto extends SequentialCommandGroup {
 
   private Command alignWithVision() { // TODO use RobotContainer.hasVision when it is tested
+    int[] visionTagTarget = {
+      IGamePosition.closestTo(
+              RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values())
+          .apriltagId
+    };
+    VisionDebouncer visionDebouncer =
+        RobotContainer.poseSensorFusion.registerVisionCheck(
+            CameraTarget.Elevator,
+            visionTagTarget,
+            0.5,
+            DebounceType.kFalling); // says if either LL has seen the tag in the last 0.5s
+
     return new RepeatConditionallyCommand(
-        ReefAlign.alignClosest(false),
-        () ->
-            !(RobotContainer.poseSensorFusion.getLeftCamera().hasVision()
-                || RobotContainer.poseSensorFusion.getCenterCamera().hasVision()),
-        true);
+            ReefAlign.alignClosest(false), () -> !visionDebouncer.hasVision(), true)
+        .finallyDo(() -> RobotContainer.poseSensorFusion.releaseVisionCheck(visionDebouncer));
   }
 
   private Command createSource(String reefLetter)
