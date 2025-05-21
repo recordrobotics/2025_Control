@@ -3,7 +3,6 @@ package frc.robot.commands.manual;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -33,19 +32,7 @@ public class ManualElevator extends Command {
     height =
         MathUtil.clamp(height, Constants.Elevator.STARTING_HEIGHT, Constants.Elevator.MAX_HEIGHT);
 
-    TrapezoidProfile.State goal =
-        new TrapezoidProfile.State(height, manualElevatorVelocity.in(MetersPerSecond));
-
-    if (goal.position
-        < Constants.Elevator.STARTING_HEIGHT
-            + Constants.Elevator.MANUAL_CONTROL_MARGIN.in(Meters)) {
-      goal.velocity = Math.max(goal.velocity, 0);
-    } else if (goal.position
-        > Constants.Elevator.MAX_HEIGHT - Constants.Elevator.MANUAL_CONTROL_MARGIN.in(Meters)) {
-      goal.velocity = Math.min(goal.velocity, 0);
-    }
-
-    RobotContainer.elevator.setGoal(goal);
+    RobotContainer.elevator.set(height);
   }
 
   // Returns true when the command should end.

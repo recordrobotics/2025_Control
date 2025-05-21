@@ -1,6 +1,8 @@
 package frc.robot.subsystems.io.stub;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.StrictFollower;
 import frc.robot.subsystems.io.ElevatorIO;
 
 public class ElevatorStub implements ElevatorIO {
@@ -13,63 +15,63 @@ public class ElevatorStub implements ElevatorIO {
   }
 
   @Override
+  public StrictFollower createFollower() {
+    return new StrictFollower(0);
+  }
+
+  @Override
   public void applyTalonFXConfig(TalonFXConfiguration configuration) {}
 
   @Override
-  public void setLeftMotorVoltage(double outputVolts) {}
+  public void setLeadMotorVoltage(double outputVolts) {}
 
   @Override
-  public void setRightMotorVoltage(double outputVolts) {}
+  public void setLeadMotionMagic(MotionMagicExpoVoltage request) {}
 
   @Override
-  public double getLeftMotorVoltage() {
+  public void setFollowerMotionMagic(StrictFollower request) {}
+
+  @Override
+  public double getLeadMotorVoltage() {
     return 0;
   }
 
   @Override
-  public double getRightMotorVoltage() {
+  public double getFollowerMotorVoltage() {
     return 0;
   }
 
   @Override
-  public void setLeftMotorPosition(double newValue) {}
+  public void setLeadMotorPosition(double newValue) {}
 
   @Override
-  public void setRightMotorPosition(double newValue) {}
+  public void setFollowerMotorPosition(double newValue) {}
 
   @Override
-  public double getLeftMotorPosition() {
+  public double getLeadMotorPosition() {
     return 0;
   }
 
   @Override
-  public double getLeftMotorVelocity() {
+  public double getLeadMotorVelocity() {
     return 0;
   }
 
   @Override
-  public double getRightMotorPosition() {
+  public double getFollowerMotorPosition() {
     return 0;
   }
 
   @Override
-  public double getRightMotorVelocity() {
+  public double getFollowerMotorVelocity() {
     return 0;
   }
 
   @Override
-  public void setLeftMotorPercent(double newValue) {}
+  public void setLeadMotorPercent(double newValue) {}
 
   @Override
-  public void setRightMotorPercent(double newValue) {}
-
-  @Override
-  public double getLeftMotorPercent() {
-    return 0;
-  }
-
-  @Override
-  public double getRightMotorPercent() {
+  public double getLeadMotorPercent() {
     return 0;
   }
 
@@ -84,12 +86,12 @@ public class ElevatorStub implements ElevatorIO {
   }
 
   @Override
-  public double getLeftMotorCurrentDraw() {
+  public double getLeadMotorCurrentDraw() {
     return 0;
   }
 
   @Override
-  public double getRightMotorCurrentDraw() {
+  public double getFollowerMotorCurrentDraw() {
     return 0;
   }
 

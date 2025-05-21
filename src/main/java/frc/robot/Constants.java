@@ -530,6 +530,10 @@ public final class Constants {
     public static final double kG = 0.19133;
     public static final double kS = 0.078513;
 
+    public static final double kP = 2.3;
+    public static final double kI = 0.0;
+    public static final double kD = 0.1;
+
     public static final double STARTING_HEIGHT = 0;
     public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
 
@@ -537,30 +541,14 @@ public final class Constants {
     public static final Current SUPPLY_CURRENT_LOWER_LIMIT = Amps.of(30);
     public static final Current STATOR_CURRENT_LIMIT = Amps.of(100);
 
-    public static final double STD_STATE_POSITION = 3.0; // m
-    public static final double STD_STATE_VELOCITY = 3.0; // m/s
-    public static final double STD_ENCODER_POSITION = 0.001; // m
-    public static final double STD_ENCODER_VELOCITY = 0.001; // m/s
-
-    public static final double REGULATOR_POSITION_ERROR_TOLERANCE =
-        0.03; // (m) tolerance for error, decrease to make
-    // regulator more aggressive
-    public static final double REGULATOR_VELOCITY_ERROR_TOLERANCE =
-        0.63514; // (m/s) tolerance for error, decrease to
-    // make regulator more aggressive
-
-    public static final double REGULATOR_CONTROL_EFFORT_TOLERANCE =
-        12.0; // (V) max control effort, decrease to make
-    // regulator more lazy
-
     public static final double GEAR_RATIO = 13.4321 / 2.0 /* compensation for second stage ratio */;
     public static final double DRUM_RADIUS = Units.inchesToMeters(0.8783343);
     // 2 * pi * r / gear ratio because same as getting distance a wheel moved, just
     // vertically
     public static final double METERS_PER_ROTATION = DRUM_RADIUS * 2 * Math.PI / GEAR_RATIO;
 
-    public static final double AT_GOAL_POSITION_TOLERANCE = REGULATOR_POSITION_ERROR_TOLERANCE;
-    public static final double AT_GOAL_VELOCITY_TOLERANCE = REGULATOR_VELOCITY_ERROR_TOLERANCE;
+    public static final double AT_GOAL_POSITION_TOLERANCE = 0.03;
+    public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.63514;
 
     public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0.15, 0, Rotation2d.fromDegrees(0));
     public static final double MIN_LENGTH = 0.65;

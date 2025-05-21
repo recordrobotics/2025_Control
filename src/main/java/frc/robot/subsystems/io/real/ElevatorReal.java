@@ -1,6 +1,8 @@
 package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.RobotMap;
@@ -11,94 +13,94 @@ public class ElevatorReal implements ElevatorIO {
   @SuppressWarnings("unused")
   private final double periodicDt;
 
-  private final TalonFX motorLeft;
-  private final TalonFX motorRight;
+  private final TalonFX motorLead;
+  private final TalonFX motorFollower;
   private final DigitalInput bottomEndStop;
   private final DigitalInput topEndStop;
 
   public ElevatorReal(double periodicDt) {
     this.periodicDt = periodicDt;
 
-    motorLeft = new TalonFX(RobotMap.Elevator.MOTOR_LEFT_ID);
-    motorRight = new TalonFX(RobotMap.Elevator.MOTOR_RIGHT_ID);
+    motorLead = new TalonFX(RobotMap.Elevator.MOTOR_LEAD_ID);
+    motorFollower = new TalonFX(RobotMap.Elevator.MOTOR_FOLLOWER_ID);
     bottomEndStop = new DigitalInput(RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
     topEndStop = new DigitalInput(RobotMap.Elevator.TOP_ENDSTOP_ID);
   }
 
   @Override
   public void applyTalonFXConfig(TalonFXConfiguration configuration) {
-    motorLeft.getConfigurator().apply(configuration);
-    motorRight.getConfigurator().apply(configuration);
+    motorLead.getConfigurator().apply(configuration);
+    motorFollower.getConfigurator().apply(configuration);
   }
 
   @Override
-  public void setLeftMotorVoltage(double outputVolts) {
-    motorLeft.setVoltage(outputVolts);
+  public StrictFollower createFollower() {
+    return new StrictFollower(RobotMap.Elevator.MOTOR_LEAD_ID);
   }
 
   @Override
-  public void setRightMotorVoltage(double outputVolts) {
-    motorRight.setVoltage(outputVolts);
+  public void setLeadMotorVoltage(double outputVolts) {
+    motorLead.setVoltage(outputVolts);
   }
 
   @Override
-  public double getLeftMotorVoltage() {
-    return motorLeft.getMotorVoltage().getValueAsDouble();
+  public void setLeadMotionMagic(MotionMagicExpoVoltage request) {
+    motorLead.setControl(request);
   }
 
   @Override
-  public double getRightMotorVoltage() {
-    return motorRight.getMotorVoltage().getValueAsDouble();
+  public void setFollowerMotionMagic(StrictFollower request) {
+    motorFollower.setControl(request);
   }
 
   @Override
-  public void setLeftMotorPosition(double newValue) {
-    motorLeft.setPosition(newValue);
+  public double getLeadMotorVoltage() {
+    return motorLead.getMotorVoltage().getValueAsDouble();
   }
 
   @Override
-  public void setRightMotorPosition(double newValue) {
-    motorRight.setPosition(newValue);
+  public double getFollowerMotorVoltage() {
+    return motorFollower.getMotorVoltage().getValueAsDouble();
   }
 
   @Override
-  public double getLeftMotorPosition() {
-    return motorLeft.getPosition().getValueAsDouble();
+  public void setLeadMotorPosition(double newValue) {
+    motorLead.setPosition(newValue);
   }
 
   @Override
-  public double getLeftMotorVelocity() {
-    return motorLeft.getVelocity().getValueAsDouble();
+  public void setFollowerMotorPosition(double newValue) {
+    motorFollower.setPosition(newValue);
   }
 
   @Override
-  public double getRightMotorPosition() {
-    return motorRight.getPosition().getValueAsDouble();
+  public double getLeadMotorPosition() {
+    return motorLead.getPosition().getValueAsDouble();
   }
 
   @Override
-  public double getRightMotorVelocity() {
-    return motorRight.getVelocity().getValueAsDouble();
+  public double getLeadMotorVelocity() {
+    return motorLead.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public void setLeftMotorPercent(double newValue) {
-    motorLeft.set(newValue);
+  public double getFollowerMotorPosition() {
+    return motorFollower.getPosition().getValueAsDouble();
   }
 
   @Override
-  public void setRightMotorPercent(double newValue) {
-    motorRight.set(newValue);
+  public double getFollowerMotorVelocity() {
+    return motorFollower.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public double getLeftMotorPercent() {
-    return motorLeft.get();
+  public void setLeadMotorPercent(double newValue) {
+    motorLead.set(newValue);
   }
 
   @Override
-  public double getRightMotorPercent() {
-    return motorRight.get();
+  public double getLeadMotorPercent() {
+    return motorLead.get();
   }
 
   @Override
@@ -112,19 +114,19 @@ public class ElevatorReal implements ElevatorIO {
   }
 
   @Override
-  public double getLeftMotorCurrentDraw() {
-    return motorLeft.getSupplyCurrent().getValueAsDouble();
+  public double getLeadMotorCurrentDraw() {
+    return motorLead.getSupplyCurrent().getValueAsDouble();
   }
 
   @Override
-  public double getRightMotorCurrentDraw() {
-    return motorRight.getSupplyCurrent().getValueAsDouble();
+  public double getFollowerMotorCurrentDraw() {
+    return motorFollower.getSupplyCurrent().getValueAsDouble();
   }
 
   @Override
   public void close() throws Exception {
-    motorLeft.close();
-    motorRight.close();
+    motorLead.close();
+    motorFollower.close();
     bottomEndStop.close();
     topEndStop.close();
   }

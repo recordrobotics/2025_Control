@@ -1,46 +1,48 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.StrictFollower;
 
 public interface ElevatorIO extends AutoCloseable {
 
   public void applyTalonFXConfig(TalonFXConfiguration configuration);
 
-  public void setLeftMotorVoltage(double outputVolts);
+  public StrictFollower createFollower();
 
-  public void setRightMotorVoltage(double outputVolts);
+  public void setLeadMotorVoltage(double outputVolts);
 
-  public double getLeftMotorVoltage();
+  public double getLeadMotorVoltage();
 
-  public double getRightMotorVoltage();
+  public double getFollowerMotorVoltage();
 
-  public void setLeftMotorPosition(double newValue);
+  public void setLeadMotorPosition(double newValue);
 
-  public void setRightMotorPosition(double newValue);
+  public void setFollowerMotorPosition(double newValue);
 
-  public double getLeftMotorPosition();
+  public void setLeadMotionMagic(MotionMagicExpoVoltage request);
 
-  public double getLeftMotorVelocity();
+  public void setFollowerMotionMagic(StrictFollower request);
 
-  public double getRightMotorPosition();
+  public double getLeadMotorPosition();
 
-  public double getRightMotorVelocity();
+  public double getLeadMotorVelocity();
 
-  public void setLeftMotorPercent(double newValue);
+  public double getFollowerMotorPosition();
 
-  public void setRightMotorPercent(double newValue);
+  public double getFollowerMotorVelocity();
 
-  public double getLeftMotorPercent();
+  public void setLeadMotorPercent(double newValue);
 
-  public double getRightMotorPercent();
+  public double getLeadMotorPercent();
 
   public boolean getTopEndStop();
 
   public boolean getBottomEndStop();
 
-  public double getLeftMotorCurrentDraw();
+  public double getLeadMotorCurrentDraw();
 
-  public double getRightMotorCurrentDraw();
+  public double getFollowerMotorCurrentDraw();
 
   public void simulationPeriodic();
 }

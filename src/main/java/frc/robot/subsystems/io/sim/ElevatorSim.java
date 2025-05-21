@@ -1,6 +1,8 @@
 package frc.robot.subsystems.io.sim;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -18,11 +20,11 @@ public class ElevatorSim implements ElevatorIO {
 
   private final double periodicDt;
 
-  private final TalonFX motorLeft;
-  private final TalonFX motorRight;
+  private final TalonFX motorLead;
+  private final TalonFX motorFollower;
 
-  private final TalonFXSimState motorLeftSim;
-  private final TalonFXSimState motorRightSim;
+  private final TalonFXSimState motorLeadSim;
+  private final TalonFXSimState motorFollowerSim;
 
   private final edu.wpi.first.wpilibj.simulation.ElevatorSim elevatorSim =
       new edu.wpi.first.wpilibj.simulation.ElevatorSim(
@@ -49,14 +51,14 @@ public class ElevatorSim implements ElevatorIO {
   public ElevatorSim(double periodicDt) {
     this.periodicDt = periodicDt;
 
-    motorLeft = new TalonFX(RobotMap.Elevator.MOTOR_LEFT_ID);
-    motorRight = new TalonFX(RobotMap.Elevator.MOTOR_RIGHT_ID);
+    motorLead = new TalonFX(RobotMap.Elevator.MOTOR_LEAD_ID);
+    motorFollower = new TalonFX(RobotMap.Elevator.MOTOR_FOLLOWER_ID);
 
-    motorLeftSim = motorLeft.getSimState();
-    motorRightSim = motorRight.getSimState();
+    motorLeadSim = motorLead.getSimState();
+    motorFollowerSim = motorFollower.getSimState();
 
-    motorLeftSim.Orientation = ChassisReference.Clockwise_Positive;
-    motorRightSim.Orientation = ChassisReference.Clockwise_Positive;
+    motorLeadSim.Orientation = ChassisReference.Clockwise_Positive;
+    motorFollowerSim.Orientation = ChassisReference.Clockwise_Positive;
 
     if (bottomEndStopSim != null)
       bottomEndStopSimValue = bottomEndStopSim.createBoolean("Value", Direction.kOutput, false);
@@ -75,78 +77,78 @@ public class ElevatorSim implements ElevatorIO {
 
   @Override
   public void applyTalonFXConfig(TalonFXConfiguration configuration) {
-    motorLeft.getConfigurator().apply(configuration);
-    motorRight.getConfigurator().apply(configuration);
+    motorLead.getConfigurator().apply(configuration);
+    motorFollower.getConfigurator().apply(configuration);
   }
 
   @Override
-  public void setLeftMotorVoltage(double outputVolts) {
-    motorLeft.setVoltage(outputVolts);
+  public StrictFollower createFollower() {
+    return new StrictFollower(RobotMap.Elevator.MOTOR_LEAD_ID);
   }
 
   @Override
-  public void setRightMotorVoltage(double outputVolts) {
-    motorRight.setVoltage(outputVolts);
+  public void setLeadMotorVoltage(double outputVolts) {
+    motorLead.setVoltage(outputVolts);
   }
 
   @Override
-  public double getLeftMotorVoltage() {
-    return motorLeft.getMotorVoltage().getValueAsDouble();
+  public void setLeadMotionMagic(MotionMagicExpoVoltage request) {
+    motorLead.setControl(request);
   }
 
   @Override
-  public double getRightMotorVoltage() {
-    return motorRight.getMotorVoltage().getValueAsDouble();
+  public void setFollowerMotionMagic(StrictFollower request) {
+    motorFollower.setControl(request);
   }
 
   @Override
-  public void setLeftMotorPosition(double newValue) {
-    motorLeft.setPosition(newValue);
+  public double getLeadMotorVoltage() {
+    return motorLead.getMotorVoltage().getValueAsDouble();
   }
 
   @Override
-  public void setRightMotorPosition(double newValue) {
-    motorRight.setPosition(newValue);
+  public double getFollowerMotorVoltage() {
+    return motorFollower.getMotorVoltage().getValueAsDouble();
   }
 
   @Override
-  public double getLeftMotorPosition() {
-    return motorLeft.getPosition().getValueAsDouble();
+  public void setLeadMotorPosition(double newValue) {
+    motorLead.setPosition(newValue);
   }
 
   @Override
-  public double getLeftMotorVelocity() {
-    return motorLeft.getVelocity().getValueAsDouble();
+  public void setFollowerMotorPosition(double newValue) {
+    motorFollower.setPosition(newValue);
   }
 
   @Override
-  public double getRightMotorPosition() {
-    return motorRight.getPosition().getValueAsDouble();
+  public double getLeadMotorPosition() {
+    return motorLead.getPosition().getValueAsDouble();
   }
 
   @Override
-  public double getRightMotorVelocity() {
-    return motorRight.getVelocity().getValueAsDouble();
+  public double getLeadMotorVelocity() {
+    return motorLead.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public void setLeftMotorPercent(double newValue) {
-    motorLeft.set(newValue);
+  public double getFollowerMotorPosition() {
+    return motorFollower.getPosition().getValueAsDouble();
   }
 
   @Override
-  public void setRightMotorPercent(double newValue) {
-    motorRight.set(newValue);
+  public double getFollowerMotorVelocity() {
+    return motorFollower.getVelocity().getValueAsDouble();
   }
 
   @Override
-  public double getLeftMotorPercent() {
-    return motorLeft.get();
+  public void setLeadMotorPercent(double newValue) {
+    motorLead.set(newValue);
   }
 
   @Override
-  public double getRightMotorPercent() {
-    return motorRight.get();
+  public double getLeadMotorPercent() {
+    return motorLead.get();
   }
 
   @Override
@@ -172,19 +174,19 @@ public class ElevatorSim implements ElevatorIO {
   }
 
   @Override
-  public double getLeftMotorCurrentDraw() {
-    return motorLeft.getSupplyCurrent().getValueAsDouble();
+  public double getLeadMotorCurrentDraw() {
+    return motorLead.getSupplyCurrent().getValueAsDouble();
   }
 
   @Override
-  public double getRightMotorCurrentDraw() {
-    return motorRight.getSupplyCurrent().getValueAsDouble();
+  public double getFollowerMotorCurrentDraw() {
+    return motorFollower.getSupplyCurrent().getValueAsDouble();
   }
 
   @Override
   public void close() throws Exception {
-    motorLeft.close();
-    motorRight.close();
+    motorLead.close();
+    motorFollower.close();
 
     if (bottomEndStopSim != null) {
       bottomEndStopSim.close();
@@ -198,22 +200,22 @@ public class ElevatorSim implements ElevatorIO {
 
   @Override
   public void simulationPeriodic() {
-    motorLeftSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-    motorRightSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+    motorLeadSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+    motorFollowerSim.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-    var motorLeftVoltage = motorLeftSim.getMotorVoltage();
-    var motorRightVoltage = motorRightSim.getMotorVoltage();
+    var motorLeftVoltage = motorLeadSim.getMotorVoltage();
+    var motorRightVoltage = motorFollowerSim.getMotorVoltage();
 
     elevatorSim.setInputVoltage((motorLeftVoltage + motorRightVoltage) / 2.0);
     elevatorSim.update(periodicDt);
 
-    motorLeftSim.setRawRotorPosition(
+    motorLeadSim.setRawRotorPosition(
         elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
-    motorLeftSim.setRotorVelocity(
+    motorLeadSim.setRotorVelocity(
         elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
-    motorRightSim.setRawRotorPosition(
+    motorFollowerSim.setRawRotorPosition(
         elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
-    motorRightSim.setRotorVelocity(
+    motorFollowerSim.setRotorVelocity(
         elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
   }
 }
