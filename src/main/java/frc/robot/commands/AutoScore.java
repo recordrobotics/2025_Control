@@ -11,9 +11,11 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants.ElevatorHeight;
+import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.hybrid.AlignToPose;
+import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.CommandUtils;
 import java.util.Set;
@@ -22,17 +24,26 @@ public class AutoScore extends SequentialCommandGroup {
 
   private Pose2d backawayTargetPose = null;
   private boolean alignTimeout = false;
+  private boolean isL1 = false;
 
   public AutoScore(CoralPosition reefPole) {
     addCommands(
-        new InstantCommand(() -> alignTimeout = false),
+        new InstantCommand(
+            () -> {
+              alignTimeout = false;
+              isL1 =
+                  DashboardUI.Overview.getControl().getReefLevelSwitchValue()
+                      == ReefLevelSwitchValue.L1;
+            }),
         CommandUtils.finishOnInterrupt(
                 ReefAlign.alignTarget(
                         reefPole,
                         () ->
-                            DashboardUI.Overview.getControl()
-                                .getReefLevelSwitchValue()
-                                .toCoralLevel(),
+                            isL1 && !RobotContainer.elevatorHead.hasCoral()
+                                ? CoralLevel.L1
+                                : DashboardUI.Overview.getControl()
+                                    .getReefLevelSwitchValue()
+                                    .toCoralLevel(),
                         false)
                     .handleInterrupt(() -> alignTimeout = true) // align until inturupted
                     .withTimeout(2.5)

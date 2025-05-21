@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.KillSpecified;
@@ -146,6 +147,10 @@ public class Robot extends LoggedRobot {
     RobotContainer.poseSensorFusion.startCalculation();
 
     CommandScheduler.getInstance().run();
+
+    SmartDashboard.putString(
+        "Overview/LevelSwitch",
+        DashboardUI.Overview.getControl().getReefLevelSwitchValue().toString());
 
     // Return to normal thread priority
     // Threads.setCurrentThreadPriority(false, 10);

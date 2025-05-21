@@ -360,7 +360,11 @@ public class RobotContainer {
                             .asProxy(),
                     Set.of()),
                 new ProcessorScore(false).asProxy(),
-                () -> elevatorHead.hasCoral()));
+                () ->
+                    elevatorHead.hasCoral()
+                        || (DashboardUI.Overview.getControl().getReefLevelSwitchValue()
+                                == ReefLevelSwitchValue.L1
+                            && !elevatorHead.hasAlgae())));
   }
 
   /**
