@@ -454,18 +454,18 @@ public final class Constants {
   }
 
   public final class ElevatorArm {
-    public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(10);
+    public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(15);
     public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
 
     public static final double MAX_ARM_VELOCITY = 12;
     public static final double MAX_ARM_ACCELERATION = 40;
 
-    public static final double kP = 15;
+    public static final double kP = 43.839;
     public static final double kI = 0;
-    public static final double kD = 0.28181;
+    public static final double kD = 4.1082;
     public static final double kG = 0.53175;
     public static final double kS = 0.17279;
-    public static final double kV = 0.53109;
+    public static final double kV = 3.1543;
     public static final double kA = 0.048931;
 
     public static final double START_POS = Units.degreesToRadians(-90);
@@ -639,9 +639,9 @@ public final class Constants {
 
     public static final double PUSH_OUT_RAMP_TIME = 0.5;
 
-    public static final double arm_kP = 34.8919;
+    public static final double arm_kP = 68.721;
     public static final double arm_kI = 0;
-    public static final double arm_kD = 0.11072;
+    public static final double arm_kD = 8.7176;
     public static final double arm_kG = 0.37793;
     public static final double arm_kS = 0.30532;
     public static final double arm_kV = 0.79648;
@@ -652,7 +652,7 @@ public final class Constants {
     public static final double ARM_INTAKE = Units.degreesToRadians(77.08);
     public static final double ARM_SCORE_L1 = Units.degreesToRadians(22.35);
     public static final double ARM_DOWN = Units.degreesToRadians(-49.5);
-    public static final double ARM_START_POS = Units.degreesToRadians(89.3);
+    public static final double ARM_START_POS = ARM_DOWN; // Units.degreesToRadians(89.3);
 
     public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18
 
@@ -996,7 +996,7 @@ public final class Constants {
     public static final boolean MOTOR_LOGGING_ENABLED = false;
 
     public static final AutoLogLevel.Level AUTO_LOG_LEVEL =
-        RobotBase.isReal() ? AutoLogLevel.Level.Real : AutoLogLevel.Level.Sim;
+        RobotBase.isReal() ? AutoLogLevel.Level.Sysid : AutoLogLevel.Level.Sim;
 
     public static enum Mode {
       REAL,

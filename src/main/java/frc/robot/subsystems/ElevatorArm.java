@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -34,7 +34,7 @@ public class ElevatorArm extends KillableSubsystem
   private final ElevatorArmIO io;
   private final SysIdRoutine sysIdRoutine;
 
-  private final MotionMagicVoltage armRequest;
+  private final MotionMagicExpoVoltage armRequest;
 
   public ElevatorArm(ElevatorArmIO io) {
     this.io = io;
@@ -58,8 +58,8 @@ public class ElevatorArm extends KillableSubsystem
     motionMagicConfigs_arm.MotionMagicCruiseVelocity = Constants.ElevatorArm.MAX_ARM_VELOCITY;
     motionMagicConfigs_arm.MotionMagicAcceleration = Constants.ElevatorArm.MAX_ARM_ACCELERATION;
     motionMagicConfigs_arm.MotionMagicJerk = 1600;
-    motionMagicConfigs_arm.MotionMagicExpo_kV = Constants.ElevatorArm.kV;
-    motionMagicConfigs_arm.MotionMagicExpo_kA = Constants.ElevatorArm.kA;
+    motionMagicConfigs_arm.MotionMagicExpo_kV = 1.931;
+    motionMagicConfigs_arm.MotionMagicExpo_kA = 1.1;
 
     io.applyArmTalonFXConfig(
         armConfig
@@ -75,7 +75,8 @@ public class ElevatorArm extends KillableSubsystem
                     .withStatorCurrentLimitEnable(true)));
 
     io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
-    armRequest = new MotionMagicVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    armRequest =
+        new MotionMagicExpoVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
     set(ElevatorHeight.BOTTOM.getArmAngle());
 
     sysIdRoutine =

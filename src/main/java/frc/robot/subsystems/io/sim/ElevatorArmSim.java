@@ -1,7 +1,7 @@
 package frc.robot.subsystems.io.sim;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -63,7 +63,7 @@ public class ElevatorArmSim implements ElevatorArmIO {
   }
 
   @Override
-  public void setArmMotionMagic(MotionMagicVoltage request) {
+  public void setArmMotionMagic(MotionMagicExpoVoltage request) {
     arm.setControl(request);
   }
 

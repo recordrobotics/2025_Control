@@ -31,7 +31,7 @@ public class ManualElevatorArm extends Command {
     angle += manualElevatorArmVelocity.times(Milliseconds.of(20)).in(Radians);
     angle = MathUtil.clamp(angle, Constants.ElevatorArm.MIN_POS, Constants.ElevatorArm.MAX_POS);
 
-    RobotContainer.elevatorArm.set(angle);
+    // RobotContainer.elevatorArm.set(angle);
   }
 
   // Returns true when the command should end.

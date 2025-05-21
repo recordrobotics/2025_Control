@@ -9,7 +9,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
@@ -55,7 +55,7 @@ public class CoralIntake extends KillableSubsystem
 
   private double intakePushAndPullRampStart = 0;
 
-  private final MotionMagicVoltage armRequest;
+  private final MotionMagicExpoVoltage armRequest;
 
   public CoralIntake(CoralIntakeIO io) {
     this.io = io;
@@ -79,6 +79,8 @@ public class CoralIntake extends KillableSubsystem
     motionMagicConfigs_arm.MotionMagicCruiseVelocity = Constants.CoralIntake.MAX_ARM_VELOCITY;
     motionMagicConfigs_arm.MotionMagicAcceleration = Constants.CoralIntake.MAX_ARM_ACCELERATION;
     motionMagicConfigs_arm.MotionMagicJerk = 1600;
+    motionMagicConfigs_arm.MotionMagicExpo_kV = 1.931;
+    motionMagicConfigs_arm.MotionMagicExpo_kA = 1.1;
 
     io.applyArmTalonFXConfig(
         armConfig
@@ -92,7 +94,7 @@ public class CoralIntake extends KillableSubsystem
 
     io.setArmPosition(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
     armRequest =
-        new MotionMagicVoltage(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
+        new MotionMagicExpoVoltage(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
     set(CoralIntakeState.UP);
 
     sysIdRoutineWheel =
@@ -191,7 +193,7 @@ public class CoralIntake extends KillableSubsystem
 
   public void setArm(double angleRadians) {
     currentSetpoint.position = angleRadians;
-    io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    // io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
   }
 
   public boolean armAtGoal() {

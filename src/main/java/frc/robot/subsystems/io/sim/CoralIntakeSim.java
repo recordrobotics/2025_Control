@@ -4,7 +4,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.sim.SparkMaxSim;
@@ -122,7 +122,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
   }
 
   @Override
-  public void setArmMotionMagic(MotionMagicVoltage request) {
+  public void setArmMotionMagic(MotionMagicExpoVoltage request) {
     arm.setControl(request);
   }
 
