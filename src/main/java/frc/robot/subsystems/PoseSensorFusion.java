@@ -380,17 +380,7 @@ public class PoseSensorFusion extends SubsystemBase
   }
 
   @Override
-  public void setupShuffleboard() {
-    DashboardUI.Overview.setTagNumLeft(() -> leftCamera.getNumTags());
-    DashboardUI.Overview.setConfidenceLeft(() -> leftCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionLeft(() -> leftCamera.hasVision());
-    DashboardUI.Overview.setLimelightConnectedLeft(() -> leftCamera.isConnected());
-
-    DashboardUI.Overview.setTagNumCenter(() -> centerCamera.getNumTags());
-    DashboardUI.Overview.setConfidenceCenter(() -> centerCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionCenter(() -> centerCamera.hasVision());
-    DashboardUI.Overview.setLimelightConnectedCenter(() -> centerCamera.isConnected());
-  }
+  public void setupShuffleboard() {}
 
   public class VisionDebouncer {
     private final Debouncer debouncer;

@@ -33,38 +33,10 @@ public class OverviewLayout extends AbstractLayout {
   // private Supplier<Boolean> poseCertainValue = () -> false;
   private Supplier<Boolean> navSensorValue = () -> false;
 
-  private Supplier<Integer> tagNumLeftValue = () -> 0;
-  private Supplier<Double> confidenceLeftValue = () -> 0.0;
-  private Supplier<Boolean> hasVisionLeftValue = () -> false;
-  private Supplier<Boolean> limelightConnectedLeftValue = () -> false;
-
-  private Supplier<Integer> tagNumCenterValue = () -> 0;
-  private Supplier<Double> confidenceCenterValue = () -> 0.0;
-  private Supplier<Boolean> hasVisionCenterValue = () -> false;
-  private Supplier<Boolean> limelightConnectedCenterValue = () -> false;
-
   private static final Map<Integer, TuningData> shooterSpeedData = new HashMap<>();
 
   public OverviewLayout() {
     addValueSendable("Nav Sensor", () -> navSensorValue.get(), "boolean");
-
-    addValueSendable("Left/Tag Count", () -> tagNumLeftValue.get(), "int");
-
-    addValueSendable("Left/Confidence", () -> confidenceLeftValue.get(), "double");
-
-    addValueSendable("Left/Has Vision", () -> hasVisionLeftValue.get(), "boolean");
-
-    addValueSendable(
-        "Left/Limelight Connected", () -> limelightConnectedLeftValue.get(), "boolean");
-
-    addValueSendable("Center/Tag Count", () -> tagNumCenterValue.get(), "int");
-
-    addValueSendable("Center/Confidence", () -> confidenceCenterValue.get(), "double");
-
-    addValueSendable("Center/Has Vision", () -> hasVisionCenterValue.get(), "boolean");
-
-    addValueSendable(
-        "Center/Limelight Connected", () -> limelightConnectedCenterValue.get(), "boolean");
   }
 
   /**
@@ -90,38 +62,6 @@ public class OverviewLayout extends AbstractLayout {
 
   public void setNavSensor(Supplier<Boolean> navSensor) {
     navSensorValue = navSensor;
-  }
-
-  public void setTagNumLeft(Supplier<Integer> tagNum) {
-    tagNumLeftValue = tagNum;
-  }
-
-  public void setConfidenceLeft(Supplier<Double> confidence) {
-    confidenceLeftValue = confidence;
-  }
-
-  public void setHasVisionLeft(Supplier<Boolean> hasVision) {
-    hasVisionLeftValue = hasVision;
-  }
-
-  public void setLimelightConnectedLeft(Supplier<Boolean> limelightConnected) {
-    limelightConnectedLeftValue = limelightConnected;
-  }
-
-  public void setTagNumCenter(Supplier<Integer> tagNum) {
-    tagNumCenterValue = tagNum;
-  }
-
-  public void setConfidenceCenter(Supplier<Double> confidence) {
-    confidenceCenterValue = confidence;
-  }
-
-  public void setHasVisionCenter(Supplier<Boolean> hasVision) {
-    hasVisionCenterValue = hasVision;
-  }
-
-  public void setLimelightConnectedCenter(Supplier<Boolean> limelightConnected) {
-    limelightConnectedCenterValue = limelightConnected;
   }
 
   public void putShooterSpeedData(int id, double current, double target) {
