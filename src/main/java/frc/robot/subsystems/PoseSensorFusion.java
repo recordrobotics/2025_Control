@@ -33,6 +33,8 @@ import frc.robot.utils.camera.PhotonVisionCamera;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -69,6 +71,9 @@ public class PoseSensorFusion extends SubsystemBase
           Constants.PhotonVision.PHOTON_SOURCE_NAME,
           CameraType.SVPROGlobalShutter,
           Constants.PhotonVision.sourceTransformRobotToCamera);
+
+  private final Set<IVisionCamera> cameras =
+      Set.of(leftCamera, centerCamera, l1Camera, sourceCamera);
 
   private final HashSet<VisionDebouncer> visionDebouncers = new HashSet<>();
 
@@ -168,7 +173,7 @@ public class PoseSensorFusion extends SubsystemBase
           estimation.visionMeasurementStdDevs);
     }
 
-    updateDashboard(leftCamera, centerCamera, l1Camera, sourceCamera);
+    updateDashboard();
 
     leftCamera.logValues("Left");
     centerCamera.logValues("Center");
@@ -193,7 +198,7 @@ public class PoseSensorFusion extends SubsystemBase
     updateNav = nav.getAdjustedAngle();
     updatePositions = getModulePositions();
 
-    if (leftCamera.hasVision() || centerCamera.hasVision()) {
+    if (cameras.stream().anyMatch(v -> v.hasVision())) {
       // when vision is correcting the pose, have that override the independent pose estimator
       independentPoseEstimator.reset(getEstimatedPosition());
       independentPoseEstimator.update(getEstimatedPosition().getRotation());
@@ -215,7 +220,7 @@ public class PoseSensorFusion extends SubsystemBase
     sourceCamera.updateEstimation(false);
   }
 
-  private void updateDashboard(IVisionCamera... cameras) {
+  private void updateDashboard() {
     for (IVisionCamera camera : cameras) {
       DashboardUI.Autonomous.setVisionPose(camera.getName(), camera.getUnsafeEstimate().pose);
     }
@@ -291,12 +296,35 @@ public class PoseSensorFusion extends SubsystemBase
   }
 
   public enum CameraTarget {
-    Left,
-    Center,
-    All;
+    Left(RobotContainer.poseSensorFusion.getLeftCamera()),
+    Center(RobotContainer.poseSensorFusion.getCenterCamera()),
+    L1(RobotContainer.poseSensorFusion.getL1Camera()),
+    Source(RobotContainer.poseSensorFusion.getSourceCamera()),
+    Elevator(Left, Center),
+    All(Left, Center, L1, Source);
 
-    boolean contains(CameraTarget camera) {
-      return this == camera || this == All;
+    private Set<IVisionCamera> cameras;
+
+    CameraTarget(IVisionCamera... cameras) {
+      this.cameras = Set.of(cameras);
+    }
+
+    CameraTarget(CameraTarget... targets) {
+      List<IVisionCamera> cameras = new ArrayList<>();
+      for (CameraTarget target : targets) {
+        for (IVisionCamera camera : target.cameras) {
+          cameras.add(camera);
+        }
+      }
+      this.cameras = Set.of(cameras.toArray(new IVisionCamera[0]));
+    }
+
+    boolean contains(IVisionCamera camera) {
+      return cameras.contains(camera);
+    }
+
+    boolean contains(IVisionCamera... cameras) {
+      return this.cameras.containsAll(Set.of(cameras));
     }
   }
 
@@ -339,6 +367,18 @@ public class PoseSensorFusion extends SubsystemBase
     return centerCamera;
   }
 
+  public PhotonVisionCamera getL1Camera() {
+    return l1Camera;
+  }
+
+  public PhotonVisionCamera getSourceCamera() {
+    return sourceCamera;
+  }
+
+  public Set<IVisionCamera> getCameras() {
+    return cameras;
+  }
+
   @Override
   public void setupShuffleboard() {
     DashboardUI.Overview.setTagNumLeft(() -> leftCamera.getNumTags());
@@ -362,6 +402,8 @@ public class PoseSensorFusion extends SubsystemBase
     private boolean result = false;
     private double lastAccessTime;
 
+    private boolean persistent = false;
+
     private VisionDebouncer(
         int id,
         double debounceTime,
@@ -377,31 +419,21 @@ public class PoseSensorFusion extends SubsystemBase
 
     private void update() {
       boolean rawInput = false;
+      ArrayList<Integer> visionTags = new ArrayList<>();
 
-      if (camera.contains(CameraTarget.Left)) {
-        rawInput |= RobotContainer.poseSensorFusion.getLeftCamera().hasVision();
-      }
+      for (var vis : RobotContainer.poseSensorFusion.getCameras()) {
+        if (camera.contains(vis)) {
+          rawInput |= vis.hasVision();
 
-      if (camera.contains(CameraTarget.Center)) {
-        rawInput |= RobotContainer.poseSensorFusion.getCenterCamera().hasVision();
-      }
-
-      if (tagIds != null && rawInput) {
-        ArrayList<Integer> visionTags = new ArrayList<>();
-        if (camera.contains(CameraTarget.Left)) {
-          for (RawVisionFiducial tag :
-              RobotContainer.poseSensorFusion.getLeftCamera().getCurrentEstimate().rawFiducials) {
-            visionTags.add(tag.id);
+          if (tagIds != null) {
+            for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials) {
+              visionTags.add(tag.id);
+            }
           }
         }
+      }
 
-        if (camera.contains(CameraTarget.Center)) {
-          for (RawVisionFiducial tag :
-              RobotContainer.poseSensorFusion.getCenterCamera().getCurrentEstimate().rawFiducials) {
-            visionTags.add(tag.id);
-          }
-        }
-
+      if (rawInput) {
         for (int tagId : tagIds) {
           if (!visionTags.contains(tagId)) {
             rawInput = false;
@@ -413,7 +445,7 @@ public class PoseSensorFusion extends SubsystemBase
       result = debouncer.calculate(rawInput);
 
       double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
-      if (timeSinceLastAccessed > 1.0) {
+      if (!persistent && timeSinceLastAccessed > 1.0) {
         DriverStation.reportWarning(
             "Detected abandoned "
                 + toString()
@@ -450,8 +482,18 @@ public class PoseSensorFusion extends SubsystemBase
       this.camera = camera;
     }
 
+    public VisionDebouncer withCamera(CameraTarget camera) {
+      setCamera(camera);
+      return this;
+    }
+
     public void setTagIds(int[] tagIds) {
       this.tagIds = tagIds;
+    }
+
+    public VisionDebouncer withTagIds(int[] tagIds) {
+      setTagIds(tagIds);
+      return this;
     }
 
     public CameraTarget getCamera() {
@@ -470,6 +512,16 @@ public class PoseSensorFusion extends SubsystemBase
       debouncer.setDebounceType(debounceType);
     }
 
+    public VisionDebouncer withDebounceTime(double time) {
+      setDebounceTime(time);
+      return this;
+    }
+
+    public VisionDebouncer withDebounceType(Debouncer.DebounceType debounceType) {
+      setDebounceType(debounceType);
+      return this;
+    }
+
     public double getDebounceTime() {
       return debouncer.getDebounceTime();
     }
@@ -484,6 +536,28 @@ public class PoseSensorFusion extends SubsystemBase
 
     public void release() {
       RobotContainer.poseSensorFusion.releaseVisionCheck(this);
+    }
+
+    public boolean isPersistent() {
+      return persistent;
+    }
+
+    public void setPersistent(boolean persistent) {
+      this.persistent = persistent;
+    }
+
+    public void setPersistent() {
+      setPersistent(true);
+    }
+
+    public VisionDebouncer withPersistent() {
+      setPersistent();
+      return this;
+    }
+
+    public VisionDebouncer withPersistent(boolean persistent) {
+      setPersistent(persistent);
+      return this;
     }
   }
 }
