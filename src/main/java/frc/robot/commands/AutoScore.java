@@ -17,6 +17,7 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.hybrid.AlignToPose;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.utils.CommandUtils;
 import java.util.Set;
 
@@ -25,6 +26,12 @@ public class AutoScore extends SequentialCommandGroup {
   private Pose2d backawayTargetPose = null;
   private boolean alignTimeout = false;
   private boolean isL1 = false;
+
+  private CoralLevel getLevel() {
+    return isL1 && !RobotContainer.elevatorHead.hasCoral()
+        ? CoralLevel.L1
+        : DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel();
+  }
 
   public AutoScore(CoralPosition reefPole) {
     addCommands(
@@ -36,45 +43,37 @@ public class AutoScore extends SequentialCommandGroup {
                       == ReefLevelSwitchValue.L1;
             }),
         CommandUtils.finishOnInterrupt(
-                ReefAlign.alignTarget(
-                        reefPole,
-                        () ->
-                            isL1 && !RobotContainer.elevatorHead.hasCoral()
-                                ? CoralLevel.L1
-                                : DashboardUI.Overview.getControl()
-                                    .getReefLevelSwitchValue()
-                                    .toCoralLevel(),
-                        false)
+                ReefAlign.alignTarget(reefPole, this::getLevel, false)
                     .handleInterrupt(() -> alignTimeout = true) // align until inturupted
                     .withTimeout(2.5)
                     .asProxy())
             .alongWith(
                 new WaitUntilCommand(
                         () -> {
-                          var level =
-                              DashboardUI.Overview.getControl()
-                                  .getReefLevelSwitchValue()
-                                  .toCoralLevel();
+                          var level = getLevel();
                           Pose2d pose = reefPole.getPose(level);
 
                           return RobotContainer.poseSensorFusion
                                       .getEstimatedPosition()
                                       .getTranslation()
                                       .getDistance(pose.getTranslation())
-                                  < 0.3
+                                  < (level == CoralLevel.L1 ? 0.5 : 0.3)
                               || ReefAlign.wasInterrupted()
                               || alignTimeout;
                         })
                     .andThen(
-                        new DeferredCommand(
-                            () ->
-                                new ElevatorMove(
-                                        DashboardUI.Overview.getControl()
-                                            .getReefLevelSwitchValue()
-                                            .toCoralLevel()
-                                            .getHeight())
-                                    .asProxy(),
-                            Set.of())))
+                        Commands.either(
+                            new DeferredCommand(
+                                () ->
+                                    new ElevatorMove(
+                                            DashboardUI.Overview.getControl()
+                                                .getReefLevelSwitchValue()
+                                                .toCoralLevel()
+                                                .getHeight())
+                                        .asProxy(),
+                                Set.of()),
+                            new CoralIntakeMoveL1().asProxy(),
+                            () -> getLevel() != CoralLevel.L1)))
             .onlyWhile(
                 () ->
                     RobotState.isAutonomous() || DashboardUI.Overview.getControl().getAutoScore()),
@@ -84,31 +83,44 @@ public class AutoScore extends SequentialCommandGroup {
                         RobotState.isAutonomous()
                             || !DashboardUI.Overview.getControl().getAutoScore())
                 .andThen(
-                    new CoralShoot()
-                        .andThen(
-                            () ->
-                                backawayTargetPose =
-                                    RobotContainer.poseSensorFusion
-                                        .getEstimatedPosition()
-                                        .transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero)))
-                        .andThen(
-                            CommandUtils.finishOnInterrupt(
-                                    new AlignToPose(() -> backawayTargetPose) // back away
-                                        .withTimeout(1.0)
-                                        .asProxy())
-                                .finallyDo(() -> RobotContainer.drivetrain.kill())
-                                .alongWith(
-                                    new DeferredCommand(
-                                            () ->
-                                                new WaitCommand(
-                                                    RobotContainer.elevator.getNearestHeight()
-                                                            == ElevatorHeight.L4
-                                                        ? 0.3
-                                                        : 0),
-                                            Set.of())
-                                        .andThen(
-                                            new ElevatorMove(ElevatorHeight.BOTTOM).asProxy())))),
-            new ElevatorMove(ElevatorHeight.BOTTOM).asProxy(),
+                    Commands.either(
+                        new CoralShoot()
+                            .andThen(
+                                () ->
+                                    backawayTargetPose =
+                                        RobotContainer.poseSensorFusion
+                                            .getEstimatedPosition()
+                                            .transformBy(
+                                                new Transform2d(-0.3, 0, Rotation2d.kZero)))
+                            .andThen(
+                                CommandUtils.finishOnInterrupt(
+                                        new AlignToPose(() -> backawayTargetPose) // back away
+                                            .withTimeout(1.0)
+                                            .asProxy())
+                                    .finallyDo(() -> RobotContainer.drivetrain.kill())
+                                    .alongWith(
+                                        new DeferredCommand(
+                                                () ->
+                                                    new WaitCommand(
+                                                        RobotContainer.elevator.getNearestHeight()
+                                                                == ElevatorHeight.L4
+                                                            ? 0.3
+                                                            : 0),
+                                                Set.of())
+                                            .andThen(
+                                                new ElevatorMove(ElevatorHeight.BOTTOM)
+                                                    .asProxy()))),
+                        new CoralIntakeShootL1().asProxy(),
+                        () -> getLevel() != CoralLevel.L1)),
+            Commands.either(
+                new ElevatorMove(ElevatorHeight.BOTTOM).asProxy(),
+                new InstantCommand(
+                        () -> {
+                          RobotContainer.coralIntake.set(CoralIntakeState.UP);
+                        },
+                        RobotContainer.coralIntake)
+                    .asProxy(),
+                () -> getLevel() != CoralLevel.L1),
             () ->
                 RobotState.isAutonomous()
                     || DashboardUI.Overview.getControl().getAutoScore()
