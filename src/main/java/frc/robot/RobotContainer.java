@@ -268,13 +268,17 @@ public class RobotContainer {
             new CoralIntakeFromGround().withInterruptBehavior(InterruptionBehavior.kCancelIncoming))
         .onFalse(
             Commands.either(
-                new CoralIntakeFromGroundUpL1()
-                    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
-                new CoralIntakeFromGroundUp()
-                    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
-                () ->
-                    DashboardUI.Overview.getControl().getReefLevelSwitchValue()
-                        == ReefLevelSwitchValue.L1));
+                    new CoralIntakeFromGroundUpL1()
+                        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
+                    new CoralIntakeFromGroundUp()
+                        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
+                    () ->
+                        DashboardUI.Overview.getControl().getReefLevelSwitchValue()
+                            == ReefLevelSwitchValue.L1)
+                .onlyWhile(
+                    () ->
+                        elevatorHead.hasCoral()
+                            || !DashboardUI.Overview.getControl().getCoralGroundIntakeSimple()));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getCoralSourceIntake())
         .onTrue(new CoralIntakeFromSource(true));

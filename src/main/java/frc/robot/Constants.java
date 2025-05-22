@@ -216,12 +216,12 @@ public final class Constants {
       public Pose2d getPose(CoralLevel level) {
         switch (level) {
           case L1:
-            return new Pose2d(); // TODO
+            return pose.transformBy(new Transform2d(-0.1, 0, Rotation2d.kCW_90deg));
           case L2:
           case L3:
-            return pose.transformBy(new Transform2d(-0.1, 0, Rotation2d.kZero));
-          case L4:
             return pose.transformBy(new Transform2d(-0.05, 0, Rotation2d.kZero));
+          case L4:
+            return pose.transformBy(new Transform2d(-0.1, 0, Rotation2d.kZero));
           default:
             return pose; // this is bad
         }
@@ -532,9 +532,9 @@ public final class Constants {
     public static final double kG = 0.19133;
     public static final double kS = 0.078513;
 
-    public static final double kP = 2.3;
+    public static final double kP = 60.0;
     public static final double kI = 0.0;
-    public static final double kD = 0.1;
+    public static final double kD = 4.1;
 
     public static final double STARTING_HEIGHT = 0;
     public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
@@ -995,7 +995,7 @@ public final class Constants {
             ? (SysIdManager.getSysIdRoutine() != SysIdRoutine.None
                 ? AutoLogLevel.Level.Sysid
                 : AutoLogLevel.Level.Real)
-            : AutoLogLevel.Level.Sim;
+            : AutoLogLevel.Level.DebugSim;
 
     public static enum Mode {
       REAL,
