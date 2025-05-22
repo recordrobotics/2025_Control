@@ -1,8 +1,8 @@
 package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.RobotMap;
@@ -34,8 +34,8 @@ public class ElevatorReal implements ElevatorIO {
   }
 
   @Override
-  public StrictFollower createFollower() {
-    return new StrictFollower(RobotMap.Elevator.MOTOR_LEAD_ID);
+  public Follower createFollower() {
+    return new Follower(RobotMap.Elevator.MOTOR_LEAD_ID, false);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class ElevatorReal implements ElevatorIO {
   }
 
   @Override
-  public void setFollowerMotionMagic(StrictFollower request) {
+  public void setFollowerMotionMagic(Follower request) {
     motorFollower.setControl(request);
   }
 

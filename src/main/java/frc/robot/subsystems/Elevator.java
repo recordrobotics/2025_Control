@@ -5,8 +5,8 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -31,7 +31,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   private final ElevatorIO io;
 
   private final MotionMagicExpoVoltage elevatorRequest;
-  private final StrictFollower elevatorFollower;
+  private final Follower elevatorFollower;
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -55,7 +55,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     motionMagicConfigs_elevator.MotionMagicCruiseVelocity = Constants.Elevator.kMaxVelocity;
     motionMagicConfigs_elevator.MotionMagicAcceleration = Constants.Elevator.kMaxAcceleration;
     motionMagicConfigs_elevator.MotionMagicJerk = 1600;
-    motionMagicConfigs_elevator.MotionMagicExpo_kV = 1.931;
+    motionMagicConfigs_elevator.MotionMagicExpo_kV = 10.0;
     motionMagicConfigs_elevator.MotionMagicExpo_kA = 1.1;
 
     io.applyTalonFXConfig(
@@ -63,7 +63,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(InvertedValue.Clockwise_Positive)
-                    .withNeutralMode(NeutralModeValue.Brake))
+                    .withNeutralMode(NeutralModeValue.Coast))
             .withCurrentLimits(
                 new CurrentLimitsConfigs()
                     .withSupplyCurrentLimit(Constants.Elevator.SUPPLY_CURRENT_LIMIT)
@@ -128,7 +128,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   @Override
   public void periodic() {
 
-    // set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
+    set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
 
     // Update mechanism
     RobotContainer.model.elevator.update(getCurrentHeight());

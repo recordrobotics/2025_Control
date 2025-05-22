@@ -527,14 +527,14 @@ public final class Constants {
     public static final double kDt = 0.02;
     public static final double kMaxVelocity = 2.3;
     public static final double kMaxAcceleration = 10;
-    public static final double kV = 5.5255;
-    public static final double kA = 0.1319;
-    public static final double kG = 0.19133;
-    public static final double kS = 0.078513;
+    public static final double kV = 5.6056;
+    public static final double kA = 0.21006;
+    public static final double kG = 0.20027;
+    public static final double kS = 0.016248;
 
-    public static final double kP = 60.0;
+    public static final double kP = 6; // 68.424;
     public static final double kI = 0.0;
-    public static final double kD = 4.1;
+    public static final double kD = 0.2; // 9.2646;
 
     public static final double STARTING_HEIGHT = 0;
     public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
@@ -634,10 +634,10 @@ public final class Constants {
     public static final double arm_kP = 68.721;
     public static final double arm_kI = 0;
     public static final double arm_kD = 8.7176;
-    public static final double arm_kG = 0.37793;
-    public static final double arm_kS = 0.30532;
-    public static final double arm_kV = 0.79648;
-    public static final double arm_kA = 0.038737;
+    public static final double arm_kG = 0.47407;
+    public static final double arm_kS = 0.41583;
+    public static final double arm_kV = 5.3;
+    public static final double arm_kA = 0.1;
 
     public static final double ARM_UP = Units.degreesToRadians(80.19);
     public static final double ARM_PUSH = Units.degreesToRadians(84.19);

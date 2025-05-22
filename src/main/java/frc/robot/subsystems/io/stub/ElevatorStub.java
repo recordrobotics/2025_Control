@@ -1,8 +1,8 @@
 package frc.robot.subsystems.io.stub;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.StrictFollower;
 import frc.robot.subsystems.io.ElevatorIO;
 
 public class ElevatorStub implements ElevatorIO {
@@ -15,8 +15,8 @@ public class ElevatorStub implements ElevatorIO {
   }
 
   @Override
-  public StrictFollower createFollower() {
-    return new StrictFollower(0);
+  public Follower createFollower() {
+    return new Follower(0, false);
   }
 
   @Override
@@ -29,7 +29,7 @@ public class ElevatorStub implements ElevatorIO {
   public void setLeadMotionMagic(MotionMagicExpoVoltage request) {}
 
   @Override
-  public void setFollowerMotionMagic(StrictFollower request) {}
+  public void setFollowerMotionMagic(Follower request) {}
 
   @Override
   public double getLeadMotorVoltage() {

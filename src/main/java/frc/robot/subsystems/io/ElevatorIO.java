@@ -1,14 +1,14 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.StrictFollower;
 
 public interface ElevatorIO extends AutoCloseable {
 
   public void applyTalonFXConfig(TalonFXConfiguration configuration);
 
-  public StrictFollower createFollower();
+  public Follower createFollower();
 
   public void setLeadMotorVoltage(double outputVolts);
 
@@ -22,7 +22,7 @@ public interface ElevatorIO extends AutoCloseable {
 
   public void setLeadMotionMagic(MotionMagicExpoVoltage request);
 
-  public void setFollowerMotionMagic(StrictFollower request);
+  public void setFollowerMotionMagic(Follower request);
 
   public double getLeadMotorPosition();
 
