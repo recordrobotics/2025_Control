@@ -32,7 +32,7 @@ public class ManualElevator extends Command {
     height =
         MathUtil.clamp(height, Constants.Elevator.STARTING_HEIGHT, Constants.Elevator.MAX_HEIGHT);
 
-    RobotContainer.elevator.set(height);
+    // RobotContainer.elevator.set(height);
   }
 
   // Returns true when the command should end.

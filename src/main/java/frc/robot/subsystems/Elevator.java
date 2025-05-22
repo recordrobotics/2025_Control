@@ -56,7 +56,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     motionMagicConfigs_elevator.MotionMagicAcceleration = Constants.Elevator.kMaxAcceleration;
     motionMagicConfigs_elevator.MotionMagicJerk = 1600;
     motionMagicConfigs_elevator.MotionMagicExpo_kV = 10.0;
-    motionMagicConfigs_elevator.MotionMagicExpo_kA = 1.1;
+    motionMagicConfigs_elevator.MotionMagicExpo_kA = 6.1;
 
     io.applyTalonFXConfig(
         elevatorConfig

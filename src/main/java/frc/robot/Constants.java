@@ -532,9 +532,9 @@ public final class Constants {
     public static final double kG = 0.20027;
     public static final double kS = 0.016248;
 
-    public static final double kP = 6; // 68.424;
+    public static final double kP = 68.424;
     public static final double kI = 0.0;
-    public static final double kD = 0.2; // 9.2646;
+    public static final double kD = 9.2646;
 
     public static final double STARTING_HEIGHT = 0;
     public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
