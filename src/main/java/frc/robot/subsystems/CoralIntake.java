@@ -256,12 +256,14 @@ public class CoralIntake extends KillableSubsystem
 
   @Override
   public void periodic() {
-    wheelPositionCached = io.getWheelPosition();
     wheelVelocityCached = io.getWheelVelocity();
-    wheelVoltageCached = io.getWheelVoltage();
     armPositionCached = io.getArmPosition();
     armVelocityCached = io.getArmVelocity();
-    armVoltageCached = io.getArmVoltage();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      wheelPositionCached = io.getWheelPosition();
+      wheelVoltageCached = io.getWheelVoltage();
+      armVoltageCached = io.getArmVoltage();
+    }
 
     // setArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
 

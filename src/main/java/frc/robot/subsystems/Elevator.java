@@ -34,11 +34,8 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   private final Follower elevatorFollower;
 
   private double leadPositionCached = 0;
-  private double followerPositionCached = 0;
   private double leadVelocityCached = 0;
-  private double followerVelocityCached = 0;
   private double leadVoltageCached = 0;
-  private double followerVoltageCached = 0;
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -84,7 +81,6 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     io.setFollowerMotorPosition(Constants.Elevator.STARTING_HEIGHT);
 
     leadPositionCached = Constants.Elevator.STARTING_HEIGHT;
-    followerPositionCached = Constants.Elevator.STARTING_HEIGHT;
 
     elevatorRequest = new MotionMagicExpoVoltage(Constants.Elevator.STARTING_HEIGHT);
     elevatorFollower = io.createFollower();
@@ -112,17 +108,17 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   /** Height of the elevator in meters */
   @AutoLogLevel(level = Level.Sysid)
   public double getCurrentHeight() {
-    return (leadPositionCached + followerPositionCached) / 2;
+    return leadPositionCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getCurrentVelocity() {
-    return (leadVelocityCached + followerVelocityCached) / 2;
+    return leadVelocityCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getCurrentVoltage() {
-    return (leadVoltageCached + followerVoltageCached) / 2;
+    return leadVoltageCached;
   }
 
   @AutoLogLevel(level = Level.DebugReal)
@@ -139,11 +135,10 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   public void periodic() {
 
     leadPositionCached = io.getLeadMotorPosition();
-    followerPositionCached = io.getFollowerMotorPosition();
     leadVelocityCached = io.getLeadMotorVelocity();
-    followerVelocityCached = io.getFollowerMotorVelocity();
-    leadVoltageCached = io.getLeadMotorVoltage();
-    followerVoltageCached = io.getFollowerMotorVoltage();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      leadVoltageCached = io.getLeadMotorVoltage();
+    }
 
     set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
 

@@ -271,7 +271,9 @@ public class ElevatorHead extends KillableSubsystem
 
     positionCached = io.getPosition();
     velocityCached = io.getVelocity();
-    voltageCached = io.getVoltage();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      voltageCached = io.getVoltage();
+    }
 
     // set(0);
     // currentState = CoralShooterStates.POSITION;
