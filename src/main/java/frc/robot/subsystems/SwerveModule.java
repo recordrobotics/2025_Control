@@ -12,8 +12,10 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.SwerveModuleIO;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
@@ -40,6 +42,13 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   final MotionMagicVoltage turnRequest;
   final MotionMagicVelocityVoltage driveRequest;
+
+  private double drivePositionCached = 0;
+  private double driveVelocityCached = 0;
+  private double driveVoltageCached = 0;
+  private double turnPositionCached = 0;
+  private double turnVelocityCached = 0;
+  private double turnVoltageCached = 0;
 
   /**
    * Constructs a SwerveModule with a drive motor, turning motor, and absolute turning encoder.
@@ -130,8 +139,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     io.setTurnMotorVoltage(0);
 
     // Corrects for offset in absolute wheel position
-    io.setTurnMechanismPosition(getAbsWheelTurnOffset());
-    turnRequest = new MotionMagicVoltage(getAbsWheelTurnOffset());
+    turnPositionCached = getAbsWheelTurnOffset();
+    io.setTurnMechanismPosition(turnPositionCached);
+    turnRequest = new MotionMagicVoltage(turnPositionCached);
     driveRequest = new MotionMagicVelocityVoltage(0);
   }
 
@@ -152,7 +162,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
    */
   public Rotation2d getTurnWheelRotation2d() {
     // Get the wheel's current turn position in rotations
-    double numWheelRotations = io.getTurnMechanismPosition();
+    double numWheelRotations = turnPositionCached;
     // Convert wheel rotations to radians
     double wheelRadians = numWheelRotations * 2 * Math.PI;
     // Create a Rotation2d object from the wheel's angle in radians
@@ -162,15 +172,13 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public double getTurnWheelVelocity() {
-    // RPS
-    double turnWheelRotationsPerSecond = io.getTurnMechanismVelocity();
-    return turnWheelRotationsPerSecond;
+    return turnVelocityCached;
   }
 
   // meters per second
   public double getDriveWheelVelocity() {
     // Get the drive motor velocity in rotations per second
-    double driveWheelRotationsPerSecond = io.getDriveMechanismVelocity();
+    double driveWheelRotationsPerSecond = driveVelocityCached;
 
     // Calculate the distance the wheel travels per rotation (circumference)
     double wheelCircumference = WHEEL_DIAMETER * Math.PI;
@@ -183,7 +191,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
   public double getDriveWheelDistance() {
     // Get the drive wheel's current position in rotations
-    double numRotationsDriveWheel = io.getDriveMechanismPosition();
+    double numRotationsDriveWheel = drivePositionCached;
 
     // Calculate the wheel's circumference
     double wheelCircumference = Math.PI * WHEEL_DIAMETER;
@@ -223,11 +231,19 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     targetTurnPosition = desiredState.angle.getRotations();
     targetDriveVelocity = desiredState.speedMetersPerSecond;
-
-    controllerPeriodic();
   }
 
-  public void controllerPeriodic() {
+  public void periodic() {
+
+    drivePositionCached = io.getDriveMechanismPosition();
+    driveVelocityCached = io.getDriveMechanismVelocity();
+    turnPositionCached = io.getTurnMechanismPosition();
+    turnVelocityCached = io.getTurnMechanismVelocity();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      driveVoltageCached = io.getDriveMotorVoltage();
+      turnVoltageCached = io.getTurnMotorVoltage();
+    }
+
     double actualTargetDriveVelocity =
         targetDriveVelocity
             * Math.cos(
@@ -256,7 +272,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public double getDriveMotorVoltsSysIdOnly() {
-    return io.getDriveMotorVoltage();
+    return driveVoltageCached;
   }
 
   public void setTurnMotorVoltsSysIdOnly(double volts) {
@@ -264,7 +280,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
   }
 
   public double getTurnMotorVoltsSysIdOnly() {
-    return io.getTurnMotorVoltage();
+    return turnVoltageCached;
   }
 
   @Override

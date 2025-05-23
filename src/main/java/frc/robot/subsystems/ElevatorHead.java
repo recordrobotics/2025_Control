@@ -54,6 +54,10 @@ public class ElevatorHead extends KillableSubsystem
 
   private CoralShooterStates currentState = CoralShooterStates.OFF;
 
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
+
   private boolean hasAlgae = false;
   private boolean waitingForAlgae = false;
   private boolean waitingForIntakeSpeed = false;
@@ -65,6 +69,7 @@ public class ElevatorHead extends KillableSubsystem
     DashboardUI.Test.addSlider("Elevator Head", io.getPercent(), -1, 1).subscribe(io::setPercent);
 
     io.setPosition(0);
+    positionCached = 0;
     positionPid.reset(0);
 
     positionPid.setTolerance(
@@ -115,7 +120,7 @@ public class ElevatorHead extends KillableSubsystem
 
   @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
-    return io.getVelocity()
+    return velocityCached
         / 60.0
         / Constants.ElevatorHead.GEAR_RATIO
         * Math.PI
@@ -124,7 +129,7 @@ public class ElevatorHead extends KillableSubsystem
 
   @AutoLogLevel(level = Level.Sysid)
   public double getPosition() {
-    return io.getPosition()
+    return positionCached
         / Constants.ElevatorHead.GEAR_RATIO
         * Math.PI
         * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* Rotations -> Meters */
@@ -132,7 +137,7 @@ public class ElevatorHead extends KillableSubsystem
 
   @AutoLogLevel(level = Level.Sysid)
   public double getVoltage() {
-    return io.getVoltage();
+    return voltageCached;
   }
 
   public void moveBy(Distance distance) {
@@ -263,6 +268,11 @@ public class ElevatorHead extends KillableSubsystem
 
   @Override
   public void periodic() {
+
+    positionCached = io.getPosition();
+    velocityCached = io.getVelocity();
+    voltageCached = io.getVoltage();
+
     // set(0);
     // currentState = CoralShooterStates.POSITION;
     // positionPid.setGoal(SmartDashboard.getNumber("CoralShooter_Value", 0));

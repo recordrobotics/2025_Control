@@ -58,6 +58,13 @@ public class CoralIntake extends KillableSubsystem
 
   private final MotionMagicExpoVoltage armRequest;
 
+  private double armPositionCached = 0;
+  private double armVelocityCached = 0;
+  private double armVoltageCached = 0;
+  private double wheelPositionCached = 0;
+  private double wheelVelocityCached = 0;
+  private double wheelVoltageCached = 0;
+
   public CoralIntake(CoralIntakeIO io) {
     this.io = io;
 
@@ -94,6 +101,7 @@ public class CoralIntake extends KillableSubsystem
                     .withStatorCurrentLimitEnable(true)));
 
     io.setArmPosition(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
+    armPositionCached = Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS);
     armRequest =
         new MotionMagicExpoVoltage(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
     set(CoralIntakeState.UP);
@@ -143,43 +151,43 @@ public class CoralIntake extends KillableSubsystem
 
   @AutoLogLevel(level = Level.Sysid)
   public double getWheelVelocity() {
-    return io.getWheelVelocity() / 60.0 / Constants.CoralIntake.WHEEL_GEAR_RATIO; /* RPM -> RPS */
+    return wheelVelocityCached / 60.0 / Constants.CoralIntake.WHEEL_GEAR_RATIO; /* RPM -> RPS */
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getWheelPosition() {
-    return io.getWheelPosition() / Constants.CoralIntake.WHEEL_GEAR_RATIO;
+    return wheelPositionCached / Constants.CoralIntake.WHEEL_GEAR_RATIO;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getWheelSetTo() {
-    return io.getWheelVoltage();
+    return wheelVoltageCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmAngle() {
-    return io.getArmPosition() * 2 * Math.PI;
+    return armPositionCached * 2 * Math.PI;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocity() {
-    return io.getArmVelocity() * 2 * Math.PI;
+    return armVelocityCached * 2 * Math.PI;
   }
 
   /** Used for sysid as units have to be in rotations in the logs */
   @AutoLogLevel(level = Level.Sysid)
   public double getArmAngleRotations() {
-    return io.getArmPosition();
+    return armPositionCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocityRotations() {
-    return io.getArmVelocity();
+    return armVelocityCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
-    return io.getArmVoltage();
+    return armVoltageCached;
   }
 
   @AutoLogLevel(level = Level.DebugReal)
@@ -248,6 +256,13 @@ public class CoralIntake extends KillableSubsystem
 
   @Override
   public void periodic() {
+    wheelPositionCached = io.getWheelPosition();
+    wheelVelocityCached = io.getWheelVelocity();
+    wheelVoltageCached = io.getWheelVoltage();
+    armPositionCached = io.getArmPosition();
+    armVelocityCached = io.getArmVelocity();
+    armVoltageCached = io.getArmVoltage();
+
     // setArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
 
     if (currentIntakeState == CoralIntakeState.PUSH_OUT) {
@@ -307,7 +322,7 @@ public class CoralIntake extends KillableSubsystem
         .subscribe(io::setWheelPercent);
     DashboardUI.Test.addSlider(
             "Coral Intake Arm Pos",
-            io.getArmPosition(),
+            armPositionCached,
             Constants.CoralIntake.ARM_DOWN,
             Constants.CoralIntake.ARM_UP)
         .subscribe(this::setArm);

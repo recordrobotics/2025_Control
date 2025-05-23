@@ -37,6 +37,10 @@ public class ElevatorArm extends KillableSubsystem
 
   private final MotionMagicExpoVoltage armRequest;
 
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
+
   public ElevatorArm(ElevatorArmIO io) {
     this.io = io;
 
@@ -76,6 +80,7 @@ public class ElevatorArm extends KillableSubsystem
                     .withStatorCurrentLimitEnable(true)));
 
     io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    positionCached = Units.radiansToRotations(Constants.ElevatorArm.START_POS);
     armRequest =
         new MotionMagicExpoVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
     set(ElevatorHeight.BOTTOM.getArmAngle());
@@ -102,28 +107,28 @@ public class ElevatorArm extends KillableSubsystem
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmAngle() {
-    return io.getArmPosition() * 2 * Math.PI;
+    return positionCached * 2 * Math.PI;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocity() {
-    return io.getArmVelocity() * 2 * Math.PI;
+    return velocityCached * 2 * Math.PI;
   }
 
   /** Used for sysid as units have to be in rotations in the logs */
   @AutoLogLevel(level = Level.Sysid)
   public double getArmAngleRotations() {
-    return io.getArmPosition();
+    return positionCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocityRotations() {
-    return io.getArmVelocity();
+    return velocityCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
-    return io.getArmVoltage();
+    return voltageCached;
   }
 
   public void set(double angleRadians) {
@@ -142,6 +147,11 @@ public class ElevatorArm extends KillableSubsystem
 
   @Override
   public void periodic() {
+
+    positionCached = io.getArmPosition();
+    velocityCached = io.getArmVelocity();
+    voltageCached = io.getArmVoltage();
+
     // set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
 
     // Update mechanism
@@ -164,7 +174,7 @@ public class ElevatorArm extends KillableSubsystem
 
   @Override
   public void setupShuffleboard() {
-    DashboardUI.Test.addSlider("Elevator Arm Pos", io.getArmPosition(), -1, 1).subscribe(this::set);
+    DashboardUI.Test.addSlider("Elevator Arm Pos", positionCached, -1, 1).subscribe(this::set);
   }
 
   @Override

@@ -221,6 +221,11 @@ public class Drivetrain extends KillableSubsystem
 
   @Override
   public void periodic() {
+    m_frontLeft.periodic();
+    m_frontRight.periodic();
+    m_backLeft.periodic();
+    m_backRight.periodic();
+
     Logger.recordOutput(
         "SwerveStates/Current",
         new SwerveModuleState[] {

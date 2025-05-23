@@ -35,6 +35,10 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   private ClimberState currentState = ClimberState.Park;
 
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
+
   public Climber(ClimberIO io) {
     this.io = io;
 
@@ -69,6 +73,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
                     .withStatorCurrentLimitEnable(true)));
 
     io.setPosition(Constants.Climber.START_ROTATIONS.in(Rotations));
+    positionCached = Constants.Climber.START_ROTATIONS.in(Rotations);
     armRequest = new MotionMagicVoltage(Constants.Climber.START_ROTATIONS.in(Rotations));
     set(ClimberState.Park);
 
@@ -97,6 +102,10 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   @Override
   public void periodic() {
+    positionCached = io.getPosition();
+    velocityCached = io.getVelocity();
+    voltageCached = io.getVoltage();
+
     if (currentState == ClimberState.Climb) {
       lastClimbVoltage =
           SimpleMath.slewRateLimitLinear(
@@ -111,7 +120,6 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
           && !atGoal()) {
         // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
         lastClimbVoltage = 0;
-        io.setVoltage(0);
         set(ClimberState.Park);
       } else {
         io.setVoltage(lastClimbVoltage);
@@ -169,23 +177,23 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
 
   @AutoLogLevel(level = Level.Sysid)
   public double getRotations() {
-    return io.getPosition();
+    return positionCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
-    return io.getVelocity();
+    return velocityCached;
   }
 
   @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
-    return io.getVoltage();
+    return voltageCached;
   }
 
   @AutoLogLevel(level = Level.DebugReal)
   public double getEstimatedkV() {
-    if (MathUtil.isNear(0, io.getVelocity(), 0.2)) return 0;
-    return io.getVoltage() / io.getVelocity();
+    if (MathUtil.isNear(0, velocityCached, 0.2)) return 0;
+    return voltageCached / velocityCached;
   }
 
   @Override
