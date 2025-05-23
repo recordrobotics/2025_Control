@@ -11,7 +11,6 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
-import frc.robot.utils.libraries.LimelightHelpers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -124,7 +123,7 @@ public class PhotonVisionCamera implements IVisionCamera {
   }
 
   public void setPipeline(int pipeline) {
-    LimelightHelpers.setPipelineIndex(name, pipeline);
+    camera.setPipelineIndex(pipeline);
   }
 
   public void updateEstimation(boolean trust) {
@@ -333,7 +332,7 @@ public class PhotonVisionCamera implements IVisionCamera {
   }
 
   public void close() {
-    camera.close();
+    // camera.close();
   }
 
   public void kill() {}
