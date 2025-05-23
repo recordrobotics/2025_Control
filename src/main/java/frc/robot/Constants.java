@@ -369,7 +369,7 @@ public final class Constants {
             new Rotation3d(0, Units.degreesToRadians(-18.951), Units.degreesToRadians(-90)));
     public static final Transform3d groundIntakeTransformRobotToCamera =
         new Transform3d(
-            new Translation3d(Meters.of(0.142850), Meters.of(-0.369435), Meters.of(0.526114)),
+            new Translation3d(Meters.of(0.142850), Meters.of(0.369435), Meters.of(0.526114)),
             new Rotation3d(Degrees.of(0), Degrees.of(-20), Degrees.of(90 + 25)));
 
     public static final Distance CORAL_ID_DISTANCE = Inches.of(8);
@@ -527,7 +527,7 @@ public final class Constants {
     public static final double kDt = 0.02;
     public static final double kMaxVelocity = 2.3;
     public static final double kMaxAcceleration = 10;
-    public static final double kV = 5.6056;
+    public static final double kV = 6.8;
     public static final double kA = 0.21006;
     public static final double kG = 0.20027;
     public static final double kS = 0.016248;

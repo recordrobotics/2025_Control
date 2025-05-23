@@ -16,6 +16,7 @@ import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.ManagedSubsystemBase;
+import frc.robot.utils.SimpleMath;
 import java.util.ArrayList;
 import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
@@ -115,7 +116,7 @@ public class CoralDetection extends ManagedSubsystemBase {
     }
   }
 
-  @AutoLogLevel(level = Level.DebugReal)
+  @AutoLogLevel(level = Level.Real)
   public Pose3d[] getCorals() {
     if (Constants.RobotState.getMode() == Mode.REAL
         || simulationMode == CoralDetectionSimulationMode.PHOTONVISION) {
@@ -155,7 +156,8 @@ public class CoralDetection extends ManagedSubsystemBase {
                           .getRotation()
                           .getMeasureY()
                           .in(Radians)
-                      + Units.degreesToRadians(target.getPitch());
+                      + Units.degreesToRadians(
+                          SimpleMath.Remap(target.getPitch(), -28.7, 28.7, -40, 40));
 
               double forward =
                   Constants.PhotonVision.groundIntakeTransformRobotToCamera
@@ -197,7 +199,8 @@ public class CoralDetection extends ManagedSubsystemBase {
                               -Constants.PhotonVision.groundIntakeTransformRobotToCamera
                                   .getRotation()
                                   .getY(),
-                              Units.degreesToRadians(-target.getYaw()))),
+                              Units.degreesToRadians(
+                                  -SimpleMath.Remap(target.getYaw(), -27.4, 27.4, -39.8, 39.8)))),
                   new Rotation3d(
                           0,
                           0,

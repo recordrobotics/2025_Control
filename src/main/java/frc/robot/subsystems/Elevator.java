@@ -59,15 +59,15 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
     motionMagicConfigs_elevator.MotionMagicCruiseVelocity = Constants.Elevator.kMaxVelocity;
     motionMagicConfigs_elevator.MotionMagicAcceleration = Constants.Elevator.kMaxAcceleration;
     motionMagicConfigs_elevator.MotionMagicJerk = 1600;
-    motionMagicConfigs_elevator.MotionMagicExpo_kV = 10.0;
-    motionMagicConfigs_elevator.MotionMagicExpo_kA = 6.1;
+    motionMagicConfigs_elevator.MotionMagicExpo_kV = 5.8;
+    motionMagicConfigs_elevator.MotionMagicExpo_kA = 1.5;
 
     io.applyTalonFXConfig(
         elevatorConfig
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(InvertedValue.Clockwise_Positive)
-                    .withNeutralMode(NeutralModeValue.Coast))
+                    .withNeutralMode(NeutralModeValue.Brake))
             .withCurrentLimits(
                 new CurrentLimitsConfigs()
                     .withSupplyCurrentLimit(Constants.Elevator.SUPPLY_CURRENT_LIMIT)
@@ -140,7 +140,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
       leadVoltageCached = io.getLeadMotorVoltage();
     }
 
-    set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
+    // set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
 
     // Update mechanism
     RobotContainer.model.elevator.update(getCurrentHeight());
