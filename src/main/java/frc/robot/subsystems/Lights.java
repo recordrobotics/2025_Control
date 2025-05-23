@@ -37,7 +37,7 @@ public class Lights extends SubsystemBase implements AutoCloseable {
     stateVisualizer = new StateVisualizerLights(this);
   }
 
-  public void periodic() {
+  public void periodicManaged() {
     // Send the latest LED color data to the LED strip
     LEDs.setData(buffer);
   }

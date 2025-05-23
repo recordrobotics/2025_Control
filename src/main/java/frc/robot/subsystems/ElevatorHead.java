@@ -267,7 +267,7 @@ public class ElevatorHead extends KillableSubsystem
   private double lastSpeed = 0;
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
 
     positionCached = io.getPosition();
     velocityCached = io.getVelocity();
@@ -317,7 +317,7 @@ public class ElevatorHead extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

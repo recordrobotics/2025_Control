@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
@@ -25,6 +24,7 @@ import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
+import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
@@ -42,7 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.littletonrobotics.junction.Logger;
 
-public class PoseSensorFusion extends SubsystemBase
+public class PoseSensorFusion extends ManagedSubsystemBase
     implements AutoCloseable, ShuffleboardPublisher {
 
   public final NavSensor nav;
@@ -191,7 +191,7 @@ public class PoseSensorFusion extends SubsystemBase
   }
 
   @Override
-  public void periodic() {}
+  public void periodicManaged() {}
 
   public void calculationLoop() {
     updateTimestamp = Timer.getFPGATimestamp();

@@ -146,7 +146,7 @@ public class ElevatorArm extends KillableSubsystem
   private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
 
     positionCached = io.getArmPosition();
     velocityCached = io.getArmVelocity();
@@ -162,7 +162,7 @@ public class ElevatorArm extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

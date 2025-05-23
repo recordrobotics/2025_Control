@@ -10,19 +10,19 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ManagedSubsystemBase;
 import java.util.ArrayList;
 import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
-public class CoralDetection extends SubsystemBase {
+public class CoralDetection extends ManagedSubsystemBase {
 
   // no IO since simulation does not currently support non-apriltag pipelines, so no point
   private PhotonCamera camera;
@@ -53,7 +53,7 @@ public class CoralDetection extends SubsystemBase {
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     if (Constants.RobotState.getMode() == Mode.REAL
         || simulationMode == CoralDetectionSimulationMode.PHOTONVISION) {
       List<PhotonTrackedTargetTimestamped> targets = new ArrayList<>();

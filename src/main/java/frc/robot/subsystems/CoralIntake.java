@@ -255,7 +255,7 @@ public class CoralIntake extends KillableSubsystem
   private double lastSpeed = 0;
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     wheelVelocityCached = io.getWheelVelocity();
     armPositionCached = io.getArmPosition();
     armVelocityCached = io.getArmVelocity();
@@ -298,7 +298,7 @@ public class CoralIntake extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

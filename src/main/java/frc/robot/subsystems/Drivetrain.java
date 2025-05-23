@@ -220,7 +220,7 @@ public class Drivetrain extends KillableSubsystem
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     m_frontLeft.periodic();
     m_frontRight.periodic();
     m_backLeft.periodic();
@@ -237,7 +237,7 @@ public class Drivetrain extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     m_frontLeft.simulationPeriodic();
     m_frontRight.simulationPeriodic();
     m_backLeft.simulationPeriodic();

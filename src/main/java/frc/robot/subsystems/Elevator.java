@@ -132,7 +132,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
 
     leadPositionCached = io.getLeadMotorPosition();
     leadVelocityCached = io.getLeadMotorVelocity();
@@ -148,7 +148,7 @@ public class Elevator extends KillableSubsystem implements ShuffleboardPublisher
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

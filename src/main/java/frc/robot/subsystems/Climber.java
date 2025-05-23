@@ -101,7 +101,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   private double lastExpectedKVTime = 0;
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     positionCached = io.getPosition();
     velocityCached = io.getVelocity();
     voltageCached = io.getVoltage();
@@ -197,7 +197,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

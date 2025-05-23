@@ -11,11 +11,11 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ManagedSubsystemBase;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
@@ -23,7 +23,7 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 /** Represents the physical model of the robot, including mechanisms and their positions */
-public class RobotModel extends SubsystemBase {
+public class RobotModel extends ManagedSubsystemBase {
 
   public interface RobotMechanism {
     int getPoseCount();
@@ -474,7 +474,7 @@ public class RobotModel extends SubsystemBase {
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     updatePoses(elevator, elevatorArm, coralIntake, climber);
 
     // Logger.recordOutput(
