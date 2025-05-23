@@ -995,7 +995,16 @@ public final class Constants {
             ? (SysIdManager.getSysIdRoutine() != SysIdRoutine.None
                 ? AutoLogLevel.Level.Sysid
                 : AutoLogLevel.Level.Real)
-            : AutoLogLevel.Level.DebugSim;
+            : AutoLogLevel.Level.Real;
+
+    public static final VisionSimulationMode VISION_SIMULATION_MODE =
+        VisionSimulationMode.MAPLE_CLEAN;
+
+    public static enum VisionSimulationMode {
+      PHOTON_SIM,
+      MAPLE_CLEAN,
+      MAPLE_NOISE;
+    }
 
     public static enum Mode {
       REAL,

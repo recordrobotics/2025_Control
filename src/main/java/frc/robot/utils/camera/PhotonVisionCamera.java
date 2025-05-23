@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
+import frc.robot.Constants.RobotState.VisionSimulationMode;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.SimpleMath;
@@ -47,6 +48,11 @@ public class PhotonVisionCamera implements IVisionCamera {
   private final PhotonCamera camera;
   private final PhotonPoseEstimator photonEstimatorClose;
   private final PhotonPoseEstimator photonEstimatorFar;
+
+  private static final RawVisionFiducial[] ALL_SIM_TAGS =
+      Constants.Game.APRILTAG_LAYOUT.getTags().stream()
+          .map(v -> new RawVisionFiducial(v.ID, 0.1, 6, 7, 0))
+          .toArray(RawVisionFiducial[]::new);
 
   public boolean isConnected() {
     return connected;
@@ -117,8 +123,12 @@ public class PhotonVisionCamera implements IVisionCamera {
       cameraProp.setLatencyStdDevMs(type.latencyStdDevMs);
 
       PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp);
-      cameraSim.enableDrawWireframe(true);
-      RobotContainer.visionSim.addCamera(cameraSim, robotToCamera);
+
+      if (Constants.RobotState.VISION_SIMULATION_MODE
+          == Constants.RobotState.VisionSimulationMode.PHOTON_SIM) {
+        cameraSim.enableDrawWireframe(true);
+        RobotContainer.visionSim.addCamera(cameraSim, robotToCamera);
+      }
     }
   }
 
@@ -129,23 +139,56 @@ public class PhotonVisionCamera implements IVisionCamera {
   public void updateEstimation(boolean trust) {
     confidence = 0;
 
-    photonEstimatorClose.addHeadingData(
-        Timer.getFPGATimestamp(),
-        new Rotation3d(
-            0,
-            0,
-            RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation().getRadians()));
-    photonEstimatorFar.addHeadingData(
-        Timer.getFPGATimestamp(),
-        new Rotation3d(
-            0,
-            0,
-            RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation().getRadians()));
+    Optional<VisionCameraEstimate> measurement_close_opt;
+    Optional<VisionCameraEstimate> measurement_far_opt;
 
-    Optional<VisionCameraEstimate> measurement_close_opt =
-        getEstimatedGlobalPose(photonEstimatorClose, false);
-    Optional<VisionCameraEstimate> measurement_far_opt =
-        getEstimatedGlobalPose(photonEstimatorFar, true);
+    if (Constants.RobotState.getMode() == Constants.RobotState.Mode.REAL
+        || Constants.RobotState.VISION_SIMULATION_MODE
+            == Constants.RobotState.VisionSimulationMode.PHOTON_SIM) {
+      photonEstimatorClose.addHeadingData(
+          Timer.getFPGATimestamp(),
+          new Rotation3d(
+              0,
+              0,
+              RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation().getRadians()));
+      photonEstimatorFar.addHeadingData(
+          Timer.getFPGATimestamp(),
+          new Rotation3d(
+              0,
+              0,
+              RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation().getRadians()));
+
+      measurement_close_opt = getEstimatedGlobalPose(photonEstimatorClose, false);
+      measurement_far_opt = getEstimatedGlobalPose(photonEstimatorFar, true);
+    } else {
+      var maplePose = RobotContainer.model.getRobot();
+      if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.MAPLE_NOISE) {
+        maplePose = SimpleMath.poseNoise(maplePose, 0.001, 0.001);
+      }
+
+      measurement_close_opt =
+          Optional.of(
+              new VisionCameraEstimate(
+                  maplePose,
+                  Timer.getFPGATimestamp(),
+                  0.01,
+                  ALL_SIM_TAGS.length,
+                  6,
+                  0.1,
+                  ALL_SIM_TAGS,
+                  false));
+      measurement_far_opt =
+          Optional.of(
+              new VisionCameraEstimate(
+                  maplePose,
+                  Timer.getFPGATimestamp(),
+                  0.01,
+                  ALL_SIM_TAGS.length,
+                  6,
+                  0.1,
+                  ALL_SIM_TAGS,
+                  true));
+    }
 
     if (!camera.isConnected()) {
       connected = false;

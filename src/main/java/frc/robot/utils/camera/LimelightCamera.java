@@ -4,7 +4,9 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
+import frc.robot.Constants.RobotState.VisionSimulationMode;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.SimpleMath;
@@ -45,6 +47,11 @@ public class LimelightCamera implements IVisionCamera {
   private PhotonCamera fakeCamera;
   private PhotonPoseEstimator photonEstimator;
   private CameraType type;
+
+  private static final RawFiducial[] ALL_SIM_TAGS =
+      Constants.Game.APRILTAG_LAYOUT.getTags().stream()
+          .map(v -> new RawFiducial(v.ID, 0.1, 0.1, 0.1, 6, 7, 0))
+          .toArray(RawFiducial[]::new);
 
   public boolean isConnected() {
     return limelightConnected;
@@ -90,7 +97,8 @@ public class LimelightCamera implements IVisionCamera {
     this.MT1_MAX_DIST = Units.feetToMeters(7); // 7 feet is where the MT1 (yellow) gets bad wiggles
     this.MAX_POSE_ERROR = 5; // 5 meters
 
-    if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+    if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL
+        && Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
       fakeCamera = new PhotonCamera(name);
       SimCameraProperties cameraProp = new SimCameraProperties();
       cameraProp.setCalibration(
@@ -129,7 +137,8 @@ public class LimelightCamera implements IVisionCamera {
     PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
     PoseEstimate measurement_m2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
 
-    if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+    if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL
+        && Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
       Optional<EstimatedRobotPose> visionEst = Optional.empty();
       var results = fakeCamera.getAllUnreadResults();
       if (results.size() > 0) {
@@ -221,6 +230,34 @@ public class LimelightCamera implements IVisionCamera {
                   true);
         }
       }
+    } else if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+      var maplePose = RobotContainer.model.getRobot();
+      if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.MAPLE_NOISE) {
+        maplePose = SimpleMath.poseNoise(maplePose, 0.001, 0.001);
+      }
+
+      measurement =
+          new PoseEstimate(
+              maplePose,
+              Timer.getFPGATimestamp(),
+              type.latencyMs,
+              ALL_SIM_TAGS.length,
+              0.1,
+              6.0,
+              2.0,
+              ALL_SIM_TAGS,
+              false);
+      measurement_m2 =
+          new PoseEstimate(
+              maplePose,
+              Timer.getFPGATimestamp(),
+              type.latencyMs,
+              ALL_SIM_TAGS.length,
+              0.1,
+              6.0,
+              2.0,
+              ALL_SIM_TAGS,
+              true);
     }
 
     if (measurement == null || measurement_m2 == null) {

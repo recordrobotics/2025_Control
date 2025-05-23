@@ -18,6 +18,7 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.RobotState.Mode;
+import frc.robot.Constants.RobotState.VisionSimulationMode;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGround;
@@ -130,8 +131,10 @@ public class RobotContainer {
       pdp = new PowerDistributionPanel();
       coralDetection = new CoralDetection();
     } else {
-      visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(Constants.Game.APRILTAG_LAYOUT);
+      if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
+        visionSim = new VisionSystemSim("main");
+        visionSim.addAprilTags(Constants.Game.APRILTAG_LAYOUT);
+      }
 
       drivetrain = new Drivetrain();
       poseSensorFusion = new PoseSensorFusion();
@@ -396,7 +399,9 @@ public class RobotContainer {
 
   public void simulationPeriodic() {
     updateSimulationBattery(drivetrain, elevator, elevatorHead, coralIntake);
-    visionSim.update(model.getRobot());
+    if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
+      visionSim.update(model.getRobot());
+    }
   }
 
   public void updateSimulationBattery(PoweredSubsystem... subsystems) {
