@@ -3,7 +3,7 @@ package frc.robot.subsystems.lights;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.Lights;
 import java.util.function.Supplier;
@@ -65,7 +65,7 @@ public abstract class VirtualLightsSubsystem extends SubsystemBase {
    */
   public Command runPattern(LEDPattern pattern) {
     // return run(() -> pattern.atBrightness(Constants.Lights.MULTIPLIER).applyTo(view));
-    return Commands.none();
+    return new InstantCommand(() -> {}, this);
   }
 
   /**
@@ -77,6 +77,6 @@ public abstract class VirtualLightsSubsystem extends SubsystemBase {
   public Command runPattern(Supplier<LEDPattern> patternSupplier) {
     // return run(() ->
     // patternSupplier.get().atBrightness(Constants.Lights.MULTIPLIER).applyTo(view));
-    return Commands.none();
+    return new InstantCommand(() -> {}, this);
   }
 }
