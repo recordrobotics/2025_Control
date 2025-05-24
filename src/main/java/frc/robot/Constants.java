@@ -437,12 +437,12 @@ public final class Constants {
     public static final double CLIMB_VOLTAGE_SLEW_RATE =
         12.0 / 0.3; /* Go from 0 - 12 in 0.3 seconds */
 
-    public static final double CLIMB_EXPECTED_KV_MIN = 7.0;
-    public static final Time CLIMB_EXPECTED_KV_TIMEOUT = Seconds.of(0.6);
+    public static final double CLIMB_EXPECTED_KV_MIN = 6.0;
+    public static final Time CLIMB_EXPECTED_KV_TIMEOUT = Seconds.of(0.9);
 
     public static final Angle START_ROTATIONS = Rotations.of(0);
     public static final Angle PARK_ROTATIONS = START_ROTATIONS;
-    public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.0);
+    public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.2);
     public static final Angle CLIMBED_ROTATIONS = Rotations.of(0.1);
 
     public static final double RATCHET_ENGAGED = 0.15;

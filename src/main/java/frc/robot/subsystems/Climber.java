@@ -170,7 +170,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     }
   }
 
-  @AutoLogLevel(level = Level.DebugReal)
+  @AutoLogLevel(level = Level.Real)
   public ClimberState getCurrentState() {
     return currentState;
   }
