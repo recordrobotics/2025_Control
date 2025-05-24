@@ -63,7 +63,7 @@ public class AutoScore extends SequentialCommandGroup {
                                   .getDistance(pose.getTranslation());
 
                           return (dist < clearanceMax && dist > clearanceMin)
-                              || ReefAlign.wasInterrupted()
+                              || GameAlign.wasInterrupted()
                               || alignTimeout;
                         })
                     .andThen(

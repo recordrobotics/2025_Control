@@ -11,22 +11,18 @@ import frc.robot.RobotContainer;
 import java.util.List;
 
 public class PathAlign {
-  public static Command createForReef(Pose2d target) {
-    Pose2d
-        currentPoseFromPoseSensorFusionButWithRotationBeingTheTargetDirectionOfTravelForThisPathPlannerPath =
-            new Pose2d(
-                RobotContainer.poseSensorFusion.getEstimatedPosition().getTranslation(),
-                target
-                    .minus(RobotContainer.poseSensorFusion.getEstimatedPosition())
-                    .getRotation()); // Sometimes is wrong/goofy idk how to consistently reproduce
+  public static Command create(Pose2d target) {
+    Pose2d startPose =
+        new Pose2d(
+            RobotContainer.poseSensorFusion.getEstimatedPosition().getTranslation(),
+            target
+                .minus(RobotContainer.poseSensorFusion.getEstimatedPosition())
+                .getRotation()); // Sometimes is wrong/goofy idk how to consistently reproduce
     // though
 
     // The rotation component of the pose should be the direction of travel. Do not use holonomic
     // rotation.
-    List<Waypoint> waypoints =
-        PathPlannerPath.waypointsFromPoses(
-            currentPoseFromPoseSensorFusionButWithRotationBeingTheTargetDirectionOfTravelForThisPathPlannerPath,
-            target);
+    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(startPose, target);
 
     PathPlannerPath path =
         new PathPlannerPath(

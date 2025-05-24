@@ -87,8 +87,18 @@ public final class Constants {
     }
 
     public static enum AlgaeLevel {
-      LOW,
-      HIGH
+      LOW(ElevatorHeight.LOW_REEF_ALGAE),
+      HIGH(ElevatorHeight.HIGH_REEF_ALGAE);
+
+      private ElevatorHeight height;
+
+      private AlgaeLevel(ElevatorHeight height) {
+        this.height = height;
+      }
+
+      public ElevatorHeight getHeight() {
+        return height;
+      }
     }
 
     public static final Distance ALGAE_OFFSET = Meters.of(-0.1055532306);

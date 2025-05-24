@@ -15,10 +15,12 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ElevatorHeight;
+import frc.robot.Constants.Game.AlgaePosition;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.Constants.RobotState.VisionSimulationMode;
+import frc.robot.commands.AutoAlgae;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGround;
@@ -349,6 +351,21 @@ public class RobotContainer {
     new Trigger(
             () -> DashboardUI.Overview.getControl().getScoreAlgae() && !algaeLock.getAsBoolean())
         .onTrue(new VibrateXbox(RumbleType.kLeftRumble, 1).withTimeout(0.1));
+
+    new Trigger(() -> DashboardUI.Overview.getControl().getReefAlgaeSimple())
+        .onTrue(
+            new DeferredCommand(
+                () ->
+                    new AutoAlgae(
+                            IGamePosition.closestTo(
+                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                AlgaePosition.values()))
+                        .handleInterrupt(
+                            () -> {
+                              System.out.println("AutoAlgae interrupted!!! :(");
+                            })
+                        .asProxy(),
+                Set.of()));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest(true));
