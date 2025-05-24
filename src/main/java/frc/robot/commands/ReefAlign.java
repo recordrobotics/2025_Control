@@ -50,9 +50,15 @@ public class ReefAlign {
 
   public static Command alignTarget(
       CoralPosition pole, Supplier<CoralLevel> level, boolean repeatedly) {
-    Pose2d targetPose = pole.getPose(level.get());
+    var lvl = level.get();
+    Pose2d targetPose = pole.getPose(lvl);
 
-    Pose2d pathTarget = targetPose.transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero));
+    Pose2d pathTarget;
+    if (lvl == CoralLevel.L1) {
+      pathTarget = targetPose.transformBy(new Transform2d(0, -0.3, Rotation2d.kZero));
+    } else {
+      pathTarget = targetPose.transformBy(new Transform2d(-0.3, 0, Rotation2d.kZero));
+    }
 
     Command alignCmd =
         new AlignToPose(

@@ -995,7 +995,7 @@ public final class Constants {
             ? (SysIdManager.getSysIdRoutine() != SysIdRoutine.None
                 ? AutoLogLevel.Level.Sysid
                 : AutoLogLevel.Level.Real)
-            : AutoLogLevel.Level.Real;
+            : AutoLogLevel.Level.Sim;
 
     public static final VisionSimulationMode VISION_SIMULATION_MODE =
         VisionSimulationMode.MAPLE_CLEAN;
