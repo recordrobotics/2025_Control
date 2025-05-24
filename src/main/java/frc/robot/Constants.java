@@ -934,7 +934,14 @@ public final class Constants {
         new RobotConfig(
             Constants.Frame.ROBOT_MASS,
             Constants.Frame.ROBOT_MOI,
-            new ModuleConfig(WHEEL_DIAMETER / 2, 4.350, 1.2, DCMotor.getKrakenX60(1), 52, 1),
+            new ModuleConfig(
+                WHEEL_DIAMETER / 2,
+                4.350,
+                1.2,
+                DCMotor.getKrakenX60(1),
+                Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO,
+                52,
+                1),
             frontLeftLocation,
             frontRightLocation,
             backLeftLocation,

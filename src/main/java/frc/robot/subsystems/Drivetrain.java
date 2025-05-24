@@ -2,12 +2,16 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -83,6 +87,9 @@ public class Drivetrain extends KillableSubsystem
 
   private final SwerveDriveSimulation swerveDriveSimulation;
 
+  private final SwerveSetpointGenerator setpointGenerator;
+  private SwerveSetpoint previousSetpoint;
+
   public SwerveModule getFrontLeftModule() {
     return m_frontLeft;
   }
@@ -156,6 +163,24 @@ public class Drivetrain extends KillableSubsystem
                   swerveDriveSimulation.getModules()[3], Constants.Swerve.backRightConstants));
     }
 
+    setpointGenerator =
+        new SwerveSetpointGenerator(
+            Constants.Swerve.PPDefaultConfig,
+            Units.rotationsToRadians(
+                Constants.Swerve
+                    .TurnMaxAngularVelocity) // The max rotation velocity of a swerve module in
+            // radians per second
+            );
+
+    // Initialize the previous setpoint to the robot's current speeds & module states
+    ChassisSpeeds currentSpeeds = getChassisSpeeds();
+    SwerveModuleState[] currentStates = getModuleStates();
+    previousSetpoint =
+        new SwerveSetpoint(
+            currentSpeeds,
+            currentStates,
+            DriveFeedforwards.zeros(Constants.Swerve.PPDefaultConfig.numModules));
+
     sysIdRoutineDriveMotorsSpin =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
@@ -190,22 +215,21 @@ public class Drivetrain extends KillableSubsystem
   }
 
   /**
-   * Drives the robot using joystick info.
+   * Drives the robot using robot relative ChassisSpeeds.
    *
-   * @param driveCommandData contains all the info to drive the robot. The xSpeed and ySpeed
-   *     components are relative to the robot's current orientation if fieldRelative is false, and
-   *     relative to the field if fieldRelative is true.
-   * @param currentRotation the current rotation of the robot in the field coordinate system. Used
-   *     to convert the joystick x and y components to the field coordinate system if fieldRelative
-   *     is true.
+   * @param nonDiscreteSpeeds The robot relative chassis speeds (non discretized)
    */
   public void drive(ChassisSpeeds nonDiscreteSpeeds) {
-    nonDiscreteSpeeds = ChassisSpeeds.discretize(nonDiscreteSpeeds, 0.02);
+    // Note: it is important to not discretize speeds before or after
+    // using the setpoint generator, as it will discretize them for you
+    previousSetpoint =
+        setpointGenerator.generateSetpoint(
+            previousSetpoint, // The previous setpoint
+            nonDiscreteSpeeds, // The desired target speeds
+            0.02 // The loop time of the robot code, in seconds
+            );
 
-    SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(nonDiscreteSpeeds);
-
-    // Desaturates wheel speeds
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.robotMaxSpeed);
+    SwerveModuleState[] swerveModuleStates = previousSetpoint.moduleStates();
 
     // Sets state for each module
     if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainSpin
@@ -226,14 +250,7 @@ public class Drivetrain extends KillableSubsystem
     m_backLeft.periodic();
     m_backRight.periodic();
 
-    Logger.recordOutput(
-        "SwerveStates/Current",
-        new SwerveModuleState[] {
-          m_frontLeft.getModuleState(),
-          m_frontRight.getModuleState(),
-          m_backLeft.getModuleState(),
-          m_backRight.getModuleState()
-        });
+    Logger.recordOutput("SwerveStates/Current", getModuleStates());
   }
 
   @Override
@@ -386,6 +403,15 @@ public class Drivetrain extends KillableSubsystem
       m_frontRight.getModulePosition(),
       m_backLeft.getModulePosition(),
       m_backRight.getModulePosition()
+    };
+  }
+
+  public SwerveModuleState[] getModuleStates() {
+    return new SwerveModuleState[] {
+      m_frontLeft.getModuleState(),
+      m_frontRight.getModuleState(),
+      m_backLeft.getModuleState(),
+      m_backRight.getModuleState()
     };
   }
 
