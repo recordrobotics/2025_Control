@@ -53,11 +53,16 @@ public class AutoScore extends SequentialCommandGroup {
                           var level = getLevel();
                           Pose2d pose = reefPole.getPose(level);
 
-                          return RobotContainer.poseSensorFusion
-                                      .getEstimatedPosition()
-                                      .getTranslation()
-                                      .getDistance(pose.getTranslation())
-                                  < (level == CoralLevel.L1 ? 0.5 : 0.3)
+                          double clearanceMin = (level == CoralLevel.L1 ? 0.3 : 0.2);
+                          double clearanceMax = (level == CoralLevel.L1 ? 0.5 : 0.3);
+
+                          double dist =
+                              RobotContainer.poseSensorFusion
+                                  .getEstimatedPosition()
+                                  .getTranslation()
+                                  .getDistance(pose.getTranslation());
+
+                          return (dist < clearanceMax && dist > clearanceMin)
                               || ReefAlign.wasInterrupted()
                               || alignTimeout;
                         })
