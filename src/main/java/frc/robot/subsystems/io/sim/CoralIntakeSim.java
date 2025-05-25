@@ -4,7 +4,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.sim.SparkMaxSim;
@@ -56,7 +56,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
           LinearSystemId.createSingleJointedArmSystem(
-              armMotor, 0.001, Constants.CoralIntake.ARM_GEAR_RATIO),
+              armMotor, 0.7, Constants.CoralIntake.ARM_GEAR_RATIO),
           armMotor,
           Constants.CoralIntake.ARM_GEAR_RATIO,
           Units.inchesToMeters(17.02),
@@ -87,7 +87,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
             width.in(Meters),
             lengthExtended.in(Meters),
             IntakeSimulation.IntakeSide.LEFT); // apparently it's on the left in maplesim
-    intakeRect.translate(Inches.of(-3.3999).in(Meters), 0);
+    intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
     intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);
   }
@@ -122,7 +122,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
   }
 
   @Override
-  public void setArmMotionMagic(MotionMagicVoltage request) {
+  public void setArmMotionMagic(MotionMagicExpoVoltage request) {
     arm.setControl(request);
   }
 

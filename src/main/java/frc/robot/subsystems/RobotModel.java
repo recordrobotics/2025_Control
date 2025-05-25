@@ -11,18 +11,19 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ManagedSubsystemBase;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 /** Represents the physical model of the robot, including mechanisms and their positions */
-public class RobotModel extends SubsystemBase {
+public class RobotModel extends ManagedSubsystemBase {
 
   public interface RobotMechanism {
     int getPoseCount();
@@ -33,7 +34,7 @@ public class RobotModel extends SubsystemBase {
   public static class Elevator implements RobotMechanism {
     public static final int POSE_COUNT = 2; /* 2 stage elevator */
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -57,7 +58,7 @@ public class RobotModel extends SubsystemBase {
                 10,
                 new Color8Bit(Color.kGreen)));
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism_setpoint =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -160,7 +161,7 @@ public class RobotModel extends SubsystemBase {
   public static class CoralIntake implements RobotMechanism {
     public static final int POSE_COUNT = 1;
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -178,7 +179,7 @@ public class RobotModel extends SubsystemBase {
                 3,
                 new Color8Bit(Color.kPurple)));
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism_setpoint =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -244,7 +245,7 @@ public class RobotModel extends SubsystemBase {
       this.model = model;
     }
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -262,7 +263,7 @@ public class RobotModel extends SubsystemBase {
                 3,
                 new Color8Bit(Color.kPurple)));
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism_setpoint =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -396,7 +397,7 @@ public class RobotModel extends SubsystemBase {
   public static class Climber implements RobotMechanism {
     public static final int POSE_COUNT = 1;
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -414,7 +415,7 @@ public class RobotModel extends SubsystemBase {
                 3,
                 new Color8Bit(Color.kPurple)));
 
-    @AutoLogOutput
+    @AutoLogLevel(level = Level.DebugReal)
     private LoggedMechanism2d mechanism_setpoint =
         new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
@@ -456,11 +457,11 @@ public class RobotModel extends SubsystemBase {
   }
 
   public final Elevator elevator = new Elevator();
-  public final CoralIntake coralIntake = new CoralIntake();
   public final ElevatorArm elevatorArm = new ElevatorArm(this);
   public final Climber climber = new Climber();
+  public final CoralIntake coralIntake = new CoralIntake();
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public Pose3d[] mechanismPoses =
       new Pose3d
           [Elevator.POSE_COUNT
@@ -473,8 +474,16 @@ public class RobotModel extends SubsystemBase {
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     updatePoses(elevator, elevatorArm, coralIntake, climber);
+
+    // Logger.recordOutput(
+    //     "IGamePositions",
+    //     IGamePosition.aggregatePositions(
+    //         Constants.Game.CoralPosition.values(),
+    //         Constants.Game.AlgaePosition.values(),
+    //         Constants.Game.SourcePosition.values(),
+    //         Constants.Game.ProcessorPosition.values()));
   }
 
   private void updatePoses(RobotMechanism... mechanisms) {
@@ -490,7 +499,7 @@ public class RobotModel extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sim)
   private Pose3d[] getCoralPositions() {
     if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
       var corals = SimulatedArena.getInstance().getGamePiecesByType("Coral");
@@ -504,7 +513,7 @@ public class RobotModel extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sim)
   private Pose3d[] getAlgaePositions() {
     if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
       return SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
@@ -513,7 +522,7 @@ public class RobotModel extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sim)
   public Pose2d getRobot() {
     if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
       return RobotContainer.drivetrain.getSwerveDriveSimulation().getSimulatedDriveTrainPose();

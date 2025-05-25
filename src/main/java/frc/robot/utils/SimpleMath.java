@@ -1,12 +1,14 @@
 package frc.robot.utils;
 
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.robot.Constants;
+import java.util.Random;
 
 public class SimpleMath {
 
@@ -59,17 +61,11 @@ public class SimpleMath {
     return Math.signum(input) * proportion * sensitivity;
   }
 
-  public static Translation2d MirrorLocation(Translation2d location) {
-    double mirrored_x = Constants.FieldConstants.FIELD_X_DIMENSION - location.getX();
-    double mirrored_y = location.getY();
-    return new Translation2d(mirrored_x, mirrored_y);
-  }
-
   public static boolean isPoseInField(Pose2d pose) {
     return pose.getX() >= 0
         && pose.getY() >= 0
-        && pose.getX() <= Constants.FieldConstants.FIELD_X_DIMENSION
-        && pose.getY() <= Constants.FieldConstants.FIELD_Y_DIMENSION;
+        && pose.getX() <= FlippingUtil.fieldSizeX
+        && pose.getY() <= FlippingUtil.fieldSizeY;
   }
 
   /**
@@ -121,7 +117,40 @@ public class SimpleMath {
     return next;
   }
 
+  public static Translation2d povToVector(int pov) {
+    switch (pov) {
+      case 0:
+        return new Translation2d(0, 1);
+      case 45:
+        return new Translation2d(1, 1);
+      case 90:
+        return new Translation2d(1, 0);
+      case 135:
+        return new Translation2d(1, -1);
+      case 180:
+        return new Translation2d(0, -1);
+      case 225:
+        return new Translation2d(-1, -1);
+      case 270:
+        return new Translation2d(-1, 0);
+      case 315:
+        return new Translation2d(-1, 1);
+      default:
+        return new Translation2d(0, 0);
+    }
+  }
+
   public static boolean isWithinTolerance(double value, double target, double tolerance) {
     return Math.abs(value - target) <= tolerance;
+  }
+
+  private static final Random rand = new Random();
+
+  public static Pose2d poseNoise(Pose2d pose, double stdDev, double stdDevRot) {
+    double x = pose.getX() + rand.nextGaussian(0, stdDev);
+    double y = pose.getY() + rand.nextGaussian(0, stdDev);
+    double rot = pose.getRotation().getRadians() + rand.nextGaussian(0, stdDevRot);
+
+    return new Pose2d(new Translation2d(x, y), new Rotation2d(rot));
   }
 }

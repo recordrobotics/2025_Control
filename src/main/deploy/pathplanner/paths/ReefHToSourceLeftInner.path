@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.4793371,
-        "y": 4.3823483
+        "x": 6.5845959999999994,
+        "y": 4.3772175
       },
       "prevControl": null,
       "nextControl": {
-        "x": 7.161528881795465,
-        "y": 4.46667659454235
+        "x": 7.266787781795464,
+        "y": 4.46154579454235
       },
       "isLocked": false,
       "linkedName": "ReefH"
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

@@ -1,27 +1,30 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
+import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
@@ -30,10 +33,16 @@ import frc.robot.utils.camera.PhotonVisionCamera;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
 import java.util.ArrayList;
 import java.util.HashSet;
-import org.littletonrobotics.junction.AutoLogOutput;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.littletonrobotics.junction.Logger;
 
-public class PoseSensorFusion extends SubsystemBase
+public class PoseSensorFusion extends ManagedSubsystemBase
     implements AutoCloseable, ShuffleboardPublisher {
 
   public final NavSensor nav;
@@ -62,6 +71,9 @@ public class PoseSensorFusion extends SubsystemBase
           Constants.PhotonVision.PHOTON_SOURCE_NAME,
           CameraType.SVPROGlobalShutter,
           Constants.PhotonVision.sourceTransformRobotToCamera);
+
+  private final Set<IVisionCamera> cameras =
+      Set.of(leftCamera, centerCamera, l1Camera, sourceCamera);
 
   private final HashSet<VisionDebouncer> visionDebouncers = new HashSet<>();
 
@@ -102,37 +114,66 @@ public class PoseSensorFusion extends SubsystemBase
     SmartDashboard.putBoolean("Autonomous/UseISPE", true);
   }
 
-  @Override
-  public void periodic() {
-    boolean trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
-    boolean trustLimelightCenter =
-        SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
-    boolean useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
+  public record DeferredPoseEstimation(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {}
 
-    poseFilter.update(nav.getAdjustedAngle(), getModulePositions());
+  private ConcurrentSkipListSet<DeferredPoseEstimation> deferredPoseEstimations =
+      new ConcurrentSkipListSet<>((a, b) -> Double.compare(a.timestampSeconds, b.timestampSeconds));
 
-    if (leftCamera.hasVision() || centerCamera.hasVision()) {
-      // when vision is correcting the pose, have that override the independent pose estimator
-      independentPoseEstimator.reset(getEstimatedPosition());
-      independentPoseEstimator.update(getEstimatedPosition().getRotation());
-    } else {
-      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+  public void addVisionMeasurement(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {
+    deferredPoseEstimations.add(
+        new DeferredPoseEstimation(
+            visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs));
+  }
 
-      // when no vision use independent pose estimator to correct pose
-      if (useISPE) {
-        poseFilter.addVisionMeasurement(
-            independentPoseEstimator.getEstimatedRobotPose(),
-            Timer.getFPGATimestamp(),
-            VecBuilder.fill(0.7, 0.7, 9999999));
+  private boolean trustLimelightLeft;
+  private boolean trustLimelightCenter;
+  private boolean useISPE;
+
+  private ExecutorService executor = Executors.newSingleThreadExecutor();
+  private Future<?> calculationFuture = null;
+
+  public void startCalculation() {
+    deferredPoseEstimations.clear();
+
+    trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
+    trustLimelightCenter = SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
+    useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
+
+    calculationFuture = executor.submit(this::calculationLoop);
+  }
+
+  private double updateTimestamp;
+  private Rotation2d updateNav;
+  private SwerveModulePosition[] updatePositions;
+
+  public void endCalculation() {
+    if (updatePositions != null) {
+      poseFilter.updateWithTime(updateTimestamp, updateNav, updatePositions);
+    }
+
+    if (calculationFuture != null) {
+      try {
+        calculationFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
       }
     }
 
-    leftCamera.updateEstimation(trustLimelightLeft);
-    centerCamera.updateEstimation(trustLimelightCenter);
-    l1Camera.updateEstimation(false);
-    sourceCamera.updateEstimation(false);
+    while (!deferredPoseEstimations.isEmpty()) {
+      DeferredPoseEstimation estimation = deferredPoseEstimations.pollFirst();
+      poseFilter.addVisionMeasurement(
+          estimation.visionRobotPoseMeters,
+          estimation.timestampSeconds,
+          estimation.visionMeasurementStdDevs);
+    }
 
-    updateDashboard(leftCamera, centerCamera, l1Camera, sourceCamera);
+    updateDashboard();
 
     leftCamera.logValues("Left");
     centerCamera.logValues("Center");
@@ -149,7 +190,37 @@ public class PoseSensorFusion extends SubsystemBase
     Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
   }
 
-  private void updateDashboard(IVisionCamera... cameras) {
+  @Override
+  public void periodicManaged() {}
+
+  public void calculationLoop() {
+    updateTimestamp = Timer.getFPGATimestamp();
+    updateNav = nav.getAdjustedAngle();
+    updatePositions = getModulePositions();
+
+    if (cameras.stream().anyMatch(v -> v.hasVision())) {
+      // when vision is correcting the pose, have that override the independent pose estimator
+      independentPoseEstimator.reset(getEstimatedPosition());
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+    } else {
+      independentPoseEstimator.update(getEstimatedPosition().getRotation());
+
+      // when no vision use independent pose estimator to correct pose
+      if (useISPE) {
+        addVisionMeasurement(
+            independentPoseEstimator.getEstimatedRobotPose(),
+            Timer.getFPGATimestamp(),
+            VecBuilder.fill(0.7, 0.7, 9999999));
+      }
+    }
+
+    leftCamera.updateEstimation(trustLimelightLeft);
+    centerCamera.updateEstimation(trustLimelightCenter);
+    l1Camera.updateEstimation(false);
+    sourceCamera.updateEstimation(false);
+  }
+
+  private void updateDashboard() {
     for (IVisionCamera camera : cameras) {
       DashboardUI.Autonomous.setVisionPose(camera.getName(), camera.getUnsafeEstimate().pose);
     }
@@ -163,11 +234,7 @@ public class PoseSensorFusion extends SubsystemBase
     return RobotContainer.drivetrain.getModulePositions();
   }
 
-  public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Vector<N3> confidence) {
-    poseFilter.addVisionMeasurement(pose, timestampSeconds, confidence);
-  }
-
-  @AutoLogOutput(key = "Odometry/Robot")
+  @AutoLogLevel(key = "Odometry/Robot", level = Level.Real)
   public Pose2d getEstimatedPosition() {
     return poseFilter.getEstimatedPosition();
   }
@@ -229,12 +296,35 @@ public class PoseSensorFusion extends SubsystemBase
   }
 
   public enum CameraTarget {
-    Left,
-    Center,
-    All;
+    Left(RobotContainer.poseSensorFusion.getLeftCamera()),
+    Center(RobotContainer.poseSensorFusion.getCenterCamera()),
+    L1(RobotContainer.poseSensorFusion.getL1Camera()),
+    Source(RobotContainer.poseSensorFusion.getSourceCamera()),
+    Elevator(Left, Center),
+    All(Left, Center, L1, Source);
 
-    boolean contains(CameraTarget camera) {
-      return this == camera || this == All;
+    private Set<IVisionCamera> cameras;
+
+    CameraTarget(IVisionCamera... cameras) {
+      this.cameras = Set.of(cameras);
+    }
+
+    CameraTarget(CameraTarget... targets) {
+      List<IVisionCamera> cameras = new ArrayList<>();
+      for (CameraTarget target : targets) {
+        for (IVisionCamera camera : target.cameras) {
+          cameras.add(camera);
+        }
+      }
+      this.cameras = Set.of(cameras.toArray(new IVisionCamera[0]));
+    }
+
+    boolean contains(IVisionCamera camera) {
+      return cameras.contains(camera);
+    }
+
+    boolean contains(IVisionCamera... cameras) {
+      return this.cameras.containsAll(Set.of(cameras));
     }
   }
 
@@ -277,18 +367,20 @@ public class PoseSensorFusion extends SubsystemBase
     return centerCamera;
   }
 
-  @Override
-  public void setupShuffleboard() {
-    DashboardUI.Overview.setTagNumLeft(() -> leftCamera.getNumTags());
-    DashboardUI.Overview.setConfidenceLeft(() -> leftCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionLeft(() -> leftCamera.hasVision());
-    DashboardUI.Overview.setLimelightConnectedLeft(() -> leftCamera.isConnected());
-
-    DashboardUI.Overview.setTagNumCenter(() -> centerCamera.getNumTags());
-    DashboardUI.Overview.setConfidenceCenter(() -> centerCamera.getUnprocessedConfidence());
-    DashboardUI.Overview.setHasVisionCenter(() -> centerCamera.hasVision());
-    DashboardUI.Overview.setLimelightConnectedCenter(() -> centerCamera.isConnected());
+  public PhotonVisionCamera getL1Camera() {
+    return l1Camera;
   }
+
+  public PhotonVisionCamera getSourceCamera() {
+    return sourceCamera;
+  }
+
+  public Set<IVisionCamera> getCameras() {
+    return cameras;
+  }
+
+  @Override
+  public void setupShuffleboard() {}
 
   public class VisionDebouncer {
     private final Debouncer debouncer;
@@ -300,6 +392,8 @@ public class PoseSensorFusion extends SubsystemBase
     private boolean result = false;
     private double lastAccessTime;
 
+    private boolean persistent = false;
+
     private VisionDebouncer(
         int id,
         double debounceTime,
@@ -309,37 +403,31 @@ public class PoseSensorFusion extends SubsystemBase
       this.id = id;
       this.camera = camera;
       this.tagIds = tagIds;
-      debouncer = new Debouncer(debounceTime, debounceType);
+
+      debouncer = new Debouncer(0, debounceType);
+      debouncer.calculate(getRaw());
+      debouncer.setDebounceTime(debounceTime);
+
       lastAccessTime = Timer.getTimestamp();
     }
 
-    private void update() {
+    private boolean getRaw() {
       boolean rawInput = false;
+      ArrayList<Integer> visionTags = new ArrayList<>();
 
-      if (camera.contains(CameraTarget.Left)) {
-        rawInput |= RobotContainer.poseSensorFusion.getLeftCamera().hasVision();
-      }
+      for (var vis : RobotContainer.poseSensorFusion.getCameras()) {
+        if (camera.contains(vis)) {
+          rawInput |= vis.hasVision();
 
-      if (camera.contains(CameraTarget.Center)) {
-        rawInput |= RobotContainer.poseSensorFusion.getCenterCamera().hasVision();
-      }
-
-      if (tagIds != null && rawInput) {
-        ArrayList<Integer> visionTags = new ArrayList<>();
-        if (camera.contains(CameraTarget.Left)) {
-          for (RawVisionFiducial tag :
-              RobotContainer.poseSensorFusion.getLeftCamera().getCurrentEstimate().rawFiducials) {
-            visionTags.add(tag.id);
+          if (tagIds != null) {
+            for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials) {
+              visionTags.add(tag.id);
+            }
           }
         }
+      }
 
-        if (camera.contains(CameraTarget.Center)) {
-          for (RawVisionFiducial tag :
-              RobotContainer.poseSensorFusion.getCenterCamera().getCurrentEstimate().rawFiducials) {
-            visionTags.add(tag.id);
-          }
-        }
-
+      if (rawInput) {
         for (int tagId : tagIds) {
           if (!visionTags.contains(tagId)) {
             rawInput = false;
@@ -348,10 +436,16 @@ public class PoseSensorFusion extends SubsystemBase
         }
       }
 
+      return rawInput;
+    }
+
+    private void update() {
+      boolean rawInput = getRaw();
+
       result = debouncer.calculate(rawInput);
 
       double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
-      if (timeSinceLastAccessed > 1.0) {
+      if (!persistent && timeSinceLastAccessed > 1.0) {
         DriverStation.reportWarning(
             "Detected abandoned "
                 + toString()
@@ -388,8 +482,18 @@ public class PoseSensorFusion extends SubsystemBase
       this.camera = camera;
     }
 
+    public VisionDebouncer withCamera(CameraTarget camera) {
+      setCamera(camera);
+      return this;
+    }
+
     public void setTagIds(int[] tagIds) {
       this.tagIds = tagIds;
+    }
+
+    public VisionDebouncer withTagIds(int[] tagIds) {
+      setTagIds(tagIds);
+      return this;
     }
 
     public CameraTarget getCamera() {
@@ -408,6 +512,16 @@ public class PoseSensorFusion extends SubsystemBase
       debouncer.setDebounceType(debounceType);
     }
 
+    public VisionDebouncer withDebounceTime(double time) {
+      setDebounceTime(time);
+      return this;
+    }
+
+    public VisionDebouncer withDebounceType(Debouncer.DebounceType debounceType) {
+      setDebounceType(debounceType);
+      return this;
+    }
+
     public double getDebounceTime() {
       return debouncer.getDebounceTime();
     }
@@ -422,6 +536,28 @@ public class PoseSensorFusion extends SubsystemBase
 
     public void release() {
       RobotContainer.poseSensorFusion.releaseVisionCheck(this);
+    }
+
+    public boolean isPersistent() {
+      return persistent;
+    }
+
+    public void setPersistent(boolean persistent) {
+      this.persistent = persistent;
+    }
+
+    public void setPersistent() {
+      setPersistent(true);
+    }
+
+    public VisionDebouncer withPersistent() {
+      setPersistent();
+      return this;
+    }
+
+    public VisionDebouncer withPersistent(boolean persistent) {
+      setPersistent(persistent);
+      return this;
     }
   }
 }

@@ -1,7 +1,7 @@
 package frc.robot.subsystems.io;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 
 public interface ElevatorArmIO extends AutoCloseable {
 
@@ -11,7 +11,7 @@ public interface ElevatorArmIO extends AutoCloseable {
 
   public void setArmPosition(double newValue);
 
-  public void setArmMotionMagic(MotionMagicVoltage request);
+  public void setArmMotionMagic(MotionMagicExpoVoltage request);
 
   public double getArmPosition();
 

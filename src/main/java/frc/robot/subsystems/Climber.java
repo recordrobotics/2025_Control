@@ -18,11 +18,13 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ClimberIO;
 import frc.robot.subsystems.io.sim.ClimberSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-import org.littletonrobotics.junction.AutoLogOutput;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class Climber extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
@@ -32,6 +34,10 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   private final MotionMagicVoltage armRequest;
 
   private ClimberState currentState = ClimberState.Park;
+
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
 
   public Climber(ClimberIO io) {
     this.io = io;
@@ -67,6 +73,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
                     .withStatorCurrentLimitEnable(true)));
 
     io.setPosition(Constants.Climber.START_ROTATIONS.in(Rotations));
+    positionCached = Constants.Climber.START_ROTATIONS.in(Rotations);
     armRequest = new MotionMagicVoltage(Constants.Climber.START_ROTATIONS.in(Rotations));
     set(ClimberState.Park);
 
@@ -83,7 +90,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     SmartDashboard.putBoolean("Ratchet", false);
   }
 
-  public enum ClimberState {
+  public static enum ClimberState {
     Park,
     Extend,
     Climb
@@ -94,7 +101,11 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
   private double lastExpectedKVTime = 0;
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
+    positionCached = io.getPosition();
+    velocityCached = io.getVelocity();
+    voltageCached = io.getVoltage();
+
     if (currentState == ClimberState.Climb) {
       lastClimbVoltage =
           SimpleMath.slewRateLimitLinear(
@@ -109,7 +120,6 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
           && !atGoal()) {
         // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
         lastClimbVoltage = 0;
-        io.setVoltage(0);
         set(ClimberState.Park);
       } else {
         io.setVoltage(lastClimbVoltage);
@@ -120,7 +130,7 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     RobotContainer.model.climber.update(getRotations());
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public boolean atGoal() {
     if (currentState == ClimberState.Climb) {
       return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
@@ -137,13 +147,19 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
       case Park:
         io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
         ratchetEngaged = false;
-        io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
+
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+          io.setMotionMagic(
+              armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
+        }
         break;
       case Extend:
         io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
         ratchetEngaged = false;
-        io.setMotionMagic(
-            armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+          io.setMotionMagic(
+              armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
+        }
         break;
       case Climb:
         io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
@@ -154,34 +170,34 @@ public class Climber extends KillableSubsystem implements ShuffleboardPublisher,
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public ClimberState getCurrentState() {
     return currentState;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getRotations() {
-    return io.getPosition();
+    return positionCached;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
-    return io.getVelocity();
+    return velocityCached;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
-    return io.getVoltage();
+    return voltageCached;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.DebugReal)
   public double getEstimatedkV() {
-    if (MathUtil.isNear(0, io.getVelocity(), 0.2)) return 0;
-    return io.getVoltage() / io.getVelocity();
+    if (MathUtil.isNear(0, velocityCached, 0.2)) return 0;
+    return voltageCached / velocityCached;
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

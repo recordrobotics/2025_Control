@@ -11,11 +11,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.KillSpecified;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.LocalADStarAK;
+import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdRoutine;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -112,6 +116,8 @@ public class Robot extends LoggedRobot {
 
     // MAKE SURE FIRST CALL TO ELASTIC IS NOT IN TELEOP OR AUTO INIT!!
     DashboardUI.Autonomous.switchTo();
+
+    AutoLogLevelManager.addObject(this);
   }
 
   /**
@@ -133,12 +139,25 @@ public class Robot extends LoggedRobot {
     // and running subsystem periodic() methods. This must be called from the
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
+
+    DashboardUI.Overview.getControl().update();
+
+    // End and start reversed to make sure we get latest data before command scheduler
+    RobotContainer.poseSensorFusion.endCalculation();
+    RobotContainer.poseSensorFusion.startCalculation();
+
     CommandScheduler.getInstance().run();
+
+    SmartDashboard.putString(
+        "Overview/LevelSwitch",
+        DashboardUI.Overview.getControl().getReefLevelSwitchValue().toString());
 
     // Return to normal thread priority
     // Threads.setCurrentThreadPriority(false, 10);
 
     DashboardUI.update();
+
+    AutoLogLevelManager.periodic();
   }
 
   boolean hasRun = false;
@@ -146,11 +165,10 @@ public class Robot extends LoggedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    // TODO: reenable when doing sysid - allows logs to be saved on disable
-    // if (hasRun) {
-    //   Logger.end();
-    //   SignalLogger.stop();
-    // }
+    if (SysIdManager.getSysIdRoutine() != SysIdRoutine.None && hasRun) {
+      Logger.end();
+      SignalLogger.stop();
+    }
 
     m_robotContainer.disabledInit();
   }
@@ -214,7 +232,10 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    Logger.recordOutput(
+        "Control/ReefLevelSwitch", DashboardUI.Overview.getControl().getReefLevelSwitchValue());
+  }
 
   @Override
   public void testInit() {

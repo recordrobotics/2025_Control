@@ -1,12 +1,12 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.NavSensorIO;
+import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.ShuffleboardPublisher;
 
-public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
+public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPublisher {
 
   private static double period = 0.02;
 
@@ -59,7 +59,7 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
   }
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
     double accelX = io.getWorldLinearAccelX();
     double accelY = io.getWorldLinearAccelY();
     jerkX = (accelX - last_accelX) / period;
@@ -69,7 +69,7 @@ public class NavSensor extends SubsystemBase implements ShuffleboardPublisher {
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

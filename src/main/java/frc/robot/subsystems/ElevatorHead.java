@@ -20,10 +20,12 @@ import frc.robot.Constants;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorHeadIO;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
-import org.littletonrobotics.junction.AutoLogOutput;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorHead extends KillableSubsystem
@@ -52,6 +54,10 @@ public class ElevatorHead extends KillableSubsystem
 
   private CoralShooterStates currentState = CoralShooterStates.OFF;
 
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
+
   private boolean hasAlgae = false;
   private boolean waitingForAlgae = false;
   private boolean waitingForIntakeSpeed = false;
@@ -63,6 +69,7 @@ public class ElevatorHead extends KillableSubsystem
     DashboardUI.Test.addSlider("Elevator Head", io.getPercent(), -1, 1).subscribe(io::setPercent);
 
     io.setPosition(0);
+    positionCached = 0;
     positionPid.reset(0);
 
     positionPid.setTolerance(
@@ -111,26 +118,26 @@ public class ElevatorHead extends KillableSubsystem
     OFF;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVelocity() {
-    return io.getVelocity()
+    return velocityCached
         / 60.0
         / Constants.ElevatorHead.GEAR_RATIO
         * Math.PI
         * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* RPM -> RPS */
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getPosition() {
-    return io.getPosition()
+    return positionCached
         / Constants.ElevatorHead.GEAR_RATIO
         * Math.PI
         * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* Rotations -> Meters */
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getVoltage() {
-    return io.getVoltage();
+    return voltageCached;
   }
 
   public void moveBy(Distance distance) {
@@ -234,17 +241,17 @@ public class ElevatorHead extends KillableSubsystem
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public boolean hasAlgae() {
     return hasAlgae;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public CoralShooterStates getCurrentCoralShooterState() {
     return currentState;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public boolean hasCoral() {
     return debounced_value;
   }
@@ -260,7 +267,14 @@ public class ElevatorHead extends KillableSubsystem
   private double lastSpeed = 0;
 
   @Override
-  public void periodic() {
+  public void periodicManaged() {
+
+    positionCached = io.getPosition();
+    velocityCached = io.getVelocity();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      voltageCached = io.getVoltage();
+    }
+
     // set(0);
     // currentState = CoralShooterStates.POSITION;
     // positionPid.setGoal(SmartDashboard.getNumber("CoralShooter_Value", 0));
@@ -273,12 +287,19 @@ public class ElevatorHead extends KillableSubsystem
       double feedforwardOutput =
           feedForward.calculateWithVelocities(lastSpeed, positionPid.getSetpoint().velocity);
 
-      io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+      if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorHead) {
+        io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+      }
+
       lastSpeed = positionPid.getSetpoint().velocity;
     } else {
       double pidOutput = pid.calculate(getVelocity());
       double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
-      io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+
+      if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorHead) {
+        io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
+      }
+
       lastSpeed = pid.getSetpoint();
 
       if (waitingForIntakeSpeed && Math.abs(getVelocity()) > 1.0) { // TODO: tune
@@ -296,7 +317,7 @@ public class ElevatorHead extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 

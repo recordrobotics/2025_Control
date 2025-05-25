@@ -2,8 +2,8 @@ package frc.robot;
 
 public final class RobotMap {
   public static final class Elevator {
-    public static final int MOTOR_LEFT_ID = 10;
-    public static final int MOTOR_RIGHT_ID = 11;
+    public static final int MOTOR_LEAD_ID = 10;
+    public static final int MOTOR_FOLLOWER_ID = 11;
     public static final int BOTTOM_ENDSTOP_ID = 4;
     public static final int TOP_ENDSTOP_ID = 5;
   }

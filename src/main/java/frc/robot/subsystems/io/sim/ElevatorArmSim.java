@@ -1,7 +1,7 @@
 package frc.robot.subsystems.io.sim;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -28,7 +28,7 @@ public class ElevatorArmSim implements ElevatorArmIO {
   private final SingleJointedArmSim armSimModel =
       new SingleJointedArmSim(
           LinearSystemId.createSingleJointedArmSystem(
-              armMotor, 0.0254, Constants.ElevatorArm.ARM_GEAR_RATIO),
+              armMotor, 0.2, Constants.ElevatorArm.ARM_GEAR_RATIO),
           armMotor,
           Constants.ElevatorArm.ARM_GEAR_RATIO,
           Units.inchesToMeters(18.4966),
@@ -63,7 +63,7 @@ public class ElevatorArmSim implements ElevatorArmIO {
   }
 
   @Override
-  public void setArmMotionMagic(MotionMagicVoltage request) {
+  public void setArmMotionMagic(MotionMagicExpoVoltage request) {
     arm.setControl(request);
   }
 

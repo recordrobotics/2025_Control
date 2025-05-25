@@ -1,34 +1,26 @@
 package frc.robot.commands.hybrid;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.control.AbstractControl;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.assists.DrivetrainControl;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class AlignToPose extends Command {
-  ProfiledPIDController xPID =
-      new ProfiledPIDController( // meters
-          9,
-          0,
-          0.01,
-          new TrapezoidProfile.Constraints(
-              Constants.Align.MAX_VELOCITY, Constants.Align.MAX_ACCELERATION));
-  ProfiledPIDController yPID = // meters
-      new ProfiledPIDController(
-          9,
-          0,
-          0.01,
-          new TrapezoidProfile.Constraints(
-              Constants.Align.MAX_VELOCITY, Constants.Align.MAX_ACCELERATION));
+
+  private static DrivetrainControl drivetrainControl = null;
+
+  private double tP = 4;
+
   ProfiledPIDController rotPID = // radians
       new ProfiledPIDController(
           4,
@@ -36,24 +28,19 @@ public class AlignToPose extends Command {
           0.05,
           new TrapezoidProfile.Constraints(
               Constants.Align.MAX_ANGULAR_VELOCITY, Constants.Align.MAX_ANGULAR_ACCELERATION));
-  boolean doTranslation;
 
-  private Pose2d targetPose;
+  private Supplier<Pose2d> targetPose;
 
-  public AlignToPose(Pose2d pose, boolean doTranslation) {
+  public AlignToPose(Supplier<Pose2d> pose) {
     this.targetPose = pose;
 
-    if (doTranslation) {
-      xPID.setTolerance(Constants.Align.translationalTolerance);
-      yPID.setTolerance(Constants.Align.translationalTolerance);
-      xPID.setGoal(pose.getX());
-      yPID.setGoal(pose.getY());
-    }
-    rotPID.setTolerance(Constants.Align.rotationalTolerance);
-    rotPID.setGoal(pose.getRotation().getRadians());
-    rotPID.enableContinuousInput(-Math.PI, Math.PI);
+    var p = pose.get();
 
-    this.doTranslation = doTranslation;
+    rotPID.setTolerance(Constants.Align.rotationalTolerance);
+    if (p != null) {
+      rotPID.setGoal(p.getRotation().getRadians());
+    }
+    rotPID.enableContinuousInput(-Math.PI, Math.PI);
 
     addRequirements(RobotContainer.drivetrain);
   }
@@ -61,45 +48,72 @@ public class AlignToPose extends Command {
   @Override
   public void initialize() {
     Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-    xPID.reset(pose.getX());
-    yPID.reset(pose.getY());
+
     rotPID.reset(pose.getRotation().getRadians());
+
+    var p = targetPose.get();
+    if (p != null) {
+      rotPID.setGoal(p.getRotation().getRadians());
+    }
+  }
+
+  private boolean isTAtGoal() {
+    Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+    var p = targetPose.get();
+    return pose.getTranslation().getDistance(p.getTranslation())
+        <= Constants.Align.translationalTolerance;
   }
 
   @Override
   public boolean isFinished() {
-    if (!doTranslation) return false;
-    return xPID.atGoal() && yPID.atGoal() && rotPID.atGoal();
+    return isTAtGoal() && rotPID.atGoal();
   }
 
   @Override
   public void execute() {
     Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
 
-    double x = xPID.calculate(pose.getX());
-    double y = yPID.calculate(pose.getY());
-    double rot = rotPID.calculate(pose.getRotation().getRadians());
+    var p = targetPose.get();
 
-    Logger.recordOutput("AlignToPose/Target", targetPose);
-    Logger.recordOutput("AlignToPose/AtGoal/X", xPID.atGoal());
-    Logger.recordOutput("AlignToPose/AtGoal/Y", yPID.atGoal());
+    double x = 0;
+    double y = 0;
+    double rot = 0;
+
+    if (p != null) {
+      var targetVector = p.getTranslation().minus(pose.getTranslation());
+      var targetDirection = targetVector.div(targetVector.getNorm());
+      targetDirection =
+          targetDirection.times(
+              Math.min(Constants.Align.MAX_VELOCITY, tP * targetVector.getNorm()));
+
+      var chassisSpeeds =
+          ChassisSpeeds.fromRobotRelativeSpeeds(
+              RobotContainer.drivetrain.getChassisSpeeds(), pose.getRotation());
+      var currentVelocity =
+          new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+
+      currentVelocity =
+          MathUtil.slewRateLimit(
+              currentVelocity, targetDirection, 0.02, Constants.Align.MAX_ACCELERATION);
+
+      Logger.recordOutput("AlignToPose/Velocity", targetDirection.getNorm());
+      Logger.recordOutput("AlignToPose/VelocityLimited", currentVelocity.getNorm());
+
+      x = currentVelocity.getX();
+      y = currentVelocity.getY();
+      rot = rotPID.calculate(pose.getRotation().getRadians(), p.getRotation().getRadians());
+    }
+
+    Logger.recordOutput("AlignToPose/Target", p);
+    Logger.recordOutput("AlignToPose/AtGoal/T", isTAtGoal());
     Logger.recordOutput("AlignToPose/AtGoal/Rot", rotPID.atGoal());
 
-    AbstractControl controls = DashboardUI.Overview.getControl();
-    DrivetrainControl drivetrainControl = controls.getDrivetrainControl();
-
-    if (doTranslation) {
-      drivetrainControl.applyWeightedVelocity(
-          DrivetrainControl.fieldToRobot(
-              new Transform2d(x, y, new Rotation2d(rot)),
-              RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation()),
-          1.0);
-    } else {
-      drivetrainControl.applyWeightedVelocity(
-          new Transform2d(
-              drivetrainControl.getTargetVelocity().getTranslation(), new Rotation2d(rot)),
-          1.0);
-    }
+    drivetrainControl =
+        DrivetrainControl.createFieldRelative(
+            new Transform2d(x, y, new Rotation2d(rot)),
+            Transform2d.kZero,
+            Transform2d.kZero,
+            RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation());
 
     RobotContainer.drivetrain.drive(drivetrainControl.toChassisSpeeds());
   }
@@ -107,5 +121,9 @@ public class AlignToPose extends Command {
   @Override
   public void end(boolean interrupted) {
     RobotContainer.drivetrain.drive(new ChassisSpeeds());
+  }
+
+  public static DrivetrainControl getDrivetrainControl() {
+    return drivetrainControl;
   }
 }

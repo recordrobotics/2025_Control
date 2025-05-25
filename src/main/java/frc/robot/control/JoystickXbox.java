@@ -30,11 +30,12 @@ public class JoystickXbox extends AbstractControl {
 
   private Transform2d lastVelocity = new Transform2d();
   private Transform2d lastAcceleration = new Transform2d();
+  private Transform2d velocity = new Transform2d();
+  private Transform2d acceleration = new Transform2d();
+  private Transform2d jerk = new Transform2d();
 
   @Override
-  public DrivetrainControl getDrivetrainControl() {
-    // Gets information needed to drive
-
+  public void update() {
     var xy = getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive()));
 
     double x = xy.getFirst() * getDirectionalSpeedLevel();
@@ -46,15 +47,19 @@ public class JoystickXbox extends AbstractControl {
       double temp = y;
       y = -x;
       x = -temp;
+    } else if (getClimbRelativeDrive()) {
+      double temp = y;
+      y = -x;
+      x = temp;
     }
 
-    Transform2d velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
-    Transform2d acceleration =
+    velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
+    acceleration =
         new Transform2d(
                 velocity.getTranslation().minus(lastVelocity.getTranslation()).div(0.02),
                 velocity.getRotation().minus(lastVelocity.getRotation()))
             .div(0.02);
-    Transform2d jerk =
+    jerk =
         new Transform2d(
                 acceleration.getTranslation().minus(lastAcceleration.getTranslation()).div(0.02),
                 acceleration.getRotation().minus(lastAcceleration.getRotation()))
@@ -62,8 +67,11 @@ public class JoystickXbox extends AbstractControl {
 
     lastVelocity = velocity;
     lastAcceleration = acceleration;
+  }
 
-    if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()) {
+  @Override
+  public DrivetrainControl getDrivetrainControl() {
+    if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive() || getClimbRelativeDrive()) {
       return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
     } else {
       return DrivetrainControl.createFieldRelative(
@@ -75,11 +83,11 @@ public class JoystickXbox extends AbstractControl {
   }
 
   public Boolean getAutoAlign() {
-    return joystick.getRawButton(9) || joystick.getRawButton(11);
+    return joystick.getRawButton(9) || getAutoAlignNear();
   }
 
-  public Boolean getAutoAlignNear() {
-    return joystick.getRawButton(7) || joystick.getRawButton(12);
+  private Boolean getAutoAlignNear() {
+    return joystick.getRawButton(7);
   }
 
   public Boolean getElevatorRelativeDrive() {
@@ -88,6 +96,10 @@ public class JoystickXbox extends AbstractControl {
 
   public Boolean getCoralIntakeRelativeDrive() {
     return joystick.getRawButton(10);
+  }
+
+  public Boolean getClimbRelativeDrive() {
+    return joystick.getRawButton(12);
   }
 
   public Pair<Double, Double> getXY(boolean orient) {
@@ -168,18 +180,13 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public Boolean getClimbMode() {
-    return joystick.getRawButton(12);
-  }
-
-  @Override
   public void vibrate(RumbleType type, double value) {
     xbox_controller.setRumble(type, value);
   }
 
   @Override
   public Boolean getAutoScore() {
-    return xbox_controller.getAButton();
+    return false;
   }
 
   @Override
@@ -198,17 +205,6 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
-  public AutoScoreDirection getAutoScoreDirection() {
-    if (xbox_controller.getLeftX() < -0.5) {
-      return AutoScoreDirection.Left;
-    } else if (xbox_controller.getLeftX() > 0.5) {
-      return AutoScoreDirection.Right;
-    } else {
-      return AutoScoreDirection.None;
-    }
-  }
-
-  @Override
   public Boolean getCoralShoot() {
     return xbox_controller.getPOV() == 270;
   }
@@ -216,6 +212,11 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getCoralGroundIntake() {
     return xbox_controller.getLeftTriggerAxis() > 0.3;
+  }
+
+  @Override
+  public Boolean getCoralGroundIntakeSimple() {
+    return false;
   }
 
   @Override
@@ -234,6 +235,11 @@ public class JoystickXbox extends AbstractControl {
   }
 
   @Override
+  public ReefLevelSwitchValue getReefLevelSwitchValue() {
+    return getAutoAlignNear() ? ReefLevelSwitchValue.L2 : ReefLevelSwitchValue.None;
+  }
+
+  @Override
   public Boolean getManualOverride() {
     return xbox_controller.getPOV() == 0;
   }
@@ -241,6 +247,11 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getGroundAlgae() {
     return xbox_controller.getRightBumperButton();
+  }
+
+  @Override
+  public Boolean getReefAlgaeSimple() {
+    return false;
   }
 
   @Override
@@ -268,5 +279,10 @@ public class JoystickXbox extends AbstractControl {
   @Override
   public Boolean getClimb() {
     return xbox_controller.getRawButton(7);
+  }
+
+  @Override
+  public Boolean getCoralSourceIntakeAuto() {
+    return false;
   }
 }

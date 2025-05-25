@@ -2,12 +2,16 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,17 +21,19 @@ import frc.robot.Constants.RobotState.Mode;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DCMotors;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SysIdManager;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 /** Represents a swerve drive style drivetrain. */
@@ -39,7 +45,8 @@ public class Drivetrain extends KillableSubsystem
   private final SwerveModule m_backLeft;
   private final SwerveModule m_backRight;
 
-  private final SysIdRoutine sysIdRoutineDriveMotors;
+  private final SysIdRoutine sysIdRoutineDriveMotorsSpin;
+  private final SysIdRoutine sysIdRoutineDriveMotorsForward;
   private final SysIdRoutine sysIdRoutineTurnMotors;
 
   // Creates swerve kinematics
@@ -79,6 +86,9 @@ public class Drivetrain extends KillableSubsystem
           .withRobotMass(Kilograms.of(Constants.Frame.ROBOT_MASS));
 
   private final SwerveDriveSimulation swerveDriveSimulation;
+
+  private final SwerveSetpointGenerator setpointGenerator;
+  private SwerveSetpoint previousSetpoint;
 
   public SwerveModule getFrontLeftModule() {
     return m_frontLeft;
@@ -153,7 +163,25 @@ public class Drivetrain extends KillableSubsystem
                   swerveDriveSimulation.getModules()[3], Constants.Swerve.backRightConstants));
     }
 
-    sysIdRoutineDriveMotors =
+    setpointGenerator =
+        new SwerveSetpointGenerator(
+            Constants.Swerve.PPDefaultConfig,
+            Units.rotationsToRadians(
+                Constants.Swerve
+                    .TurnMaxAngularVelocity) // The max rotation velocity of a swerve module in
+            // radians per second
+            );
+
+    // Initialize the previous setpoint to the robot's current speeds & module states
+    ChassisSpeeds currentSpeeds = getChassisSpeeds();
+    SwerveModuleState[] currentStates = getModuleStates();
+    previousSetpoint =
+        new SwerveSetpoint(
+            currentSpeeds,
+            currentStates,
+            DriveFeedforwards.zeros(Constants.Swerve.PPDefaultConfig.numModules));
+
+    sysIdRoutineDriveMotorsSpin =
         new SysIdRoutine(
             // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
             new SysIdRoutine.Config(
@@ -162,7 +190,18 @@ public class Drivetrain extends KillableSubsystem
                 Seconds.of(1.5),
                 (state ->
                     Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
-            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotors, null, this));
+            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsSpin, null, this));
+
+    sysIdRoutineDriveMotorsForward =
+        new SysIdRoutine(
+            // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
+            new SysIdRoutine.Config(
+                Volts.of(3.0).per(Second),
+                Volts.of(3.0),
+                Seconds.of(1.5),
+                (state ->
+                    Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
+            new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsForward, null, this));
 
     sysIdRoutineTurnMotors =
         new SysIdRoutine(
@@ -176,65 +215,57 @@ public class Drivetrain extends KillableSubsystem
   }
 
   /**
-   * Drives the robot using joystick info.
+   * Drives the robot using robot relative ChassisSpeeds.
    *
-   * @param driveCommandData contains all the info to drive the robot. The xSpeed and ySpeed
-   *     components are relative to the robot's current orientation if fieldRelative is false, and
-   *     relative to the field if fieldRelative is true.
-   * @param currentRotation the current rotation of the robot in the field coordinate system. Used
-   *     to convert the joystick x and y components to the field coordinate system if fieldRelative
-   *     is true.
+   * @param nonDiscreteSpeeds The robot relative chassis speeds (non discretized)
    */
   public void drive(ChassisSpeeds nonDiscreteSpeeds) {
-    nonDiscreteSpeeds = ChassisSpeeds.discretize(nonDiscreteSpeeds, 0.02);
+    // Note: it is important to not discretize speeds before or after
+    // using the setpoint generator, as it will discretize them for you
+    previousSetpoint =
+        setpointGenerator.generateSetpoint(
+            previousSetpoint, // The previous setpoint
+            nonDiscreteSpeeds, // The desired target speeds
+            0.02 // The loop time of the robot code, in seconds
+            );
 
-    SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(nonDiscreteSpeeds);
-
-    // Desaturates wheel speeds
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.robotMaxSpeed);
+    SwerveModuleState[] swerveModuleStates = previousSetpoint.moduleStates();
 
     // Sets state for each module
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_backLeft.setDesiredState(swerveModuleStates[2]);
-    m_backRight.setDesiredState(swerveModuleStates[3]);
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainSpin
+        && SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainForward) {
+      m_frontLeft.setDesiredState(swerveModuleStates[0]);
+      m_frontRight.setDesiredState(swerveModuleStates[1]);
+      m_backLeft.setDesiredState(swerveModuleStates[2]);
+      m_backRight.setDesiredState(swerveModuleStates[3]);
+    }
 
     Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
   }
 
   @Override
-  public void periodic() {
-    Logger.recordOutput(
-        "SwerveStates/Current",
-        new SwerveModuleState[] {
-          m_frontLeft.getModuleState(),
-          m_frontRight.getModuleState(),
-          m_backLeft.getModuleState(),
-          m_backRight.getModuleState()
-        });
+  public void periodicManaged() {
+    m_frontLeft.periodic();
+    m_frontRight.periodic();
+    m_backLeft.periodic();
+    m_backRight.periodic();
+
+    Logger.recordOutput("SwerveStates/Current", getModuleStates());
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     m_frontLeft.simulationPeriodic();
     m_frontRight.simulationPeriodic();
     m_backLeft.simulationPeriodic();
     m_backRight.simulationPeriodic();
   }
 
-  public void SysIdOnlyDriveMotors(Voltage volts) {
-
-    // SwerveModuleState state = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
-
+  public void SysIdOnlyDriveMotorsSpin(Voltage volts) {
     m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(360 - 45)));
     m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
     m_backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 45)));
     m_backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 - 45)));
-
-    // m_frontLeft.setDesiredState(state);
-    // m_frontRight.setDesiredState(state);
-    // m_backLeft.setDesiredState(state);
-    // m_backRight.setDesiredState(state);
 
     m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
     m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
@@ -242,7 +273,22 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
   }
 
-  @AutoLogOutput
+  public void SysIdOnlyDriveMotorsForward(Voltage volts) {
+
+    SwerveModuleState state = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
+
+    m_frontLeft.setDesiredState(state);
+    m_frontRight.setDesiredState(state);
+    m_backLeft.setDesiredState(state);
+    m_backRight.setDesiredState(state);
+
+    m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+    m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+  }
+
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorVolts() {
     // average of all drive motors .get() values
     return (m_frontLeft.getDriveMotorVoltsSysIdOnly()
@@ -252,7 +298,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorPosition() {
     // average
     return (m_frontLeft.getDriveWheelDistance()
@@ -262,7 +308,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetDriveMotorVelocity() {
     // average
     return (m_frontLeft.getDriveWheelVelocity()
@@ -279,7 +325,7 @@ public class Drivetrain extends KillableSubsystem
     m_backRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorVolts() {
     // average of all turn motors .get() values
     return (m_frontLeft.getTurnMotorVoltsSysIdOnly()
@@ -289,7 +335,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorPosition() {
     // average
     return (m_frontLeft.getTurnWheelRotation2d().getRotations()
@@ -299,7 +345,7 @@ public class Drivetrain extends KillableSubsystem
         / 4;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double SysIdOnlyGetTurnMotorVelocity() {
     // average
     return (m_frontLeft.getTurnWheelVelocity()
@@ -333,7 +379,7 @@ public class Drivetrain extends KillableSubsystem
    *
    * @return The current relative chassis speeds as a ChassisSpeeds object.
    */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Real)
   public ChassisSpeeds getChassisSpeeds() {
     return m_kinematics.toChassisSpeeds(
         m_frontLeft.getModuleState(),
@@ -360,18 +406,37 @@ public class Drivetrain extends KillableSubsystem
     };
   }
 
-  public Command sysIdQuasistaticDriveMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineDriveMotors
-        .quasistatic(direction)
-        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
-    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  public SwerveModuleState[] getModuleStates() {
+    return new SwerveModuleState[] {
+      m_frontLeft.getModuleState(),
+      m_frontRight.getModuleState(),
+      m_backLeft.getModuleState(),
+      m_backRight.getModuleState()
+    };
   }
 
-  public Command sysIdDynamicDriveMotors(SysIdRoutine.Direction direction) {
-    return sysIdRoutineDriveMotors
+  public Command sysIdQuasistaticDriveMotorsSpin(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsSpin
+        .quasistatic(direction)
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+  }
+
+  public Command sysIdDynamicDriveMotorsSpin(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsSpin
         .dynamic(direction)
         .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
-    // run pids with zero velocity for 0.5 seconds in order to align wheels;
+  }
+
+  public Command sysIdQuasistaticDriveMotorsForward(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsForward
+        .quasistatic(direction)
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+  }
+
+  public Command sysIdDynamicDriveMotorsForward(SysIdRoutine.Direction direction) {
+    return sysIdRoutineDriveMotorsForward
+        .dynamic(direction)
+        .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
   }
 
   public Command sysIdQuasistaticTurnMotors(SysIdRoutine.Direction direction) {

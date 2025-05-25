@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -20,11 +20,13 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorArmIO;
 import frc.robot.subsystems.io.sim.ElevatorArmSim;
+import frc.robot.utils.AutoLogLevel;
+import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
-import org.littletonrobotics.junction.AutoLogOutput;
+import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorArm extends KillableSubsystem
@@ -33,7 +35,11 @@ public class ElevatorArm extends KillableSubsystem
   private final ElevatorArmIO io;
   private final SysIdRoutine sysIdRoutine;
 
-  private final MotionMagicVoltage armRequest;
+  private final MotionMagicExpoVoltage armRequest;
+
+  private double positionCached = 0;
+  private double velocityCached = 0;
+  private double voltageCached = 0;
 
   public ElevatorArm(ElevatorArmIO io) {
     this.io = io;
@@ -57,8 +63,8 @@ public class ElevatorArm extends KillableSubsystem
     motionMagicConfigs_arm.MotionMagicCruiseVelocity = Constants.ElevatorArm.MAX_ARM_VELOCITY;
     motionMagicConfigs_arm.MotionMagicAcceleration = Constants.ElevatorArm.MAX_ARM_ACCELERATION;
     motionMagicConfigs_arm.MotionMagicJerk = 1600;
-    motionMagicConfigs_arm.MotionMagicExpo_kV = Constants.ElevatorArm.kV;
-    motionMagicConfigs_arm.MotionMagicExpo_kA = Constants.ElevatorArm.kA;
+    motionMagicConfigs_arm.MotionMagicExpo_kV = 1.931;
+    motionMagicConfigs_arm.MotionMagicExpo_kA = 1.1;
 
     io.applyArmTalonFXConfig(
         armConfig
@@ -74,7 +80,9 @@ public class ElevatorArm extends KillableSubsystem
                     .withStatorCurrentLimitEnable(true)));
 
     io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
-    armRequest = new MotionMagicVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
+    positionCached = Units.radiansToRotations(Constants.ElevatorArm.START_POS);
+    armRequest =
+        new MotionMagicExpoVoltage(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
     set(ElevatorHeight.BOTTOM.getArmAngle());
 
     sysIdRoutine =
@@ -97,35 +105,37 @@ public class ElevatorArm extends KillableSubsystem
     }
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngle() {
-    return io.getArmPosition() * 2 * Math.PI;
+    return positionCached * 2 * Math.PI;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocity() {
-    return io.getArmVelocity() * 2 * Math.PI;
+    return velocityCached * 2 * Math.PI;
   }
 
   /** Used for sysid as units have to be in rotations in the logs */
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmAngleRotations() {
-    return io.getArmPosition();
+    return positionCached;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmVelocityRotations() {
-    return io.getArmVelocity();
+    return velocityCached;
   }
 
-  @AutoLogOutput
+  @AutoLogLevel(level = Level.Sysid)
   public double getArmSetTo() {
-    return io.getArmVoltage();
+    return voltageCached;
   }
 
   public void set(double angleRadians) {
     currentSetpoint.position = angleRadians;
-    io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorArm) {
+      io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
+    }
   }
 
   public boolean atGoal() {
@@ -136,8 +146,15 @@ public class ElevatorArm extends KillableSubsystem
   private TrapezoidProfile.State currentSetpoint = new TrapezoidProfile.State();
 
   @Override
-  public void periodic() {
-    set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
+  public void periodicManaged() {
+
+    positionCached = io.getArmPosition();
+    velocityCached = io.getArmVelocity();
+    if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+      voltageCached = io.getArmVoltage();
+    }
+
+    // set(SmartDashboard.getNumber("ElevatorArm", Constants.ElevatorArm.START_POS));
 
     // Update mechanism
     RobotContainer.model.elevatorArm.update(getArmAngle());
@@ -145,7 +162,7 @@ public class ElevatorArm extends KillableSubsystem
   }
 
   @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodicManaged() {
     io.simulationPeriodic();
   }
 
@@ -159,7 +176,7 @@ public class ElevatorArm extends KillableSubsystem
 
   @Override
   public void setupShuffleboard() {
-    DashboardUI.Test.addSlider("Elevator Arm Pos", io.getArmPosition(), -1, 1).subscribe(this::set);
+    DashboardUI.Test.addSlider("Elevator Arm Pos", positionCached, -1, 1).subscribe(this::set);
   }
 
   @Override
