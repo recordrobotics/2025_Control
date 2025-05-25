@@ -354,18 +354,22 @@ public class RobotContainer {
 
     new Trigger(() -> DashboardUI.Overview.getControl().getReefAlgaeSimple())
         .onTrue(
-            new DeferredCommand(
-                () ->
-                    new AutoAlgae(
-                            IGamePosition.closestTo(
-                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                                AlgaePosition.values()))
-                        .handleInterrupt(
-                            () -> {
-                              System.out.println("AutoAlgae interrupted!!! :(");
-                            })
-                        .asProxy(),
-                Set.of()));
+            Commands.either(
+                new DeferredCommand(
+                    () ->
+                        new AutoAlgae(
+                                IGamePosition.closestTo(
+                                    RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                    AlgaePosition.values()))
+                            .finallyDo(() -> AutoAlgae.stopRunning())
+                            .handleInterrupt(
+                                () -> {
+                                  System.out.println("AutoAlgae interrupted!!! :(");
+                                })
+                            .asProxy(),
+                    Set.of()),
+                new InstantCommand(() -> AutoAlgae.performCancel()),
+                () -> !AutoAlgae.isRunning()));
 
     new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
         .whileTrue(ReefAlign.alignClosest(true));

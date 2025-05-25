@@ -12,12 +12,28 @@ import frc.robot.utils.CommandUtils;
 public class AutoAlgae extends SequentialCommandGroup {
 
   private boolean alignTimeout = false;
+  private static boolean cancelCommand = false;
+  private static boolean isRunning = false;
+
+  public static void performCancel() {
+    cancelCommand = true;
+  }
+
+  public static boolean isRunning() {
+    return isRunning;
+  }
+
+  public static void stopRunning() {
+    isRunning = false;
+  }
 
   public AutoAlgae(AlgaePosition reefPole) {
     addCommands(
         new InstantCommand(
             () -> {
               alignTimeout = false;
+              cancelCommand = false;
+              isRunning = true;
             }),
         CommandUtils.finishOnInterrupt(
                 AlgaeAlign.alignTarget(reefPole, false)
@@ -45,7 +61,7 @@ public class AutoAlgae extends SequentialCommandGroup {
                     .andThen(
                         ElevatorMoveThenAlgaeGrab.create(reefPole.getLevel().getHeight(), true)
                             .asProxy()))
-            .onlyWhile(() -> RobotState.isAutonomous() || true /* TODO: press again to stop */),
+            .onlyWhile(() -> RobotState.isAutonomous() || !cancelCommand),
         new WaitUntilCommand(
             () -> {
               Pose2d pose = reefPole.getPose();
@@ -56,7 +72,7 @@ public class AutoAlgae extends SequentialCommandGroup {
                       .getTranslation()
                       .getDistance(pose.getTranslation());
 
-              return false /* TODO: press again to go down */ || dist > 0.4;
+              return cancelCommand || dist > 0.4;
             }),
         new ElevatorMoveThenAlgaeGrabEnd(reefPole.getLevel().getHeight(), true).asProxy());
   }
