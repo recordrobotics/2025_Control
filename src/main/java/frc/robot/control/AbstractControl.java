@@ -24,6 +24,8 @@ public abstract class AbstractControl {
 
   public abstract Boolean getCoralIntakeRelativeDrive();
 
+  public abstract Boolean getClimbRelativeDrive();
+
   // Misc
   public abstract Boolean getPoseReset();
 

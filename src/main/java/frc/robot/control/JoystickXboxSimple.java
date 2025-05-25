@@ -62,6 +62,10 @@ public class JoystickXboxSimple extends AbstractControl {
       double temp = y;
       y = -x;
       x = -temp;
+    } else if (getClimbRelativeDrive()) {
+      double temp = y;
+      y = -x;
+      x = temp;
     }
 
     velocity = new Transform2d(x, y, new Rotation2d(getSpin() * getSpinSpeedLevel()));
@@ -82,7 +86,7 @@ public class JoystickXboxSimple extends AbstractControl {
 
   @Override
   public DrivetrainControl getDrivetrainControl() {
-    if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive()) {
+    if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive() || getClimbRelativeDrive()) {
       return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
     } else {
       return DrivetrainControl.createFieldRelative(
@@ -113,6 +117,10 @@ public class JoystickXboxSimple extends AbstractControl {
         || (getAutoScore()
             && getReefLevelSwitchValue()
                 == ReefLevelSwitchValue.L1); // coral relative when auto score
+  }
+
+  public Boolean getClimbRelativeDrive() {
+    return joystick.getRawButton(12);
   }
 
   public Pair<Double, Double> getXY(boolean orient) {
