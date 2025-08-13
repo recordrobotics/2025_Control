@@ -85,6 +85,11 @@ public class SwerveModuleStub implements SwerveModuleIO {
     }
 
     @Override
+    public double getDriveMechanismAcceleration() {
+        return 0;
+    }
+
+    @Override
     public void setDriveMechanismPosition(double newValue) {}
 
     @Override

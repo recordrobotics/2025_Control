@@ -6,6 +6,7 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -13,8 +14,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
@@ -28,6 +29,10 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.modifiers.DrivetrainControl;
+import frc.robot.utils.modifiers.IDrivetrainControlModifier;
+import java.util.ArrayList;
+import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
@@ -85,6 +90,11 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
     private final SwerveSetpointGenerator setpointGenerator;
     private SwerveSetpoint previousSetpoint;
+
+    private int lastModifiersAppliedCount = 0;
+    private SwerveModuleState[] lastModuleSetpoints = new SwerveModuleState[0];
+
+    public final List<IDrivetrainControlModifier> modifiers = new ArrayList<>();
 
     public SwerveModule getFrontLeftModule() {
         return m_frontLeft;
@@ -187,12 +197,31 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
                 new SysIdRoutine.Mechanism(this::SysIdOnlyTurnMotors, null, this));
     }
 
-    /**
-     * Drives the robot using robot relative ChassisSpeeds.
-     *
-     * @param nonDiscreteSpeeds The robot relative chassis speeds (non discretized)
-     */
-    public void drive(ChassisSpeeds nonDiscreteSpeeds) {
+    private DrivetrainControl getDrivetrainControl() {
+        if (RobotState.isTeleop()) {
+            return DashboardUI.Overview.getControl().getDrivetrainControl();
+        } else {
+            return DrivetrainControl.createRobotRelative(Transform2d.kZero, Transform2d.kZero, Transform2d.kZero);
+        }
+    }
+
+    /** Drives the robot using robot relative ChassisSpeeds. */
+    private void driveInternal() {
+        DrivetrainControl drivetrainControl = getDrivetrainControl();
+
+        int applyCount = 0;
+        for (IDrivetrainControlModifier modifier : modifiers) {
+            if (modifier.isEnabled()) {
+                if (modifier.apply(drivetrainControl)) {
+                    applyCount++;
+                }
+            }
+        }
+
+        lastModifiersAppliedCount = applyCount;
+
+        ChassisSpeeds nonDiscreteSpeeds = drivetrainControl.toChassisSpeeds(); // Converts the control to ChassisSpeeds
+
         // Note: it is important to not discretize speeds before or after
         // using the setpoint generator, as it will discretize them for you
         previousSetpoint = setpointGenerator.generateSetpoint(
@@ -212,17 +241,17 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
             m_backRight.setDesiredState(swerveModuleStates[3]);
         }
 
-        Logger.recordOutput("SwerveStates/Setpoints", swerveModuleStates);
+        lastModuleSetpoints = swerveModuleStates;
     }
 
     @Override
     public void periodicManaged() {
+        driveInternal();
+
         m_frontLeft.periodic();
         m_frontRight.periodic();
         m_backLeft.periodic();
         m_backRight.periodic();
-
-        Logger.recordOutput("SwerveStates/Current", getModuleStates());
     }
 
     @Override
@@ -336,7 +365,6 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
      */
     @Override
     public void kill() {
-        drive(new ChassisSpeeds());
         m_frontLeft.stop();
         m_frontRight.stop();
         m_backLeft.stop();
@@ -361,6 +389,28 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
     }
 
     /**
+     * Retrieves the current chassis acceleration relative to the robot's orientation.
+     *
+     * <p>This method calculates the chassis acceleration based on the current states of all four
+     * swerve modules using the drivetrain's kinematics.
+     *
+     * @return The current relative chassis acceleration as a ChassisSpeeds object.
+     */
+    @AutoLogLevel(level = Level.Real)
+    public ChassisSpeeds getChassisAcceleration() {
+        return m_kinematics.toChassisSpeeds(
+                m_frontLeft.getModuleStateAcceleration(),
+                m_frontRight.getModuleStateAcceleration(),
+                m_backLeft.getModuleStateAcceleration(),
+                m_backRight.getModuleStateAcceleration());
+    }
+
+    @AutoLogLevel(level = Level.Real)
+    public int getModifiersAppliedCount() {
+        return lastModifiersAppliedCount;
+    }
+
+    /**
      * Returns the swerve drive kinematics for this drivetrain.
      *
      * @return The SwerveDriveKinematics object associated with this drivetrain.
@@ -378,6 +428,7 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
         };
     }
 
+    @AutoLogLevel(level = Level.Real)
     public SwerveModuleState[] getModuleStates() {
         return new SwerveModuleState[] {
             m_frontLeft.getModuleState(),
@@ -387,26 +438,25 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
         };
     }
 
+    @AutoLogLevel(level = Level.Real)
+    public SwerveModuleState[] getModuleSetpoints() {
+        return lastModuleSetpoints;
+    }
+
     public Command sysIdQuasistaticDriveMotorsSpin(SysIdRoutine.Direction direction) {
-        return sysIdRoutineDriveMotorsSpin
-                .quasistatic(direction)
-                .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+        return sysIdRoutineDriveMotorsSpin.quasistatic(direction);
     }
 
     public Command sysIdDynamicDriveMotorsSpin(SysIdRoutine.Direction direction) {
-        return sysIdRoutineDriveMotorsSpin.dynamic(direction).raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+        return sysIdRoutineDriveMotorsSpin.dynamic(direction);
     }
 
     public Command sysIdQuasistaticDriveMotorsForward(SysIdRoutine.Direction direction) {
-        return sysIdRoutineDriveMotorsForward
-                .quasistatic(direction)
-                .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+        return sysIdRoutineDriveMotorsForward.quasistatic(direction);
     }
 
     public Command sysIdDynamicDriveMotorsForward(SysIdRoutine.Direction direction) {
-        return sysIdRoutineDriveMotorsForward
-                .dynamic(direction)
-                .raceWith(Commands.run(() -> drive(new ChassisSpeeds())));
+        return sysIdRoutineDriveMotorsForward.dynamic(direction);
     }
 
     public Command sysIdQuasistaticTurnMotors(SysIdRoutine.Direction direction) {

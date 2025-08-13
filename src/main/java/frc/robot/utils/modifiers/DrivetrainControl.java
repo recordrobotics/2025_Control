@@ -1,4 +1,4 @@
-package frc.robot.utils.assists;
+package frc.robot.utils.modifiers;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -56,6 +56,12 @@ public class DrivetrainControl {
                 fieldToRobot(driverJerk, robotAngle));
     }
 
+    /**
+     * @deprecated Warning: the driver velocity does not change with applied modifiers, making
+     *     stacking modifiers challenging. Only use this if you know what you're doing
+     *     {@code @SuppressWarnings("deprecation")}
+     */
+    @Deprecated
     public Transform2d getDriverVelocity() {
         return driverVelocity;
     }

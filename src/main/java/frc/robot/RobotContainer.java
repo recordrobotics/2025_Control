@@ -36,6 +36,7 @@ import frc.robot.commands.KillSpecified;
 import frc.robot.commands.ProcessorScore;
 import frc.robot.commands.ReefAlign;
 import frc.robot.commands.VibrateXbox;
+import frc.robot.commands.WaypointAlign;
 import frc.robot.commands.auto.PlannedAuto;
 import frc.robot.commands.legacy.CoralIntakeFromGroundToggled;
 import frc.robot.commands.legacy.CoralIntakeFromSource;
@@ -44,7 +45,6 @@ import frc.robot.commands.legacy.ElevatorReefToggled;
 import frc.robot.commands.legacy.GroundAlgaeToggled;
 import frc.robot.commands.manual.ManualElevator;
 import frc.robot.commands.manual.ManualElevatorArm;
-import frc.robot.commands.manual.ManualSwerve;
 import frc.robot.control.*;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
@@ -70,12 +70,10 @@ import frc.robot.utils.RepeatConditionallyCommand;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
-import frc.robot.utils.assists.GroundIntakeAssist;
-import frc.robot.utils.assists.IAssist;
 import frc.robot.utils.libraries.Elastic;
 import frc.robot.utils.libraries.Elastic.Notification;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
-import java.util.List;
+import frc.robot.utils.modifiers.GroundIntakeAssist;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.photonvision.simulation.VisionSystemSim;
@@ -107,8 +105,6 @@ public class RobotContainer {
     private final AutoPath autoPath;
 
     private Command autoCommand;
-
-    public static final List<IAssist> assits = List.of(new GroundIntakeAssist());
 
     private Alert noEncoderResetAlert = new Alert("Encoders not reset!", AlertType.kError);
 
@@ -146,6 +142,8 @@ public class RobotContainer {
             humanPlayerSimulation = new HumanPlayerSimulation();
         }
 
+        drivetrain.modifiers.add(new GroundIntakeAssist());
+
         model = new RobotModel();
 
         // Sets up auto path
@@ -162,7 +160,6 @@ public class RobotContainer {
 
         ShuffleboardPublisher.setup(poseSensorFusion.nav, drivetrain, poseSensorFusion);
 
-        drivetrain.setDefaultCommand(new ManualSwerve());
         elevator.setDefaultCommand(new ManualElevator());
         elevatorArm.setDefaultCommand(new ManualElevatorArm());
 
@@ -262,7 +259,9 @@ public class RobotContainer {
                 .onTrue(new VibrateXbox(RumbleType.kLeftRumble, 1).withTimeout(0.1));
 
         new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-                .whileTrue(ReefAlign.alignClosest(true, true, true, 2.0, 1.0, false));
+                .whileTrue(WaypointAlign.align(
+                        ReefAlign.generateWaypointsClosest(false), new Boolean[] {true, true}, new Double[] {2.0, 1.0
+                        }));
     }
 
     private void configureTriggers() {
