@@ -10,15 +10,16 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class AutoScore extends SequentialCommandGroup {
 
@@ -31,38 +32,21 @@ public class AutoScore extends SequentialCommandGroup {
                 : DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel();
     }
 
+    @SuppressWarnings("unchecked")
     public AutoScore(CoralPosition reefPole) {
         addCommands(
                 new InstantCommand(() -> {
                     isL1 = DashboardUI.Overview.getControl().getReefLevelSwitchValue() == ReefLevelSwitchValue.L1;
                 }),
-                GameAlign.makeAlignWithCommand(
-                        (usePath, useAlign) -> ReefAlign.alignTarget(
-                                        reefPole, this::getLevel, usePath, useAlign, true, 2.0, 1.0, false)
-                                .asProxy(),
-                        () -> {
-                            CoralLevel level = getLevel();
-                            Pose2d pose = reefPole.getPose(level);
-
-                            double clearanceMin = (level == CoralLevel.L1
-                                    ? Constants.Align.L1_CLEARANCE_MIN
-                                    : level == CoralLevel.L4
-                                            ? Constants.Align.L4_CLEARANCE_MIN
-                                            : Constants.Align.CLEARANCE_MIN);
-                            double clearanceMax = (level == CoralLevel.L1
-                                    ? Constants.Align.L1_CLEARANCE_MAX
-                                    : level == CoralLevel.L4
-                                            ? Constants.Align.L4_CLEARANCE_MAX
-                                            : Constants.Align.CLEARANCE_MAX);
-
-                            double dist = RobotContainer.poseSensorFusion
-                                    .getEstimatedPosition()
-                                    .getTranslation()
-                                    .getDistance(pose.getTranslation());
-
-                            return (dist < clearanceMax && dist > clearanceMin);
-                        },
-                        () -> Commands.either(
+                WaypointAlign.alignWithCommand(
+                        ReefAlign.generateWaypoints(() -> reefPole, this::getLevel, false),
+                        // 2s timeout for first waypoint, 1s for second
+                        new Double[] {2.0, 1.0},
+                        // start elevator immediately
+                        -1,
+                        // elevator has to be fully extended before moving to second waypoint
+                        0,
+                        Commands.either(
                                 new DeferredCommand(
                                         () -> new ElevatorMove(DashboardUI.Overview.getControl()
                                                         .getReefLevelSwitchValue()
@@ -71,51 +55,31 @@ public class AutoScore extends SequentialCommandGroup {
                                                 .asProxy(),
                                         Set.of()),
                                 new CoralIntakeMoveL1().asProxy(),
-                                () -> getLevel() != CoralLevel.L1),
-                        () -> {
-                            CoralLevel level = getLevel();
-                            Pose2d pose = reefPole.getPose(level);
-
-                            double clearanceMax = (level == CoralLevel.L1
-                                    ? Constants.Align.L1_CLEARANCE_MAX
-                                    : level == CoralLevel.L4
-                                            ? Constants.Align.L4_CLEARANCE_MAX
-                                            : Constants.Align.CLEARANCE_MAX);
-
-                            double dist = RobotContainer.poseSensorFusion
-                                    .getEstimatedPosition()
-                                    .getTranslation()
-                                    .getDistance(pose.getTranslation());
-
-                            return dist > clearanceMax;
-                        }),
-                new WaitUntilCommand(() -> RobotState.isAutonomous()
-                                || !DashboardUI.Overview.getControl().getAutoScore())
-                        .andThen(Commands.either(
-                                new CoralShoot()
-                                        .andThen(() -> backawayTargetPose = RobotContainer.poseSensorFusion
-                                                .getEstimatedPosition()
-                                                .transformBy(new Transform2d(-0.6, 0, Rotation2d.kZero)))
-                                        .andThen(GameAlign.alignTarget(
-                                                        () -> backawayTargetPose,
-                                                        Transform2d.kZero,
-                                                        false,
-                                                        true,
-                                                        false,
-                                                        2.0,
-                                                        2.0) // back away
-                                                .asProxy()
-                                                .finallyDo(() -> RobotContainer.drivetrain.kill())
-                                                .alongWith(new DeferredCommand(
-                                                                () -> new WaitCommand(
-                                                                        RobotContainer.elevator.getNearestHeight()
-                                                                                        == ElevatorHeight.L4
-                                                                                ? 1.0
-                                                                                : 0),
-                                                                Set.of())
-                                                        .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy())
-                                                        .onlyIf(() -> !CoralShoot.failedToShoot))),
-                                new CoralIntakeShootL1().asProxy(),
-                                () -> getLevel() != CoralLevel.L1)));
+                                () -> getLevel() != CoralLevel.L1)),
+                        new WaitUntilCommand(() -> RobotState.isAutonomous()
+                                        || !DashboardUI.Overview.getControl().getAutoScore())
+                                .andThen(Commands.either(
+                                        new CoralShoot()
+                                                .andThen(() -> backawayTargetPose = RobotContainer.poseSensorFusion
+                                                        .getEstimatedPosition()
+                                                        .transformBy(new Transform2d(-0.6, 0, Rotation2d.kZero)))
+                                                .andThen(WaypointAlign.align(
+                                                                new Supplier[] {() -> backawayTargetPose},
+                                                                new Boolean[] {true},
+                                                                new Double[] {2.0}) // back away
+                                                        .alongWith(new DeferredCommand(
+                                                                        () -> new WaitCommand(
+                                                                                RobotContainer.elevator
+                                                                                                        .getNearestHeight()
+                                                                                                == ElevatorHeight.L4
+                                                                                        ? 1.0
+                                                                                        : 0),
+                                                                        Set.of())
+                                                                .andThen(
+                                                                        new ElevatorMove(ElevatorHeight.BOTTOM)
+                                                                                .asProxy())
+                                                                .onlyIf(() -> !CoralShoot.failedToShoot))),
+                                        new CoralIntakeShootL1().asProxy(),
+                                        () -> getLevel() != CoralLevel.L1)));
     }
 }

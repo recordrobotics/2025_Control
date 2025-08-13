@@ -22,11 +22,15 @@ import frc.robot.commands.ProcessorScore;
 import frc.robot.commands.ReefAlign;
 import frc.robot.commands.legacy.CoralIntakeFromSource;
 import frc.robot.commands.legacy.ElevatorMoveThenAlgaeGrab;
+import frc.robot.commands.WaypointAlign;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
+import frc.robot.utils.modifiers.AutoPathControlModifier;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoPath {
+
+    public static AutoPathControlModifier controlModifier = new AutoPathControlModifier();
 
     public AutoPath() {
         RobotConfig config = Constants.Swerve.PPDefaultConfig;
@@ -37,6 +41,8 @@ public class AutoPath {
             Notifications.send(NotificationLevel.ERROR, "AutoPath failed to load config", "Error message in console");
         }
 
+        RobotContainer.drivetrain.modifiers.add(0, controlModifier);
+
         // Registering named commands (so that the pathplanner can call them by name)
 
         // Stop the robot's movement
@@ -44,16 +50,10 @@ public class AutoPath {
 
         NamedCommands.registerCommand(
                 "AutoAlign",
-                CommandUtils.finishOnInterrupt(new RepeatConditionallyCommand(
-                                ReefAlign.alignClosest(() -> CoralLevel.L4, true, true, false, 2.0, 1.0, true),
-                                () -> !(RobotContainer.poseSensorFusion
-                                                .getLeftCamera()
-                                                .hasVision()
-                                        || RobotContainer.poseSensorFusion
-                                                .getCenterCamera()
-                                                .hasVision()),
-                                true)
-                        .withTimeout(1.5)));
+                CommandUtils.finishOnInterrupt(WaypointAlign.align(
+                        ReefAlign.generateWaypointsClosest(() -> CoralLevel.L4, true),
+                        new Boolean[] {true, true},
+                        new Double[] {2.0, 1.0})));
         NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
         NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));
         NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));
@@ -100,7 +100,7 @@ public class AutoPath {
 
                 // Method that will drive the robot given ROBOT RELATIVE speeds
                 (speeds, feedforwards) -> {
-                    RobotContainer.drivetrain.drive(speeds);
+                    controlModifier.drive(speeds);
                 },
                 Constants.Swerve.PPDriveController,
                 config,

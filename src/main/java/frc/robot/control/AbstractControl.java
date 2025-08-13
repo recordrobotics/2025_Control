@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriverStationUtils;
-import frc.robot.utils.assists.DrivetrainControl;
+import frc.robot.utils.modifiers.DrivetrainControl;
 
 public abstract class AbstractControl {
 

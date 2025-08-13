@@ -40,6 +40,8 @@ public interface SwerveModuleIO extends AutoCloseable {
 
     double getDriveMechanismVelocity();
 
+    double getDriveMechanismAcceleration();
+
     void setDriveMechanismPosition(double newValue);
 
     void setTurnMechanismPosition(double newValue);

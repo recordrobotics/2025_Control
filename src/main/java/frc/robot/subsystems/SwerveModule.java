@@ -48,6 +48,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     private double drivePositionCached = 0;
     private double driveVelocityCached = 0;
+    private double driveAccelerationCached = 0;
     private double driveVoltageCached = 0;
     private double turnPositionCached = 0;
     private double turnVelocityCached = 0;
@@ -198,6 +199,20 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         return driveWheelMetersPerSecond;
     }
 
+    // meters per second^2
+    public double getDriveWheelAcceleration() {
+        // Get the drive motor acceleration in rotations per second^2
+        double driveWheelRotationsPerSecond2 = driveAccelerationCached;
+
+        // Calculate the distance the wheel travels per rotation (circumference)
+        double wheelCircumference = WHEEL_DIAMETER * Math.PI;
+
+        // Calculate wheel acceleration in meters per second^2
+        double driveWheelMetersPerSecond2 = driveWheelRotationsPerSecond2 * wheelCircumference;
+
+        return driveWheelMetersPerSecond2;
+    }
+
     public double getDriveWheelDistance() {
         // Get the drive wheel's current position in rotations
         double numRotationsDriveWheel = drivePositionCached;
@@ -218,6 +233,10 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
      */
     public SwerveModuleState getModuleState() {
         return new SwerveModuleState(getDriveWheelVelocity(), getTurnWheelRotation2d());
+    }
+
+    public SwerveModuleState getModuleStateAcceleration() {
+        return new SwerveModuleState(getDriveWheelAcceleration(), getTurnWheelRotation2d());
     }
 
     /**
@@ -249,6 +268,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
         drivePositionCached = io.getDriveMechanismPosition();
         driveVelocityCached = io.getDriveMechanismVelocity();
+        driveAccelerationCached = io.getDriveMechanismAcceleration();
         turnPositionCached = io.getTurnMechanismPosition();
         turnVelocityCached = io.getTurnMechanismVelocity();
         if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {

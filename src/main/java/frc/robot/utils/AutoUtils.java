@@ -3,7 +3,6 @@ package frc.robot.utils;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
@@ -15,9 +14,8 @@ import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.ReefAlign;
 import frc.robot.commands.legacy.CoralIntakeFromSource;
+import frc.robot.commands.WaypointAlign;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
-import frc.robot.subsystems.PoseSensorFusion.CameraTarget;
-import frc.robot.subsystems.PoseSensorFusion.VisionDebouncer;
 import java.io.IOException;
 import java.util.Set;
 import org.json.simple.parser.ParseException;
@@ -32,17 +30,12 @@ public class AutoUtils {
                                 .apriltagId
                     };
 
-                    VisionDebouncer visionDebouncer = RobotContainer.poseSensorFusion.registerVisionCheck(
-                            CameraTarget.Elevator,
-                            visionTagTarget,
-                            0.5,
-                            DebounceType.kFalling); // says if either LL has seen the tag in the last 0.5s
+                    // TODO: Add 2d april tag alignment after waypoint finishes
 
-                    return new RepeatConditionallyCommand(
-                                    ReefAlign.alignClosest(() -> CoralLevel.L4, true, true, false, 2.0, 1.0, true),
-                                    () -> !visionDebouncer.hasVision(),
-                                    true)
-                            .finallyDo(() -> RobotContainer.poseSensorFusion.releaseVisionCheck(visionDebouncer));
+                    return WaypointAlign.align(
+                            ReefAlign.generateWaypointsClosest(() -> CoralLevel.L4, true),
+                            new Boolean[] {true, true},
+                            new Double[] {2.0, 1.0});
                 },
                 Set.of(RobotContainer.drivetrain));
     }

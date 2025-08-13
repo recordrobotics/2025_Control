@@ -1,4 +1,4 @@
-package frc.robot.utils.assists;
+package frc.robot.utils.modifiers;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
-public class GroundIntakeAssist implements IAssist {
+public class GroundIntakeAssist implements IDrivetrainControlModifier {
 
     private boolean enabled = true;
 
@@ -49,7 +49,7 @@ public class GroundIntakeAssist implements IAssist {
                 .transformBy(new Transform2d(Constants.CoralIntake.INTAKE_X_OFFSET, Meters.zero(), Rotation2d.kZero));
 
         Translation2d driverVector = DrivetrainControl.robotToField(
-                        control.getDriverVelocity(), robotPose.getRotation())
+                        control.getTargetVelocity(), robotPose.getRotation())
                 .getTranslation();
 
         double driverSpeed = driverVector.getNorm();
@@ -122,8 +122,8 @@ public class GroundIntakeAssist implements IAssist {
         Translation2d targetVelocity = DrivetrainControl.fieldToRobot(robotToCoral, robotPose.getRotation())
                 .times(Constants.Assits.GROUND_ASSIST_TRANSLATION_P);
 
-        double driverX = control.getDriverVelocity().getX();
-        double driverRot = control.getDriverVelocity().getRotation().getRadians();
+        double driverX = control.getTargetVelocity().getX();
+        double driverRot = control.getTargetVelocity().getRotation().getRadians();
 
         // If the driver is moving in the opposite direction of the target velocity, don't assist
         if (Math.signum(driverX) != 0

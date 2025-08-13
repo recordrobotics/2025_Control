@@ -112,6 +112,11 @@ public class SwerveModuleReal implements SwerveModuleIO {
     }
 
     @Override
+    public double getDriveMechanismAcceleration() {
+        return m_driveMotor.getAcceleration().getValueAsDouble();
+    }
+
+    @Override
     public void setDriveMechanismPosition(double newValue) {
         m_driveMotor.setPosition(newValue);
     }
