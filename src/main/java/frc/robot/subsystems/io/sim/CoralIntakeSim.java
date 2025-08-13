@@ -27,12 +27,14 @@ import frc.robot.subsystems.io.CoralIntakeIO;
 import frc.robot.utils.DCMotors;
 import frc.robot.utils.IntakeSimulationUtils;
 import frc.robot.utils.ProjectileSimulationUtils;
+import frc.robot.utils.SimpleMath;
 import java.util.Set;
 import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgaeStack;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnField;
 
 public class CoralIntakeSim implements CoralIntakeIO {
@@ -88,7 +90,20 @@ public class CoralIntakeSim implements CoralIntakeIO {
         intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
         intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);
-        intakeSimulation.setCustomIntakeCondition(gp -> true); // TODO add rotation check
+        intakeSimulation.setCustomIntakeCondition(gp -> {
+            boolean isNotStack = !(gp instanceof ReefscapeCoralAlgaeStack);
+            double coralPointing =
+                    (gp.getPoseOnField().getRotation().getRadians() + Math.PI) % Math.PI; // coral is bidirectional
+            double robotPointing = (RobotContainer.poseSensorFusion
+                                    .getEstimatedPosition()
+                                    .getRotation()
+                                    .getRadians()
+                            + Math.PI)
+                    % Math.PI; // intake is bidirectional
+            boolean coralAlignedWithRobot = SimpleMath.isWithinTolerance(
+                    coralPointing, robotPointing, Units.degreesToRadians(30)); // TODO check with real-world tests
+            return isNotStack && coralAlignedWithRobot;
+        });
     }
 
     public IntakeSimulation getIntakeSimulation() {
