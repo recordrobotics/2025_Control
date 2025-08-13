@@ -88,6 +88,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
         intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
         intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);
+        intakeSimulation.setCustomIntakeCondition(gp -> true); // TODO add rotation check
     }
 
     public IntakeSimulation getIntakeSimulation() {

@@ -123,7 +123,9 @@ public class CoralDetection extends ManagedSubsystemBase {
             }
             return corals;
         } else {
-            return SimulatedArena.getInstance().getGamePiecesByType("Coral").toArray(new Pose3d[0]);
+            return SimulatedArena.getInstance()
+                    .getGamePiecesPosesByType("Coral")
+                    .toArray(new Pose3d[0]);
         }
     }
 

@@ -1,7 +1,11 @@
-package frc.robot.utils;
+package frc.robot.utils.mapleSim;
 
-import edu.wpi.first.math.geometry.*;
-import java.util.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import java.util.Arrays;
+import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgaeStack;
 import org.ironmaple.utils.FieldMirroringUtils;
@@ -36,10 +40,12 @@ public class ImprovedArena2025Reefscape extends SimulatedArena {
             super.addBorderLine(new Translation2d(17.548, 6.782), new Translation2d(17.548 - 1.672, 8.052));
 
             // upper walls
-            super.addBorderLine(new Translation2d(1.672, 8.052), new Translation2d(17.548 - 1.672, 8.052));
+            super.addBorderLine(new Translation2d(1.672, 8.052), new Translation2d(11, 8.052));
+            super.addBorderLine(new Translation2d(12, 8.052), new Translation2d(17.548 - 1.672, 8.052));
 
             // lower walls
-            super.addBorderLine(new Translation2d(1.672, 0), new Translation2d(17.548 - 1.672, 0));
+            super.addBorderLine(new Translation2d(1.672, 0), new Translation2d(5.8, 0));
+            super.addBorderLine(new Translation2d(6.3, 0), new Translation2d(17.548 - 1.672, 0));
 
             // blue reef
             Translation2d[] reefVorticesBlue = new Translation2d[] {
@@ -64,12 +70,33 @@ public class ImprovedArena2025Reefscape extends SimulatedArena {
         }
     }
 
-    public final ImprovedReefscapeReefSimulation reefSimulation;
+    public final ImprovedReefscapeReefSimulation redReefSimulation;
+    public final ImprovedReefscapeReefSimulation blueReefSimulation;
+    public final ImprovedReefscapeBargeSimulation redBarge;
+    public final ImprovedReefscapeBargeSimulation blueBarge;
+    public final ImprovedReefscapeProcessorSimulation redProcessor;
+    public final ImprovedReefscapeProcessorSimulation blueProcessor;
 
     public ImprovedArena2025Reefscape() {
         super(new ReefscapeFieldObstacleMap());
-        reefSimulation = new ImprovedReefscapeReefSimulation(this);
-        super.addCustomSimulation(reefSimulation);
+
+        redReefSimulation = new ImprovedReefscapeReefSimulation(this, false);
+        super.addCustomSimulation(redReefSimulation);
+
+        blueReefSimulation = new ImprovedReefscapeReefSimulation(this, true);
+        super.addCustomSimulation(blueReefSimulation);
+
+        blueBarge = new ImprovedReefscapeBargeSimulation(this, true);
+        super.addCustomSimulation(blueBarge);
+
+        redBarge = new ImprovedReefscapeBargeSimulation(this, false);
+        super.addCustomSimulation(redBarge);
+
+        blueProcessor = new ImprovedReefscapeProcessorSimulation(this, true);
+        super.addCustomSimulation(blueProcessor);
+
+        redProcessor = new ImprovedReefscapeProcessorSimulation(this, false);
+        super.addCustomSimulation(redProcessor);
     }
 
     @Override
@@ -84,17 +111,31 @@ public class ImprovedArena2025Reefscape extends SimulatedArena {
                         new Translation2d(FieldMirroringUtils.FIELD_WIDTH - bluePosition.getX(), bluePosition.getY()))
                 .toArray(Translation2d[]::new);
         for (Translation2d position : redPositions) super.addGamePiece(new ReefscapeCoralAlgaeStack(position));
+
+        setupValueForMatchBreakdown("AlgaeInProcessor");
+        setupValueForMatchBreakdown("AlgaeInNet");
+        setupValueForMatchBreakdown("Auto/CoralScoredInAuto");
+        setupValueForMatchBreakdown("CoralScoredOnLevel 1");
+        setupValueForMatchBreakdown("CoralScoredOnLevel 2");
+        setupValueForMatchBreakdown("CoralScoredOnLevel 3");
+        setupValueForMatchBreakdown("CoralScoredOnLevel 4");
+        setupValueForMatchBreakdown("Auto/AlgaeScoredInAuto");
     }
 
     @Override
-    public synchronized List<Pose3d> getGamePiecesByType(String type) {
-        List<Pose3d> poses = super.getGamePiecesByType(type);
+    public synchronized List<Pose3d> getGamePiecesPosesByType(String type) {
+        List<Pose3d> poses = super.getGamePiecesPosesByType(type);
 
         // add algae and coral stack
-        if (type.equals("Algae")) poses.addAll(ReefscapeCoralAlgaeStack.getStackedAlgaePoses());
-        else if (type.equals("Coral")) {
+        if (type.equals("Algae")) {
+            poses.addAll(ReefscapeCoralAlgaeStack.getStackedAlgaePoses());
+            redBarge.draw(poses);
+            blueBarge.draw(poses);
+
+        } else if (type.equals("Coral")) {
             poses.addAll(ReefscapeCoralAlgaeStack.getStackedCoralPoses());
-            reefSimulation.addCoralsOnReefForDisplay(poses);
+            redReefSimulation.draw(poses);
+            blueReefSimulation.draw(poses);
         }
 
         return poses;
@@ -103,6 +144,7 @@ public class ImprovedArena2025Reefscape extends SimulatedArena {
     @Override
     public synchronized void clearGamePieces() {
         super.clearGamePieces();
-        reefSimulation.clearReef();
+        redReefSimulation.clearReef();
+        blueReefSimulation.clearReef();
     }
 }

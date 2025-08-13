@@ -435,12 +435,12 @@ public class RobotModel extends ManagedSubsystemBase {
     @AutoLogLevel(level = Level.Sim)
     private Pose3d[] getCoralPositions() {
         if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
-            List<Pose3d> corals = SimulatedArena.getInstance().getGamePiecesByType("Coral");
+            List<Pose3d> coralPoses = SimulatedArena.getInstance().getGamePiecesPosesByType("Coral");
             Pose3d robotCoralPose = robotCoral.poseSupplier.get();
             if (robotCoralPose != null) {
-                corals.add(robotCoralPose);
+                coralPoses.add(robotCoralPose);
             }
-            return corals.toArray(new Pose3d[0]);
+            return coralPoses.toArray(new Pose3d[0]);
         } else {
             return new Pose3d[0];
         }
