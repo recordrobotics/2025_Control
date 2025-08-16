@@ -3,6 +3,7 @@ package frc.robot.commands;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
@@ -40,6 +41,8 @@ public class RuckigAlign extends Command {
     private final PIDController xpid = new PIDController(6, 0, 0.02);
     private final PIDController ypid = new PIDController(6, 0, 0.02);
     private final PIDController rpid = new PIDController(2.48, 0, 0.01);
+
+    private static boolean lastAlignSuccessful = false;
 
     public RuckigAlign(
             Supplier<KinematicState> targetStateSupplier,
@@ -90,6 +93,8 @@ public class RuckigAlign extends Command {
 
         reset();
         setTargetState(targetStateSupplier.get());
+
+        lastAlignSuccessful = false;
     }
 
     @Override
@@ -106,6 +111,10 @@ public class RuckigAlign extends Command {
         Logger.recordOutput(
                 "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
 
+        Logger.recordOutput(
+                "Ruckig/SetpointVelocity",
+                new Transform2d(newVelocity[0], newVelocity[1], new Rotation2d(newVelocity[2])));
+
         // Calculate the new velocities using PID and velocity feedforward
         double vx = xpid.calculate(currentPose.getX(), newPosition[0]) + newVelocity[0];
         double vy = ypid.calculate(currentPose.getY(), newPosition[1]) + newVelocity[1];
@@ -116,9 +125,9 @@ public class RuckigAlign extends Command {
 
         output.passToInput(input);
 
-        double ex = currentPose.getX() - newPosition[0];
-        double ey = currentPose.getY() - newPosition[1];
-        double er = currentPose.getRotation().getRadians() - newPosition[2];
+        double ex = Math.abs(currentPose.getX() - newPosition[0]);
+        double ey = Math.abs(currentPose.getY() - newPosition[1]);
+        double er = Math.abs(currentPose.getRotation().getRadians() - newPosition[2]);
 
         Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
 
@@ -130,6 +139,14 @@ public class RuckigAlign extends Command {
 
     @Override
     public boolean isFinished() {
-        return result != Result.Working && xpid.atSetpoint() && ypid.atSetpoint() && rpid.atSetpoint();
+        boolean finished = result != Result.Working && xpid.atSetpoint() && ypid.atSetpoint() && rpid.atSetpoint();
+        if (finished) {
+            lastAlignSuccessful = true;
+        }
+        return finished;
+    }
+
+    public static boolean lastAlignSuccessful() {
+        return lastAlignSuccessful;
     }
 }

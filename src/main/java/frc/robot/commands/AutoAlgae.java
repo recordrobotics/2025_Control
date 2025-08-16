@@ -47,8 +47,8 @@ public class AutoAlgae extends SequentialCommandGroup {
                 }),
                 WaypointAlign.alignWithCommand(
                                 AlgaeAlign.generateWaypoints(reefPole),
-                                // 2s timeout for first waypoint, 1s for second
-                                new Double[] {2.0, 1.0},
+                                // 8s timeout for first waypoint, 4s for second
+                                new Double[] {8.0, 4.0},
                                 // start elevator immediately
                                 -1,
                                 // elevator has to be fully extended before moving to second waypoint
