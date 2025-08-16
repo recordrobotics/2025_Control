@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
-import frc.robot.utils.assists.DrivetrainControl;
+import frc.robot.utils.modifiers.DrivetrainControl;
 
 public class JoystickXbox extends AbstractControl {
 
