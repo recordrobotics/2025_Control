@@ -1,10 +1,10 @@
 package frc.robot.commands;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.RobotContainer;
@@ -28,11 +28,82 @@ public class WaypointAlign {
         return waypointSuppliers;
     }
 
-    private static KinematicState getKinematicStateForWaypoint(Pose2d currentWaypoint, Pose2d nextWaypoint) {
-        double dx = nextWaypoint.getX() - currentWaypoint.getX();
-        double dy = nextWaypoint.getY() - currentWaypoint.getY();
-        double dtheta = nextWaypoint.getRotation().getRadians()
-                - currentWaypoint.getRotation().getRadians();
+    private static KinematicState getKinematicStateForWaypoint(
+            Pose2d previousWaypoint,
+            Pose2d currentWaypoint,
+            Pose2d nextWaypoint,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            boolean useAcceleration) {
+        double px = previousWaypoint.getX();
+        double py = previousWaypoint.getY();
+        double pr = previousWaypoint.getRotation().getRadians();
+
+        double nx = nextWaypoint.getX();
+        double ny = nextWaypoint.getY();
+        double nr = nextWaypoint.getRotation().getRadians();
+
+        double dpx = currentWaypoint.getX() - px;
+        double dpy = currentWaypoint.getY() - py;
+        double dpr = currentWaypoint.getRotation().getRadians() - pr;
+        double dnx = nx - currentWaypoint.getX();
+        double dny = ny - currentWaypoint.getY();
+        double dnr = nr - currentWaypoint.getRotation().getRadians();
+
+        double lp = Math.hypot(dpx, dpy);
+        double ln = Math.hypot(dnx, dny);
+        double t = lp < ln ? lp / (2 * ln) : (1 - ln / (2 * lp));
+
+        double dx = dnx * t + dpx * (1 - t);
+        double dy = dny * t + dpy * (1 - t);
+        double dr = dnr * t + dpr * (1 - t);
+        dr = MathUtil.clamp(dr, -maxVelocity[2], maxVelocity[2]);
+
+        double dist = Math.hypot(dx, dy);
+        if (dist > 1e-6) {
+            double max_v = Math.hypot(maxVelocity[0], maxVelocity[1]);
+            max_v /= Math.abs(dr);
+            if (dist > max_v) {
+                dx /= dist;
+                dy /= dist;
+                double v_peak = max_v;
+                dx *= v_peak;
+                dy *= v_peak;
+            }
+        } else {
+            dx = 0.0;
+            dy = 0.0;
+        }
+
+        double t_vx = 0, t_vy = 0, t_vr = 0;
+        double t_ax = 0, t_ay = 0, t_ar = 0;
+
+        if (useAcceleration) {
+            dnr = MathUtil.clamp(dnr, -maxAcceleration[2], maxAcceleration[2]);
+            double dist_a = Math.hypot(dnx, dny);
+            if (dist_a > 1e-6) {
+                double max_a = Math.hypot(maxAcceleration[0], maxAcceleration[1]);
+                max_a /= Math.abs(dnr);
+                if (dist_a > max_a) {
+                    dnx /= dist_a;
+                    dny /= dist_a;
+                    double a_peak = max_a;
+                    dnx *= a_peak;
+                    dny *= a_peak;
+                }
+            } else {
+                dnx = 0.0;
+                dny = 0.0;
+            }
+
+            t_ax = dnx;
+            t_ay = dny;
+            t_ar = dnr;
+        }
+
+        t_vx = dx;
+        t_vy = dy;
+        t_vr = dr;
 
         return new KinematicState(
                 new double[] {
@@ -40,12 +111,29 @@ public class WaypointAlign {
                     currentWaypoint.getY(),
                     currentWaypoint.getRotation().getRadians()
                 }, // position
-                new double[] {0, 0, 0}, // velocity
-                new double[] {0, 0, 0} // acceleration
+                new double[] {t_vx, t_vy, t_vr}, // velocity
+                new double[] {t_ax, t_ay, t_ar} // acceleration
                 );
     }
 
     public static Command align(Supplier<Pose2d>[] waypoints, Boolean[] includedWaypoints, Double[] waypointTimeouts) {
+        return align(
+                waypoints,
+                includedWaypoints,
+                waypointTimeouts,
+                new double[] {4, 4, 4}, // max velocity
+                new double[] {2, 2, 6.46}, // max acceleration
+                new double[] {5, 5, 6.37} // max jerk
+                );
+    }
+
+    public static Command align(
+            Supplier<Pose2d>[] waypoints,
+            Boolean[] includedWaypoints,
+            Double[] waypointTimeouts,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxJerk) {
 
         if (waypoints.length > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
@@ -72,12 +160,20 @@ public class WaypointAlign {
                                     new double[] {0, 0, 0},
                                     new double[] {0, 0, 0});
                         } else {
-                            return getKinematicStateForWaypoint(waypoints[index].get(), waypoints[index + 1].get());
+                            return getKinematicStateForWaypoint(
+                                    index == 0
+                                            ? RobotContainer.poseSensorFusion.getEstimatedPosition()
+                                            : waypoints[index - 1].get(),
+                                    waypoints[index].get(),
+                                    waypoints[index + 1].get(),
+                                    maxVelocity,
+                                    maxAcceleration,
+                                    true);
                         }
                     },
-                    new double[] {4, 4, 4},
-                    new double[] {2, 2, 6.46},
-                    new double[] {5, 5, 6.37});
+                    maxVelocity,
+                    maxAcceleration,
+                    maxJerk);
             waypointGroup.addCommands(cmd.withTimeout(waypointTimeouts[i]));
         }
 
@@ -105,6 +201,45 @@ public class WaypointAlign {
             int commandStartWaypoint,
             int commandEndWaypoint,
             Command performCommand) {
+        return alignWithCommand(
+                waypoints,
+                waypointTimeouts,
+                commandStartWaypoint,
+                commandEndWaypoint,
+                performCommand,
+                new double[] {4, 4, 4}, // max velocity
+                new double[] {2, 2, 6.46}, // max acceleration
+                new double[] {5, 5, 6.37} // max jerk
+                );
+    }
+
+    /**
+     * Aligns the robot with a command that runs at a specific waypoint. The command will run
+     * immediately when the robot reaches the waypoint specified by {@code commandStartWaypoint} and
+     * will wait until the robot reaches the waypoint specified by {@code commandEndWaypoint} before
+     * continuing to the next waypoint.
+     *
+     * @param waypoints The waypoints to align with
+     * @param waypointTimeouts The timeouts for each waypoint
+     * @param commandStartWaypoint The waypoint when to run the command
+     * @param commandEndWaypoint The waypoint before which to wait for command to finish (if start is
+     *     -1 and end is 0 then the command will run immediately and wait before entering the segment
+     *     between first and second waypoint)
+     * @param performCommand The command to run when at the right waypoint
+     * @param maxVelocity The maximum velocity for each axis
+     * @param maxAcceleration The maximum acceleration for each axis
+     * @param maxJerk The maximum jerk for each axis
+     * @return
+     */
+    public static Command alignWithCommand(
+            Supplier<Pose2d>[] waypoints,
+            Double[] waypointTimeouts,
+            int commandStartWaypoint,
+            int commandEndWaypoint,
+            Command performCommand,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxJerk) {
 
         if (waypoints.length > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
@@ -120,73 +255,60 @@ public class WaypointAlign {
         Supplier<Integer> currentWaypoint = () -> {
             Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
 
-            // Find closest waypoint
-            int closestWaypoint = 0;
+            double px = currentPose.getX();
+            double py = currentPose.getY();
+
             double minDist = Double.MAX_VALUE;
-            for (int i = 0; i < waypoints.length; i++) {
-                double dx = currentPose.getX() - waypoints[i].get().getX();
-                double dy = currentPose.getY() - waypoints[i].get().getY();
-                double dist = dx * dx + dy * dy;
+            int closestWaypoint = -1;
+
+            for (int i = 0; i < waypoints.length - 1; i++) {
+                int waypointIndex = i;
+
+                double wx = waypoints[i].get().getX();
+                double wy = waypoints[i].get().getY();
+                double wnx = waypoints[i + 1].get().getX();
+                double wny = waypoints[i + 1].get().getY();
+
+                double t = ((px - wx) * (wnx - wx) + (py - wy) * (wny - wy))
+                        / ((wnx - wx) * (wnx - wx) + (wny - wy) * (wny - wy));
+                if (i == 0 && t < 0) {
+                    waypointIndex = -1;
+                }
+                t = MathUtil.clamp(t, 0, 1);
+                double cx = wx + t * (wnx - wx);
+                double cy = wy + t * (wny - wy);
+                double dist = Math.hypot(cx - px, cy - py);
                 if (dist < minDist) {
                     minDist = dist;
-                    closestWaypoint = i;
+                    closestWaypoint = waypointIndex;
                 }
             }
 
-            // Check if near any segment between waypoints
-            double segmentThreshold = 0.5 * 0.5; // 0.5 meters squared, adjust as needed
-            for (int i = 0; i < waypoints.length - 1; i++) {
-                Pose2d p1 = waypoints[i].get();
-                Pose2d p2 = waypoints[i + 1].get();
-
-                // Project currentPose onto segment p1-p2
-                double x1 = p1.getX(), y1 = p1.getY();
-                double x2 = p2.getX(), y2 = p2.getY();
-                double x0 = currentPose.getX(), y0 = currentPose.getY();
-
-                double dx = x2 - x1;
-                double dy = y2 - y1;
-                double lengthSq = dx * dx + dy * dy;
-                if (lengthSq == 0) continue; // skip degenerate segment
-
-                double t = ((x0 - x1) * dx + (y0 - y1) * dy) / lengthSq;
-                if (t >= 0 && t <= 1) {
-                    // Closest point on segment
-                    double projX = x1 + t * dx;
-                    double projY = y1 + t * dy;
-                    double distSq = (x0 - projX) * (x0 - projX) + (y0 - projY) * (y0 - projY);
-                    if (distSq < segmentThreshold) {
-                        return i; // Near segment i (between waypoints i and i+1)
-                    }
-                }
-            }
-
-            // If closest to first waypoint and not near first segment
-            if (closestWaypoint == 0) {
-                return -1;
-            }
-            // If closest to last waypoint and not near last segment
-            if (closestWaypoint == waypoints.length - 1) {
-                return waypoints.length - 1;
-            }
-            // Otherwise, return closest waypoint index
             return closestWaypoint;
         };
 
-        return new InstantCommand(() -> {
-                    for (int i = 0; i < waypoints.length; i++) {
-                        // Only include waypoints before the command end and in front of the current
-                        // waypoint (unless the current waypoint is after the command end - then back up
-                        // first)
-                        waypointsBeforeCommandEnd[i] =
-                                i <= commandEndWaypoint && i > Math.min(commandEndWaypoint - 1, currentWaypoint.get());
-                    }
-                })
-                .andThen(Commands.defer(
-                        () -> align(waypoints, waypointsBeforeCommandEnd, waypointTimeouts),
-                        Set.of(RobotContainer.drivetrain)))
+        return Commands.defer(
+                        () -> {
+                            for (int i = 0; i < waypoints.length; i++) {
+                                // Only include waypoints before the command end and in front of the current
+                                // waypoint (unless the current waypoint is after the command end - then back up
+                                // first)
+                                waypointsBeforeCommandEnd[i] = i <= commandEndWaypoint
+                                        && i > Math.min(commandEndWaypoint - 1, currentWaypoint.get());
+                            }
+
+                            return align(
+                                    waypoints,
+                                    waypointsBeforeCommandEnd,
+                                    waypointTimeouts,
+                                    maxVelocity,
+                                    maxAcceleration,
+                                    maxJerk);
+                        },
+                        Set.of(RobotContainer.drivetrain))
                 .alongWith(new WaitUntilCommand(() -> currentWaypoint.get() == commandStartWaypoint)
                         .andThen(performCommand))
-                .andThen(align(waypoints, waypointsAfterCommandEnd, waypointTimeouts));
+                .andThen(align(
+                        waypoints, waypointsAfterCommandEnd, waypointTimeouts, maxVelocity, maxAcceleration, maxJerk));
     }
 }

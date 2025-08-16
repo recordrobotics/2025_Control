@@ -40,8 +40,8 @@ public class AutoScore extends SequentialCommandGroup {
                 }),
                 WaypointAlign.alignWithCommand(
                         ReefAlign.generateWaypoints(() -> reefPole, this::getLevel, false),
-                        // 2s timeout for first waypoint, 1s for second
-                        new Double[] {2.0, 1.0},
+                        // 8s timeout for first waypoint, 4s for second
+                        new Double[] {8.0, 4.0},
                         // start elevator immediately
                         -1,
                         // elevator has to be fully extended before moving to second waypoint
@@ -56,6 +56,9 @@ public class AutoScore extends SequentialCommandGroup {
                                         Set.of()),
                                 new CoralIntakeMoveL1().asProxy(),
                                 () -> getLevel() != CoralLevel.L1)),
+                // if ruckig timed out, wait until autoscore is pressed again
+                new WaitUntilCommand(() -> DashboardUI.Overview.getControl().getAutoScore())
+                        .onlyIf(() -> !RuckigAlign.lastAlignSuccessful() && !RobotState.isAutonomous()),
                         new WaitUntilCommand(() -> RobotState.isAutonomous()
                                         || !DashboardUI.Overview.getControl().getAutoScore())
                                 .andThen(Commands.either(
