@@ -16,7 +16,7 @@ import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
 import frc.robot.dashboard.OverviewLayout;
 import frc.robot.utils.SimpleMath;
-import frc.robot.utils.assists.DrivetrainControl;
+import frc.robot.utils.modifiers.DrivetrainControl;
 import java.util.HashMap;
 import java.util.Map;
 
