@@ -5,8 +5,8 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -43,7 +43,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     private final double DRIVE_GEAR_RATIO;
     private final double WHEEL_DIAMETER;
 
-    final MotionMagicVoltage turnRequest;
+    final MotionMagicExpoVoltage turnRequest;
     final MotionMagicVelocityVoltage driveRequest;
 
     private double drivePositionCached = 0;
@@ -119,6 +119,8 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         motionMagicConfigs_turn.MotionMagicCruiseVelocity = m.TurnMaxAngularVelocity;
         motionMagicConfigs_turn.MotionMagicAcceleration = m.TurnMaxAngularAcceleration;
         motionMagicConfigs_turn.MotionMagicJerk = 1600;
+        motionMagicConfigs_turn.MotionMagicExpo_kV = 5.8;
+        motionMagicConfigs_turn.MotionMagicExpo_kA = 1.5;
 
         io.applyTurnTalonFXConfig(turnConfig
                 .withMotorOutput(new MotorOutputConfigs()
@@ -147,7 +149,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
             turnPositionCached = io.getTurnMechanismPosition();
         }
 
-        turnRequest = new MotionMagicVoltage(turnPositionCached);
+        turnRequest = new MotionMagicExpoVoltage(turnPositionCached);
         driveRequest = new MotionMagicVelocityVoltage(0);
     }
 

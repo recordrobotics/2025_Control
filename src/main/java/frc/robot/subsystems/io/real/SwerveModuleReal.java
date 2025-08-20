@@ -1,8 +1,8 @@
 package frc.robot.subsystems.io.real;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.subsystems.io.SwerveModuleIO;
@@ -47,7 +47,7 @@ public class SwerveModuleReal implements SwerveModuleIO {
     }
 
     @Override
-    public void setTurnMotorMotionMagic(MotionMagicVoltage request) {
+    public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {
         m_turningMotor.setControl(request);
     }
 

@@ -1,8 +1,8 @@
 package frc.robot.subsystems.io.stub;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.ModuleConstants;
 
@@ -28,7 +28,7 @@ public class SwerveModuleStub implements SwerveModuleIO {
     public void setTurnMotorVoltage(double newValue) {}
 
     @Override
-    public void setTurnMotorMotionMagic(MotionMagicVoltage request) {}
+    public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {}
 
     @Override
     public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {}

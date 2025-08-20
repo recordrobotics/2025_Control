@@ -43,7 +43,7 @@ public class ReefAutoScoreTestCases {
                             RobotContainer.drivetrain.getSwerveDriveSimulation().setSimulationWorldPose(startPose);
 
                             // Odometry reset has to run during periodic to work correctly
-                            runFor(1, () -> RobotContainer.poseSensorFusion.setToPose(startPose));
+                            runFor(2, () -> RobotContainer.poseSensorFusion.setToPose(startPose));
 
                             controlBridge().setReefLevel(ReefLevelSwitchValue.valueOf("L" + level));
 
@@ -67,8 +67,8 @@ public class ReefAutoScoreTestCases {
                                 }
                             }
 
-                            // Because of debouncer on coral sensor - have to wait one periodic cycle before autoscore
-                            runAfter(1, () -> controlBridge().pressButton(AUTO_SCORE, 1));
+                            // Because of debouncer on coral sensor - have to wait two periodic cycles before autoscore
+                            runAfter(2, () -> controlBridge().pressButton(AUTO_SCORE, 1));
                         },
                         () -> assertReefEquals(branchId));
             });

@@ -1,15 +1,17 @@
 package frc.robot.subsystems.io.sim;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.ModuleConstants;
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
@@ -24,6 +26,7 @@ public class SwerveModuleSim implements SwerveModuleIO {
 
     private final TalonFXSimState m_driveMotorSim;
     private final TalonFXSimState m_turningMotorSim;
+    private final SimDouble absoluteTurningMotorEncoderPosition;
 
     public static class TalonFXMotorControllerSim implements SimulatedMotorController {
         public final int id;
@@ -54,6 +57,9 @@ public class SwerveModuleSim implements SwerveModuleIO {
         m_turningMotor = new TalonFX(m.turningMotorChannel);
 
         absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel);
+        SimDeviceSim absoluteTurningMotorEncoderSim =
+                new SimDeviceSim("DutyCycle:DutyCycleEncoder", m.absoluteTurningMotorEncoderChannel);
+        absoluteTurningMotorEncoderPosition = absoluteTurningMotorEncoderSim.getDouble("Position");
 
         m_driveMotorSim = m_driveMotor.getSimState();
         m_turningMotorSim = m_turningMotor.getSimState();
@@ -85,7 +91,7 @@ public class SwerveModuleSim implements SwerveModuleIO {
     }
 
     @Override
-    public void setTurnMotorMotionMagic(MotionMagicVoltage request) {
+    public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {
         m_turningMotor.setControl(request);
     }
 
@@ -186,5 +192,7 @@ public class SwerveModuleSim implements SwerveModuleIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        absoluteTurningMotorEncoderPosition.set(getTurnMechanismPosition());
+    }
 }

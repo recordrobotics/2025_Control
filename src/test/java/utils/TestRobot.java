@@ -230,11 +230,11 @@ public class TestRobot {
         }
         m_runMutex.unlock();
 
-        long startTime = System.currentTimeMillis();
+        long startTime = getTimestamp();
         if (timeoutSeconds > 0) {
             Supplier<Boolean> originalStopCondition = stopCondition;
-            stopCondition = () ->
-                    originalStopCondition.get() || (System.currentTimeMillis() - startTime) >= (timeoutSeconds * 1000);
+            stopCondition =
+                    () -> originalStopCondition.get() || (getTimestamp() - startTime) >= (timeoutSeconds * 1000000);
         }
 
         try {
