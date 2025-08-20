@@ -109,7 +109,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
         super(
                 arena,
                 level == 0 ? Centimeters.of(30) : Centimeters.of(30),
-                level == 0 ? Centimeters.of(100) : Centimeters.of(30),
+                level == 0 ? Centimeters.of(40) : Centimeters.of(30),
                 Centimeters.of(30),
                 "Coral",
                 getPoseOfBranchAt(isBlue, level, column),

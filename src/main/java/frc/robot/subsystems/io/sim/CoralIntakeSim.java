@@ -83,10 +83,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
         Distance width = Inches.of(21.25);
         Distance lengthExtended = Inches.of(8.419554);
         Rectangle intakeRect = IntakeSimulationUtils.getIntakeRectangle(
-                drivetrainSim,
-                width.in(Meters),
-                lengthExtended.in(Meters),
-                IntakeSimulation.IntakeSide.LEFT); // apparently it's on the left in maplesim
+                drivetrainSim, width.in(Meters), lengthExtended.in(Meters), IntakeSimulation.IntakeSide.LEFT);
         intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
         intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);

@@ -209,13 +209,12 @@ public final class Constants {
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
-                                (side == 0 ? -REEF_SEGMENT_OFFSET.in(Meters) : REEF_SEGMENT_OFFSET.in(Meters))
-                                        + SHOOTER_OFFSET.in(Meters),
+                                (side == 0 ? -REEF_SEGMENT_OFFSET.in(Meters) : REEF_SEGMENT_OFFSET.in(Meters)),
                                 Rotation2d.k180deg));
             }
 
             public Pose2d getFirstStagePose() {
-                return pose.transformBy(new Transform2d(-0.2, 0, Rotation2d.kZero));
+                return pose.transformBy(new Transform2d(-0.2, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
             }
 
             public Pose2d getPose() {
@@ -225,12 +224,13 @@ public final class Constants {
             public Pose2d getPose(CoralLevel level) {
                 switch (level) {
                     case L1:
-                        return pose.transformBy(new Transform2d(-0.4, 0, Rotation2d.kCW_90deg));
+                        return pose.transformBy(
+                                new Transform2d(-0.4, CoralIntake.INTAKE_X_OFFSET.in(Meters), Rotation2d.kCW_90deg));
                     case L2:
                     case L3:
-                        return pose.transformBy(new Transform2d(-0.02, 0, Rotation2d.kZero));
+                        return pose.transformBy(new Transform2d(-0.02, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
                     case L4:
-                        return pose.transformBy(new Transform2d(-0.05, 0, Rotation2d.kZero));
+                        return pose.transformBy(new Transform2d(-0.05, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
                     default:
                         return pose; // this is bad
                 }

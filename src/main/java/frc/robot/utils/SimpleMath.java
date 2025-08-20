@@ -160,7 +160,7 @@ public class SimpleMath {
      */
     public static double closestTarget(double currentPos, double targetAngle) {
         double twoPi = 2.0 * Math.PI;
-        // Compute the nearest multiple of 2π
+        // Compute the nearest multiple of 2pi
         double k = Math.round((currentPos - targetAngle) / twoPi);
         // Return the unbounded target position
         return targetAngle + k * twoPi;
