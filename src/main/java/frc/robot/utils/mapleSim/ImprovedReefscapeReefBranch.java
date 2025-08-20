@@ -9,9 +9,11 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import java.util.Arrays;
 import java.util.List;
+import org.dyn4j.geometry.Vector2;
 import org.ironmaple.simulation.Goal;
 import org.ironmaple.simulation.gamepieces.GamePiece;
 import org.ironmaple.utils.FieldMirroringUtils;
@@ -150,7 +152,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
     }
 
     @Override
-    public boolean checkRotation(GamePiece gamePiece) {
+    protected boolean checkRotation(GamePiece gamePiece) {
         return true;
         // if (level == 3) {
         // Rotation3d rotation = gamePiece.getPose3d().getRotation();
@@ -162,6 +164,14 @@ public class ImprovedReefscapeReefBranch extends Goal {
         // } else {
         // return super.checkRotation(gamePiece);
         // }
+    }
+
+    @Override
+    protected boolean checkCollision(GamePiece gamePiece) {
+        return xyBox.contains(new Vector2(
+                        gamePiece.getPose3d().getX(), gamePiece.getPose3d().getY()))
+                && gamePiece.getPose3d().getZ() >= (elevation.in(Units.Meters) - 0.02)
+                && gamePiece.getPose3d().getZ() <= elevation.in(Units.Meters) + height.in(Units.Meters);
     }
 
     @Override
