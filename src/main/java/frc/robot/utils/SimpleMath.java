@@ -150,4 +150,28 @@ public class SimpleMath {
 
         return new Pose2d(new Translation2d(x, y), new Rotation2d(rot));
     }
+
+    /**
+     * Returns the closest unbounded axis position corresponding to the target angle.
+     *
+     * @param currentPos Current unbounded axis position (radians)
+     * @param targetAngle Target angle (radians, in [-PI, PI])
+     * @return Closest unbounded position to the target angle
+     */
+    public static double closestTarget(double currentPos, double targetAngle) {
+        double twoPi = 2.0 * Math.PI;
+        // Compute the nearest multiple of 2π
+        double k = Math.round((currentPos - targetAngle) / twoPi);
+        // Return the unbounded target position
+        return targetAngle + k * twoPi;
+    }
+
+    /**
+     *  Normalize an angle to [-PI, PI] (for use with {@link #closestTarget})
+     */
+    public static double normalizeAngle(double angle) {
+        double twoPi = 2.0 * Math.PI;
+        angle = ((angle + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
+        return angle;
+    }
 }

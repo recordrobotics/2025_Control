@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.SimpleMath;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.recordrobotics.ruckig.InputParameter3;
@@ -57,12 +58,19 @@ public class RuckigAlign extends Command {
         xpid.setTolerance(0.01, 0.05);
         ypid.setTolerance(0.01, 0.05);
         rpid.setTolerance(Math.toRadians(1), Math.toRadians(5));
+        rpid.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(RobotContainer.drivetrain);
     }
 
     private static double[] pose2dToArray(Pose2d pose) {
-        return new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()};
+        return new double[] {
+            pose.getX(),
+            pose.getY(),
+            SimpleMath.closestTarget(
+                    input.getCurrentPosition()[2],
+                    SimpleMath.normalizeAngle(pose.getRotation().getRadians()))
+        };
     }
 
     private static double[] chassisSpeedsToArray(ChassisSpeeds speeds) {
@@ -70,7 +78,10 @@ public class RuckigAlign extends Command {
     }
 
     private static void setTargetState(KinematicState state) {
-        input.setTargetPosition(state.position());
+        double[] targetPosition = state.position();
+        targetPosition[2] =
+                SimpleMath.closestTarget(input.getCurrentPosition()[2], SimpleMath.normalizeAngle(targetPosition[2]));
+        input.setTargetPosition(targetPosition);
         input.setTargetVelocity(state.velocity());
         input.setTargetAcceleration(state.acceleration());
     }
@@ -127,12 +138,15 @@ public class RuckigAlign extends Command {
 
         double ex = Math.abs(currentPose.getX() - newPosition[0]);
         double ey = Math.abs(currentPose.getY() - newPosition[1]);
-        double er = Math.abs(currentPose.getRotation().getRadians() - newPosition[2]);
+        double er = Math.abs(SimpleMath.closestTarget(
+                        newPosition[2],
+                        SimpleMath.normalizeAngle(currentPose.getRotation().getRadians()))
+                - newPosition[2]);
 
         Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
 
         // If the error is too large, reset the trajectory to current position for more accurate motion
-        if (ex * ex + ey * ey > 1.0 /* TODO: replace with smaller value */ || Math.abs(er) > Math.PI) {
+        if (ex * ex + ey * ey > 0.5 || Math.abs(er) > Math.PI) {
             reset();
         }
     }

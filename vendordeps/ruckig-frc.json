@@ -1,7 +1,7 @@
 {
     "fileName": "ruckig-frc.json",
     "name": "ruckig-frc",
-    "version": "0.15.5",
+    "version": "0.15.6",
     "frcYear": "2025",
     "uuid": "163c5268-070c-429a-9e20-0f2287b0d85a",
     "mavenUrls": [
@@ -13,14 +13,14 @@
         {
             "groupId": "org.recordrobotics.ruckig",
             "artifactId": "ruckig-frc",
-            "version": "0.15.5"
+            "version": "0.15.6"
         }
     ],
     "jniDependencies": [
         {
             "groupId": "org.recordrobotics.ruckig",
             "artifactId": "ruckig-native",
-            "version": "0.15.5",
+            "version": "0.15.6",
             "skipInvalidPlatforms": false,
             "isJar": false,
             "validPlatforms": [
