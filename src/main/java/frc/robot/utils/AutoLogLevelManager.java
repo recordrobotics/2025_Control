@@ -113,7 +113,7 @@ public class AutoLogLevelManager {
 
                 AutoLogLevel annotation = method.getAnnotation(AutoLogLevel.class);
 
-                if (!annotation.level().isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
+                if (!annotation.level().isAtOrHigherThan(Constants.RobotState.AUTO_LOG_LEVEL)) {
                     return;
                 }
 
@@ -143,7 +143,7 @@ public class AutoLogLevelManager {
             if (field.isAnnotationPresent(AutoLogLevel.class)) {
                 AutoLogLevel annotation = field.getAnnotation(AutoLogLevel.class);
 
-                if (!annotation.level().isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
+                if (!annotation.level().isAtOrHigherThan(Constants.RobotState.AUTO_LOG_LEVEL)) {
                     return;
                 }
 

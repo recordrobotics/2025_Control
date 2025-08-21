@@ -46,6 +46,7 @@ public class TestRobot {
 
     /**
      * Acts as the robot time source
+     * Function to return the time in microseconds.
      */
     private static long getTimestamp() {
         return timestamp;

@@ -23,8 +23,12 @@ public @interface AutoLogLevel {
         Sysid,
         Real;
 
-        public boolean isAtLeast(Level other) {
+        public boolean isAtOrHigherThan(Level other) {
             return this.compareTo(other) >= 0;
+        }
+
+        public boolean isAtOrLowerThan(Level other) {
+            return this.compareTo(other) <= 0;
         }
     }
 

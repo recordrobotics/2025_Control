@@ -126,7 +126,7 @@ public class GroundIntakeAssist implements IDrivetrainControlModifier {
         double driverRot = control.getTargetVelocity().getRotation().getRadians();
 
         // If the driver is moving in the opposite direction of the target velocity, don't assist
-        if (Math.signum(driverX) != 0
+        if (driverX != 0
                 && Math.signum(driverX) != Math.signum(targetVelocity.getX())
                 && Math.abs(driverX - targetVelocity.getX()) > 2.5) {
             Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.DRIVER_MOVING_IN_OPPOSITE_DIRECTION);

@@ -148,7 +148,7 @@ public class ElevatorArm extends KillableSubsystem
 
         positionCached = io.getArmPosition();
         velocityCached = io.getArmVelocity();
-        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
             voltageCached = io.getArmVoltage();
         }
 

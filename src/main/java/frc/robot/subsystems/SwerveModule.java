@@ -249,7 +249,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         driveAccelerationCached = io.getDriveMechanismAcceleration();
         turnPositionCached = io.getTurnMechanismPosition();
         turnVelocityCached = io.getTurnMechanismVelocity();
-        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
             driveVoltageCached = io.getDriveMotorVoltage();
             turnVoltageCached = io.getTurnMotorVoltage();
         }

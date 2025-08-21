@@ -64,7 +64,9 @@ public class WaypointAlign {
         double dist = Math.hypot(dx, dy);
         if (dist > 1e-6) {
             double max_v = Math.hypot(maxVelocity[0], maxVelocity[1]);
-            max_v /= Math.abs(dr);
+            if (Math.abs(dr) > 1e-6) {
+                max_v /= Math.abs(dr);
+            }
             if (dist > max_v) {
                 dx /= dist;
                 dy /= dist;
@@ -85,7 +87,9 @@ public class WaypointAlign {
             double dist_a = Math.hypot(dnx, dny);
             if (dist_a > 1e-6) {
                 double max_a = Math.hypot(maxAcceleration[0], maxAcceleration[1]);
-                max_a /= Math.abs(dnr);
+                if (Math.abs(dnr) > 1e-6) {
+                    max_a /= Math.abs(dnr);
+                }
                 if (dist_a > max_a) {
                     dnx /= dist_a;
                     dny /= dist_a;
