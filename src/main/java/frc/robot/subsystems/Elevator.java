@@ -133,7 +133,7 @@ public class Elevator extends KillableSubsystem
 
         leadPositionCached = io.getLeadMotorPosition();
         leadVelocityCached = io.getLeadMotorVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
             leadVoltageCached = io.getLeadMotorVoltage();
         }
 

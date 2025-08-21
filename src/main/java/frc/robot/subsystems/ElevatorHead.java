@@ -291,7 +291,7 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
 
         positionCached = io.getPosition();
         velocityCached = io.getVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
             voltageCached = io.getVoltage();
         }
 

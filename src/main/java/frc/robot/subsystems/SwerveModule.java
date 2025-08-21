@@ -24,6 +24,7 @@ import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
+import org.littletonrobotics.junction.Logger;
 
 public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, PoweredSubsystem {
 
@@ -86,12 +87,13 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         slot0Configs_drive.kP = m.DRIVE_P;
         slot0Configs_drive.kI = 0;
         slot0Configs_drive.kD = 0;
-        driveConfig.Feedback.SensorToMechanismRatio = DRIVE_GEAR_RATIO;
+        double wheelCircumference = WHEEL_DIAMETER * Math.PI;
+        driveConfig.Feedback.SensorToMechanismRatio = DRIVE_GEAR_RATIO / wheelCircumference;
 
         // set Motion Magic settings
         MotionMagicConfigs motionMagicConfigs_drive = driveConfig.MotionMagic;
-        motionMagicConfigs_drive.MotionMagicAcceleration = 400;
-        motionMagicConfigs_drive.MotionMagicJerk = 4000;
+        motionMagicConfigs_drive.MotionMagicAcceleration = Constants.Swerve.DriveMaxAcceleration;
+        motionMagicConfigs_drive.MotionMagicJerk = Constants.Swerve.DriveMaxJerk;
 
         io.applyDriveTalonFXConfig(driveConfig
                 .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
@@ -189,43 +191,17 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     // meters per second
     public double getDriveWheelVelocity() {
-        // Get the drive motor velocity in rotations per second
-        double driveWheelRotationsPerSecond = driveVelocityCached;
-
-        // Calculate the distance the wheel travels per rotation (circumference)
-        double wheelCircumference = WHEEL_DIAMETER * Math.PI;
-
-        // Calculate wheel velocity in meters per second
-        double driveWheelMetersPerSecond = driveWheelRotationsPerSecond * wheelCircumference;
-
-        return driveWheelMetersPerSecond;
+        return driveVelocityCached;
     }
 
     // meters per second^2
     public double getDriveWheelAcceleration() {
-        // Get the drive motor acceleration in rotations per second^2
-        double driveWheelRotationsPerSecond2 = driveAccelerationCached;
-
-        // Calculate the distance the wheel travels per rotation (circumference)
-        double wheelCircumference = WHEEL_DIAMETER * Math.PI;
-
-        // Calculate wheel acceleration in meters per second^2
-        double driveWheelMetersPerSecond2 = driveWheelRotationsPerSecond2 * wheelCircumference;
-
-        return driveWheelMetersPerSecond2;
+        return driveAccelerationCached;
     }
 
+    // meters
     public double getDriveWheelDistance() {
-        // Get the drive wheel's current position in rotations
-        double numRotationsDriveWheel = drivePositionCached;
-
-        // Calculate the wheel's circumference
-        double wheelCircumference = Math.PI * WHEEL_DIAMETER;
-
-        // Calculate the total distance traveled by the wheel in meters
-        double driveWheelDistanceMeters = numRotationsDriveWheel * wheelCircumference;
-
-        return driveWheelDistanceMeters;
+        return drivePositionCached;
     }
 
     /**
@@ -273,7 +249,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         driveAccelerationCached = io.getDriveMechanismAcceleration();
         turnPositionCached = io.getTurnMechanismPosition();
         turnVelocityCached = io.getTurnMechanismVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
             driveVoltageCached = io.getDriveMotorVoltage();
             turnVoltageCached = io.getTurnMotorVoltage();
         }
@@ -294,6 +270,10 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
                         - getTurnWheelRotation2d().getRadians());
 
         io.setDriveMotorMotionMagic(driveRequest.withVelocity(actualTargetDriveVelocity));
+
+        // TODO: remove after drivetrain tuning
+        Logger.recordOutput("Swerve/" + driveMotorChannel + "/Current", getDriveWheelVelocity());
+        Logger.recordOutput("Swerve/" + driveMotorChannel + "/Target", actualTargetDriveVelocity);
 
         if (SysIdManager.getSysIdRoutine() != SysIdRoutine.DrivetrainTurn) {
             io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));

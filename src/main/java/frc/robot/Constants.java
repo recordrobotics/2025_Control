@@ -344,13 +344,15 @@ public final class Constants {
     }
 
     public final class Align {
-        public static final double MAX_VELOCITY = 1.5; // m/s
-        public static final double MAX_ACCELERATION = 10.0; // m/s^2
-        public static final double MAX_ANGULAR_VELOCITY = 4.0; // rad/s
-        public static final double MAX_ANGULAR_ACCELERATION = 7.0; // rad/s^2
+        public static final double MAX_VELOCITY = Constants.Swerve.robotMaxSpeed; // m/s
+        public static final double MAX_ANGULAR_VELOCITY = 1.8; // rad/s
+        public static final double MAX_ACCELERATION = 3.3228; // m/s^2
+        public static final double MAX_JERK = 7.0711; // m/s^3
 
         public static final double translationalTolerance = 0.01; // Meters
-        public static final double rotationalTolerance = 0.02; // Radians
+        public static final double translationalVelocityTolerance = 0.05; // Meters/s
+        public static final double rotationalTolerance = Math.toRadians(1); // Radians
+        public static final double rotationalVelocityTolerance = Math.toRadians(5); // Radians/s
 
         public static final double MAX_REEF_ALIGN_DISTANCE = 2.5; // Meters
 
@@ -362,9 +364,6 @@ public final class Constants {
         public static final double CLEARANCE_MAX = 0.7;
 
         public static final double ADDITIONAL_OFFSET = 0.02;
-
-        public static final PathConstraints PATH_CONSTRAINTS =
-                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION, MAX_ANGULAR_VELOCITY, MAX_ANGULAR_ACCELERATION);
     }
 
     public final class PhotonVision {
@@ -890,10 +889,10 @@ public final class Constants {
         public static final double FALCON_TURN_P = 1.2;
         public static final double FALCON_TURN_D = 0.2;
 
-        public static final double KRAKEN_DRIVE_KS = 0.089666;
-        public static final double KRAKEN_DRIVE_KV = 2.5833;
-        public static final double KRAKEN_DRIVE_KA = 0.18188;
-        public static final double KRAKEN_DRIVE_P = 0.1;
+        public static final double KRAKEN_DRIVE_KS = 0.13192;
+        public static final double KRAKEN_DRIVE_KV = 2.7547;
+        public static final double KRAKEN_DRIVE_KA = 0.24758;
+        public static final double KRAKEN_DRIVE_P = 4.6957;
 
         public static final double KRAKEN_TURN_KV = 1.2993;
         public static final double KRAKEN_TURN_KA = 0.058972;
@@ -910,6 +909,9 @@ public final class Constants {
         // Calculated from max velocity / time to reach (0.1)
         public static final double TurnMaxAngularAcceleration = 20; // ROTATIONS / SECOND / SECOND
 
+        public static final double DriveMaxAcceleration = 13.18;
+        public static final double DriveMaxJerk = 131.28;
+
         /** The max speed the robot can travel safely */
         public static final double robotMaxSpeed = 4.35;
 
@@ -921,7 +923,7 @@ public final class Constants {
                 Constants.Frame.ROBOT_MOI,
                 new ModuleConfig(
                         WHEEL_DIAMETER / 2,
-                        4.350,
+                        robotMaxSpeed,
                         1.2,
                         DCMotor.getKrakenX60(1),
                         Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO,

@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.SimpleMath;
@@ -39,9 +40,9 @@ public class RuckigAlign extends Command {
 
     private Result result;
 
-    private final PIDController xpid = new PIDController(6, 0, 0.02);
-    private final PIDController ypid = new PIDController(6, 0, 0.02);
-    private final PIDController rpid = new PIDController(2.48, 0, 0.01);
+    private final PIDController xpid = new PIDController(5, 0, 0.03);
+    private final PIDController ypid = new PIDController(5, 0, 0.03);
+    private final PIDController rpid = new PIDController(7, 0, 0.04);
 
     private static boolean lastAlignSuccessful = false;
 
@@ -55,9 +56,9 @@ public class RuckigAlign extends Command {
         this.maxAcceleration = maxAcceleration;
         this.maxJerk = maxJerk;
 
-        xpid.setTolerance(0.01, 0.05);
-        ypid.setTolerance(0.01, 0.05);
-        rpid.setTolerance(Math.toRadians(1), Math.toRadians(5));
+        xpid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
+        ypid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
+        rpid.setTolerance(Constants.Align.rotationalTolerance, Constants.Align.rotationalVelocityTolerance);
         rpid.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(RobotContainer.drivetrain);
@@ -108,6 +109,13 @@ public class RuckigAlign extends Command {
         lastAlignSuccessful = false;
     }
 
+    private double feedforward(double velocity, double acceleration, double jerk) {
+        final double kV = 1.0;
+        final double kA = 0.1;
+        final double kJ = 0.01;
+        return kV * velocity + kA * acceleration + kJ * jerk;
+    }
+
     @Override
     public void execute() {
         setTargetState(targetStateSupplier.get());
@@ -118,18 +126,26 @@ public class RuckigAlign extends Command {
 
         double[] newPosition = output.getNewPosition();
         double[] newVelocity = output.getNewVelocity();
+        double[] newAcceleration = output.getNewAcceleration();
+        double[] newJerk = output.getNewJerk();
 
         Logger.recordOutput(
                 "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
-
         Logger.recordOutput(
                 "Ruckig/SetpointVelocity",
                 new Transform2d(newVelocity[0], newVelocity[1], new Rotation2d(newVelocity[2])));
+        Logger.recordOutput(
+                "Ruckig/SetpointAcceleration",
+                new Transform2d(newAcceleration[0], newAcceleration[1], new Rotation2d(newAcceleration[2])));
+        Logger.recordOutput("Ruckig/SetpointJerk", new Transform2d(newJerk[0], newJerk[1], new Rotation2d(newJerk[2])));
 
         // Calculate the new velocities using PID and velocity feedforward
-        double vx = xpid.calculate(currentPose.getX(), newPosition[0]) + newVelocity[0];
-        double vy = ypid.calculate(currentPose.getY(), newPosition[1]) + newVelocity[1];
-        double vr = rpid.calculate(currentPose.getRotation().getRadians(), newPosition[2]) + newVelocity[2];
+        double vx = xpid.calculate(currentPose.getX(), newPosition[0])
+                + feedforward(newVelocity[0], newAcceleration[0], newJerk[0]);
+        double vy = ypid.calculate(currentPose.getY(), newPosition[1])
+                + feedforward(newVelocity[1], newAcceleration[1], newJerk[1]);
+        double vr = rpid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
+                + feedforward(newVelocity[2], newAcceleration[2], newJerk[2]);
 
         AutoPath.controlModifier.drive(
                 ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(vx, vy, vr), currentPose.getRotation()));

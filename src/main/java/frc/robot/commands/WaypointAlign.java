@@ -7,7 +7,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.utils.SimpleMath;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.recordrobotics.ruckig.Trajectory3.KinematicState;
@@ -116,24 +118,39 @@ public class WaypointAlign {
                 );
     }
 
-    public static Command align(Supplier<Pose2d>[] waypoints, Boolean[] includedWaypoints, Double[] waypointTimeouts) {
-        return align(
-                waypoints,
-                includedWaypoints,
-                waypointTimeouts,
-                new double[] {4, 4, 4}, // max velocity
-                new double[] {2, 2, 6.46}, // max acceleration
-                new double[] {5, 5, 6.37} // max jerk
+    private static double moduleToRobotRadians(double moduleValue) {
+        return moduleValue / Constants.Swerve.locDist;
+    }
+
+    public record KinematicConstraints(double[] maxVelocity, double[] maxAcceleration, double[] maxJerk) {
+        public static final KinematicConstraints DEFAULT = new KinematicConstraints(
+                new double[] {
+                    Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
+                    Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
+                    Constants.Align.MAX_ANGULAR_VELOCITY
+                }, // max velocity
+                new double[] {
+                    Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
+                    Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
+                    moduleToRobotRadians(Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2)
+                }, // max acceleration
+                new double[] {
+                    Constants.Align.MAX_JERK / SimpleMath.SQRT2,
+                    Constants.Align.MAX_JERK / SimpleMath.SQRT2,
+                    moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2)
+                } // max jerk
                 );
+    }
+
+    public static Command align(Supplier<Pose2d>[] waypoints, Boolean[] includedWaypoints, Double[] waypointTimeouts) {
+        return align(waypoints, includedWaypoints, waypointTimeouts, KinematicConstraints.DEFAULT);
     }
 
     public static Command align(
             Supplier<Pose2d>[] waypoints,
             Boolean[] includedWaypoints,
             Double[] waypointTimeouts,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxJerk) {
+            KinematicConstraints constraints) {
 
         if (waypoints.length > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
@@ -166,14 +183,14 @@ public class WaypointAlign {
                                             : waypoints[index - 1].get(),
                                     waypoints[index].get(),
                                     waypoints[index + 1].get(),
-                                    maxVelocity,
-                                    maxAcceleration,
+                                    constraints.maxVelocity,
+                                    constraints.maxAcceleration,
                                     true);
                         }
                     },
-                    maxVelocity,
-                    maxAcceleration,
-                    maxJerk);
+                    constraints.maxVelocity,
+                    constraints.maxAcceleration,
+                    constraints.maxJerk);
             waypointGroup.addCommands(cmd.withTimeout(waypointTimeouts[i]));
         }
 
@@ -207,10 +224,7 @@ public class WaypointAlign {
                 commandStartWaypoint,
                 commandEndWaypoint,
                 performCommand,
-                new double[] {4, 4, 4}, // max velocity
-                new double[] {2, 2, 6.46}, // max acceleration
-                new double[] {5, 5, 6.37} // max jerk
-                );
+                KinematicConstraints.DEFAULT);
     }
 
     /**
@@ -226,9 +240,7 @@ public class WaypointAlign {
      *     -1 and end is 0 then the command will run immediately and wait before entering the segment
      *     between first and second waypoint)
      * @param performCommand The command to run when at the right waypoint
-     * @param maxVelocity The maximum velocity for each axis
-     * @param maxAcceleration The maximum acceleration for each axis
-     * @param maxJerk The maximum jerk for each axis
+     * @param constraints The maximum kinematic constraints to use
      * @return
      */
     public static Command alignWithCommand(
@@ -237,9 +249,7 @@ public class WaypointAlign {
             int commandStartWaypoint,
             int commandEndWaypoint,
             Command performCommand,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxJerk) {
+            KinematicConstraints constraints) {
 
         if (waypoints.length > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
@@ -297,18 +307,11 @@ public class WaypointAlign {
                                         && i > Math.min(commandEndWaypoint - 1, currentWaypoint.get());
                             }
 
-                            return align(
-                                    waypoints,
-                                    waypointsBeforeCommandEnd,
-                                    waypointTimeouts,
-                                    maxVelocity,
-                                    maxAcceleration,
-                                    maxJerk);
+                            return align(waypoints, waypointsBeforeCommandEnd, waypointTimeouts, constraints);
                         },
                         Set.of(RobotContainer.drivetrain))
                 .alongWith(new WaitUntilCommand(() -> currentWaypoint.get() == commandStartWaypoint)
                         .andThen(performCommand))
-                .andThen(align(
-                        waypoints, waypointsAfterCommandEnd, waypointTimeouts, maxVelocity, maxAcceleration, maxJerk));
+                .andThen(align(waypoints, waypointsAfterCommandEnd, waypointTimeouts, constraints));
     }
 }

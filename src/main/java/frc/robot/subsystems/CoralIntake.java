@@ -250,7 +250,7 @@ public class CoralIntake extends KillableSubsystem
         wheelVelocityCached = io.getWheelVelocity();
         armPositionCached = io.getArmPosition();
         armVelocityCached = io.getArmVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtLeast(Level.Sysid)) {
+        if (Level.Sysid.isAtLeast(Constants.RobotState.AUTO_LOG_LEVEL)) {
             wheelPositionCached = io.getWheelPosition();
             wheelVoltageCached = io.getWheelVoltage();
             armVoltageCached = io.getArmVoltage();
