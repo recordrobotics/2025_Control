@@ -17,6 +17,7 @@ import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -31,7 +32,6 @@ public class AutoScore extends SequentialCommandGroup {
                 : DashboardUI.Overview.getControl().getReefLevelSwitchValue().toCoralLevel();
     }
 
-    @SuppressWarnings("unchecked")
     public AutoScore(CoralPosition reefPole) {
         addCommands(
                 new InstantCommand(() -> {
@@ -66,7 +66,11 @@ public class AutoScore extends SequentialCommandGroup {
                                                 .getEstimatedPosition()
                                                 .transformBy(new Transform2d(-0.6, 0, Rotation2d.kZero)))
                                         .andThen(WaypointAlign.align(
-                                                        new Supplier[] {() -> backawayTargetPose},
+                                                        new ArrayList<Supplier<Pose2d>>() {
+                                                            {
+                                                                add(() -> backawayTargetPose);
+                                                            }
+                                                        },
                                                         new Boolean[] {true},
                                                         new Double[] {2.0}) // back away
                                                 .alongWith(new DeferredCommand(

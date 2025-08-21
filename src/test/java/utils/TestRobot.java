@@ -1,7 +1,11 @@
 package utils;
 
+import static edu.wpi.first.units.Units.Microseconds;
+import static edu.wpi.first.units.Units.Seconds;
+
 import com.ctre.phoenix6.unmanaged.Unmanaged;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
@@ -182,7 +186,7 @@ public class TestRobot {
             Optional<Supplier<Boolean>> periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction) {
-        testUntil(stopCondition, periodic, robotConfig, testFunction, 10.0);
+        testUntil(stopCondition, periodic, robotConfig, testFunction, Seconds.of(10.0));
     }
 
     /**
@@ -192,14 +196,14 @@ public class TestRobot {
      * @param periodic an optional periodic boolean supplier that runs every 20ms (can also be null). return true to call it next periodic, false to stop calling it.
      * @param robotConfig a consumer that configures the robot before the test starts
      * @param testFunction a runnable that runs after the stop condition is met to verify the robot's state
-     * @param timeoutSeconds the maximum time to run the test before failing (in seconds), if less than or equal to 0, no timeout
+     * @param timeout the maximum time to run the test before failing, if less than or equal to 0, no timeout
      */
     public static void testUntil(
             Supplier<Boolean> stopCondition,
             Optional<Supplier<Boolean>> periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction,
-            double timeoutSeconds) {
+            Time timeout) {
 
         if (stopCondition == null) throw new IllegalArgumentException("stopCondition cannot be null");
         if (robotConfig == null) throw new IllegalArgumentException("robotConfig cannot be null");
@@ -232,10 +236,10 @@ public class TestRobot {
         m_runMutex.unlock();
 
         long startTime = getTimestamp();
-        if (timeoutSeconds > 0) {
+        if (timeout.gt(Seconds.zero())) {
             Supplier<Boolean> originalStopCondition = stopCondition;
             stopCondition =
-                    () -> originalStopCondition.get() || (getTimestamp() - startTime) >= (timeoutSeconds * 1000000);
+                    () -> originalStopCondition.get() || (getTimestamp() - startTime) >= timeout.in(Microseconds);
         }
 
         try {

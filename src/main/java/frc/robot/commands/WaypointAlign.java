@@ -10,22 +10,23 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 
 public class WaypointAlign {
 
-    public static Supplier<Pose2d>[] createWaypointsToTarget(
-            Supplier<Pose2d> target, Supplier<Transform2d>[] targetTransforms) {
-        @SuppressWarnings("unchecked")
-        Supplier<Pose2d>[] waypointSuppliers = new Supplier[targetTransforms.length + 1];
+    public static List<Supplier<Pose2d>> createWaypointsToTarget(
+            Supplier<Pose2d> target, List<Supplier<Transform2d>> targetTransforms) {
 
-        waypointSuppliers[targetTransforms.length] = target;
-        for (int i = 0; i < targetTransforms.length; i++) {
-            final int index = i;
-            waypointSuppliers[i] = () -> target.get().plus(targetTransforms[index].get());
+        List<Supplier<Pose2d>> waypointSuppliers = new ArrayList<Supplier<Pose2d>>(targetTransforms.size() + 1);
+
+        for (Supplier<Transform2d> transform : targetTransforms) {
+            waypointSuppliers.add(() -> target.get().plus(transform.get()));
         }
+        waypointSuppliers.add(target);
 
         return waypointSuppliers;
     }
@@ -146,37 +147,38 @@ public class WaypointAlign {
                 );
     }
 
-    public static Command align(Supplier<Pose2d>[] waypoints, Boolean[] includedWaypoints, Double[] waypointTimeouts) {
+    public static Command align(
+            List<Supplier<Pose2d>> waypoints, Boolean[] includedWaypoints, Double[] waypointTimeouts) {
         return align(waypoints, includedWaypoints, waypointTimeouts, KinematicConstraints.DEFAULT);
     }
 
     public static Command align(
-            Supplier<Pose2d>[] waypoints,
+            List<Supplier<Pose2d>> waypoints,
             Boolean[] includedWaypoints,
             Double[] waypointTimeouts,
             KinematicConstraints constraints) {
 
-        if (waypoints.length > waypointTimeouts.length) {
+        if (waypoints.size() > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
         }
 
-        if (waypoints.length > includedWaypoints.length) {
+        if (waypoints.size() > includedWaypoints.length) {
             throw new IllegalArgumentException("Waypoints and included waypoints must have the same length");
         }
 
         SequentialCommandGroup waypointGroup = new SequentialCommandGroup();
-        for (int i = 0; i < waypoints.length; i++) {
+        for (int i = 0; i < waypoints.size(); i++) {
             if (!includedWaypoints[i]) continue;
 
             final int index = i;
             RuckigAlign cmd = new RuckigAlign(
                     () -> {
-                        if (index == waypoints.length - 1 || !includedWaypoints[index + 1]) {
+                        if (index == waypoints.size() - 1 || !includedWaypoints[index + 1]) {
                             return new KinematicState(
                                     new double[] {
-                                        waypoints[index].get().getX(),
-                                        waypoints[index].get().getY(),
-                                        waypoints[index].get().getRotation().getRadians()
+                                        waypoints.get(index).get().getX(),
+                                        waypoints.get(index).get().getY(),
+                                        waypoints.get(index).get().getRotation().getRadians()
                                     },
                                     new double[] {0, 0, 0},
                                     new double[] {0, 0, 0});
@@ -184,9 +186,9 @@ public class WaypointAlign {
                             return getKinematicStateForWaypoint(
                                     index == 0
                                             ? RobotContainer.poseSensorFusion.getEstimatedPosition()
-                                            : waypoints[index - 1].get(),
-                                    waypoints[index].get(),
-                                    waypoints[index + 1].get(),
+                                            : waypoints.get(index - 1).get(),
+                                    waypoints.get(index).get(),
+                                    waypoints.get(index + 1).get(),
                                     constraints.maxVelocity,
                                     constraints.maxAcceleration,
                                     true);
@@ -217,7 +219,7 @@ public class WaypointAlign {
      * @return
      */
     public static Command alignWithCommand(
-            Supplier<Pose2d>[] waypoints,
+            List<Supplier<Pose2d>> waypoints,
             Double[] waypointTimeouts,
             int commandStartWaypoint,
             int commandEndWaypoint,
@@ -248,21 +250,21 @@ public class WaypointAlign {
      * @return
      */
     public static Command alignWithCommand(
-            Supplier<Pose2d>[] waypoints,
+            List<Supplier<Pose2d>> waypoints,
             Double[] waypointTimeouts,
             int commandStartWaypoint,
             int commandEndWaypoint,
             Command performCommand,
             KinematicConstraints constraints) {
 
-        if (waypoints.length > waypointTimeouts.length) {
+        if (waypoints.size() > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
         }
 
-        Boolean[] waypointsBeforeCommandEnd = new Boolean[waypoints.length];
+        Boolean[] waypointsBeforeCommandEnd = new Boolean[waypoints.size()];
 
-        Boolean[] waypointsAfterCommandEnd = new Boolean[waypoints.length];
-        for (int i = 0; i < waypoints.length; i++) {
+        Boolean[] waypointsAfterCommandEnd = new Boolean[waypoints.size()];
+        for (int i = 0; i < waypoints.size(); i++) {
             waypointsAfterCommandEnd[i] = i > commandEndWaypoint;
         }
 
@@ -275,13 +277,15 @@ public class WaypointAlign {
             double minDist = Double.MAX_VALUE;
             int closestWaypoint = -1;
 
-            for (int i = 0; i < waypoints.length - 1; i++) {
+            for (int i = 0; i < waypoints.size() - 1; i++) {
                 int waypointIndex = i;
 
-                double wx = waypoints[i].get().getX();
-                double wy = waypoints[i].get().getY();
-                double wnx = waypoints[i + 1].get().getX();
-                double wny = waypoints[i + 1].get().getY();
+                Pose2d wp = waypoints.get(i).get();
+                Pose2d wpn = waypoints.get(i + 1).get();
+                double wx = wp.getX();
+                double wy = wp.getY();
+                double wnx = wpn.getX();
+                double wny = wpn.getY();
 
                 double t = ((px - wx) * (wnx - wx) + (py - wy) * (wny - wy))
                         / ((wnx - wx) * (wnx - wx) + (wny - wy) * (wny - wy));
@@ -303,7 +307,7 @@ public class WaypointAlign {
 
         return Commands.defer(
                         () -> {
-                            for (int i = 0; i < waypoints.length; i++) {
+                            for (int i = 0; i < waypoints.size(); i++) {
                                 // Only include waypoints before the command end and in front of the current
                                 // waypoint (unless the current waypoint is after the command end - then back up
                                 // first)

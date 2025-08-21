@@ -9,11 +9,13 @@ import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ReefAlign {
 
-    public static Supplier<Pose2d>[] generateWaypointsClosest(boolean useAdditionalOffset) {
+    public static List<Supplier<Pose2d>> generateWaypointsClosest(boolean useAdditionalOffset) {
         return generateWaypointsClosest(
                 () -> DashboardUI.Overview.getControl()
                         .getReefLevelSwitchValue()
@@ -21,7 +23,8 @@ public class ReefAlign {
                 useAdditionalOffset);
     }
 
-    public static Supplier<Pose2d>[] generateWaypointsClosest(Supplier<CoralLevel> level, boolean useAdditionalOffset) {
+    public static List<Supplier<Pose2d>> generateWaypointsClosest(
+            Supplier<CoralLevel> level, boolean useAdditionalOffset) {
         return generateWaypoints(
                 () -> {
                     CoralPosition closestCoral = IGamePosition.closestTo(
@@ -41,8 +44,7 @@ public class ReefAlign {
                 useAdditionalOffset);
     }
 
-    @SuppressWarnings("unchecked")
-    public static Supplier<Pose2d>[] generateWaypoints(
+    public static List<Supplier<Pose2d>> generateWaypoints(
             Supplier<CoralPosition> pole, Supplier<CoralLevel> level, boolean useAdditionalOffset) {
         return WaypointAlign.createWaypointsToTarget(
                 () -> useAdditionalOffset
@@ -50,10 +52,12 @@ public class ReefAlign {
                                 .getPose(level.get())
                                 .transformBy(new Transform2d(-Constants.Align.ADDITIONAL_OFFSET, 0, Rotation2d.kZero))
                         : pole.get().getPose(level.get()),
-                new Supplier[] {
-                    () -> level.get() == CoralLevel.L1
-                            ? new Transform2d(0, -Constants.Align.L1_CLEARANCE_MIN, Rotation2d.kZero)
-                            : new Transform2d(-Constants.Align.CLEARANCE_MIN, 0, Rotation2d.kZero)
+                new ArrayList<Supplier<Transform2d>>() {
+                    {
+                        add(() -> level.get() == CoralLevel.L1
+                                ? new Transform2d(0, -Constants.Align.L1_CLEARANCE_MIN, Rotation2d.kZero)
+                                : new Transform2d(-Constants.Align.CLEARANCE_MIN, 0, Rotation2d.kZero));
+                    }
                 });
     }
 }

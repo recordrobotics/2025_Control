@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class SimpleMath {
 
-    public static final double SQRT2 = 1.41421356237;
+    public static final double SQRT2 = Math.sqrt(2);
 
     /**
      * Remaps a value between a range to a different range
