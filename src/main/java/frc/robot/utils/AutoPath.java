@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
@@ -26,6 +27,7 @@ import frc.robot.commands.legacy.ElevatorMoveThenAlgaeGrab;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import frc.robot.utils.modifiers.AutoPathControlModifier;
 import java.util.Optional;
+import java.util.Set;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoPath {
@@ -50,10 +52,12 @@ public class AutoPath {
 
         NamedCommands.registerCommand(
                 "AutoAlign",
-                CommandUtils.finishOnInterrupt(WaypointAlign.align(
-                        ReefAlign.generateWaypointsClosest(() -> CoralLevel.L4, true),
-                        new Boolean[] {true, true},
-                        new Double[] {2.0, 1.0})));
+                Commands.defer(
+                        () -> CommandUtils.finishOnInterrupt(WaypointAlign.align(
+                                ReefAlign.generateWaypointsClosest(CoralLevel.L4, true), 0, 1, true, new Double[] {
+                                    2.0, 1.0
+                                })),
+                        Set.of(RobotContainer.drivetrain)));
         NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
         NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));
         NamedCommands.registerCommand("ElevatorL2", new ElevatorMove(ElevatorHeight.L2));

@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -259,9 +258,10 @@ public class RobotContainer {
                 .onTrue(new VibrateXbox(RumbleType.kLeftRumble, 1).withTimeout(0.1));
 
         new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
-                .whileTrue(WaypointAlign.align(
-                        ReefAlign.generateWaypointsClosest(false), new Boolean[] {true, true}, new Double[] {2.0, 1.0
-                        }));
+                .whileTrue(Commands.defer(
+                        () -> WaypointAlign.align(
+                                ReefAlign.generateWaypointsClosest(false), 0, 1, true, new Double[] {2.0, 1.0}),
+                        Set.of(drivetrain)));
     }
 
     private void configureTriggers() {
@@ -337,7 +337,7 @@ public class RobotContainer {
         new Trigger(() -> DashboardUI.Overview.getControl().getReefAlgaeSimple()
                         && !elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN))
                 .onTrue(Commands.either(
-                        new DeferredCommand(
+                        Commands.defer(
                                 () -> new ScheduleCommand(new AutoAlgae(IGamePosition.closestTo(
                                                 RobotContainer.poseSensorFusion.getEstimatedPosition(),
                                                 AlgaePosition.values()))
@@ -349,12 +349,12 @@ public class RobotContainer {
 
         new Trigger(() -> DashboardUI.Overview.getControl().getAutoScore())
                 .onTrue(Commands.either(
-                        new DeferredCommand(
-                                () -> new AutoScore(IGamePosition.closestTo(
-                                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                                                CoralPosition.values()))
-                                        .asProxy(),
-                                Set.of()),
+                        Commands.deferredProxy(() -> new AutoScore(
+                                IGamePosition.closestTo(
+                                        RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values()),
+                                DashboardUI.Overview.getControl()
+                                        .getReefLevelSwitchValue()
+                                        .toCoralLevel())),
                         new ProcessorScore(false).asProxy(),
                         () -> elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)
                                 || (DashboardUI.Overview.getControl().getReefLevelSwitchValue()

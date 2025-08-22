@@ -5,7 +5,6 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.Auto;
 import frc.robot.Constants.Game.CoralLevel;
@@ -22,7 +21,7 @@ import org.json.simple.parser.ParseException;
 
 public class AutoUtils {
     public static Command alignWithVision() {
-        return new DeferredCommand(
+        return Commands.defer(
                 () -> {
                     int[] visionTagTarget = {
                         IGamePosition.closestTo(
@@ -33,9 +32,8 @@ public class AutoUtils {
                     // TODO: Add 2d april tag alignment after waypoint finishes
 
                     return WaypointAlign.align(
-                            ReefAlign.generateWaypointsClosest(() -> CoralLevel.L4, true),
-                            new Boolean[] {true, true},
-                            new Double[] {2.0, 1.0});
+                            ReefAlign.generateWaypointsClosest(CoralLevel.L4, true), 0, 1, true, new Double[] {2.0, 1.0
+                            });
                 },
                 Set.of(RobotContainer.drivetrain));
     }

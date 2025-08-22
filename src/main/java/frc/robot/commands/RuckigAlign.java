@@ -6,10 +6,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoPath;
 import frc.robot.utils.SimpleMath;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.recordrobotics.ruckig.InputParameter3;
@@ -22,44 +27,188 @@ import org.recordrobotics.ruckig.enums.Synchronization;
 
 public class RuckigAlign extends Command {
 
+    /**
+     * Allows sequential RuckigAlign commands to not reset the trajectory state on every initialize.
+     * Useful for following waypoints with velocity mode.
+     */
+    public static class RuckigAlignGroup<T> {
+
+        private record AlignEntry<T>(Supplier<T> initializer, Function<T, RuckigAlignState> state, double timeout) {}
+
+        private final List<AlignEntry<T>> states = new ArrayList<>();
+        private final List<Integer> groups = new ArrayList<>();
+        private final double[] maxVelocity;
+        private final double[] maxAcceleration;
+        private final double[] maxJerk;
+
+        /**
+         * Create a RuckigAlignGroup with the given constraints
+         * @param maxVelocity the max velocity for each of the 3 dimensions (x, y, rotation)
+         * @param maxAcceleration the max acceleration for each of the 3 dimensions (x, y, rotation)
+         * @param maxJerk the max jerk for each of the 3 dimensions (x, y, rotation)
+         */
+        public RuckigAlignGroup(double[] maxVelocity, double[] maxAcceleration, double[] maxJerk) {
+            this.maxVelocity = maxVelocity;
+            this.maxAcceleration = maxAcceleration;
+            this.maxJerk = maxJerk;
+        }
+
+        /**
+         * Start a new group of align states (used for splitting the group command into multiple)
+         * @return this (for chaining)
+         */
+        public RuckigAlignGroup<T> newGroup() {
+            groups.add(states.size());
+            return this;
+        }
+
+        /**
+         * Add an align state to the group
+         * @param initializer Function to initialize any parameters needed for the state
+         * @param state Function to get the RuckigAlignState from the parameters
+         * @param timeout Timeout for this align state
+         * @return this (for chaining)
+         */
+        public RuckigAlignGroup<T> addAlign(
+                Supplier<T> initializer, Function<T, RuckigAlignState> state, double timeout) {
+            states.add(new AlignEntry<>(initializer, state, timeout));
+            return this;
+        }
+
+        public double[] getMaxVelocity() {
+            return maxVelocity;
+        }
+
+        public double[] getMaxAcceleration() {
+            return maxAcceleration;
+        }
+
+        public double[] getMaxJerk() {
+            return maxJerk;
+        }
+
+        /**
+         * Build the RuckigAlign command sequence for all groups
+         * @return the command sequence
+         */
+        public Command build() {
+            return build(0, groups.size() - 1);
+        }
+
+        /**
+         * Build the RuckigAlign command sequence for a specific group
+         * @param group the group index
+         * @return the command sequence
+         */
+        public Command build(int group) {
+            return build(group, group);
+        }
+
+        /**
+         * Build the RuckigAlign command sequence for a range of groups
+         * @param startGroup the starting group index (inclusive)
+         * @param endGroup the ending group index (inclusive)
+         * @return the command sequence
+         */
+        public Command build(int startGroup, int endGroup) {
+            if (states.isEmpty()) return Commands.none();
+
+            final int startIndex;
+            final int endIndex;
+
+            if (groups.isEmpty()) {
+                // If no groups were defined, treat all states as a single group
+                startIndex = 0;
+                endIndex = states.size();
+            } else {
+                if (startGroup < 0
+                        || startGroup >= groups.size()
+                        || endGroup < 0
+                        || endGroup >= groups.size()
+                        || startGroup > endGroup) {
+                    throw new IllegalArgumentException("Invalid group indices");
+                }
+
+                startIndex = groups.get(startGroup);
+                endIndex = (endGroup + 1 < groups.size()) ? groups.get(endGroup + 1) : states.size();
+            }
+
+            List<Command> commands = new ArrayList<>();
+            for (int i = startIndex; i < endIndex; i++) {
+                final int index = i;
+                final AlignEntry<T> entry = states.get(index);
+                commands.add(Commands.defer(
+                                () -> {
+                                    final T param = entry.initializer().get();
+                                    return new RuckigAlign(
+                                            () -> entry.state().apply(param),
+                                            maxVelocity,
+                                            maxAcceleration,
+                                            maxJerk,
+                                            index == 0);
+                                },
+                                Set.of(RobotContainer.drivetrain))
+                        .withTimeout(entry.timeout()));
+            }
+            return Commands.sequence(commands.toArray(Command[]::new));
+        }
+    }
+
     private static final Ruckig3 ruckig = new Ruckig3();
     private static final InputParameter3 input = new InputParameter3();
     private static final OutputParameter3 output = new OutputParameter3();
+
+    private static final PIDController xpid = new PIDController(5, 0, 0.03);
+    private static final PIDController ypid = new PIDController(5, 0, 0.03);
+    private static final PIDController rpid = new PIDController(7, 0, 0.04);
+
+    private static AlignMode currentMode = AlignMode.Position;
+
+    public enum AlignMode {
+        Position, // Full stop at target
+        Velocity // Keep moving at target velocity
+    }
+
+    public record RuckigAlignState(KinematicState kinematicState, AlignMode alignMode) {}
 
     static {
         input.setDurationDiscretization(DurationDiscretization.Discrete);
         input.setDefaultSynchronization(Synchronization.Phase);
         input.setPerDoFSynchronization(
                 new Synchronization[] {Synchronization.Phase, Synchronization.Phase, Synchronization.None});
+        setPositionModeTolerance();
+        rpid.enableContinuousInput(-Math.PI, Math.PI);
     }
 
-    private final Supplier<KinematicState> targetStateSupplier;
+    private final Supplier<RuckigAlignState> targetStateSupplier;
     private final double[] maxVelocity;
     private final double[] maxAcceleration;
     private final double[] maxJerk;
+    private final boolean resetTrajectory;
 
     private Result result;
-
-    private final PIDController xpid = new PIDController(5, 0, 0.03);
-    private final PIDController ypid = new PIDController(5, 0, 0.03);
-    private final PIDController rpid = new PIDController(7, 0, 0.04);
 
     private static boolean lastAlignSuccessful = false;
 
     public RuckigAlign(
-            Supplier<KinematicState> targetStateSupplier,
+            Supplier<RuckigAlignState> targetStateSupplier,
             double[] maxVelocity,
             double[] maxAcceleration,
             double[] maxJerk) {
+        this(targetStateSupplier, maxVelocity, maxAcceleration, maxJerk, true);
+    }
+
+    private RuckigAlign(
+            Supplier<RuckigAlignState> targetStateSupplier,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxJerk,
+            boolean resetTrajectory) {
         this.targetStateSupplier = targetStateSupplier;
         this.maxVelocity = maxVelocity;
         this.maxAcceleration = maxAcceleration;
         this.maxJerk = maxJerk;
-
-        xpid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
-        ypid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
-        rpid.setTolerance(Constants.Align.rotationalTolerance, Constants.Align.rotationalVelocityTolerance);
-        rpid.enableContinuousInput(-Math.PI, Math.PI);
+        this.resetTrajectory = resetTrajectory;
 
         addRequirements(RobotContainer.drivetrain);
     }
@@ -87,14 +236,47 @@ public class RuckigAlign extends Command {
         input.setTargetAcceleration(state.acceleration());
     }
 
+    private void applyAlignState(RuckigAlignState state) {
+        setTargetState(state.kinematicState());
+        if (state.alignMode() == AlignMode.Position) {
+            setPositionModeTolerance();
+        } else {
+            setVelocityModeTolerance();
+        }
+    }
+
     private void reset() {
-        input.setCurrentPosition(pose2dToArray(RobotContainer.poseSensorFusion.getEstimatedPosition()));
-        input.setCurrentVelocity(chassisSpeedsToArray(RobotContainer.drivetrain.getChassisSpeeds()));
-        input.setCurrentAcceleration(chassisSpeedsToArray(RobotContainer.drivetrain.getChassisAcceleration()));
+        Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+        input.setCurrentPosition(pose2dToArray(pose));
+        input.setCurrentVelocity(chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(
+                RobotContainer.drivetrain.getChassisSpeeds(), pose.getRotation())));
+        input.setCurrentAcceleration(chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(
+                RobotContainer.drivetrain.getChassisAcceleration(), pose.getRotation())));
         xpid.reset();
         ypid.reset();
         rpid.reset();
         result = Result.Working;
+    }
+
+    /**
+     * Tight tolerance for position mode (final full-stop target)
+     */
+    private static void setPositionModeTolerance() {
+        xpid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
+        ypid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
+        rpid.setTolerance(Constants.Align.rotationalTolerance, Constants.Align.rotationalVelocityTolerance);
+        currentMode = AlignMode.Position;
+    }
+
+    /**
+     * Increases the tolerance for velocity mode
+     * to insure smooth waypoint following (final target is still in position mode)
+     */
+    private static void setVelocityModeTolerance() {
+        xpid.setTolerance(Constants.Align.translationalTolerance * 5, Double.POSITIVE_INFINITY);
+        ypid.setTolerance(Constants.Align.translationalTolerance * 5, Double.POSITIVE_INFINITY);
+        rpid.setTolerance(Constants.Align.rotationalTolerance * 5, Double.POSITIVE_INFINITY);
+        currentMode = AlignMode.Velocity;
     }
 
     @Override
@@ -103,8 +285,11 @@ public class RuckigAlign extends Command {
         input.setMaxAcceleration(maxAcceleration);
         input.setMaxJerk(maxJerk);
 
-        reset();
-        setTargetState(targetStateSupplier.get());
+        if (resetTrajectory) {
+            reset();
+        }
+
+        applyAlignState(targetStateSupplier.get());
 
         lastAlignSuccessful = false;
     }
@@ -118,7 +303,7 @@ public class RuckigAlign extends Command {
 
     @Override
     public void execute() {
-        setTargetState(targetStateSupplier.get());
+        applyAlignState(targetStateSupplier.get());
 
         result = ruckig.update(input, output);
 
@@ -128,6 +313,13 @@ public class RuckigAlign extends Command {
         double[] newVelocity = output.getNewVelocity();
         double[] newAcceleration = output.getNewAcceleration();
         double[] newJerk = output.getNewJerk();
+
+        Logger.recordOutput(
+                "Ruckig/Target",
+                new Pose2d(
+                        input.getTargetPosition()[0],
+                        input.getTargetPosition()[1],
+                        new Rotation2d(input.getTargetPosition()[2])));
 
         Logger.recordOutput(
                 "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
@@ -162,14 +354,27 @@ public class RuckigAlign extends Command {
         Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
 
         // If the error is too large, reset the trajectory to current position for more accurate motion
-        if (ex * ex + ey * ey > 0.5 || Math.abs(er) > Math.PI) {
+        if (ex * ex + ey * ey > 0.5 || Math.abs(er) > 1.0) {
             reset();
         }
     }
 
     @Override
     public boolean isFinished() {
-        boolean finished = result != Result.Working && xpid.atSetpoint() && ypid.atSetpoint() && rpid.atSetpoint();
+        boolean finished = false;
+        switch (currentMode) {
+            case Position:
+                finished = result != Result.Working && xpid.atSetpoint() && ypid.atSetpoint() && rpid.atSetpoint();
+                break;
+            case Velocity:
+                Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+                double distanceToTarget = Math.hypot(
+                        currentPose.getX() - input.getTargetPosition()[0],
+                        currentPose.getY() - input.getTargetPosition()[1]);
+                finished = distanceToTarget < 0.05 || result != Result.Working;
+                break;
+        }
+
         if (finished) {
             lastAlignSuccessful = true;
         }
