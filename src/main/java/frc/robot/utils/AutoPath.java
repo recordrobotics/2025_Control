@@ -54,9 +54,11 @@ public class AutoPath {
                 "AutoAlign",
                 Commands.defer(
                         () -> CommandUtils.finishOnInterrupt(WaypointAlign.align(
-                                ReefAlign.generateWaypointsClosest(CoralLevel.L4, true), 0, 1, true, new Double[] {
-                                    2.0, 1.0
-                                })),
+                                ReefAlign.generateWaypointsClosest(CoralLevel.L4, false, true),
+                                0,
+                                1,
+                                true,
+                                new Double[] {2.0, 1.0})),
                         Set.of(RobotContainer.drivetrain)));
         NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
         NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));

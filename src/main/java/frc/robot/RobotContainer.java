@@ -260,7 +260,7 @@ public class RobotContainer {
         new Trigger(() -> DashboardUI.Overview.getControl().getAutoAlign())
                 .whileTrue(Commands.defer(
                         () -> WaypointAlign.align(
-                                ReefAlign.generateWaypointsClosest(false), 0, 1, true, new Double[] {2.0, 1.0}),
+                                ReefAlign.generateWaypointsClosest(false, false), 0, 1, true, new Double[] {2.0, 1.0}),
                         Set.of(drivetrain)));
     }
 

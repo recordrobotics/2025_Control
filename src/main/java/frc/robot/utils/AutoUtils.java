@@ -32,7 +32,8 @@ public class AutoUtils {
                     // TODO: Add 2d april tag alignment after waypoint finishes
 
                     return WaypointAlign.align(
-                            ReefAlign.generateWaypointsClosest(CoralLevel.L4, true), 0, 1, true, new Double[] {2.0, 1.0
+                            ReefAlign.generateWaypointsClosest(CoralLevel.L4, false, true), 0, 1, true, new Double[] {
+                                2.0, 1.0
                             });
                 },
                 Set.of(RobotContainer.drivetrain));

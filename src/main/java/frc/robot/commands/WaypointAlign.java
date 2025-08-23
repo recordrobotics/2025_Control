@@ -38,20 +38,27 @@ public class WaypointAlign {
             double[] maxVelocity,
             double[] maxAcceleration,
             boolean useAcceleration) {
+
         double px = previousWaypoint.getX();
         double py = previousWaypoint.getY();
         double pr = previousWaypoint.getRotation().getRadians();
 
+        double cx = currentWaypoint.getX();
+        double cy = currentWaypoint.getY();
+        double cr = SimpleMath.closestTarget(
+                pr, SimpleMath.normalizeAngle(currentWaypoint.getRotation().getRadians()));
+
         double nx = nextWaypoint.getX();
         double ny = nextWaypoint.getY();
-        double nr = nextWaypoint.getRotation().getRadians();
+        double nr = SimpleMath.closestTarget(
+                cr, SimpleMath.normalizeAngle(nextWaypoint.getRotation().getRadians()));
 
-        double dpx = currentWaypoint.getX() - px;
-        double dpy = currentWaypoint.getY() - py;
-        double dpr = currentWaypoint.getRotation().getRadians() - pr;
-        double dnx = nx - currentWaypoint.getX();
-        double dny = ny - currentWaypoint.getY();
-        double dnr = nr - currentWaypoint.getRotation().getRadians();
+        double dpx = cx - px;
+        double dpy = cy - py;
+        double dpr = cr - pr;
+        double dnx = nx - cx;
+        double dny = ny - cy;
+        double dnr = nr - cr;
 
         double lp = Math.hypot(dpx, dpy);
         double ln = Math.hypot(dnx, dny);
@@ -113,11 +120,7 @@ public class WaypointAlign {
         t_vr = dr;
 
         return new KinematicState(
-                new double[] {
-                    currentWaypoint.getX(),
-                    currentWaypoint.getY(),
-                    currentWaypoint.getRotation().getRadians()
-                }, // position
+                new double[] {cx, cy, cr}, // position
                 new double[] {t_vx, t_vy, t_vr}, // velocity
                 new double[] {t_ax, t_ay, t_ar} // acceleration
                 );

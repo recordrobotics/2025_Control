@@ -356,12 +356,12 @@ public final class Constants {
 
         public static final double MAX_REEF_ALIGN_DISTANCE = 2.5; // Meters
 
-        public static final double L1_CLEARANCE_MIN = 0.5;
-        public static final double L1_CLEARANCE_MAX = 0.65;
-        public static final double L4_CLEARANCE_MIN = 0.6;
-        public static final double L4_CLEARANCE_MAX = 1.5;
-        public static final double CLEARANCE_MIN = 0.3;
-        public static final double CLEARANCE_MAX = 0.7;
+        public static final double INTAKE_END_MOVE_DISTANCE_L1 = 0.5;
+        public static final double INTAKE_START_MOVE_DISTANCE_L1 = 0.65;
+        public static final double ELEVATOR_END_MOVE_DISTANCE_L4 = 0.3;
+        public static final double ELEVATOR_START_MOVE_DISTANCE_L4 = 1.5;
+        public static final double ELEVATOR_END_MOVE_DISTANCE = 0.3;
+        public static final double ELEVATOR_START_MOVE_DISTANCE = 1.5;
 
         public static final double ADDITIONAL_OFFSET = 0.02;
     }
