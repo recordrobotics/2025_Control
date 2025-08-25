@@ -84,5 +84,7 @@ public class ClimberReal implements ClimberIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

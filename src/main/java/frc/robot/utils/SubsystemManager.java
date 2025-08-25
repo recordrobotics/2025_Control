@@ -10,19 +10,23 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+@SuppressWarnings("java:S6548") // We want this to be a singleton
 public class SubsystemManager extends SubsystemBase {
     /** The Singleton Instance. */
     private static SubsystemManager instance;
 
     // A map from subsystems registered with the scheduler to their default commands.  Also used
     // as a list of currently-registered subsystems.
-    private final Map<ManagedSubsystemBase, Command> m_subsystems = new LinkedHashMap<>();
+    @SuppressWarnings("java:S6411") // Using ManagedSubsystemBase as Key is inefficient but acceptable
+    private final Map<ManagedSubsystemBase, Command> subsystems = new LinkedHashMap<>();
 
-    private final Watchdog m_watchdog = new Watchdog(TimedRobot.kDefaultPeriod, () -> {});
+    private final Watchdog watchdog = new Watchdog(TimedRobot.kDefaultPeriod, () -> {});
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -49,42 +53,43 @@ public class SubsystemManager extends SubsystemBase {
         for (ManagedSubsystemBase subsystem : subsystems) {
             if (subsystem == null) {
                 DriverStation.reportWarning("Tried to register a null subsystem", true);
-                continue;
-            }
-            if (m_subsystems.containsKey(subsystem)) {
+            } else if (this.subsystems.containsKey(subsystem)) {
                 DriverStation.reportWarning("Tried to register an already-registered subsystem", true);
-                continue;
+            } else {
+                this.subsystems.put(subsystem, null);
             }
-            m_subsystems.put(subsystem, null);
         }
     }
 
-    private final List<Future<?>> m_futures = new ArrayList<>();
+    private final List<Future<?>> futures = new ArrayList<>();
 
     @Override
     public void periodic() {
-        m_watchdog.reset();
-        m_futures.clear();
+        watchdog.reset();
+        futures.clear();
 
         // Run the periodic method of all registered subsystems.
-        for (ManagedSubsystemBase subsystem : m_subsystems.keySet()) {
-            m_futures.add(executor.submit(subsystem::periodicManaged));
+        for (ManagedSubsystemBase subsystem : subsystems.keySet()) {
+            futures.add(executor.submit(subsystem::periodicManaged));
             if (RobotBase.isSimulation()) {
-                m_futures.add(executor.submit(subsystem::simulationPeriodicManaged));
+                futures.add(executor.submit(subsystem::simulationPeriodicManaged));
             }
         }
 
-        for (Future<?> future : m_futures) {
+        for (Future<?> future : futures) {
             try {
                 future.get();
-            } catch (Exception e) {
+            } catch (CancellationException | ExecutionException e) {
                 DriverStation.reportError("SubsystemManager periodic error: " + e.getMessage(), false);
+            } catch (InterruptedException e) {
+                DriverStation.reportError("SubsystemManager periodic interrupted: " + e.getMessage(), false);
+                Thread.currentThread().interrupt();
             }
         }
 
-        m_watchdog.disable();
-        if (m_watchdog.isExpired()) {
-            System.out.println("SubsystemManager loop overrun: " + m_watchdog.getTime());
+        watchdog.disable();
+        if (watchdog.isExpired()) {
+            System.out.println("SubsystemManager loop overrun: " + watchdog.getTime());
         }
     }
 }

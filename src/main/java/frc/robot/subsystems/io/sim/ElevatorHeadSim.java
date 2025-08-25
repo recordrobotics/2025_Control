@@ -22,6 +22,7 @@ import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.io.ElevatorHeadIO;
+import frc.robot.utils.SimpleMath;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
@@ -101,7 +102,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     }
 
     @Override
-    public boolean getCoralDetector() {
+    public boolean isCoralDetectorTriggered() {
         if (coralDetectorSim != null) return coralDetectorSimValue.get();
         else return false;
     }
@@ -117,13 +118,14 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
     public void setPreload() {
         setCoralDetectorSim(false);
-        RobotContainer.model.getRobotCoral().poseSupplier =
-                () -> RobotContainer.model.elevatorArm.getCoralShooterTargetPose();
+        RobotContainer.model
+                .getRobotCoral()
+                .setPoseSupplier(RobotContainer.model.elevatorArm::getCoralShooterTargetPose);
     }
 
     public void clearPreload() {
         setCoralDetectorSim(true);
-        RobotContainer.model.getRobotCoral().poseSupplier = () -> null;
+        RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
     }
 
     @Override
@@ -135,14 +137,19 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
         }
     }
 
-    private MedianFilter velocityFilter = new MedianFilter(10);
+    private static final int SHOOTER_CORAL_MOVEMENT_VELOCITY_FILTER_SIZE = 10;
+    private MedianFilter velocityFilter = new MedianFilter(SHOOTER_CORAL_MOVEMENT_VELOCITY_FILTER_SIZE);
+
+    private static final double ALGAE_VOLTAGE_DIVIDER = 20.0;
+    private static final double SHOOT_CORAL_VELOCITY_THRESHOLD = 1.4; // m/s
+    private static final double CORAL_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER = 2.0;
 
     @Override
     public void simulationPeriodic() {
         double voltage = motorSim.getAppliedOutput() * motorSim.getBusVoltage();
 
         if (hasAlgae) {
-            voltage /= 20.0;
+            voltage /= ALGAE_VOLTAGE_DIVIDER;
         }
 
         wheelSimModel.setInputVoltage(voltage);
@@ -150,21 +157,21 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
         motorSim.iterate(
                 Units.radiansToRotations(wheelSimModel.getAngularVelocityRadPerSec())
-                        * 60.0
+                        * SimpleMath.SECONDS_PER_MINUTE
                         * Constants.ElevatorHead.GEAR_RATIO,
                 RobotController.getBatteryVoltage(),
                 periodicDt);
 
         velocityFilter.calculate(RobotContainer.elevatorHead.getVelocity());
 
-        if (!getCoralDetector()) { // NC
+        if (!isCoralDetectorTriggered()) { // NC
             Pose3d ejectPose = RobotContainer.model
                     .elevatorArm
                     .getCoralShooterTargetPose()
                     .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
-            if (Math.abs(velocityFilter.lastValue()) > 1.4
+            if (Math.abs(velocityFilter.lastValue()) > SHOOT_CORAL_VELOCITY_THRESHOLD
                     && RobotContainer.elevatorHead.getCurrentCoralShooterState() != CoralShooterStates.POSITION) {
-                RobotContainer.model.getRobotCoral().poseSupplier = () -> null;
+                RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
                 setCoralDetectorSim(true); // NC
 
                 Angle angle = ejectPose.getRotation().getMeasureY();
@@ -184,8 +191,9 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
                                 // The height at which the coral is ejected
                                 ejectPose.getMeasureZ(),
                                 // The initial speed of the coral
-                                MetersPerSecond.of(Math.abs(RobotContainer.elevatorHead.getVelocity())
-                                        * 2 /* help maplesim reef simulation */),
+                                MetersPerSecond.of(
+                                        Math.abs(RobotContainer.elevatorHead.getVelocity())
+                                                * CORAL_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER /* help maplesim reef simulation */),
                                 angle));
             }
         }

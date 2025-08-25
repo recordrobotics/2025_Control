@@ -1,4 +1,4 @@
-package frc.robot.utils.mapleSim;
+package frc.robot.utils.maplesim;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -22,6 +22,8 @@ import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeReefBranch
  * ReefscapeReefBranch} objects. However for all other purposes this class behaves and can be used
  * like a normal goal.
  */
+// This is a MapleSim library class modified to support custom features, so ignore the warnings
+@SuppressWarnings({"java:S2293", "java:S109", "java:S1104"})
 public class ImprovedReefscapeReefSimulation implements SimulatedArena.Simulatable {
     protected final HashMap<String, ImprovedReefscapeReefBranch> branches;
     public ReefscapeAlgaeOnField algae;

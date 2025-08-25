@@ -3,10 +3,22 @@ package frc.robot.commands.legacy;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.CoralIntakeFromGround;
 
+/**
+ * @deprecated This is an old control scheme command and will be removed
+ */
+@Deprecated(forRemoval = true)
 public class CoralIntakeFromGroundToggled extends Command {
 
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public static boolean isGoingToL1 = false;
 
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public CoralIntakeFromGroundToggled() {
         addRequirements(ToggleRequirements.coralIntakeMoveToggleRequirement);
     }

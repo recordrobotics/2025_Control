@@ -75,5 +75,7 @@ public class ElevatorArmReal implements ElevatorArmIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

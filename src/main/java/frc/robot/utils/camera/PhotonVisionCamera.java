@@ -11,6 +11,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.RobotState.VisionSimulationMode;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.subsystems.PoseSensorFusion;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
 import java.util.ArrayList;
@@ -29,21 +30,21 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 public class PhotonVisionCamera implements IVisionCamera {
 
     private int numTags = 0;
-    private double confidence = 0;
     private boolean hasVision = false;
     private boolean connected = false;
 
-    private double currentConfidence = 9999999; // large number means less confident
+    private double currentMeasurementStdDevs =
+            PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS; // large number means less confident
     private VisionCameraEstimate currentEstimate = new VisionCameraEstimate();
     private VisionCameraEstimate unsafeEstimate = new VisionCameraEstimate();
 
     private String name;
 
-    private final double CONFIDENCE_CLOSE;
-    private final double CONFIDENCE_FAR;
-    private final double CLOSE_MAX_DIST;
+    private final double confidenceClose;
+    private final double confidenceFar;
+    private final double closeMaxDistance;
 
-    private final double MAX_POSE_ERROR;
+    private final double maxPoseError;
 
     private CameraType type;
     private final PhotonCamera camera;
@@ -82,21 +83,22 @@ public class PhotonVisionCamera implements IVisionCamera {
         return unsafeEstimate;
     }
 
-    public double getConfidence() {
-        return currentConfidence;
+    public double getMeasurementStdDevs() {
+        return currentMeasurementStdDevs;
     }
 
-    public double getUnprocessedConfidence() {
-        return confidence;
-    }
+    private static final double DEFAULT_CONFIDENCE_CLOSE = 0.65;
+    private static final double DEFAULT_CONFIDENCE_FAR = 0.7;
+    private static final double DEFAULT_CLOSE_MAX_DISTANCE = Units.feetToMeters(7);
+    private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
 
     public PhotonVisionCamera(String name, CameraType type, Transform3d robotToCamera, double stdMultiplier) {
         this.name = name;
         this.type = type;
-        this.CONFIDENCE_CLOSE = 0.65 * stdMultiplier;
-        this.CONFIDENCE_FAR = 0.7 * stdMultiplier;
-        this.CLOSE_MAX_DIST = Units.feetToMeters(7);
-        this.MAX_POSE_ERROR = 10; // 10 meters
+        this.confidenceClose = DEFAULT_CONFIDENCE_CLOSE * stdMultiplier;
+        this.confidenceFar = DEFAULT_CONFIDENCE_FAR * stdMultiplier;
+        this.closeMaxDistance = DEFAULT_CLOSE_MAX_DISTANCE;
+        this.maxPoseError = DEFAULT_MAX_POSE_ERROR;
 
         camera = new PhotonCamera(name);
 
@@ -130,118 +132,188 @@ public class PhotonVisionCamera implements IVisionCamera {
     }
 
     public void updateEstimation(boolean trust, boolean ignore) {
-        confidence = 0;
+        updateConnectionStatus();
+        if (!connected) return;
 
-        Optional<VisionCameraEstimate> measurement_close_opt;
-        Optional<VisionCameraEstimate> measurement_far_opt;
+        MeasurementPair measurements = getMeasurements();
 
-        if (Constants.RobotState.getMode() == Constants.RobotState.Mode.REAL
-                || Constants.RobotState.VISION_SIMULATION_MODE
-                        == Constants.RobotState.VisionSimulationMode.PHOTON_SIM) {
-            photonEstimatorClose.addHeadingData(
-                    Timer.getTimestamp(),
-                    new Rotation3d(
-                            0,
-                            0,
-                            RobotContainer.poseSensorFusion
-                                    .getEstimatedPosition()
-                                    .getRotation()
-                                    .getRadians()));
-            photonEstimatorFar.addHeadingData(
-                    Timer.getTimestamp(),
-                    new Rotation3d(
-                            0,
-                            0,
-                            RobotContainer.poseSensorFusion
-                                    .getEstimatedPosition()
-                                    .getRotation()
-                                    .getRadians()));
-
-            measurement_close_opt = getEstimatedGlobalPose(photonEstimatorClose, false);
-            measurement_far_opt = getEstimatedGlobalPose(photonEstimatorFar, true);
-        } else {
-            Pose2d maplePose = RobotContainer.model.getRobot();
-            if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.MAPLE_NOISE) {
-                maplePose = SimpleMath.poseNoise(maplePose, 0.001, 0.001);
-            }
-
-            measurement_close_opt = Optional.of(new VisionCameraEstimate(
-                    maplePose, Timer.getTimestamp(), 0.01, ALL_SIM_TAGS.length, 6, 0.1, ALL_SIM_TAGS, false));
-            measurement_far_opt = Optional.of(new VisionCameraEstimate(
-                    maplePose, Timer.getTimestamp(), 0.01, ALL_SIM_TAGS.length, 6, 0.1, ALL_SIM_TAGS, true));
-        }
-
-        if (!camera.isConnected()) {
-            connected = false;
+        if (measurements.isEmpty()) {
+            resetVisionState();
             return;
-        } else {
-            connected = true;
         }
 
-        if (measurement_close_opt.isEmpty() && measurement_far_opt.isEmpty()) {
+        VisionCameraEstimate selectedMeasurement = selectBestMeasurement(measurements);
+        updateVisionEstimate(selectedMeasurement, trust);
+    }
+
+    private MeasurementPair getMeasurements() {
+        if (isRealOrPhotonSim()) {
+            return getPhotonMeasurements();
+        }
+        return getMapleSimMeasurements();
+    }
+
+    private static boolean isRealOrPhotonSim() {
+        return Constants.RobotState.getMode() == Constants.RobotState.Mode.REAL
+                || Constants.RobotState.VISION_SIMULATION_MODE == Constants.RobotState.VisionSimulationMode.PHOTON_SIM;
+    }
+
+    private MeasurementPair getPhotonMeasurements() {
+        addHeadingDataToEstimators();
+
+        Optional<VisionCameraEstimate> closeOpt = getEstimatedGlobalPose(photonEstimatorClose, false);
+        Optional<VisionCameraEstimate> farOpt = getEstimatedGlobalPose(photonEstimatorFar, true);
+
+        return new MeasurementPair(closeOpt.isEmpty() ? null : closeOpt.get(), farOpt.isEmpty() ? null : farOpt.get());
+    }
+
+    private void addHeadingDataToEstimators() {
+        double timestamp = Timer.getTimestamp();
+        Rotation3d heading = new Rotation3d(
+                0,
+                0,
+                RobotContainer.poseSensorFusion
+                        .getEstimatedPosition()
+                        .getRotation()
+                        .getRadians());
+
+        photonEstimatorClose.addHeadingData(timestamp, heading);
+        photonEstimatorFar.addHeadingData(timestamp, heading);
+    }
+
+    private static final double MAPLE_SIM_STDDEV = 0.001;
+    private static final double MAPLE_SIM_TAG_DIST = 6;
+    private static final double MAPLE_SIM_TAG_AREA = 0.1;
+
+    private MeasurementPair getMapleSimMeasurements() {
+        Pose2d maplePose = RobotContainer.model.getRobot();
+        if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.MAPLE_NOISE) {
+            maplePose = SimpleMath.poseNoise(maplePose, MAPLE_SIM_STDDEV, MAPLE_SIM_STDDEV);
+        }
+
+        VisionCameraEstimate closeEstimate = new VisionCameraEstimate(
+                maplePose,
+                Timer.getTimestamp(),
+                Units.millisecondsToSeconds(type.latencyMs),
+                ALL_SIM_TAGS.length,
+                MAPLE_SIM_TAG_DIST,
+                MAPLE_SIM_TAG_AREA,
+                ALL_SIM_TAGS,
+                false);
+        VisionCameraEstimate farEstimate = new VisionCameraEstimate(
+                maplePose,
+                Timer.getTimestamp(),
+                Units.millisecondsToSeconds(type.latencyMs),
+                ALL_SIM_TAGS.length,
+                MAPLE_SIM_TAG_DIST,
+                MAPLE_SIM_TAG_AREA,
+                ALL_SIM_TAGS,
+                true);
+
+        return new MeasurementPair(closeEstimate, farEstimate);
+    }
+
+    private void updateConnectionStatus() {
+        connected = camera.isConnected();
+    }
+
+    private void resetVisionState() {
+        hasVision = false;
+        currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
+    }
+
+    private VisionCameraEstimate selectBestMeasurement(MeasurementPair measurements) {
+        VisionCameraEstimate measurement =
+                calculateConfidenceAndEstimate(measurements.getCloseMeasurement(), measurements.getFarMeasurement());
+        numTags = measurement.tagCount();
+        unsafeEstimate = measurement;
+
+        return measurement;
+    }
+
+    private VisionCameraEstimate calculateConfidenceAndEstimate(
+            VisionCameraEstimate closeEst, VisionCameraEstimate farEst) {
+        if (DashboardUI.Autonomous.isForceMT1Pressed()) {
+            currentMeasurementStdDevs = confidenceClose;
+            return closeEst;
+        }
+
+        if (closeEst.tagCount() > 0 && SimpleMath.isPoseInField(closeEst.pose())) {
+            if (closeEst.avgTagDist() < closeMaxDistance) {
+                currentMeasurementStdDevs = confidenceClose;
+            } else {
+                currentMeasurementStdDevs = confidenceFar;
+                return farEst;
+            }
+        }
+
+        return closeEst;
+    }
+
+    private void updateVisionEstimate(VisionCameraEstimate measurement, boolean trust) {
+        if (isPoseErrorTooLarge(measurement)) {
+            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
+        }
+
+        if (currentMeasurementStdDevs < PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS) {
+            applyVisionMeasurement(measurement, trust);
+        } else {
             hasVision = false;
-            currentConfidence = 9999999;
-            confidence = 0;
-            return;
+            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
         }
+    }
 
-        VisionCameraEstimate measurement_close =
-                measurement_close_opt.isEmpty() ? measurement_far_opt.get() : measurement_close_opt.get();
-        VisionCameraEstimate measurement_far =
-                measurement_far_opt.isEmpty() ? measurement_close_opt.get() : measurement_far_opt.get();
-
-        numTags = measurement_close.tagCount;
-
-        if (!DashboardUI.Autonomous.getForceMT1()) {
-            if (measurement_close.tagCount > 0 && SimpleMath.isPoseInField(measurement_close.pose)) {
-                if (measurement_close.avgTagDist < CLOSE_MAX_DIST) {
-                    confidence = CONFIDENCE_CLOSE;
-                } else {
-                    confidence = CONFIDENCE_FAR;
-                    measurement_close = measurement_far;
-                }
-            }
-        } else { // reseting robot pose before match
-            confidence = CONFIDENCE_CLOSE;
-        }
-
-        unsafeEstimate = measurement_close;
-
-        if (measurement_close
-                        .pose
+    private boolean isPoseErrorTooLarge(VisionCameraEstimate measurement) {
+        return measurement
+                        .pose()
                         .getTranslation()
                         .getDistance(RobotContainer.poseSensorFusion
                                 .getEstimatedPosition()
                                 .getTranslation())
-                > MAX_POSE_ERROR) {
-            confidence = 0;
+                > maxPoseError;
+    }
+
+    private void applyVisionMeasurement(VisionCameraEstimate measurement, boolean trust) {
+        hasVision = true;
+        currentEstimate = measurement;
+        RobotContainer.poseSensorFusion.addVisionMeasurement(
+                currentEstimate.pose(),
+                currentEstimate.timestampSeconds(),
+                VecBuilder.fill(
+                        currentMeasurementStdDevs,
+                        currentMeasurementStdDevs,
+                        trust
+                                ? Constants.PhotonVision.ROT_STD_DEV_WHEN_TRUSTING
+                                : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+    }
+
+    private static class MeasurementPair {
+        private final VisionCameraEstimate closeOpt;
+        private final VisionCameraEstimate farOpt;
+
+        public MeasurementPair(VisionCameraEstimate close, VisionCameraEstimate far) {
+            this.closeOpt = close;
+            this.farOpt = far;
         }
 
-        if (confidence > 0) {
-            hasVision = true;
-            currentEstimate = measurement_close;
-            currentConfidence = confidence;
-            RobotContainer.poseSensorFusion.addVisionMeasurement(
-                    currentEstimate.pose,
-                    currentEstimate.timestampSeconds,
-                    VecBuilder.fill(
-                            currentConfidence,
-                            currentConfidence,
-                            trust
-                                    ? Constants.PhotonVision.ROT_STD_DEV_WHEN_TRUSTING
-                                    : 9999999) // some influence of limelight pose rotation
-                    );
-        } else {
-            hasVision = false;
-            currentConfidence = 9999999;
+        public boolean isEmpty() {
+            return closeOpt == null && farOpt == null;
+        }
+
+        public VisionCameraEstimate getCloseMeasurement() {
+            return closeOpt == null ? farOpt : closeOpt;
+        }
+
+        public VisionCameraEstimate getFarMeasurement() {
+            return farOpt == null ? closeOpt : farOpt;
         }
     }
 
     public void logValues(String id) {
         String prefix = "PhotonCamera/" + id + "/";
-        Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose);
+        Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose());
         Logger.recordOutput(prefix + "NumTags", numTags);
-        Logger.recordOutput(prefix + "Confidence", currentConfidence);
+        Logger.recordOutput(prefix + "Confidence", currentMeasurementStdDevs);
         Logger.recordOutput(prefix + "HasVision", hasVision);
         Logger.recordOutput(prefix + "Connected", connected);
     }
@@ -259,16 +331,16 @@ public class PhotonVisionCamera implements IVisionCamera {
     public Optional<VisionCameraEstimate> getEstimatedGlobalPose(PhotonPoseEstimator estimator, boolean isConstrained) {
         Optional<VisionCameraEstimate> visionEst = Optional.empty();
         for (PhotonPipelineResult change : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est_opt = estimator.update(change);
+            Optional<EstimatedRobotPose> estOpt = estimator.update(change);
 
-            if (est_opt.isPresent()) {
-                EstimatedRobotPose est = est_opt.get();
-                int numTags = est.targetsUsed.size();
+            if (estOpt.isPresent()) {
+                EstimatedRobotPose est = estOpt.get();
+                int targetNum = est.targetsUsed.size();
 
                 double avgTagDist = 0;
                 double avgTagArea = 0;
 
-                List<RawVisionFiducial> rawFiducials = new ArrayList<>(numTags);
+                List<RawVisionFiducial> rawFiducials = new ArrayList<>(targetNum);
                 for (PhotonTrackedTarget target : est.targetsUsed) {
                     double dist =
                             target.getBestCameraToTarget().getTranslation().getNorm();
@@ -283,14 +355,14 @@ public class PhotonVisionCamera implements IVisionCamera {
                             target.fiducialId, target.getArea(), dist, distRobot, target.getPoseAmbiguity());
                     rawFiducials.add(rawFiducial);
                 }
-                avgTagDist /= numTags;
-                avgTagArea /= numTags;
+                avgTagDist /= targetNum;
+                avgTagArea /= targetNum;
 
                 VisionCameraEstimate estimation = new VisionCameraEstimate(
                         est.estimatedPose.toPose2d(),
                         est.timestampSeconds,
                         type.latencyMs,
-                        numTags,
+                        targetNum,
                         avgTagDist,
                         avgTagArea,
                         rawFiducials.toArray(new RawVisionFiducial[0]),
@@ -303,10 +375,4 @@ public class PhotonVisionCamera implements IVisionCamera {
         }
         return visionEst;
     }
-
-    public void close() {
-        // camera.close();
-    }
-
-    public void kill() {}
 }

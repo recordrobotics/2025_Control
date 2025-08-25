@@ -6,11 +6,19 @@ import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
 import frc.robot.commands.ElevatorMove;
 
+/**
+ * @deprecated This is an old control scheme command and will be removed
+ */
+@Deprecated(forRemoval = true)
 public class ElevatorReefToggled extends Command {
 
     private ElevatorHeight targetHeight;
     private Command lightsCommand;
 
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public ElevatorReefToggled(ElevatorHeight targetHeight) {
         this.targetHeight = targetHeight;
         addRequirements(ToggleRequirements.elevatorMoveToggleRequirement);

@@ -5,10 +5,14 @@ import frc.robot.subsystems.io.NavSensorIO;
 public class NavSensorStub implements NavSensorIO {
 
     @Override
-    public void reset() {}
+    public void reset() {
+        /* stub */
+    }
 
     @Override
-    public void resetDisplacement() {}
+    public void resetDisplacement() {
+        /* stub */
+    }
 
     @Override
     public double getAngle() {
@@ -31,8 +35,12 @@ public class NavSensorStub implements NavSensorIO {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        /* stub */
+    }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 }

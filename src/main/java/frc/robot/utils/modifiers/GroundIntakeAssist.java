@@ -3,7 +3,7 @@ package frc.robot.utils.modifiers;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -13,6 +13,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
+import frc.robot.utils.SimpleMath;
 import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -26,141 +27,196 @@ public class GroundIntakeAssist implements IDrivetrainControlModifier {
         NO_OR_UNREACHABLE_CORAL,
         NOT_IN_GROUND_MODE,
         NOT_DRIVING,
-        TOO_MUCH_ANGLE_ERROR,
         DRIVER_MOVING_IN_OPPOSITE_DIRECTION,
-        DRIVER_FIGHTING_ASSIST,
-        DRIVER_ROTATE_IN_OPPOSITE_DIRECTION,
-        DRIVER_ROTATE_FIGHTING_ASSIST
+        DRIVER_ROTATE_IN_OPPOSITE_DIRECTION
     }
+
+    private PIDController rotationController = new PIDController(Constants.Assists.GROUND_ASSIST_ROTATION_P, 0.0, 0);
+
+    public GroundIntakeAssist() {
+        rotationController.enableContinuousInput(-Math.PI, Math.PI);
+    }
+
+    public static final double MIN_TARGET_VELOCITY_FOR_ASSIST_CANCEL = 2.0;
+    public static final double MIN_DRIVER_VELOCITY_DIFFERENCE_FOR_ASSIST_CANCEL = 0.5;
+    public static final double MIN_DRIVER_ROTATION_VELOCITY_DIFFERENCE_FOR_ASSIST_CANCEL = Units.degreesToRadians(40);
+    public static final double CORAL_VELOCITY_TANGENCY_THRESHOLD = 0.85;
 
     @Override
     public boolean apply(DrivetrainControl control) {
+        if (!isGroundModeActive()) {
+            return false;
+        }
 
-        // Ground assist requires coral intake to be in ground mode
+        Pose2d robotPose = getRobotPoseWithIntakeOffset();
+        Translation2d driverVector = getNormalizedDriverVector(control, robotPose);
+
+        Pose3d closestCoral = findAndLogClosestCoral(robotPose, driverVector);
+        if (closestCoral == null) {
+            logFailReason(FailReason.NO_OR_UNREACHABLE_CORAL);
+            return false;
+        }
+
+        return applyAssistControl(control, robotPose, closestCoral);
+    }
+
+    @SuppressWarnings("java:S3878")
+    private static boolean isGroundModeActive() {
         if (RobotContainer.coralIntake.getState() != CoralIntakeState.GROUND) {
             Logger.recordOutput("GroundIntakeAssist/Corals", new Pose3d[0]);
             Logger.recordOutput("GroundIntakeAssist/TargetCoral", new Pose3d[0]);
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.NOT_IN_GROUND_MODE);
+            logFailReason(FailReason.NOT_IN_GROUND_MODE);
             return false;
         }
+        return true;
+    }
 
-        Pose2d robotPose = RobotContainer.poseSensorFusion
+    private static Pose2d getRobotPoseWithIntakeOffset() {
+        return RobotContainer.poseSensorFusion
                 .getEstimatedPosition()
                 .transformBy(new Transform2d(Constants.CoralIntake.INTAKE_X_OFFSET, Meters.zero(), Rotation2d.kZero));
+    }
 
+    private static Translation2d getNormalizedDriverVector(DrivetrainControl control, Pose2d robotPose) {
         Translation2d driverVector = DrivetrainControl.robotToField(
                         control.getTargetVelocity(), robotPose.getRotation())
                 .getTranslation();
-
         double driverSpeed = driverVector.getNorm();
-        driverVector.div(driverSpeed);
+        return driverVector.div(driverSpeed);
+    }
 
-        // If the driver is not moving, don't assist
-        if (driverSpeed < 0.1) {
-            Logger.recordOutput("GroundIntakeAssist/Corals", new Pose3d[0]);
-            Logger.recordOutput("GroundIntakeAssist/TargetCoral", new Pose3d[0]);
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.NOT_DRIVING);
-            return false;
-        }
-
-        // Find all coral in direction of driver velocity
-        List<Pose3d> corals = new ArrayList<>();
-        Pose3d closestCoral = null;
-        double closestCoralDistance = Double.MAX_VALUE;
-        for (Pose3d coral : RobotContainer.coralDetection.getCorals()) {
-            Translation2d robotToCoral =
-                    coral.getTranslation().toTranslation2d().minus(robotPose.getTranslation());
-            robotToCoral = robotToCoral.div(robotToCoral.getNorm());
-
-            double dot = robotToCoral.getX() * driverVector.getX() + robotToCoral.getY() * driverVector.getY();
-
-            if (dot > 0.85) {
-                corals.add(coral);
-
-                double distance = robotPose
-                        .getTranslation()
-                        .getDistance(coral.getTranslation().toTranslation2d());
-                if (distance <= Constants.Assits.GROUND_ASSIST_MAX_CORAL_DISTANCE.in(Meters)
-                        && distance < closestCoralDistance) {
-                    closestCoralDistance = distance;
-                    closestCoral = coral;
-                }
-            }
-        }
+    @SuppressWarnings("java:S3878")
+    private static Pose3d findAndLogClosestCoral(Pose2d robotPose, Translation2d driverVector) {
+        List<Pose3d> corals = findCoralInDirection(robotPose, driverVector, CORAL_VELOCITY_TANGENCY_THRESHOLD);
+        Pose3d closestCoral = findClosestCoral(robotPose, corals);
 
         Logger.recordOutput("GroundIntakeAssist/Corals", corals.toArray(new Pose3d[0]));
         Logger.recordOutput(
                 "GroundIntakeAssist/TargetCoral", closestCoral == null ? new Pose3d[0] : new Pose3d[] {closestCoral});
 
-        if (closestCoral == null) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.NO_OR_UNREACHABLE_CORAL);
-            return false;
-        }
+        return closestCoral;
+    }
 
-        // Find the angle to the closest coral
+    private static boolean applyAssistControl(DrivetrainControl control, Pose2d robotPose, Pose3d closestCoral) {
         Translation2d robotToCoral =
                 closestCoral.getTranslation().toTranslation2d().minus(robotPose.getTranslation());
-        double angle =
-                Math.atan2(robotToCoral.getY(), robotToCoral.getX()) - Math.PI / 2; // face ground intake towards coral
+        double angle = getAngleFacingIntakeTowardsCoral(robotToCoral);
 
         Logger.recordOutput(
                 "GroundIntakeAssist/TargetPose", new Pose2d(robotPose.getTranslation(), new Rotation2d(angle)));
 
-        double angleDiff = angle - robotPose.getRotation().getRadians();
+        Translation2d targetVelocity = DrivetrainControl.fieldToRobot(robotToCoral, robotPose.getRotation())
+                .times(Constants.Assists.GROUND_ASSIST_TRANSLATION_P);
 
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        double angleDiff =
+                normalizeAngleDifference(angle - robotPose.getRotation().getRadians());
+        Rotation2d targetAngularVelocity = new Rotation2d(angleDiff * Constants.Assists.GROUND_ASSIST_ROTATION_P);
 
-        // If the angle is too large, don't assist
-        if (Math.abs(angleDiff) > Constants.Assits.GROUND_ASSIST_MAX_ANGLE_ERROR.in(Radians)) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.TOO_MUCH_ANGLE_ERROR);
+        if (!isDriverMovementCompatible(control, targetVelocity, targetAngularVelocity)) {
             return false;
         }
 
-        Rotation2d targetAngularVelocity = new Rotation2d(angleDiff * Constants.Assits.GROUND_ASSIST_ROTATION_P);
+        applyAssistVelocity(control, targetVelocity, targetAngularVelocity);
+        logFailReason(FailReason.NONE);
+        return true;
+    }
 
-        Translation2d targetVelocity = DrivetrainControl.fieldToRobot(robotToCoral, robotPose.getRotation())
-                .times(Constants.Assits.GROUND_ASSIST_TRANSLATION_P);
+    private static double getAngleFacingIntakeTowardsCoral(Translation2d robotToCoral) {
+        return Math.atan2(robotToCoral.getY(), robotToCoral.getX()) - Math.PI / 2;
+    }
 
+    private static double normalizeAngleDifference(double angleDiff) {
+        if (angleDiff > Math.PI) angleDiff -= SimpleMath.PI2;
+        if (angleDiff < -Math.PI) angleDiff += SimpleMath.PI2;
+        return angleDiff;
+    }
+
+    private static boolean isDriverMovementCompatible(
+            DrivetrainControl control, Translation2d targetVelocity, Rotation2d targetAngularVelocity) {
         double driverX = control.getTargetVelocity().getX();
+
+        if (isDriverMovingOppositeToTarget(driverX, targetVelocity.getX())) {
+            logFailReason(FailReason.DRIVER_MOVING_IN_OPPOSITE_DIRECTION);
+            return false;
+        }
+
         double driverRot = control.getTargetVelocity().getRotation().getRadians();
 
-        // If the driver is moving in the opposite direction of the target velocity, don't assist
-        if (Math.abs(driverX) > 1e-3
-                && Math.signum(driverX) != Math.signum(targetVelocity.getX())
-                && Math.abs(driverX - targetVelocity.getX()) > 2.5) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.DRIVER_MOVING_IN_OPPOSITE_DIRECTION);
+        if (isDriverRotatingOppositeToTarget(driverRot, targetAngularVelocity)) {
+            logFailReason(FailReason.DRIVER_ROTATE_IN_OPPOSITE_DIRECTION);
             return false;
         }
 
-        // If driver is fighting assist, stop
-        if (Math.abs(driverX - targetVelocity.getX()) > 3.0) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.DRIVER_FIGHTING_ASSIST);
-            return false;
-        }
+        return true;
+    }
 
-        // If the driver is moving in the opposite direction of the target velocity, don't assist
-        if (Math.abs(driverRot) > 1e-3
-                && Math.signum(driverRot) != Math.signum(targetAngularVelocity.getRadians())
-                && Math.abs(driverRot - targetAngularVelocity.getRadians()) > Units.degreesToRadians(40)) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.DRIVER_ROTATE_IN_OPPOSITE_DIRECTION);
-            return false;
-        }
+    private static boolean isDriverMovingOppositeToTarget(double driverX, double targetX) {
+        return Math.abs(targetX) > MIN_TARGET_VELOCITY_FOR_ASSIST_CANCEL
+                && Math.abs(driverX) - Math.abs(targetX) >= MIN_DRIVER_VELOCITY_DIFFERENCE_FOR_ASSIST_CANCEL
+                && !SimpleMath.signEq(driverX, targetX);
+    }
 
-        // If driver is fighting assist, stop
-        if (Math.abs(driverRot - targetAngularVelocity.getRadians()) > Units.degreesToRadians(70)) {
-            Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.DRIVER_ROTATE_FIGHTING_ASSIST);
-            return false;
-        }
+    private static boolean isDriverRotatingOppositeToTarget(double driverRot, Rotation2d targetAngularVelocity) {
+        return Math.abs(driverRot) > 1e-3
+                && !SimpleMath.signEq(driverRot, targetAngularVelocity.getRadians())
+                && Math.abs(driverRot - targetAngularVelocity.getRadians())
+                        > MIN_DRIVER_ROTATION_VELOCITY_DIFFERENCE_FOR_ASSIST_CANCEL;
+    }
 
+    private static void applyAssistVelocity(
+            DrivetrainControl control, Translation2d targetVelocity, Rotation2d targetAngularVelocity) {
         control.applyWeightedVelocity(
                 new Transform2d(
                         targetVelocity.getX(), control.getTargetVelocity().getY(), targetAngularVelocity),
-                MathUtil.interpolate(0.6, 1.0, MathUtil.inverseInterpolate(0.1, 0.5, driverSpeed)));
+                1.0 /* MathUtil.interpolate(0.6, 1.0, MathUtil.inverseInterpolate(0.1, 0.5, driverSpeed)) */);
+    }
 
-        Logger.recordOutput("GroundIntakeAssist/FailReason", FailReason.NONE);
+    private static List<Pose3d> findCoralInDirection(
+            Pose2d robotPose, Translation2d direction, double tangencyThreshold) {
+        List<Pose3d> corals = new ArrayList<>();
 
-        return true;
+        for (Pose3d coral : RobotContainer.coralDetection.getCorals()) {
+            Translation2d robotToCoral =
+                    coral.getTranslation().toTranslation2d().minus(robotPose.getTranslation());
+            robotToCoral = robotToCoral.div(robotToCoral.getNorm());
+
+            double dot = robotToCoral.getX() * direction.getX() + robotToCoral.getY() * direction.getY();
+
+            if (dot > tangencyThreshold) {
+                double angle = getAngleFacingIntakeTowardsCoral(robotToCoral);
+
+                double angleDiff =
+                        normalizeAngleDifference(angle - robotPose.getRotation().getRadians());
+
+                // Ignore if the angle is too large
+                if (Math.abs(angleDiff) <= Constants.Assists.GROUND_ASSIST_MAX_ANGLE_ERROR.in(Radians)) {
+                    corals.add(coral);
+                }
+            }
+        }
+
+        return corals;
+    }
+
+    private static Pose3d findClosestCoral(Pose2d robotPose, List<Pose3d> corals) {
+        Pose3d closestCoral = null;
+        double closestCoralDistance = Double.MAX_VALUE;
+        for (Pose3d coral : corals) {
+            double distance = robotPose
+                    .getTranslation()
+                    .getDistance(coral.getTranslation().toTranslation2d());
+            if (distance <= Constants.Assists.GROUND_ASSIST_MAX_CORAL_DISTANCE.in(Meters)
+                    && distance < closestCoralDistance) {
+                closestCoralDistance = distance;
+                closestCoral = coral;
+            }
+        }
+
+        return closestCoral;
+    }
+
+    private static void logFailReason(FailReason reason) {
+        Logger.recordOutput("GroundIntakeAssist/FailReason", reason);
     }
 
     @Override

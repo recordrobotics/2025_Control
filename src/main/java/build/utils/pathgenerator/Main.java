@@ -18,16 +18,24 @@ public final class Main {
         for (CoralPosition coral : Stream.of(CoralPosition.values())
                 .filter(c -> c.name().startsWith("Blue"))
                 .toList()) {
-            PathHelper.editLinkedWaypoint(
-                    "Reef" + coral.name().substring("Blue".length()),
-                    coral.getFirstStagePose()
-                            .transformBy(new Transform2d(FIRST_STAGE_OFFSET, Meters.of(0), Rotation2d.kZero)));
+            try {
+                PathHelper.editLinkedWaypoint(
+                        "Reef" + coral.name().substring("Blue".length()),
+                        coral.getFirstStagePose()
+                                .transformBy(new Transform2d(FIRST_STAGE_OFFSET, Meters.of(0), Rotation2d.kZero)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         for (AlgaePosition algae : Stream.of(AlgaePosition.values())
                 .filter(c -> c.name().startsWith("Blue"))
                 .toList()) {
-            PathHelper.editLinkedWaypoint("Reef" + algae.name().substring("Blue".length()), algae.getPose());
+            try {
+                PathHelper.editLinkedWaypoint("Reef" + algae.name().substring("Blue".length()), algae.getPose());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         System.out.println("PathGenerator finished with " + PathHelper.getCounter() + " waypoints updated.");

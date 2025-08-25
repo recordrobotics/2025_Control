@@ -11,7 +11,15 @@ import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 
+/**
+ * @deprecated This is an old control scheme command and will be removed
+ */
+@Deprecated(forRemoval = true)
 public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public CoralIntakeFromGroundUp() {
         addRequirements(RobotContainer.coralIntake, RobotContainer.elevatorHead, RobotContainer.elevator);
 
@@ -41,10 +49,7 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
                                                 .getGamePiece()
                                                 .atLeast(GamePiece.CORAL))))
                         .andThen(new InstantCommand(
-                                () -> {
-                                    RobotContainer.coralIntake.set(CoralIntakeState.UP);
-                                },
-                                RobotContainer.coralIntake))
+                                () -> RobotContainer.coralIntake.set(CoralIntakeState.UP), RobotContainer.coralIntake))
                         .andThen(
                                 // move coral a set distance
                                 new InstantCommand(
@@ -52,7 +57,9 @@ public class CoralIntakeFromGroundUp extends SequentialCommandGroup {
                                                 Constants.ElevatorHead.CORAL_INTAKE_DISTANCE),
                                         RobotContainer.elevatorHead))
                         .andThen(
-                                new WaitUntilCommand(() -> RobotContainer.elevatorHead.positionAtGoal()),
+                                new WaitUntilCommand(() -> RobotContainer.elevatorHead
+                                        .getGamePiece()
+                                        .atLeast(GamePiece.CORAL_POSITIONED)),
                                 // stop elevator intake
                                 new InstantCommand(
                                         () -> RobotContainer.elevatorHead.set(CoralShooterStates.OFF),

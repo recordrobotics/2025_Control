@@ -1,4 +1,4 @@
-package frc.robot.utils.mapleSim;
+package frc.robot.utils.maplesim;
 
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
@@ -27,6 +27,17 @@ import org.ironmaple.utils.FieldMirroringUtils;
  * used directly and instead should be used via a {@link ReefscapeReefSimulation} which will handle
  * an entire reef.
  */
+// This is a MapleSim library class modified to support custom features, so ignore the warnings
+@SuppressWarnings({
+    "java:S2386",
+    "java:S2301",
+    "java:S109",
+    "java:S3923",
+    "java:S1699",
+    "java:S1541",
+    "java:S1153",
+    "java:S112"
+})
 public class ImprovedReefscapeReefBranch extends Goal {
 
     public final int level;
@@ -154,16 +165,6 @@ public class ImprovedReefscapeReefBranch extends Goal {
     @Override
     protected boolean checkRotation(GamePiece gamePiece) {
         return true;
-        // if (level == 3) {
-        // Rotation3d rotation = gamePiece.getPose3d().getRotation();
-        // System.out.println(Math.abs(rotation.getY() + Math.PI / 2));
-        // System.out.println(Math.abs(rotation.getY() - Math.PI / 2));
-
-        // return Math.abs(rotation.getY() + Math.PI / 2) < Degrees.of(10).in(Units.Radians)
-        //     || Math.abs(rotation.getY() - Math.PI / 2) < Degrees.of(10).in(Units.Radians);
-        // } else {
-        // return super.checkRotation(gamePiece);
-        // }
     }
 
     @Override

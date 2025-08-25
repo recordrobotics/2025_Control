@@ -24,7 +24,7 @@ import org.junit.jupiter.api.TestFactory;
 public class ReefAutoScoreTestCases {
 
     private static Stream<DynamicTest> testFactory(Stream<CoralPosition> branches, int level) {
-        return branches.map((coralPosition) -> {
+        return branches.map(coralPosition -> {
             // Branch id is the first and last letter of CoralPosition + the level (BlueA, 4 -> BA4)
             String branchId = String.valueOf(coralPosition.name().charAt(0))
                     + String.valueOf(
@@ -33,9 +33,9 @@ public class ReefAutoScoreTestCases {
 
             return dynamicTest("AutoScore " + branchId, () -> {
                 testUntil(
-                        delayStop(level == 1 ? 20 : 0, stopOnCommandEnd(cmd -> cmd instanceof AutoScore)),
+                        delayStop(level == 1 ? 20 : 0, stopOnCommandEnd(AutoScore.class::isInstance)),
                         null,
-                        (robot) -> {
+                        robot -> {
                             /* robot and field setup */
 
                             final Pose2d startPose =
@@ -75,7 +75,7 @@ public class ReefAutoScoreTestCases {
         });
     }
 
-    public static class Blue1 {
+    static class Blue1 {
         @TestFactory
         Stream<DynamicTest> blue1() {
             return testFactory(
@@ -83,7 +83,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Blue2 {
+    static class Blue2 {
         @TestFactory
         Stream<DynamicTest> blue2() {
             return testFactory(
@@ -91,7 +91,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Blue3 {
+    static class Blue3 {
         @TestFactory
         Stream<DynamicTest> blue3() {
             return testFactory(
@@ -99,7 +99,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Blue4 {
+    static class Blue4 {
         @TestFactory
         Stream<DynamicTest> blue4() {
             return testFactory(
@@ -107,7 +107,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Red1 {
+    static class Red1 {
         @TestFactory
         Stream<DynamicTest> red1() {
             return testFactory(
@@ -115,7 +115,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Red2 {
+    static class Red2 {
         @TestFactory
         Stream<DynamicTest> red2() {
             return testFactory(
@@ -123,7 +123,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Red3 {
+    static class Red3 {
         @TestFactory
         Stream<DynamicTest> red3() {
             return testFactory(
@@ -131,7 +131,7 @@ public class ReefAutoScoreTestCases {
         }
     }
 
-    public static class Red4 {
+    static class Red4 {
         @TestFactory
         Stream<DynamicTest> red4() {
             return testFactory(

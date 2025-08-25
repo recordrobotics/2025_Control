@@ -25,7 +25,6 @@ import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
 import frc.robot.utils.ManagedSubsystemBase;
-import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
@@ -43,32 +42,35 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.littletonrobotics.junction.Logger;
 
-public class PoseSensorFusion extends ManagedSubsystemBase implements AutoCloseable, ShuffleboardPublisher {
+public class PoseSensorFusion extends ManagedSubsystemBase {
 
     public final NavSensor nav;
 
-    private static SwerveDrivePoseEstimator poseFilter;
-    private static IndependentSwervePoseEstimator independentPoseEstimator;
+    public static final double MAX_MEASUREMENT_STD_DEVS = 9_999_999;
+
+    private SwerveDrivePoseEstimator poseFilter;
+    private IndependentSwervePoseEstimator independentPoseEstimator;
 
     private LimelightCamera leftCamera = new LimelightCamera(
-            Constants.Limelight.LIMELIGHT_LEFT_NAME,
-            CameraType.Limelight3G,
-            Constants.Limelight.leftTransformRobotToCamera);
+            Constants.Limelight.LIMELIGHT_LEFT_NAME, CameraType.LIMELIGHT_3G, Constants.Limelight.ROBOT_TO_CAMERA_LEFT);
     private LimelightCamera centerCamera = new LimelightCamera(
             Constants.Limelight.LIMELIGHT_CENTER_NAME,
-            CameraType.Limelight2,
-            Constants.Limelight.centerTransformRobotToCamera);
+            CameraType.LIMELIGHT_2,
+            Constants.Limelight.ROBOT_TO_CAMERA_CENTER);
+
+    private static final double L1_STD_MULTIPLIER = 2.0;
+    private static final double SOURCE_STD_MULTIPLIER = 8.0;
 
     private PhotonVisionCamera l1Camera = new PhotonVisionCamera(
             Constants.PhotonVision.PHOTON_L1_NAME,
-            CameraType.SVPROGlobalShutter,
-            Constants.PhotonVision.l1TransformRobotToCamera,
-            2.0);
+            CameraType.SVPRO_GLOBAL_SHUTTER,
+            Constants.PhotonVision.ROBOT_TO_CAMERA_L1,
+            L1_STD_MULTIPLIER);
     private PhotonVisionCamera sourceCamera = new PhotonVisionCamera(
             Constants.PhotonVision.PHOTON_SOURCE_NAME,
-            CameraType.SVPROGlobalShutter,
-            Constants.PhotonVision.sourceTransformRobotToCamera,
-            8.0);
+            CameraType.SVPRO_GLOBAL_SHUTTER,
+            Constants.PhotonVision.ROBOT_TO_CAMERA_SOURCE,
+            SOURCE_STD_MULTIPLIER);
 
     private final Set<IVisionCamera> cameras = Set.of(leftCamera, centerCamera, l1Camera, sourceCamera);
 
@@ -98,10 +100,10 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
                     RobotContainer.drivetrain.getBackRightModule()
                 },
                 new Translation2d[] {
-                    Constants.Swerve.frontLeftConstants.wheelLocation,
-                    Constants.Swerve.frontRightConstants.wheelLocation,
-                    Constants.Swerve.backLeftConstants.wheelLocation,
-                    Constants.Swerve.backRightConstants.wheelLocation
+                    Constants.Swerve.FRONT_LEFT_WHEEL_LOCATION,
+                    Constants.Swerve.FRONT_RIGHT_WHEEL_LOCATION,
+                    Constants.Swerve.BACK_LEFT_WHEEL_LOCATION,
+                    Constants.Swerve.BACK_RIGHT_WHEEL_LOCATION
                 });
 
         SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", true);
@@ -150,8 +152,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         if (calculationFuture != null) {
             try {
                 calculationFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (ExecutionException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -178,7 +183,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
     }
 
     @Override
-    public void periodicManaged() {}
+    public void periodicManaged() {
+        /* logic is asynchronous */
+    }
+
+    private static final double ISPE_STD_DEV = 0.7;
+    private static final double MAX_L1_DISTANCE_TO_IGNORE_SOURCE = 2.5;
 
     public void calculationLoop() {
         updateTimestamp = Timer.getTimestamp();
@@ -197,19 +207,22 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
                 addVisionMeasurement(
                         independentPoseEstimator.getEstimatedRobotPose(),
                         Timer.getTimestamp(),
-                        VecBuilder.fill(0.7, 0.7, 9999999));
+                        VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
             }
         }
 
         leftCamera.updateEstimation(trustLimelightLeft, false);
         centerCamera.updateEstimation(trustLimelightCenter, false);
         l1Camera.updateEstimation(true, false);
-        sourceCamera.updateEstimation(true, l1Camera.hasVision() && l1Camera.getUnsafeEstimate().avgTagDist < 2.5);
+        sourceCamera.updateEstimation(
+                true,
+                l1Camera.hasVision() && l1Camera.getUnsafeEstimate().avgTagDist() < MAX_L1_DISTANCE_TO_IGNORE_SOURCE);
     }
 
     private void updateDashboard() {
         for (IVisionCamera camera : cameras) {
-            DashboardUI.Autonomous.setVisionPose(camera.getName(), camera.getUnsafeEstimate().pose);
+            DashboardUI.Autonomous.setVisionPose(
+                    camera.getName(), camera.getUnsafeEstimate().pose());
         }
 
         SmartDashboard.putNumber(
@@ -218,11 +231,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         DashboardUI.Autonomous.setRobotPose(poseFilter.getEstimatedPosition());
     }
 
-    private SwerveModulePosition[] getModulePositions() {
+    private static SwerveModulePosition[] getModulePositions() {
         return RobotContainer.drivetrain.getModulePositions();
     }
 
-    @AutoLogLevel(key = "Odometry/Robot", level = Level.Real)
+    @AutoLogLevel(key = "Odometry/Robot", level = Level.REAL)
     public Pose2d getEstimatedPosition() {
         return poseFilter.getEstimatedPosition();
     }
@@ -253,15 +266,13 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
     public void resetToVision() {
         cameras.stream()
                 .filter(IVisionCamera::hasVision)
-                .sorted((a, b) -> Double.compare(a.getCurrentEstimate().avgTagDist, b.getCurrentEstimate().avgTagDist))
+                .sorted((a, b) -> Double.compare(
+                        a.getCurrentEstimate().avgTagDist(),
+                        b.getCurrentEstimate().avgTagDist()))
                 .findFirst()
                 .ifPresentOrElse(
-                        camera -> {
-                            setToPose(camera.getCurrentEstimate().pose);
-                        },
-                        () -> {
-                            DriverStation.reportWarning("No camera has vision!", false);
-                        });
+                        camera -> setToPose(camera.getCurrentEstimate().pose()),
+                        () -> DriverStation.reportWarning("No camera has vision!", false));
     }
 
     /**
@@ -275,12 +286,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
     }
 
     public enum CameraTarget {
-        Left(RobotContainer.poseSensorFusion.getLeftCamera()),
-        Center(RobotContainer.poseSensorFusion.getCenterCamera()),
+        LEFT(RobotContainer.poseSensorFusion.getLeftCamera()),
+        CENTER(RobotContainer.poseSensorFusion.getCenterCamera()),
         L1(RobotContainer.poseSensorFusion.getL1Camera()),
-        Source(RobotContainer.poseSensorFusion.getSourceCamera()),
-        Elevator(Left, Center),
-        All(Left, Center, L1, Source);
+        SOURCE(RobotContainer.poseSensorFusion.getSourceCamera()),
+        ELEVATOR(LEFT, CENTER),
+        ALL(LEFT, CENTER, L1, SOURCE);
 
         private Set<IVisionCamera> cameras;
 
@@ -289,13 +300,13 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         }
 
         CameraTarget(CameraTarget... targets) {
-            List<IVisionCamera> cameras = new ArrayList<>();
+            List<IVisionCamera> cameraList = new ArrayList<>();
             for (CameraTarget target : targets) {
                 for (IVisionCamera camera : target.cameras) {
-                    cameras.add(camera);
+                    cameraList.add(camera);
                 }
             }
-            this.cameras = Set.of(cameras.toArray(new IVisionCamera[0]));
+            this.cameras = Set.of(cameraList.toArray(new IVisionCamera[0]));
         }
 
         boolean contains(IVisionCamera camera) {
@@ -307,8 +318,10 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         }
     }
 
+    private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
+
     public VisionDebouncer registerVisionCheck(CameraTarget camera) {
-        return registerVisionCheck(camera, null);
+        return registerVisionCheck(camera, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
     }
 
     public VisionDebouncer registerVisionCheck(
@@ -317,7 +330,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
     }
 
     public VisionDebouncer registerVisionCheck(CameraTarget camera, int... tagIds) {
-        return registerVisionCheck(camera, tagIds, 0.5, Debouncer.DebounceType.kBoth);
+        return registerVisionCheck(camera, tagIds, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
     }
 
     private int nextVisionId = 1;
@@ -333,6 +346,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         visionDebouncers.remove(visionDebouncer);
     }
 
+    @Override
     public void close() throws Exception {
         nav.close();
     }
@@ -357,10 +371,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
         return cameras;
     }
 
-    @Override
-    public void setupShuffleboard() {}
-
-    public class VisionDebouncer {
+    public static final class VisionDebouncer {
         private final Debouncer debouncer;
         private CameraTarget camera;
         private int[] tagIds;
@@ -379,42 +390,53 @@ public class PoseSensorFusion extends ManagedSubsystemBase implements AutoClosea
             this.tagIds = tagIds;
 
             debouncer = new Debouncer(0, debounceType);
-            debouncer.calculate(getRaw());
+            debouncer.calculate(hasVisionRaw());
             debouncer.setDebounceTime(debounceTime);
 
             lastAccessTime = Timer.getTimestamp();
         }
 
-        private boolean getRaw() {
-            boolean rawInput = false;
-            ArrayList<Integer> visionTags = new ArrayList<>();
-
-            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
-                if (camera.contains(vis)) {
-                    rawInput |= vis.hasVision();
-
-                    if (tagIds != null) {
-                        for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials) {
-                            visionTags.add(tag.id);
-                        }
-                    }
-                }
+        private boolean hasVisionRaw() {
+            boolean rawInput = hasAnyVision();
+            if (rawInput && tagIds != null) {
+                rawInput = hasRequiredTags();
             }
-
-            if (rawInput) {
-                for (int tagId : tagIds) {
-                    if (!visionTags.contains(tagId)) {
-                        rawInput = false;
-                        break;
-                    }
-                }
-            }
-
             return rawInput;
         }
 
+        private boolean hasAnyVision() {
+            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
+                if (camera.contains(vis) && vis.hasVision()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean hasRequiredTags() {
+            ArrayList<Integer> visionTags = collectVisionTags();
+            for (int tagId : tagIds) {
+                if (!visionTags.contains(tagId)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private ArrayList<Integer> collectVisionTags() {
+            ArrayList<Integer> visionTags = new ArrayList<>();
+            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
+                if (camera.contains(vis)) {
+                    for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials()) {
+                        visionTags.add(tag.id());
+                    }
+                }
+            }
+            return visionTags;
+        }
+
         private void update() {
-            boolean rawInput = getRaw();
+            boolean rawInput = hasVisionRaw();
 
             result = debouncer.calculate(rawInput);
 

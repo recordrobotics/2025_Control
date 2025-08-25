@@ -2,6 +2,10 @@ package frc.robot.control;
 
 import edu.wpi.first.wpilibj.GenericHID;
 
+@SuppressWarnings({ // This class is based off WPILib's Joystick class, so suppress warnings
+    "java:S115",
+    "java:S2047"
+})
 public class MacroPad extends GenericHID {
 
     public enum Button {
@@ -68,8 +72,7 @@ public class MacroPad extends GenericHID {
          */
         @Override
         public String toString() {
-            String name = this.name().substring(1); // Remove leading `k`
-            return name;
+            return this.name().substring(1);
         }
     }
 
@@ -99,7 +102,7 @@ public class MacroPad extends GenericHID {
         return getRawButton(button.value);
     }
 
-    public boolean getButonPressed(Button button) {
+    public boolean getButtonPressed(Button button) {
         return getRawButtonPressed(button.value);
     }
 

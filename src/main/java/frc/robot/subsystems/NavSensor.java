@@ -1,14 +1,14 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.NavSensorIO;
 import frc.robot.utils.ManagedSubsystemBase;
-import frc.robot.utils.ShuffleboardPublisher;
 
-public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPublisher {
+public class NavSensor extends ManagedSubsystemBase {
 
-    private static double period = 0.02;
+    private static final double PERIODIC = RobotContainer.ROBOT_PERIODIC;
 
     private final NavSensorIO io;
 
@@ -18,9 +18,9 @@ public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPubli
      * vector might change its angle and that is still a change in the vector that we need so we take
      * the derivative first and then the magnitude.
      */
-    private double last_accelX;
+    private double lastAccelX;
 
-    private double last_accelY;
+    private double lastAccelY;
 
     private double jerkX;
     private double jerkY;
@@ -28,20 +28,15 @@ public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPubli
     // variable to keep track of a reference angle whenever you reset
     private double referenceAngle;
 
-    private static NavSensor instance;
-
-    public static NavSensor getInstance() {
-        return instance;
-    }
-
     public NavSensor(NavSensorIO io) {
-        instance = this;
         this.io = io;
 
         io.reset();
         io.resetDisplacement(); // Technically not necessary but whatever
 
         referenceAngle = io.getAngle();
+
+        DashboardUI.Overview.setNavSensor(io::isConnected);
     }
 
     // Stores the reference angle as whatever the angle is currently measured to be
@@ -62,10 +57,10 @@ public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPubli
     public void periodicManaged() {
         double accelX = io.getWorldLinearAccelX();
         double accelY = io.getWorldLinearAccelY();
-        jerkX = (accelX - last_accelX) / period;
-        jerkY = (accelY - last_accelY) / period;
-        last_accelX = accelX;
-        last_accelY = accelY;
+        jerkX = (accelX - lastAccelX) / PERIODIC;
+        jerkY = (accelY - lastAccelY) / PERIODIC;
+        lastAccelX = accelX;
+        lastAccelY = accelY;
     }
 
     @Override
@@ -74,13 +69,8 @@ public class NavSensor extends ManagedSubsystemBase implements ShuffleboardPubli
     }
 
     /** frees up all hardware allocations */
+    @Override
     public void close() throws Exception {
         io.close();
-    }
-
-    @Override
-    public void setupShuffleboard() {
-        DashboardUI.Overview.setNavSensor(io::isConnected);
-        DashboardUI.Test.addBoolean("Nav Sensor", io::isConnected);
     }
 }

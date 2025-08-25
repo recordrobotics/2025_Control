@@ -12,108 +12,157 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.modifiers.DrivetrainControl;
 
-public abstract class AbstractControl {
+public interface AbstractControl {
 
-    public abstract void update();
+    void update();
 
     // Movement
-    public abstract DrivetrainControl getDrivetrainControl();
+    DrivetrainControl getDrivetrainControl();
 
-    public abstract Transform2d getRawDriverInput();
+    Transform2d getRawDriverInput();
 
-    public abstract Boolean getAutoAlign();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isAutoAlignTriggered();
 
-    public abstract Boolean getElevatorRelativeDrive();
+    boolean isElevatorRelativeDriveTriggered();
 
-    public abstract Boolean getCoralIntakeRelativeDrive();
+    boolean isCoralIntakeRelativeDriveTriggered();
 
-    public abstract Boolean getClimbRelativeDrive();
+    boolean isClimbRelativeDriveTriggered();
 
     // Misc
-    public abstract Boolean getPoseReset();
+    boolean isPoseResetTriggered();
 
-    public abstract Boolean getLimelightReset();
+    boolean isLimelightResetTriggered();
 
-    public abstract Boolean getKill();
+    boolean isKillTriggered();
 
     // Elevator
-    public abstract Boolean getAutoScore();
+    boolean isAutoScoreTriggered();
 
-    public abstract Boolean getElevatorL2();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isElevatorL2Triggered();
 
-    public abstract Boolean getElevatorL3();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isElevatorL3Triggered();
 
-    public abstract Boolean getElevatorL4();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isElevatorL4Triggered();
 
-    public abstract Boolean getElevatorAlgaeLow();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isElevatorAlgaeLowTriggered();
 
-    public abstract Boolean getElevatorAlgaeHigh();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isElevatorAlgaeHighTriggered();
 
-    public abstract Boolean getManualOverride();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isManualOverrideTriggered();
 
-    public abstract LinearVelocity getManualElevatorVelocity();
+    LinearVelocity getManualElevatorVelocity();
 
-    public abstract AngularVelocity getManualElevatorArmVelocity();
+    AngularVelocity getManualElevatorArmVelocity();
 
-    public abstract ReefLevelSwitchValue getReefLevelSwitchValue();
+    ReefLevelSwitchValue getReefLevelSwitchValue();
 
     // Intake coral
-    public abstract Boolean getCoralGroundIntake();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isCoralGroundIntakeTriggered();
 
-    public abstract Boolean getCoralGroundIntakeSimple();
+    boolean isCoralGroundIntakeSimpleTriggered();
 
-    public abstract Boolean getCoralSourceIntake();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isCoralSourceIntakeTriggered();
 
-    public abstract Boolean getCoralSourceIntakeAuto();
+    boolean isCoralSourceIntakeAutoTriggered();
 
-    public abstract Boolean getCoralIntakeScoreL1();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isCoralIntakeScoreL1Triggered();
 
-    public abstract Boolean getCoralShoot();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isCoralShootTriggered();
 
     // Ground Algae
-    public abstract Boolean getGroundAlgae();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isGroundAlgaeTriggered();
 
     // Score algae
-    public abstract Boolean getReefAlgaeSimple();
+    boolean isReefAlgaeSimpleTriggered();
 
-    public abstract Boolean getScoreAlgae();
+    /**
+     * @deprecated This is an old control scheme trigger and will be removed
+     */
+    @Deprecated(forRemoval = true)
+    boolean isScoreAlgaeTriggered();
 
     // Climb
-    public abstract Boolean getClimb();
+    boolean isClimbTriggered();
 
-    public abstract void vibrate(RumbleType type, double value);
+    void vibrate(RumbleType type, double value);
 
     // Orient XY
-    public static Pair<Double, Double> OrientXY(Pair<Double, Double> input) {
+    static Pair<Double, Double> orientXY(Pair<Double, Double> input) {
         double inputX = input.getFirst();
         double inputY = input.getSecond();
 
         switch (DashboardUI.Overview.getDriverOrientation()) {
-            case XAxisTowardsTrigger:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue)
-                    return new Pair<Double, Double>(-inputY, -inputX);
-                else return new Pair<Double, Double>(inputY, inputX);
-            case YAxisTowardsTrigger:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue)
-                    return new Pair<Double, Double>(inputX, -inputY);
-                else return new Pair<Double, Double>(-inputX, inputY);
-            case XAxisInvertTowardsTrigger:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue)
-                    return new Pair<Double, Double>(inputY, inputX);
-                else return new Pair<Double, Double>(-inputY, -inputX);
+            case X_AXIS_TOWARDS_TRIGGER:
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(-inputY, -inputX);
+                else return new Pair<>(inputY, inputX);
+            case Y_AXIS_TOWARDS_TRIGGER:
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(inputX, -inputY);
+                else return new Pair<>(-inputX, inputY);
+            case X_AXIS_INVERTED_TOWARDS_TRIGGER:
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(inputY, inputX);
+                else return new Pair<>(-inputY, -inputX);
             default:
-                return new Pair<Double, Double>(0.0, 0.0);
+                return new Pair<>(0.0, 0.0);
         }
     }
 
     // Orient Angle
-    public static Rotation2d OrientAngle(Rotation2d angle) {
+    static Rotation2d orientAngle(Rotation2d angle) {
         switch (DashboardUI.Overview.getDriverOrientation()) {
-            case XAxisTowardsTrigger:
+            case X_AXIS_TOWARDS_TRIGGER:
                 if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue)
                     return new Rotation2d(angle.getRadians() - Math.PI / 2);
                 else return new Rotation2d(angle.getRadians() + Math.PI / 2);
-            case YAxisTowardsTrigger:
+            case Y_AXIS_TOWARDS_TRIGGER:
                 if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return angle;
                 else return new Rotation2d(angle.getRadians() + Math.PI);
             default:
@@ -121,26 +170,21 @@ public abstract class AbstractControl {
         }
     }
 
-    public enum ReefLevelSwitchValue {
-        None,
+    enum ReefLevelSwitchValue {
+        NONE,
         L1,
         L2,
         L3,
         L4;
 
         public CoralLevel toCoralLevel() {
-            switch (this) {
-                case L1:
-                    return CoralLevel.L1;
-                case L2:
-                    return CoralLevel.L2;
-                case L3:
-                    return CoralLevel.L3;
-                case L4:
-                    return CoralLevel.L4;
-                default: // None is L4 to preserve default far-align behavior
-                    return CoralLevel.L4;
-            }
+            return switch (this) {
+                case L1 -> CoralLevel.L1;
+                case L2 -> CoralLevel.L2;
+                case L3 -> CoralLevel.L3;
+                case L4 -> CoralLevel.L4;
+                default -> CoralLevel.L4; // None is L4 to preserve default far-align behavior
+            };
         }
     }
 }

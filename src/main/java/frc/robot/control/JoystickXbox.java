@@ -2,7 +2,7 @@ package frc.robot.control;
 
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Second;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -18,14 +18,25 @@ import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.DrivetrainControl;
 
-public class JoystickXbox extends AbstractControl {
+/**
+ * @deprecated This is an old control scheme and will be removed
+ */
+@Deprecated(forRemoval = true)
+@SuppressWarnings({"java:S109"})
+public class JoystickXbox implements AbstractControl {
 
     private Joystick joystick;
-    private XboxController xbox_controller;
+    private XboxController xboxController;
 
+    private static final double SHOULDER_TRIGGER_THRESHOLD = 0.3;
+
+    /**
+     * @deprecated This is an old control scheme and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public JoystickXbox(int joystickPort, int xboxPort) {
         joystick = new Joystick(joystickPort);
-        xbox_controller = new XboxController(xboxPort);
+        xboxController = new XboxController(xboxPort);
     }
 
     private Transform2d lastVelocity = new Transform2d();
@@ -36,19 +47,25 @@ public class JoystickXbox extends AbstractControl {
 
     @Override
     public void update() {
-        Pair<Double, Double> xy =
-                getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive() || getClimbRelativeDrive()));
+        Pair<Double, Double> xy;
+        if (isCoralIntakeRelativeDriveTriggered()
+                || isElevatorRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
+            xy = getXYRaw();
+        } else {
+            xy = getXYOriented();
+        }
 
         double x = xy.getFirst() * getDirectionalSpeedLevel();
         double y = xy.getSecond() * getDirectionalSpeedLevel();
 
-        if (getCoralIntakeRelativeDrive()) {
+        if (isCoralIntakeRelativeDriveTriggered()) {
             y = -y;
-        } else if (getElevatorRelativeDrive()) {
+        } else if (isElevatorRelativeDriveTriggered()) {
             double temp = y;
             y = -x;
             x = -temp;
-        } else if (getClimbRelativeDrive()) {
+        } else if (isClimbRelativeDriveTriggered()) {
             double temp = y;
             y = x;
             x = temp;
@@ -58,16 +75,16 @@ public class JoystickXbox extends AbstractControl {
         acceleration = new Transform2d(
                         velocity.getTranslation()
                                 .minus(lastVelocity.getTranslation())
-                                .div(0.02),
+                                .div(RobotContainer.ROBOT_PERIODIC),
                         velocity.getRotation().minus(lastVelocity.getRotation()))
-                .div(0.02);
+                .div(RobotContainer.ROBOT_PERIODIC);
         jerk = new Transform2d(
                         acceleration
                                 .getTranslation()
                                 .minus(lastAcceleration.getTranslation())
-                                .div(0.02),
+                                .div(RobotContainer.ROBOT_PERIODIC),
                         acceleration.getRotation().minus(lastAcceleration.getRotation()))
-                .div(0.02);
+                .div(RobotContainer.ROBOT_PERIODIC);
 
         lastVelocity = velocity;
         lastAcceleration = acceleration;
@@ -75,14 +92,16 @@ public class JoystickXbox extends AbstractControl {
 
     @Override
     public Transform2d getRawDriverInput() {
-        Pair<Double, Double> xy = getXY(false);
+        Pair<Double, Double> xy = getXYRaw();
         // Returns the raw driver input as a Transform2d
         return new Transform2d(xy.getFirst(), xy.getSecond(), Rotation2d.fromRadians(getSpin()));
     }
 
     @Override
     public DrivetrainControl getDrivetrainControl() {
-        if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive() || getClimbRelativeDrive()) {
+        if (isElevatorRelativeDriveTriggered()
+                || isCoralIntakeRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
             return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
         } else {
             return DrivetrainControl.createFieldRelative(
@@ -93,63 +112,70 @@ public class JoystickXbox extends AbstractControl {
         }
     }
 
-    public Boolean getAutoAlign() {
-        return joystick.getRawButton(9) || getAutoAlignNear();
+    public boolean isAutoAlignTriggered() {
+        return joystick.getRawButton(9) || isAutoAlignNearTriggered();
     }
 
-    private Boolean getAutoAlignNear() {
+    private boolean isAutoAlignNearTriggered() {
         return joystick.getRawButton(7);
     }
 
-    public Boolean getElevatorRelativeDrive() {
+    public boolean isElevatorRelativeDriveTriggered() {
         return joystick.getRawButton(8) || joystick.getRawButton(2);
     }
 
-    public Boolean getCoralIntakeRelativeDrive() {
+    public boolean isCoralIntakeRelativeDriveTriggered() {
         return joystick.getRawButton(10);
     }
 
-    public Boolean getClimbRelativeDrive() {
+    public boolean isClimbRelativeDriveTriggered() {
         return joystick.getRawButton(12);
     }
 
-    public Pair<Double, Double> getXY(boolean orient) {
-        double X = SimpleMath.ApplyThresholdAndSensitivity(
+    public Pair<Double, Double> getXYRaw() {
+        double x = SimpleMath.applyThresholdAndSensitivity(
                 joystick.getX(),
                 Constants.Control.JOYSTICK_X_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
-        double Y = SimpleMath.ApplyThresholdAndSensitivity(
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
+        double y = SimpleMath.applyThresholdAndSensitivity(
                 joystick.getY(),
                 Constants.Control.JOYSTICK_Y_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
 
-        if (orient) return super.OrientXY(new Pair<Double, Double>(X, Y));
-        else return new Pair<Double, Double>(X, Y);
+        return new Pair<>(x, y);
+    }
+
+    public Pair<Double, Double> getXYOriented() {
+        Pair<Double, Double> xy = getXYRaw();
+        return AbstractControl.orientXY(new Pair<>(xy.getFirst(), xy.getSecond()));
     }
 
     public Double getSpin() {
         // Gets raw twist value
-        return SimpleMath.ApplyThresholdAndSensitivity(
-                -SimpleMath.Remap(joystick.getTwist(), -1.0, 1.0, -1.0, 1.0),
+        return SimpleMath.applyThresholdAndSensitivity(
+                -SimpleMath.remap(joystick.getTwist(), -1.0, 1.0, -1.0, 1.0),
                 Constants.Control.JOYSTICK_SPIN_THRESHOLD,
                 Constants.Control.JOYSTICK_SPIN_SENSITIVITY);
     }
 
-    public Boolean getHalfSpeed() {
+    public boolean isHalfSpeedTriggered() {
         return joystick.getRawButton(1);
     }
 
+    private static final double HALF_SPEED_DIRECTIONAL_DIVIDER = 3;
+    private static final double HALF_SPEED_SPIN_DIVIDER = 2;
+
     public Double getDirectionalSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 joystick.getRawAxis(3),
                 1,
                 -1,
                 Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
                 Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 3;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_DIRECTIONAL_DIVIDER;
         }
 
         return speed;
@@ -157,139 +183,145 @@ public class JoystickXbox extends AbstractControl {
 
     public Double getSpinSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 joystick.getRawAxis(3),
                 1,
                 -1,
                 Constants.Control.SPIN_SPEED_METER_LOW,
                 Constants.Control.SPIN_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 2;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_SPIN_DIVIDER;
         }
 
         return speed;
     }
 
     @Override
-    public Boolean getPoseReset() {
+    public boolean isPoseResetTriggered() {
         return joystick.getRawButtonPressed(3) || joystick.getRawButtonPressed(5);
     }
 
     @Override
-    public Boolean getLimelightReset() {
+    public boolean isLimelightResetTriggered() {
         return joystick.getRawButtonPressed(4) || joystick.getRawButtonPressed(6);
     }
 
     @Override
-    public Boolean getKill() {
-        return xbox_controller.getRawButton(8);
+    public boolean isKillTriggered() {
+        return xboxController.getRawButton(8);
     }
 
     @Override
     public void vibrate(RumbleType type, double value) {
-        xbox_controller.setRumble(type, value);
+        xboxController.setRumble(type, value);
     }
 
     @Override
-    public Boolean getAutoScore() {
+    public boolean isAutoScoreTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getElevatorL2() {
-        return xbox_controller.getXButton();
+    public boolean isElevatorL2Triggered() {
+        return xboxController.getXButton();
     }
 
     @Override
-    public Boolean getElevatorL3() {
-        return xbox_controller.getBButton();
+    public boolean isElevatorL3Triggered() {
+        return xboxController.getBButton();
     }
 
     @Override
-    public Boolean getElevatorL4() {
-        return xbox_controller.getYButton();
+    public boolean isElevatorL4Triggered() {
+        return xboxController.getYButton();
     }
 
     @Override
-    public Boolean getCoralShoot() {
-        return xbox_controller.getPOV() == 270;
+    public boolean isCoralShootTriggered() {
+        return xboxController.getPOV() == 270;
     }
 
     @Override
-    public Boolean getCoralGroundIntake() {
-        return xbox_controller.getLeftTriggerAxis() > 0.3;
+    public boolean isCoralGroundIntakeTriggered() {
+        return xboxController.getLeftTriggerAxis() > SHOULDER_TRIGGER_THRESHOLD;
     }
 
     @Override
-    public Boolean getCoralGroundIntakeSimple() {
+    public boolean isCoralGroundIntakeSimpleTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getCoralSourceIntake() {
-        return xbox_controller.getLeftBumperButton();
+    public boolean isCoralSourceIntakeTriggered() {
+        return xboxController.getLeftBumperButton();
     }
 
     @Override
-    public Boolean getElevatorAlgaeLow() {
-        return xbox_controller.getRightTriggerAxis() > 0.3 && xbox_controller.getPOV() != 0;
+    public boolean isElevatorAlgaeLowTriggered() {
+        return xboxController.getRightTriggerAxis() > SHOULDER_TRIGGER_THRESHOLD && xboxController.getPOV() != 0;
     }
 
     @Override
-    public Boolean getElevatorAlgaeHigh() {
-        return xbox_controller.getRightTriggerAxis() > 0.3 && xbox_controller.getPOV() == 0;
+    public boolean isElevatorAlgaeHighTriggered() {
+        return xboxController.getRightTriggerAxis() > SHOULDER_TRIGGER_THRESHOLD && xboxController.getPOV() == 0;
     }
 
     @Override
     public ReefLevelSwitchValue getReefLevelSwitchValue() {
-        return getAutoAlignNear() ? ReefLevelSwitchValue.L2 : ReefLevelSwitchValue.None;
+        return isAutoAlignNearTriggered() ? ReefLevelSwitchValue.L2 : ReefLevelSwitchValue.NONE;
     }
 
     @Override
-    public Boolean getManualOverride() {
-        return xbox_controller.getPOV() == 0;
+    public boolean isManualOverrideTriggered() {
+        return xboxController.getPOV() == 0;
     }
 
     @Override
-    public Boolean getGroundAlgae() {
-        return xbox_controller.getRightBumperButton();
+    public boolean isGroundAlgaeTriggered() {
+        return xboxController.getRightBumperButton();
     }
 
     @Override
-    public Boolean getReefAlgaeSimple() {
+    public boolean isReefAlgaeSimpleTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getScoreAlgae() {
-        return xbox_controller.getPOV() == 90;
+    public boolean isScoreAlgaeTriggered() {
+        return xboxController.getPOV() == 90;
     }
 
     @Override
-    public Boolean getCoralIntakeScoreL1() {
-        return xbox_controller.getPOV() == 180;
+    public boolean isCoralIntakeScoreL1Triggered() {
+        return xboxController.getPOV() == 180;
     }
+
+    private static final LinearVelocity MANUAL_ELEVATOR_VELOCITY_MAX =
+            Centimeters.of(50).per(Second);
+    private static final AngularVelocity MANUAL_ELEVATOR_ARM_VELOCITY_MAX =
+            Degrees.of(180).per(Second);
+    private static final double MANUAL_AXIS_DEADBAND = 0.1;
 
     @Override
     public LinearVelocity getManualElevatorVelocity() {
-        double leftY = MathUtil.applyDeadband(-xbox_controller.getLeftY(), 0.1);
-        return Centimeters.of(50).per(Seconds).times(leftY * Math.abs(leftY));
+        double leftY = MathUtil.applyDeadband(-xboxController.getLeftY(), MANUAL_AXIS_DEADBAND);
+        return MANUAL_ELEVATOR_VELOCITY_MAX.times(leftY * Math.abs(leftY));
     }
 
     @Override
     public AngularVelocity getManualElevatorArmVelocity() {
-        double rightY = MathUtil.applyDeadband(-xbox_controller.getRightY(), 0.1);
-        return Degrees.of(180).per(Seconds).times(rightY * Math.abs(rightY));
+        double rightY = MathUtil.applyDeadband(-xboxController.getRightY(), MANUAL_AXIS_DEADBAND);
+        return MANUAL_ELEVATOR_ARM_VELOCITY_MAX.times(rightY * Math.abs(rightY));
     }
 
     @Override
-    public Boolean getClimb() {
-        return xbox_controller.getRawButton(7);
+    public boolean isClimbTriggered() {
+        return xboxController.getRawButton(7);
     }
 
     @Override
-    public Boolean getCoralSourceIntakeAuto() {
+    public boolean isCoralSourceIntakeAutoTriggered() {
         return false;
     }
 }

@@ -3,9 +3,9 @@ package frc.robot.utils;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public abstract class ManagedSubsystemBase extends SubsystemBase {
+public abstract class ManagedSubsystemBase extends SubsystemBase implements AutoCloseable {
 
-    public ManagedSubsystemBase() {
+    protected ManagedSubsystemBase() {
         SubsystemManager.getInstance().registerSubsystem(this);
     }
 
@@ -23,4 +23,9 @@ public abstract class ManagedSubsystemBase extends SubsystemBase {
      * {@link edu.wpi.first.wpilibj.simulation} classes and setting simulated sensor readings.
      */
     public void simulationPeriodicManaged() {}
+
+    @Override
+    public void close() throws Exception {
+        // Default implementation does nothing
+    }
 }

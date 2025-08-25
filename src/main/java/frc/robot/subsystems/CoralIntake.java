@@ -19,13 +19,16 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.CoralIntakeIO;
 import frc.robot.subsystems.io.sim.CoralIntakeSim;
 import frc.robot.utils.AutoLogLevel;
@@ -33,21 +36,19 @@ import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.EncoderResettableSubsystem;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
-public class CoralIntake extends KillableSubsystem
-        implements ShuffleboardPublisher, PoweredSubsystem, EncoderResettableSubsystem {
+public final class CoralIntake extends KillableSubsystem implements PoweredSubsystem, EncoderResettableSubsystem {
 
     private final CoralIntakeIO io;
 
-    private final PIDController pid = new PIDController(
-            Constants.CoralIntake.wheel_kP, Constants.CoralIntake.wheel_kI, Constants.CoralIntake.wheel_kD);
+    private final PIDController pid =
+            new PIDController(Constants.CoralIntake.WHEEL_KP, 0, Constants.CoralIntake.WHEEL_KD);
 
     private final SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(
-            Constants.CoralIntake.wheel_kS, Constants.CoralIntake.wheel_kV, Constants.CoralIntake.wheel_kA);
+            Constants.CoralIntake.WHEEL_KS, Constants.CoralIntake.WHEEL_KV, Constants.CoralIntake.WHEEL_KA);
 
     private CoralIntakeState currentIntakeState = CoralIntakeState.UP;
 
@@ -62,30 +63,34 @@ public class CoralIntake extends KillableSubsystem
     private double wheelVelocityCached = 0;
     private double wheelVoltageCached = 0;
 
+    private static final Velocity<VoltageUnit> SYSID_RAMP_RATE = Volts.of(4.0).per(Second);
+    private static final Voltage SYSID_STEP_VOLTAGE = Volts.of(2.3);
+    private static final Time SYSID_TIMEOUT = Seconds.of(1.0);
+
     public CoralIntake(CoralIntakeIO io) {
         this.io = io;
 
         TalonFXConfiguration armConfig = new TalonFXConfiguration();
 
         // set slot 0 gains
-        Slot0Configs slot0Configs_arm = armConfig.Slot0;
-        slot0Configs_arm.kS = Constants.CoralIntake.arm_kS;
-        slot0Configs_arm.kV = Constants.CoralIntake.arm_kV;
-        slot0Configs_arm.kA = Constants.CoralIntake.arm_kA;
-        slot0Configs_arm.kG = Constants.CoralIntake.arm_kG;
-        slot0Configs_arm.kP = Constants.CoralIntake.arm_kP;
-        slot0Configs_arm.kI = Constants.CoralIntake.arm_kI;
-        slot0Configs_arm.kD = Constants.CoralIntake.arm_kD;
-        slot0Configs_arm.GravityType = GravityTypeValue.Arm_Cosine;
+        Slot0Configs slot0ConfigsArm = armConfig.Slot0;
+        slot0ConfigsArm.kS = Constants.CoralIntake.ARM_KS;
+        slot0ConfigsArm.kV = Constants.CoralIntake.ARM_KV;
+        slot0ConfigsArm.kA = Constants.CoralIntake.ARM_KA;
+        slot0ConfigsArm.kG = Constants.CoralIntake.ARM_KG;
+        slot0ConfigsArm.kP = Constants.CoralIntake.ARM_KP;
+        slot0ConfigsArm.kI = 0;
+        slot0ConfigsArm.kD = Constants.CoralIntake.ARM_KD;
+        slot0ConfigsArm.GravityType = GravityTypeValue.Arm_Cosine;
         armConfig.Feedback.SensorToMechanismRatio = Constants.CoralIntake.ARM_GEAR_RATIO;
 
         // set Motion Magic settings
-        MotionMagicConfigs motionMagicConfigs_arm = armConfig.MotionMagic;
-        motionMagicConfigs_arm.MotionMagicCruiseVelocity = Constants.CoralIntake.MAX_ARM_VELOCITY;
-        motionMagicConfigs_arm.MotionMagicAcceleration = Constants.CoralIntake.MAX_ARM_ACCELERATION;
-        motionMagicConfigs_arm.MotionMagicJerk = 1600;
-        motionMagicConfigs_arm.MotionMagicExpo_kV = 1.931;
-        motionMagicConfigs_arm.MotionMagicExpo_kA = 1.1;
+        MotionMagicConfigs motionMagicConfigsArm = armConfig.MotionMagic;
+        motionMagicConfigsArm.MotionMagicCruiseVelocity = Constants.CoralIntake.MAX_ARM_VELOCITY;
+        motionMagicConfigsArm.MotionMagicAcceleration = Constants.CoralIntake.MAX_ARM_ACCELERATION;
+        motionMagicConfigsArm.MotionMagicJerk = Constants.CoralIntake.MAX_ARM_JERK;
+        motionMagicConfigsArm.MotionMagicExpo_kV = Constants.CoralIntake.ARM_MMEXPO_KV;
+        motionMagicConfigsArm.MotionMagicExpo_kA = Constants.CoralIntake.ARM_MMEXPO_KA;
 
         io.applyArmTalonFXConfig(armConfig
                 .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
@@ -106,24 +111,24 @@ public class CoralIntake extends KillableSubsystem
                         null, // default 7 volt step voltage
                         null,
                         (state -> Logger.recordOutput("CoralIntake/Wheel/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism((v) -> io.setWheelVoltage(v.in(Volts)), null, this));
+                new SysIdRoutine.Mechanism(v -> io.setWheelVoltage(v.in(Volts)), null, this));
 
         sysIdRoutineArm = new SysIdRoutine(
                 new SysIdRoutine.Config(
-                        Volts.of(4.0).per(Second),
-                        Volts.of(2.3),
-                        Seconds.of(1.0),
-                        (state -> Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism((v) -> io.setArmVoltage(v.in(Volts)), null, this));
+                        SYSID_RAMP_RATE,
+                        SYSID_STEP_VOLTAGE,
+                        SYSID_TIMEOUT,
+                        state -> Logger.recordOutput("CoralIntake/Arm/SysIdTestState", state.toString())),
+                new SysIdRoutine.Mechanism(v -> io.setArmVoltage(v.in(Volts)), null, this));
 
         SmartDashboard.putNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS);
     }
 
-    public CoralIntakeSim getSimIO() throws Exception {
-        if (io instanceof CoralIntakeSim) {
-            return (CoralIntakeSim) io;
+    public CoralIntakeSim getSimIO() throws IllegalStateException {
+        if (io instanceof CoralIntakeSim simIO) {
+            return simIO;
         } else {
-            throw new Exception("CoralIntakeIO is not a simulation");
+            throw new IllegalStateException("CoralIntakeIO is not a simulation");
         }
     }
 
@@ -140,48 +145,50 @@ public class CoralIntake extends KillableSubsystem
         L1_DOWN;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getWheelVelocity() {
-        return wheelVelocityCached / 60.0 / Constants.CoralIntake.WHEEL_GEAR_RATIO; /* RPM -> RPS */
+        return wheelVelocityCached
+                / SimpleMath.SECONDS_PER_MINUTE
+                / Constants.CoralIntake.WHEEL_GEAR_RATIO; /* RPM -> RPS */
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getWheelPosition() {
         return wheelPositionCached / Constants.CoralIntake.WHEEL_GEAR_RATIO;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getWheelSetTo() {
         return wheelVoltageCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmAngle() {
-        return armPositionCached * 2 * Math.PI;
+        return armPositionCached * SimpleMath.PI2;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmVelocity() {
-        return armVelocityCached * 2 * Math.PI;
+        return armVelocityCached * SimpleMath.PI2;
     }
 
     /** Used for sysid as units have to be in rotations in the logs */
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmAngleRotations() {
         return armPositionCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmVelocityRotations() {
         return armVelocityCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmSetTo() {
         return armVoltageCached;
     }
 
-    @AutoLogLevel(level = Level.DebugReal)
+    @AutoLogLevel(level = Level.DEBUG_REAL)
     public CoralIntakeState getState() {
         return currentIntakeState;
     }
@@ -193,14 +200,17 @@ public class CoralIntake extends KillableSubsystem
 
     public void setArm(double angleRadians) {
         currentSetpoint.position = angleRadians;
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CoralIntakeArm) {
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CORAL_INTAKE_ARM) {
             io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
         }
     }
 
+    private static final double POSITION_TOLERANCE = 0.15;
+    private static final double VELOCITY_TOLERANCE = 1.05;
+
     public boolean armAtGoal() {
-        return SimpleMath.isWithinTolerance(getArmAngle(), currentSetpoint.position, 0.15)
-                && SimpleMath.isWithinTolerance(getArmVelocity(), 0, 1.05);
+        return SimpleMath.isWithinTolerance(getArmAngle(), currentSetpoint.position, POSITION_TOLERANCE)
+                && SimpleMath.isWithinTolerance(getArmVelocity(), 0, VELOCITY_TOLERANCE);
     }
 
     public void set(CoralIntakeState state) {
@@ -250,13 +260,11 @@ public class CoralIntake extends KillableSubsystem
         wheelVelocityCached = io.getWheelVelocity();
         armPositionCached = io.getArmPosition();
         armVelocityCached = io.getArmVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.SYSID)) {
             wheelPositionCached = io.getWheelPosition();
             wheelVoltageCached = io.getWheelVoltage();
             armVoltageCached = io.getArmVoltage();
         }
-
-        // setArm(SmartDashboard.getNumber("CoralIntakeArm", Constants.CoralIntake.ARM_START_POS));
 
         if (currentIntakeState == CoralIntakeState.PUSH_OUT) {
             // push and pull ramp
@@ -272,7 +280,7 @@ public class CoralIntake extends KillableSubsystem
         double pidOutput = pid.calculate(getWheelVelocity());
         double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
 
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CoralIntakeWheel) {
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CORAL_INTAKE_WHEEL) {
             io.setWheelVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
         }
 
@@ -305,23 +313,12 @@ public class CoralIntake extends KillableSubsystem
     }
 
     @Override
-    public void setupShuffleboard() {
-        DashboardUI.Test.addSlider("Coral Intake Motor", io.getWheelPercent(), -1, 1)
-                .subscribe(io::setWheelPercent);
-        DashboardUI.Test.addSlider(
-                        "Coral Intake Arm Pos",
-                        armPositionCached,
-                        Constants.CoralIntake.ARM_DOWN,
-                        Constants.CoralIntake.ARM_UP)
-                .subscribe(this::setArm);
-    }
-
-    @Override
     public void kill() {
         setWheel(0);
     }
 
     /** frees up all hardware allocations */
+    @Override
     public void close() throws Exception {
         io.close();
     }

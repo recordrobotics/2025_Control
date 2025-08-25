@@ -26,7 +26,7 @@ public class ElevatorSim implements ElevatorIO {
     private final TalonFXSimState motorLeadSim;
     private final TalonFXSimState motorFollowerSim;
 
-    private final edu.wpi.first.wpilibj.simulation.ElevatorSim elevatorSim =
+    private final edu.wpi.first.wpilibj.simulation.ElevatorSim physicsSim =
             new edu.wpi.first.wpilibj.simulation.ElevatorSim(
                     DCMotor.getKrakenX60(2),
                     Constants.Elevator.GEAR_RATIO,
@@ -111,16 +111,15 @@ public class ElevatorSim implements ElevatorIO {
     @Override
     public void setLeadMotorPosition(double newValue) {
         // Reset internal sim state
-        elevatorSim.setState(newValue, 0);
+        physicsSim.setState(newValue, 0);
 
         // Update raw rotor position to match internal sim state (has to be called before setPosition to
         // have correct offset)
-        motorLeadSim.setRawRotorPosition(elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
-        motorLeadSim.setRotorVelocity(
-                elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
-        motorFollowerSim.setRawRotorPosition(elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
+        motorLeadSim.setRawRotorPosition(physicsSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
+        motorLeadSim.setRotorVelocity(physicsSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
+        motorFollowerSim.setRawRotorPosition(physicsSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
         motorFollowerSim.setRotorVelocity(
-                elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
+                physicsSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
 
         // Update internal raw position offset
         motorLead.setPosition(newValue);
@@ -163,17 +162,15 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
-    public boolean getTopEndStop() {
+    public boolean isTopEndStopPressed() {
         if (topEndStopSimValue != null) return topEndStopSimValue.get();
         else return false;
-        // return topEndStop.get();
     }
 
     @Override
-    public boolean getBottomEndStop() {
+    public boolean isBottomEndStopPressed() {
         if (bottomEndStopSimValue != null) return bottomEndStopSimValue.get();
         else return false;
-        // return bottomEndStop.get();
     }
 
     public void setTopEndStopSim(boolean newValue) {
@@ -217,14 +214,13 @@ public class ElevatorSim implements ElevatorIO {
         double motorLeftVoltage = motorLeadSim.getMotorVoltage();
         double motorRightVoltage = motorFollowerSim.getMotorVoltage();
 
-        elevatorSim.setInputVoltage((motorLeftVoltage + motorRightVoltage) / 2.0);
-        elevatorSim.update(periodicDt);
+        physicsSim.setInputVoltage((motorLeftVoltage + motorRightVoltage) / 2.0);
+        physicsSim.update(periodicDt);
 
-        motorLeadSim.setRawRotorPosition(elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
-        motorLeadSim.setRotorVelocity(
-                elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
-        motorFollowerSim.setRawRotorPosition(elevatorSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
+        motorLeadSim.setRawRotorPosition(physicsSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
+        motorLeadSim.setRotorVelocity(physicsSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
+        motorFollowerSim.setRawRotorPosition(physicsSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
         motorFollowerSim.setRotorVelocity(
-                elevatorSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
+                physicsSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
     }
 }

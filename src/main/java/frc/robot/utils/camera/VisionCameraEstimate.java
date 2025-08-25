@@ -3,24 +3,19 @@ package frc.robot.utils.camera;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
+import java.util.Arrays;
 
-public class VisionCameraEstimate {
+public record VisionCameraEstimate(
+        Pose2d pose,
+        double timestampSeconds,
+        double latency,
+        int tagCount,
+        double avgTagDist,
+        double avgTagArea,
+        RawVisionFiducial[] rawFiducials,
+        boolean isConstrained) {
 
-    public static class RawVisionFiducial {
-        public int id = 0;
-        public double area = 0;
-        public double distToCamera = 0;
-        public double distToRobot = 0;
-        public double ambiguity = 0;
-
-        public RawVisionFiducial(int id, double area, double distToCamera, double distToRobot, double ambiguity) {
-            this.id = id;
-            this.area = area;
-            this.distToCamera = distToCamera;
-            this.distToRobot = distToRobot;
-            this.ambiguity = ambiguity;
-        }
-
+    public record RawVisionFiducial(int id, double area, double distToCamera, double distToRobot, double ambiguity) {
         public RawVisionFiducial(RawFiducial limelightFiducial) {
             this(
                     limelightFiducial.id,
@@ -29,35 +24,6 @@ public class VisionCameraEstimate {
                     limelightFiducial.distToRobot,
                     limelightFiducial.ambiguity);
         }
-    }
-
-    public Pose2d pose;
-    public double timestampSeconds;
-    public double latency;
-    public int tagCount;
-    public double avgTagDist;
-    public double avgTagArea;
-
-    public RawVisionFiducial[] rawFiducials;
-    public boolean isConstrained;
-
-    public VisionCameraEstimate(
-            Pose2d pose,
-            double timestampSeconds,
-            double latency,
-            int tagCount,
-            double avgTagDist,
-            double avgTagArea,
-            RawVisionFiducial[] rawFiducials,
-            boolean isConstrained) {
-        this.pose = pose;
-        this.timestampSeconds = timestampSeconds;
-        this.latency = latency;
-        this.tagCount = tagCount;
-        this.avgTagDist = avgTagDist;
-        this.avgTagArea = avgTagArea;
-        this.rawFiducials = rawFiducials;
-        this.isConstrained = isConstrained;
     }
 
     public VisionCameraEstimate() {
@@ -82,5 +48,46 @@ public class VisionCameraEstimate {
                 limelightEstimate.avgTagArea,
                 convertRawFiducials(limelightEstimate.rawFiducials),
                 limelightEstimate.isMegaTag2);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        VisionCameraEstimate that = (VisionCameraEstimate) obj;
+        return Double.compare(that.timestampSeconds, timestampSeconds) == 0
+                && Double.compare(that.latency, latency) == 0
+                && tagCount == that.tagCount
+                && Double.compare(that.avgTagDist, avgTagDist) == 0
+                && Double.compare(that.avgTagArea, avgTagArea) == 0
+                && isConstrained == that.isConstrained
+                && pose.equals(that.pose)
+                && Arrays.equals(rawFiducials, that.rawFiducials);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pose.hashCode();
+        result = 31 * result + Double.hashCode(timestampSeconds);
+        result = 31 * result + Double.hashCode(latency);
+        result = 31 * result + tagCount;
+        result = 31 * result + Double.hashCode(avgTagDist);
+        result = 31 * result + Double.hashCode(avgTagArea);
+        result = 31 * result + Arrays.hashCode(rawFiducials);
+        result = 31 * result + Boolean.hashCode(isConstrained);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "VisionCameraEstimate{" + "pose="
+                + pose + ", timestampSeconds="
+                + timestampSeconds + ", latency="
+                + latency + ", tagCount="
+                + tagCount + ", avgTagDist="
+                + avgTagDist + ", avgTagArea="
+                + avgTagArea + ", rawFiducials="
+                + Arrays.toString(rawFiducials) + ", isConstrained="
+                + isConstrained + '}';
     }
 }

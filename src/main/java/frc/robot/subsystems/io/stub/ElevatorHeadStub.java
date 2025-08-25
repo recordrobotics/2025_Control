@@ -12,10 +12,14 @@ public class ElevatorHeadStub implements ElevatorHeadIO {
     }
 
     @Override
-    public void setVoltage(double outputVolts) {}
+    public void setVoltage(double outputVolts) {
+        /* stub */
+    }
 
     @Override
-    public void setPosition(double newValue) {}
+    public void setPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getPosition() {
@@ -33,7 +37,9 @@ public class ElevatorHeadStub implements ElevatorHeadIO {
     }
 
     @Override
-    public void setPercent(double newValue) {}
+    public void setPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getPercent() {
@@ -41,7 +47,7 @@ public class ElevatorHeadStub implements ElevatorHeadIO {
     }
 
     @Override
-    public boolean getCoralDetector() {
+    public boolean isCoralDetectorTriggered() {
         return false;
     }
 
@@ -51,8 +57,12 @@ public class ElevatorHeadStub implements ElevatorHeadIO {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        /* stub */
+    }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 }

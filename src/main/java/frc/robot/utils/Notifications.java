@@ -8,7 +8,9 @@ import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Notifications {
+public final class Notifications {
+    private Notifications() {}
+
     private static List<Alert> alerts = new ArrayList<>();
 
     public static void send(NotificationLevel type, String title, String description) {
@@ -19,21 +21,13 @@ public class Notifications {
         Notification notification = new Notification(level, title, description, desplayTimeMillis);
         Elastic.sendNotification(notification);
 
-        AlertType alertType;
-        switch (level) {
-            case INFO:
-                alertType = AlertType.kInfo;
-                break;
-            case WARNING:
-                alertType = AlertType.kWarning;
-                break;
-            case ERROR:
-                alertType = AlertType.kError;
-                break;
-            default:
-                alertType = AlertType.kInfo;
-                break;
-        }
+        AlertType alertType =
+                switch (level) {
+                    case INFO -> AlertType.kInfo;
+                    case WARNING -> AlertType.kWarning;
+                    case ERROR -> AlertType.kError;
+                    default -> AlertType.kInfo;
+                };
 
         Alert alert = new Alert(title + " - " + description, alertType);
         alerts.add(alert);

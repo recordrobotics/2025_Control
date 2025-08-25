@@ -42,7 +42,7 @@ public class Auto {
 
     /**
      * @param scoringPositions List[Pair[Position (A-L), Level(1-4)]]
-     * @param startPosition FeildStartingLocation
+     * @param startPosition FieldStartingLocation
      * @param source "Left" or "Right"
      * @return the command
      * @throws FileVersionException

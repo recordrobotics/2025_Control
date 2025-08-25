@@ -13,6 +13,8 @@ import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StringTopic;
 
+// This is a Elastic library file, so ignore the warnings
+@SuppressWarnings({"java:S1118", "java:S109"})
 public final class Elastic {
     private static final StringTopic notificationTopic =
             NetworkTableInstance.getDefault().getStringTopic("/Elastic/RobotNotifications");

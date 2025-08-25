@@ -10,7 +10,6 @@ import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -20,7 +19,7 @@ import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
-import frc.robot.utils.mapleSim.ImprovedArena2025Reefscape;
+import frc.robot.utils.maplesim.ImprovedArena2025Reefscape;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -35,66 +34,93 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class Robot extends LoggedRobot {
-    private Command m_autonomousCommand;
-    private RobotContainer m_robotContainer;
+public final class Robot extends LoggedRobot {
+    private Command autonomousCommand;
+    private RobotContainer robotContainer;
 
     private Runnable periodicRunnable;
     private volatile boolean initialized = false;
 
-    private static double autoStartTimestamp;
+    @SuppressWarnings("java:S1075")
+    private static final String DEFAULT_PATH_RIO = "/home/lvuser/logs";
 
-    private static final String defaultPathRio = "/home/lvuser/logs";
-    private static final String defaultPathSim = "logs";
+    private static final String DEFAULT_PATH_SIM = "logs";
+
+    private static final int ELASTIC_WEBSERVER_PORT = 5800;
 
     public Robot() {
-        // Record metadata
+        recordBuildMetadata();
+        configureLogging();
+        configureDriveStation();
+        configureMotorLogging();
+        configureSimulation();
+    }
+
+    private static void recordBuildMetadata() {
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
         Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
         Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
         Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
-        switch (BuildConstants.DIRTY) {
-            case 0:
-                Logger.recordMetadata("GitDirty", "All changes committed");
-                break;
-            case 1:
-                Logger.recordMetadata("GitDirty", "Uncomitted changes");
-                break;
-            default:
-                Logger.recordMetadata("GitDirty", "Unknown");
-                break;
-        }
+        Logger.recordMetadata(
+                "GitDirty",
+                switch (BuildConstants.DIRTY) {
+                    case 0 -> "All changes committed";
+                    case 1 -> "Uncomitted changes";
+                    default -> "Unknown";
+                });
+    }
 
+    private void configureLogging() {
         if (Constants.RobotState.getMode().isRealtime()) {
-            setUseTiming(true); // Run at standard robot speed (20 ms)
-            Logger.addDataReceiver(new WPILOGWriter(RobotBase.isSimulation() ? defaultPathSim : defaultPathRio));
-            Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            configureRealtimeLogging();
         } else {
-            setUseTiming(
-                    Constants.RobotState.getMode() == Constants.RobotState.Mode.TEST
-                            ? true /* TODO: Still looking into ways to speed up Phoenix sim (false is faster) */
-                            : false); // Run as fast as possible
-            if (Constants.RobotState.getMode() == Constants.RobotState.Mode.REPLAY) {
-                String logPath =
-                        LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-                Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-                Logger.addDataReceiver(
-                        new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
-            } else if (Constants.RobotState.getMode() == Constants.RobotState.Mode.TEST) {
-                if (Constants.RobotState.UNIT_TESTS_ENABLE_ADVANTAGE_SCOPE) {
-                    Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-                }
-            }
+            configureNonRealtimeLogging();
         }
+        Logger.start();
+    }
 
+    private void configureRealtimeLogging() {
+        setUseTiming(true); // Run at standard robot speed (20 ms)
+        Logger.addDataReceiver(new WPILOGWriter(RobotBase.isSimulation() ? DEFAULT_PATH_SIM : DEFAULT_PATH_RIO));
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+    }
+
+    @SuppressWarnings("java:S1125")
+    private void configureNonRealtimeLogging() {
+        setUseTiming(
+                Constants.RobotState.getMode() == Constants.RobotState.Mode.TEST
+                        ? true /* TODO: Still looking into ways to speed up Phoenix sim (false is faster) */
+                        : false); // Run as fast as possible
+
+        if (Constants.RobotState.getMode() == Constants.RobotState.Mode.REPLAY) {
+            configureReplayLogging();
+        } else if (Constants.RobotState.getMode() == Constants.RobotState.Mode.TEST) {
+            configureTestLogging();
+        }
+    }
+
+    private static void configureReplayLogging() {
+        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+        Logger.addDataReceiver(
+                new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+    }
+
+    private static void configureTestLogging() {
+        if (Constants.RobotState.UNIT_TESTS_ENABLE_ADVANTAGE_SCOPE) {
+            Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+        }
+    }
+
+    private static void configureDriveStation() {
         DriverStation.silenceJoystickConnectionWarning(
                 Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL);
+    }
 
-        Logger.start();
-
+    private static void configureMotorLogging() {
         if (Constants.RobotState.MOTOR_LOGGING_ENABLED) {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++) { // NOSONAR
                 DriverStation.reportWarning(
                         "[WARNING] Motor logging enabled, DON'T FORGET to delete old logs to make space on disk.\n"
                                 + "[WARNING] During competition, set MOTOR_LOGGING_ENABLED to false since logging is enabled automatically.",
@@ -104,7 +130,9 @@ public class Robot extends LoggedRobot {
                 SignalLogger.start();
             }
         }
+    }
 
+    private static void configureSimulation() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             // Use custom improved simulation
             SimulatedArena.overrideInstance(new ImprovedArena2025Reefscape());
@@ -121,7 +149,7 @@ public class Robot extends LoggedRobot {
     }
 
     public RobotContainer getRobotContainer() {
-        return m_robotContainer;
+        return robotContainer;
     }
 
     /**
@@ -134,11 +162,12 @@ public class Robot extends LoggedRobot {
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our
         // autonomous chooser on the dashboard.
-        m_robotContainer = new RobotContainer();
+        robotContainer = new RobotContainer();
 
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.TEST) {
             // Elastic layout webserver
-            WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+            WebServer.start(
+                    ELASTIC_WEBSERVER_PORT, Filesystem.getDeployDirectory().getPath());
         }
 
         if (Constants.RobotState.getMode() == Constants.RobotState.Mode.SIM) {
@@ -163,9 +192,6 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
-        // Switch thread to high priority to improve loop timing
-        // Threads.setCurrentThreadPriority(true, 99);
-
         // Runs the Scheduler. This is responsible for polling buttons, adding
         // newly-scheduled
         // commands, running already-scheduled commands, removing finished or
@@ -191,9 +217,6 @@ public class Robot extends LoggedRobot {
                 "Overview/LevelSwitch",
                 DashboardUI.Overview.getControl().getReefLevelSwitchValue().toString());
 
-        // Return to normal thread priority
-        // Threads.setCurrentThreadPriority(false, 10);
-
         try {
             DashboardUI.update();
         } catch (Exception e) {
@@ -214,22 +237,23 @@ public class Robot extends LoggedRobot {
     /** This function is called once each time the robot enters Disabled mode. */
     @Override
     public void disabledInit() {
-        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.None && hasRun) {
+        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.NONE && hasRun) {
             Logger.end();
             SignalLogger.stop();
         }
 
-        m_robotContainer.disabledInit();
+        robotContainer.disabledInit();
     }
 
     @Override
-    public void disabledPeriodic() {}
+    public void disabledPeriodic() {
+        /* nothing to do */
+    }
 
     /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
     @Override
     public void autonomousInit() {
-        autoStartTimestamp = Timer.getTimestamp();
-        m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+        autonomousCommand = robotContainer.getAutonomousCommand();
 
         // Cancel any previous commands
         CommandScheduler.getInstance().cancelAll();
@@ -248,8 +272,8 @@ public class Robot extends LoggedRobot {
         }
 
         // schedule the autonomous command (example)
-        if (m_autonomousCommand != null) {
-            m_autonomousCommand.schedule();
+        if (autonomousCommand != null) {
+            autonomousCommand.schedule();
         }
 
         DashboardUI.Autonomous.switchTo();
@@ -259,7 +283,9 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during autonomous. */
     @Override
-    public void autonomousPeriodic() {}
+    public void autonomousPeriodic() {
+        /* nothing to do */
+    }
 
     @Override
     public void teleopInit() {
@@ -267,13 +293,13 @@ public class Robot extends LoggedRobot {
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
         // this line or comment it out.
-        if (m_autonomousCommand != null) {
-            m_autonomousCommand.cancel();
+        if (autonomousCommand != null) {
+            autonomousCommand.cancel();
         }
 
         new KillSpecified(RobotContainer.elevatorHead, RobotContainer.coralIntake).schedule();
 
-        m_robotContainer.teleopInit();
+        robotContainer.teleopInit();
         hasRun = true;
 
         DashboardUI.Overview.switchTo();
@@ -292,20 +318,15 @@ public class Robot extends LoggedRobot {
         CommandScheduler.getInstance().cancelAll();
     }
 
-    /** This function is called periodically during test mode. */
     @Override
     public void testPeriodic() {
-        m_robotContainer.testPeriodic();
+        /* nothing to do */
     }
 
     @Override
     public void simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic();
-        m_robotContainer.simulationPeriodic();
-    }
-
-    public static double getAutoStartTime() {
-        return autoStartTimestamp;
+        robotContainer.simulationPeriodic();
     }
 
     @Override

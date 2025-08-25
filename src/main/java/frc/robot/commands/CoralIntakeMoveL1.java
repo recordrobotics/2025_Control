@@ -21,10 +21,7 @@ public class CoralIntakeMoveL1 extends SequentialCommandGroup {
                         .runPattern(Constants.Lights.coralScorePattern)
                         .onlyWhile(this::isScheduled)),
                 new InstantCommand(
-                        () -> {
-                            RobotContainer.coralIntake.set(CoralIntakeState.L1_DOWN);
-                        },
-                        RobotContainer.coralIntake),
+                        () -> RobotContainer.coralIntake.set(CoralIntakeState.L1_DOWN), RobotContainer.coralIntake),
                 new WaitUntilCommand(() -> RobotContainer.coralIntake.armAtGoal()));
     }
 }

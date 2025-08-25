@@ -11,40 +11,42 @@ import java.util.function.Supplier;
 
 public class SysIdManager {
 
+    public static final double IN_BETWEEN_STEP_DELAY = 0.4;
+
     public static Command createCommand(
             Function<Direction, Command> quasistatic, Function<Direction, Command> dynamic) {
         return new InstantCommand()
-                .andThen(quasistatic.apply(Direction.kForward).andThen(new WaitCommand(0.4)))
-                .andThen(quasistatic.apply(Direction.kReverse).andThen(new WaitCommand(0.4)))
-                .andThen(dynamic.apply(Direction.kForward).andThen(new WaitCommand(0.4)))
-                .andThen(dynamic.apply(Direction.kReverse).andThen(new WaitCommand(0.4)));
+                .andThen(quasistatic.apply(Direction.kForward).andThen(new WaitCommand(IN_BETWEEN_STEP_DELAY)))
+                .andThen(quasistatic.apply(Direction.kReverse).andThen(new WaitCommand(IN_BETWEEN_STEP_DELAY)))
+                .andThen(dynamic.apply(Direction.kForward).andThen(new WaitCommand(IN_BETWEEN_STEP_DELAY)))
+                .andThen(dynamic.apply(Direction.kReverse).andThen(new WaitCommand(IN_BETWEEN_STEP_DELAY)));
     }
 
     public static SysIdRoutine getSysIdRoutine() {
-        return SysIdRoutine.None;
+        return SysIdRoutine.NONE;
     }
 
     public enum SysIdRoutine {
-        None,
-        Climber(() -> RobotContainer.climber::sysIdQuasistatic, () -> RobotContainer.climber::sysIdDynamic),
-        CoralIntakeArm(
+        NONE,
+        CLIMBER(() -> RobotContainer.climber::sysIdQuasistatic, () -> RobotContainer.climber::sysIdDynamic),
+        CORAL_INTAKE_ARM(
                 () -> RobotContainer.coralIntake::sysIdQuasistaticArm,
                 () -> RobotContainer.coralIntake::sysIdDynamicArm),
-        CoralIntakeWheel(
+        CORAL_INTAKE_WHEEL(
                 () -> RobotContainer.coralIntake::sysIdQuasistaticWheel,
                 () -> RobotContainer.coralIntake::sysIdDynamicWheel),
-        DrivetrainTurn(
+        DRIVETRAIN_TURN(
                 () -> RobotContainer.drivetrain::sysIdQuasistaticTurnMotors,
                 () -> RobotContainer.drivetrain::sysIdDynamicTurnMotors),
-        DrivetrainSpin(
+        DRIVETRAIN_SPIN(
                 () -> RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsSpin,
                 () -> RobotContainer.drivetrain::sysIdDynamicDriveMotorsSpin),
-        DrivetrainForward(
+        DRIVETRAIN_FORWARD(
                 () -> RobotContainer.drivetrain::sysIdQuasistaticDriveMotorsForward,
                 () -> RobotContainer.drivetrain::sysIdDynamicDriveMotorsForward),
-        Elevator(() -> RobotContainer.elevator::sysIdQuasistatic, () -> RobotContainer.elevator::sysIdDynamic),
-        ElevatorArm(() -> RobotContainer.elevator::sysIdQuasistatic, () -> RobotContainer.elevator::sysIdDynamic),
-        ElevatorHead(
+        ELEVATOR(() -> RobotContainer.elevator::sysIdQuasistatic, () -> RobotContainer.elevator::sysIdDynamic),
+        ELEVATOR_ARM(() -> RobotContainer.elevator::sysIdQuasistatic, () -> RobotContainer.elevator::sysIdDynamic),
+        ELEVATOR_HEAD(
                 () -> RobotContainer.elevatorHead::sysIdQuasistatic, () -> RobotContainer.elevatorHead::sysIdDynamic);
 
         private final boolean enabled;

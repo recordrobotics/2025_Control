@@ -21,16 +21,10 @@ public class CoralIntakeShootL1 extends SequentialCommandGroup {
                         .runPattern(Constants.Lights.coralScorePattern)
                         .onlyWhile(this::isScheduled)),
                 new InstantCommand(
-                        () -> {
-                            RobotContainer.coralIntake.set(CoralIntakeState.L1_SCORE);
-                        },
-                        RobotContainer.coralIntake),
+                        () -> RobotContainer.coralIntake.set(CoralIntakeState.L1_SCORE), RobotContainer.coralIntake),
                 new WaitCommand(Constants.CoralIntake.SHOOT_TIME),
                 new InstantCommand(
-                        () -> {
-                            RobotContainer.coralIntake.set(CoralIntakeState.UP);
-                        },
-                        RobotContainer.coralIntake),
+                        () -> RobotContainer.coralIntake.set(CoralIntakeState.UP), RobotContainer.coralIntake),
                 new ScheduleCommand(RobotContainer.lights
                         .coralIntake
                         .runPattern(Constants.Lights.FLASHING_GREEN)

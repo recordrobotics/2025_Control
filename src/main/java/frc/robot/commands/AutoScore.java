@@ -18,6 +18,16 @@ import java.util.Set;
 
 public class AutoScore extends SequentialCommandGroup {
 
+    // 8s timeout for first waypoint
+    private static final double FIRST_WAYPOINT_TIMEOUT = 8.0;
+    // 4s for second and third
+    private static final double OTHER_WAYPOINT_TIMEOUT = 4.0;
+
+    private static final double BACKAWAY_DISTANCE = 0.6;
+
+    private static final double L4_DELAY_BEFORE_ELEVATOR_LOWER = 1.0;
+
+    @SuppressWarnings("java:S3358") // there is enough clarity for nested ternary operators
     public AutoScore(CoralPosition reefPole, CoralLevel level) {
         addCommands(
                 Commands.defer(
@@ -30,9 +40,9 @@ public class AutoScore extends SequentialCommandGroup {
                                     < Constants.Align.ELEVATOR_START_MOVE_DISTANCE;
 
                             return WaypointAlign.alignWithCommand(
-                                    ReefAlign.generateWaypoints(reefPole, level, !insideElevatorMoveRegion, false),
-                                    // 8s timeout for first waypoint, 4s for second and third
-                                    new Double[] {8.0, 4.0, 4.0},
+                                    ReefAlign.generateWaypoints(reefPole, level, !insideElevatorMoveRegion),
+                                    new Double[] {FIRST_WAYPOINT_TIMEOUT, OTHER_WAYPOINT_TIMEOUT, OTHER_WAYPOINT_TIMEOUT
+                                    },
                                     // start elevator immediately if already inside move region, otherwise only after
                                     // first waypoint
                                     insideElevatorMoveRegion ? -1 : 0,
@@ -45,10 +55,10 @@ public class AutoScore extends SequentialCommandGroup {
                         },
                         Set.of(RobotContainer.drivetrain)),
                 // if ruckig timed out, wait until autoscore is pressed again
-                new WaitUntilCommand(() -> DashboardUI.Overview.getControl().getAutoScore())
+                new WaitUntilCommand(() -> DashboardUI.Overview.getControl().isAutoScoreTriggered())
                         .onlyIf(() -> !RuckigAlign.lastAlignSuccessful() && !RobotState.isAutonomous()),
                 new WaitUntilCommand(() -> RobotState.isAutonomous()
-                                || !DashboardUI.Overview.getControl().getAutoScore())
+                                || !DashboardUI.Overview.getControl().isAutoScoreTriggered())
                         .andThen(
                                 level != CoralLevel.L1
                                         ? new CoralShoot()
@@ -58,7 +68,7 @@ public class AutoScore extends SequentialCommandGroup {
                                                                                 .getEstimatedPosition()
                                                                                 .transformBy(
                                                                                         new Transform2d(
-                                                                                                -0.6,
+                                                                                                -BACKAWAY_DISTANCE,
                                                                                                 0,
                                                                                                 Rotation2d.kZero)),
                                                                         2.0),
@@ -68,12 +78,12 @@ public class AutoScore extends SequentialCommandGroup {
                                                                                 RobotContainer.elevator
                                                                                                         .getNearestHeight()
                                                                                                 == ElevatorHeight.L4
-                                                                                        ? 1.0
+                                                                                        ? L4_DELAY_BEFORE_ELEVATOR_LOWER
                                                                                         : 0),
                                                                         Set.of())
                                                                 .andThen(new ElevatorMove(ElevatorHeight.BOTTOM)
                                                                         .asProxy())
-                                                                .onlyIf(() -> !CoralShoot.failedToShoot)))
+                                                                .onlyIf(() -> !CoralShoot.failedToShoot())))
                                         : new CoralIntakeShootL1().asProxy()));
     }
 }

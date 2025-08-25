@@ -6,11 +6,19 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.ElevatorMoveThenAlgaeGrabEnd;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 
+/**
+ * @deprecated This is an old control scheme command and will be removed
+ */
+@Deprecated(forRemoval = true)
 public class GroundAlgaeToggled extends Command {
     private ElevatorHeight targetHeight;
 
     private boolean isRunning = false;
 
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public GroundAlgaeToggled(ElevatorHeight targetHeight) {
         this.targetHeight = targetHeight;
         addRequirements(ToggleRequirements.elevatorMoveToggleRequirement);

@@ -6,10 +6,13 @@ import edu.wpi.first.math.geometry.Transform2d;
 import frc.robot.Constants.Game.AlgaePosition;
 import java.util.List;
 
-public class AlgaeAlign {
+public final class AlgaeAlign {
+    private AlgaeAlign() {}
+
+    private static final double APPROACH_DISTANCE = 0.3;
 
     public static List<Pose2d> generateWaypoints(AlgaePosition pole) {
         return WaypointAlign.createWaypointsToTarget(
-                pole.getPose(), new Transform2d[] {new Transform2d(-0.3, 0, Rotation2d.kZero)});
+                pole.getPose(), new Transform2d[] {new Transform2d(-APPROACH_DISTANCE, 0, Rotation2d.kZero)});
     }
 }

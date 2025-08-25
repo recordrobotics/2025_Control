@@ -28,7 +28,22 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 
-public class AutoLogLevelManager {
+// This is a AdvantageKit library class modified to support log levels, so ignore the warnings
+@SuppressWarnings({
+    "java:S3776",
+    "java:S1941",
+    "java:S135",
+    "java:S2259",
+    "java:S1541",
+    "java:S1611",
+    "java:S108",
+    "java:S109",
+    "java:S6541",
+    "java:S3011"
+})
+public final class AutoLogLevelManager {
+    private AutoLogLevelManager() {}
+
     private static final List<Runnable> callbacks = new ArrayList<>();
     private static final List<Integer> scannedObjectHashes = new ArrayList<>();
     private static final Set<String> allowedPackages = new HashSet<>();
@@ -197,7 +212,6 @@ public class AutoLogLevelManager {
             this.declaringClass = declaringClass;
         }
     }
-    ;
 
     /** Returns the set of all fields in the class and its superclasses (public and private). */
     private static List<FieldAndDeclaringClass> getAllFields(Class<?> type) {
@@ -220,7 +234,6 @@ public class AutoLogLevelManager {
             this.declaringClass = declaringClass;
         }
     }
-    ;
 
     /**
      * Finds the field in the provided class and its superclasses (must be public or protected in

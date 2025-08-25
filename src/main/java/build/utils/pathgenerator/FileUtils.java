@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public final class FileUtils {
     private FileUtils() {}
@@ -21,26 +22,34 @@ public final class FileUtils {
 
     private static final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
-    public static JsonNode readJson(File file) {
-        if (!file.exists()) throw new RuntimeException("File not found: " + file.getAbsolutePath());
+    public static JsonNode readJson(File file) throws FileNotFoundException {
+        if (!file.exists()) throw new FileNotFoundException("File not found: " + file.getAbsolutePath());
 
         JsonNode obj;
         try {
-            FileReader reader = new FileReader(file);
-            obj = mapper.readTree(reader);
-            reader.close();
+            obj = mapper.readTree(file);
         } catch (IOException e) {
-            throw new RuntimeException("Error reading JSON file: " + file.getAbsolutePath(), e);
+            throw new InvalidFileFormatException("Error reading JSON file: " + file.getAbsolutePath(), e);
         }
 
         return obj;
     }
 
     public static void writeJson(File file, JsonNode obj) {
-        try (FileWriter writer = new FileWriter(file)) {
+        try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
             mapper.writer(new PathPlannerPrettyPrinter()).writeValue(writer, obj);
         } catch (IOException e) {
-            throw new RuntimeException("Error writing JSON file: " + file.getAbsolutePath(), e);
+            throw new InvalidFileFormatException("Error writing JSON file: " + file.getAbsolutePath(), e);
+        }
+    }
+
+    public static class InvalidFileFormatException extends RuntimeException {
+        public InvalidFileFormatException(String message) {
+            super(message);
+        }
+
+        public InvalidFileFormatException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

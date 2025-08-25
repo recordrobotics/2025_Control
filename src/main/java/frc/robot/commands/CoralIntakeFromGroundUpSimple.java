@@ -12,7 +12,9 @@ import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 
 public class CoralIntakeFromGroundUpSimple extends SequentialCommandGroup {
 
-    public static boolean isRunning = false;
+    private static boolean running = false;
+
+    public static final double PUSH_OUT_TIME = 0.1;
 
     public CoralIntakeFromGroundUpSimple() {
         addRequirements(RobotContainer.coralIntake);
@@ -21,7 +23,7 @@ public class CoralIntakeFromGroundUpSimple extends SequentialCommandGroup {
         addRequirements(RobotContainer.elevator);
 
         addCommands(
-                new InstantCommand(() -> isRunning = true),
+                new InstantCommand(() -> setRunning(true)),
                 // raise the arm
                 new InstantCommand(
                         () -> RobotContainer.coralIntake.set(CoralIntakeState.PUSH_READY), RobotContainer.coralIntake),
@@ -37,6 +39,14 @@ public class CoralIntakeFromGroundUpSimple extends SequentialCommandGroup {
                 // push coral out
                 new InstantCommand(
                         () -> RobotContainer.coralIntake.set(CoralIntakeState.PUSH_OUT), RobotContainer.coralIntake),
-                new WaitCommand(0.1));
+                new WaitCommand(PUSH_OUT_TIME));
+    }
+
+    public static boolean isRunning() {
+        return running;
+    }
+
+    public static void setRunning(boolean running) {
+        CoralIntakeFromGroundUpSimple.running = running;
     }
 }

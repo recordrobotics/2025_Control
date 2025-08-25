@@ -20,16 +20,24 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
-    public void applyTalonFXConfig(TalonFXConfiguration configuration) {}
+    public void applyTalonFXConfig(TalonFXConfiguration configuration) {
+        /* stub */
+    }
 
     @Override
-    public void setLeadMotorVoltage(double outputVolts) {}
+    public void setLeadMotorVoltage(double outputVolts) {
+        /* stub */
+    }
 
     @Override
-    public void setLeadMotionMagic(MotionMagicExpoVoltage request) {}
+    public void setLeadMotionMagic(MotionMagicExpoVoltage request) {
+        /* stub */
+    }
 
     @Override
-    public void setFollowerMotionMagic(Follower request) {}
+    public void setFollowerMotionMagic(Follower request) {
+        /* stub */
+    }
 
     @Override
     public double getLeadMotorVoltage() {
@@ -42,10 +50,14 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
-    public void setLeadMotorPosition(double newValue) {}
+    public void setLeadMotorPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setFollowerMotorPosition(double newValue) {}
+    public void setFollowerMotorPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getLeadMotorPosition() {
@@ -68,7 +80,9 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
-    public void setLeadMotorPercent(double newValue) {}
+    public void setLeadMotorPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getLeadMotorPercent() {
@@ -76,12 +90,12 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
-    public boolean getTopEndStop() {
+    public boolean isTopEndStopPressed() {
         return false;
     }
 
     @Override
-    public boolean getBottomEndStop() {
+    public boolean isBottomEndStopPressed() {
         return false;
     }
 
@@ -96,8 +110,12 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        /* stub */
+    }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 }

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Constants;
+import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
@@ -19,12 +20,13 @@ import frc.robot.utils.ManagedSubsystemBase;
 import java.util.List;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 /** Represents the physical model of the robot, including mechanisms and their positions */
-public class RobotModel extends ManagedSubsystemBase {
+public final class RobotModel extends ManagedSubsystemBase {
 
     public interface RobotMechanism {
         int getPoseCount();
@@ -35,51 +37,53 @@ public class RobotModel extends ManagedSubsystemBase {
     public static class Elevator implements RobotMechanism {
         public static final int POSE_COUNT = 2; /* 2 stage elevator */
 
-        @AutoLogLevel(level = Level.DebugReal)
+        private static final double LINE_WIDTH = 10;
+
+        @AutoLogLevel(level = Level.DEBUG_REAL)
         private LoggedMechanism2d mechanism =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root = mechanism.getRoot(
+        private LoggedMechanismRoot2d rootNode = mechanism.getRoot(
                 "elevator_root",
                 Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.Elevator.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d elevator = root.append(new LoggedMechanismLigament2d(
-                "elevator", Constants.Elevator.MIN_LENGTH, 90, 10, new Color8Bit(Color.kBlue)));
+        private LoggedMechanismLigament2d elevatorNode = rootNode.append(new LoggedMechanismLigament2d(
+                "elevator", Constants.Elevator.MIN_LENGTH, 90, LINE_WIDTH, new Color8Bit(Color.kBlue)));
 
         @SuppressWarnings("unused")
-        private LoggedMechanismLigament2d coralShooter = elevator.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d coralShooter = elevatorNode.append(new LoggedMechanismLigament2d(
                 "coralShooter",
                 Constants.ElevatorHead.HOW_FAR_FORWARDS_FROM_THE_ELEVATOR_IS_THE_CORAL_SHOOTER,
                 -90,
-                10,
+                LINE_WIDTH,
                 new Color8Bit(Color.kGreen)));
 
-        @AutoLogLevel(level = Level.DebugReal)
-        private LoggedMechanism2d mechanism_setpoint =
+        @AutoLogLevel(level = Level.DEBUG_REAL)
+        private LoggedMechanism2d mechanismSetpoint =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root_setpoint = mechanism_setpoint.getRoot(
+        private LoggedMechanismRoot2d rootNodeSetpoint = mechanismSetpoint.getRoot(
                 "elevator_root",
                 Constants.Elevator.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.Elevator.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d elevator_setpoint = root_setpoint.append(new LoggedMechanismLigament2d(
-                "elevator", Constants.Elevator.MIN_LENGTH, 90, 10, new Color8Bit(Color.kBlueViolet)));
+        private LoggedMechanismLigament2d elevatorNodeSetpoint = rootNodeSetpoint.append(new LoggedMechanismLigament2d(
+                "elevator", Constants.Elevator.MIN_LENGTH, 90, LINE_WIDTH, new Color8Bit(Color.kBlueViolet)));
 
         @SuppressWarnings("unused")
-        private LoggedMechanismLigament2d coralShooter_setpoint =
-                elevator_setpoint.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d coralShooterSetpoint =
+                elevatorNodeSetpoint.append(new LoggedMechanismLigament2d(
                         "coralShooter",
                         Constants.ElevatorHead.HOW_FAR_FORWARDS_FROM_THE_ELEVATOR_IS_THE_CORAL_SHOOTER,
                         -90,
-                        10,
+                        LINE_WIDTH,
                         new Color8Bit(Color.kGreenYellow)));
 
         public void update(double height) {
-            elevator.setLength(Constants.Elevator.MIN_LENGTH + height);
+            elevatorNode.setLength(Constants.Elevator.MIN_LENGTH + height);
         }
 
         public void updateSetpoint(double height) {
-            elevator_setpoint.setLength(Constants.Elevator.MIN_LENGTH + height);
+            elevatorNodeSetpoint.setLength(Constants.Elevator.MIN_LENGTH + height);
         }
 
         @Override
@@ -87,96 +91,97 @@ public class RobotModel extends ManagedSubsystemBase {
             return POSE_COUNT;
         }
 
+        private static final double FIRST_STAGE_MAX_HEIGHT = 0.760967; // meters
+        private static final double SECOND_STAGE_MAX_HEIGHT = 1.44; // meters
+
+        public double getFirstStageHeight() {
+            return (elevatorNode.getLength() - Constants.Elevator.MIN_LENGTH)
+                    / Constants.Elevator.MAX_HEIGHT
+                    * FIRST_STAGE_MAX_HEIGHT;
+        }
+
+        public double getSecondStageHeight() {
+            return (elevatorNode.getLength() - Constants.Elevator.MIN_LENGTH)
+                    / Constants.Elevator.MAX_HEIGHT
+                    * SECOND_STAGE_MAX_HEIGHT;
+        }
+
         @Override
         public void updatePoses(Pose3d[] poses, int i) {
             // First stage
-            poses[i++] = new Pose3d(
-                    new Translation3d(
-                            0,
-                            0,
-                            (elevator.getLength() - Constants.Elevator.MIN_LENGTH)
-                                    / Constants.Elevator.MAX_HEIGHT
-                                    * 0.760967),
-                    new Rotation3d(0, 0, 0));
+            poses[i++] = new Pose3d(new Translation3d(0, 0, getFirstStageHeight()), Rotation3d.kZero);
 
             // Second stage
-            poses[i++] = new Pose3d(
-                    new Translation3d(
-                            0,
-                            0,
-                            (elevator.getLength() - Constants.Elevator.MIN_LENGTH)
-                                    / Constants.Elevator.MAX_HEIGHT
-                                    * 1.44),
-                    new Rotation3d(0, 0, 0));
+            poses[i] = new Pose3d(new Translation3d(0, 0, getSecondStageHeight()), Rotation3d.kZero);
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getCoralIntakeEjectPose() {
-            Pose3d robotOrigin = new Pose3d();
+            Pose3d robotOrigin = Pose3d.kZero;
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
-            Pose3d coralPose = robotOrigin.transformBy(
-                    new Transform3d(-0.1, 0.27, 0.494817 + Constants.CoralIntake.LENGTH, new Rotation3d(0, 0, 0)));
-
-            return coralPose;
+            return robotOrigin.transformBy(
+                    new Transform3d(-0.1, 0.27, 0.494817 + Constants.CoralIntake.LENGTH, Rotation3d.kZero));
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getCoralIntakeEjectFinalPose() {
-            Pose3d robotOrigin = new Pose3d();
+            Pose3d robotOrigin = Pose3d.kZero;
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
-            Pose3d coralPose = robotOrigin.transformBy(
-                    new Transform3d(-0.1, 0.18, 0.456817 + Constants.CoralIntake.LENGTH, new Rotation3d(0, 0, 0)));
-
-            return coralPose;
+            return robotOrigin.transformBy(
+                    new Transform3d(-0.1, 0.18, 0.456817 + Constants.CoralIntake.LENGTH, Rotation3d.kZero));
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getCoralIntakeChannelPose() {
-            Pose3d robotOrigin = new Pose3d();
+            Pose3d robotOrigin = Pose3d.kZero;
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
-            Pose3d coralPose = robotOrigin.transformBy(
-                    new Transform3d(-0.1, 0.18, 0.316817 + Constants.CoralIntake.LENGTH, new Rotation3d(0, 0, 0)));
-
-            return coralPose;
+            return robotOrigin.transformBy(
+                    new Transform3d(-0.1, 0.18, 0.316817 + Constants.CoralIntake.LENGTH, Rotation3d.kZero));
         }
     }
 
     public static class CoralIntake implements RobotMechanism {
         public static final int POSE_COUNT = 1;
 
-        @AutoLogLevel(level = Level.DebugReal)
+        private static final double LINE_WIDTH = 3;
+
+        @AutoLogLevel(level = Level.DEBUG_REAL)
         private LoggedMechanism2d mechanism =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root = mechanism.getRoot(
+        private LoggedMechanismRoot2d rootNode = mechanism.getRoot(
                 "coralintake_root",
                 Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d coralintake = root.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d coralIntakeNode = rootNode.append(new LoggedMechanismLigament2d(
                 "coralintake",
                 Constants.CoralIntake.LENGTH,
                 Constants.CoralIntake.ANGLE_OFFSET,
-                3,
+                LINE_WIDTH,
                 new Color8Bit(Color.kPurple)));
 
-        @AutoLogLevel(level = Level.DebugReal)
-        private LoggedMechanism2d mechanism_setpoint =
+        @AutoLogLevel(level = Level.DEBUG_REAL)
+        private LoggedMechanism2d mechanismSetpoint =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root_setpoint = mechanism_setpoint.getRoot(
+        private LoggedMechanismRoot2d rootNodeSetpoint = mechanismSetpoint.getRoot(
                 "coralintake_root",
                 Constants.CoralIntake.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.CoralIntake.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d coralintake_setpoint = root_setpoint.append(new LoggedMechanismLigament2d(
-                "coralintake",
-                Constants.CoralIntake.LENGTH,
-                Constants.CoralIntake.ANGLE_OFFSET,
-                3,
-                new Color8Bit(Color.kViolet)));
+        private LoggedMechanismLigament2d coralIntakeNodeSetpoint =
+                rootNodeSetpoint.append(new LoggedMechanismLigament2d(
+                        "coralintake",
+                        Constants.CoralIntake.LENGTH,
+                        Constants.CoralIntake.ANGLE_OFFSET,
+                        LINE_WIDTH,
+                        new Color8Bit(Color.kViolet)));
 
         public void update(double angle) {
-            coralintake.setAngle(Units.radiansToDegrees(Constants.CoralIntake.ANGLE_OFFSET + angle));
+            coralIntakeNode.setAngle(Units.radiansToDegrees(Constants.CoralIntake.ANGLE_OFFSET + angle));
         }
 
         public void updateSetpoint(double angle) {
-            coralintake_setpoint.setAngle(Units.radiansToDegrees(Constants.CoralIntake.ANGLE_OFFSET + angle));
+            coralIntakeNodeSetpoint.setAngle(Units.radiansToDegrees(Constants.CoralIntake.ANGLE_OFFSET + angle));
         }
 
         @Override
@@ -184,27 +189,30 @@ public class RobotModel extends ManagedSubsystemBase {
             return POSE_COUNT;
         }
 
+        private static final Translation3d SHAFT_ORIGIN = new Translation3d(0, 0.3337, 0.3598);
+
         @Override
         public void updatePoses(Pose3d[] poses, int i) {
-            poses[i] = new Pose3d(0, 0, 0, new Rotation3d())
-                    .rotateAround(
-                            new Translation3d(0, 0.3337, 0.3598),
-                            new Rotation3d(Units.degreesToRadians(coralintake.getAngle()), 0, 0));
+            poses[i] = Pose3d.kZero.rotateAround(
+                    SHAFT_ORIGIN, new Rotation3d(Units.degreesToRadians(coralIntakeNode.getAngle()), 0, 0));
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getCoralTargetPose() {
-            Pose3d robotOrigin = new Pose3d();
+            Pose3d robotOrigin = Pose3d.kZero;
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
             Pose3d coralIntakePose = robotOrigin.transformBy(new Transform3d(
-                    0, 0.3337, 0.3598, new Rotation3d(Units.degreesToRadians(coralintake.getAngle()), 0, 0)));
+                    SHAFT_ORIGIN, new Rotation3d(Units.degreesToRadians(coralIntakeNode.getAngle()), 0, 0)));
 
             return coralIntakePose.transformBy(
-                    new Transform3d(-0.1, Constants.CoralIntake.LENGTH, 0.038, new Rotation3d()));
+                    new Transform3d(-0.1, Constants.CoralIntake.LENGTH, 0.038, Rotation3d.kZero));
         }
     }
 
     public static class ElevatorArm implements RobotMechanism {
         public static final int POSE_COUNT = 1;
+
+        private static final double LINE_WIDTH = 3;
 
         private RobotModel model;
 
@@ -212,42 +220,43 @@ public class RobotModel extends ManagedSubsystemBase {
             this.model = model;
         }
 
-        @AutoLogLevel(level = Level.DebugReal)
+        @AutoLogLevel(level = Level.DEBUG_REAL)
         private LoggedMechanism2d mechanism =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root = mechanism.getRoot(
+        private LoggedMechanismRoot2d rootNode = mechanism.getRoot(
                 "elevatorarm_root",
                 Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.ElevatorArm.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d elevatorarm = root.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d elevatorArmNode = rootNode.append(new LoggedMechanismLigament2d(
                 "elevatorarm",
                 Constants.ElevatorArm.LENGTH,
                 Constants.ElevatorArm.ANGLE_OFFSET,
-                3,
+                LINE_WIDTH,
                 new Color8Bit(Color.kPurple)));
 
-        @AutoLogLevel(level = Level.DebugReal)
-        private LoggedMechanism2d mechanism_setpoint =
+        @AutoLogLevel(level = Level.DEBUG_REAL)
+        private LoggedMechanism2d mechanismSetpoint =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root_setpoint = mechanism_setpoint.getRoot(
+        private LoggedMechanismRoot2d rootNodeSetpoint = mechanismSetpoint.getRoot(
                 "elevatorarm_root",
                 Constants.ElevatorArm.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.ElevatorArm.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d elevatorarm_setpoint = root_setpoint.append(new LoggedMechanismLigament2d(
-                "elevatorarm",
-                Constants.ElevatorArm.LENGTH,
-                Constants.ElevatorArm.ANGLE_OFFSET,
-                3,
-                new Color8Bit(Color.kViolet)));
+        private LoggedMechanismLigament2d elevatorArmNodeSetpoint =
+                rootNodeSetpoint.append(new LoggedMechanismLigament2d(
+                        "elevatorarm",
+                        Constants.ElevatorArm.LENGTH,
+                        Constants.ElevatorArm.ANGLE_OFFSET,
+                        LINE_WIDTH,
+                        new Color8Bit(Color.kViolet)));
 
         public void update(double angle) {
-            elevatorarm.setAngle(Units.radiansToDegrees(Constants.ElevatorArm.ANGLE_OFFSET + angle));
+            elevatorArmNode.setAngle(Units.radiansToDegrees(Constants.ElevatorArm.ANGLE_OFFSET + angle));
         }
 
         public void updateSetpoint(double angle) {
-            elevatorarm_setpoint.setAngle(Units.radiansToDegrees(Constants.ElevatorArm.ANGLE_OFFSET + angle));
+            elevatorArmNodeSetpoint.setAngle(Units.radiansToDegrees(Constants.ElevatorArm.ANGLE_OFFSET + angle));
         }
 
         @Override
@@ -255,60 +264,50 @@ public class RobotModel extends ManagedSubsystemBase {
             return POSE_COUNT;
         }
 
+        private static final Translation3d SHAFT_ORIGIN = new Translation3d(0.318, 0, 0.575);
+
         @Override
         public void updatePoses(Pose3d[] poses, int i) {
-            Pose3d pose = new Pose3d(0, 0, 0, new Rotation3d())
-                    .rotateAround(
-                            new Translation3d(0.318, 0, 0.575),
-                            new Rotation3d(0, -Units.degreesToRadians(elevatorarm.getAngle()), 0));
+            Pose3d pose = Pose3d.kZero.rotateAround(
+                    SHAFT_ORIGIN, new Rotation3d(0, -Units.degreesToRadians(elevatorArmNode.getAngle()), 0));
             poses[i] = new Pose3d(
-                    pose.getTranslation()
-                            .plus(new Translation3d(
-                                    0,
-                                    0,
-                                    (model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)
-                                            / Constants.Elevator.MAX_HEIGHT
-                                            * 1.44)),
+                    pose.getTranslation().plus(new Translation3d(0, 0, model.elevator.getSecondStageHeight())),
                     pose.getRotation());
         }
 
+        private static final double CORAL_ANGLE_IN_SHOOTER = 20;
+
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getCoralShooterTargetPose() {
-            Pose3d robotOrigin = new Pose3d();
+            Pose3d robotOrigin = Pose3d.kZero;
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
-            Pose3d pose = new Pose3d(0.32 + 0.166, 0.19, 0.54, new Rotation3d())
+            Pose3d pose = new Pose3d(SHAFT_ORIGIN.plus(new Translation3d(0.166, 0.19, -0.04)), Rotation3d.kZero)
                     .rotateAround(
-                            new Translation3d(0.318, 0, 0.575),
-                            new Rotation3d(0, -Units.degreesToRadians(elevatorarm.getAngle()), 0));
+                            SHAFT_ORIGIN, new Rotation3d(0, -Units.degreesToRadians(elevatorArmNode.getAngle()), 0));
             pose = new Pose3d(
-                    pose.getTranslation()
-                            .plus(new Translation3d(
-                                    0,
-                                    0,
-                                    (model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)
-                                            / Constants.Elevator.MAX_HEIGHT
-                                            * 1.44)),
+                    pose.getTranslation().plus(new Translation3d(0, 0, model.elevator.getSecondStageHeight())),
                     pose.getRotation());
 
             Pose3d coralShooterPose =
                     robotOrigin.transformBy(new Transform3d(pose.getTranslation(), pose.getRotation()));
 
-            return coralShooterPose.transformBy(
-                    new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + 20), 0)));
+            return coralShooterPose.transformBy(new Transform3d(
+                    0, 0, 0, new Rotation3d(0, Units.degreesToRadians(180 + 90 + CORAL_ANGLE_IN_SHOOTER), 0)));
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getAlgaeGrabberTargetPoseTop() {
             Pose3d robotOrigin = new Pose3d();
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
-            Pose3d pose = new Pose3d(0.32 + 0.18, -0.11, 0.68, new Rotation3d())
+            Pose3d pose = new Pose3d(SHAFT_ORIGIN.plus(new Translation3d(0.18, -0.11, 0.1)), new Rotation3d())
                     .rotateAround(
-                            new Translation3d(0.32, 0, 0.58),
-                            new Rotation3d(0, -Units.degreesToRadians(elevatorarm.getAngle()), 0));
+                            SHAFT_ORIGIN, new Rotation3d(0, -Units.degreesToRadians(elevatorArmNode.getAngle()), 0));
             pose = new Pose3d(
                     pose.getTranslation()
                             .plus(new Translation3d(
-                                    0, 0, model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)),
+                                    0, 0, model.elevator.elevatorNode.getLength() - Constants.Elevator.MIN_LENGTH)),
                     pose.getRotation());
 
             Pose3d algaeGrabberPose =
@@ -317,18 +316,18 @@ public class RobotModel extends ManagedSubsystemBase {
             return algaeGrabberPose.transformBy(new Transform3d(0, 0, 0, new Rotation3d()));
         }
 
+        @SuppressWarnings("java:S109") // specific xyz transform coordinates
         public Pose3d getAlgaeGrabberTargetPoseBottom() {
             Pose3d robotOrigin = new Pose3d();
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
-            Pose3d pose = new Pose3d(0.32 + 0.18, -0.11, 0.48, new Rotation3d())
+            Pose3d pose = new Pose3d(SHAFT_ORIGIN.plus(new Translation3d(0.18, -0.11, -0.1)), new Rotation3d())
                     .rotateAround(
-                            new Translation3d(0.32, 0, 0.58),
-                            new Rotation3d(0, -Units.degreesToRadians(elevatorarm.getAngle()), 0));
+                            SHAFT_ORIGIN, new Rotation3d(0, -Units.degreesToRadians(elevatorArmNode.getAngle()), 0));
             pose = new Pose3d(
                     pose.getTranslation()
                             .plus(new Translation3d(
-                                    0, 0, model.elevator.elevator.getLength() - Constants.Elevator.MIN_LENGTH)),
+                                    0, 0, model.elevator.elevatorNode.getLength() - Constants.Elevator.MIN_LENGTH)),
                     pose.getRotation());
 
             Pose3d algaeGrabberPose =
@@ -341,42 +340,44 @@ public class RobotModel extends ManagedSubsystemBase {
     public static class Climber implements RobotMechanism {
         public static final int POSE_COUNT = 1;
 
-        @AutoLogLevel(level = Level.DebugReal)
+        private static final double LINE_WIDTH = 3;
+
+        @AutoLogLevel(level = Level.DEBUG_REAL)
         private LoggedMechanism2d mechanism =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root = mechanism.getRoot(
+        private LoggedMechanismRoot2d rootNode = mechanism.getRoot(
                 "climber_root",
                 Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.Climber.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d climber = root.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d climberNode = rootNode.append(new LoggedMechanismLigament2d(
                 "climber",
                 Constants.Climber.LENGTH.in(Meters),
                 Constants.Climber.ANGLE_OFFSET,
-                3,
+                LINE_WIDTH,
                 new Color8Bit(Color.kPurple)));
 
-        @AutoLogLevel(level = Level.DebugReal)
-        private LoggedMechanism2d mechanism_setpoint =
+        @AutoLogLevel(level = Level.DEBUG_REAL)
+        private LoggedMechanism2d mechanismSetpoint =
                 new LoggedMechanism2d(Constants.Frame.FRAME_WIDTH, Constants.Frame.MAX_MECHANISM_HEIGHT);
 
-        private LoggedMechanismRoot2d root_setpoint = mechanism_setpoint.getRoot(
+        private LoggedMechanismRoot2d rootNodeSetpoint = mechanismSetpoint.getRoot(
                 "climber_root",
                 Constants.Climber.ROOT_MECHANISM_POSE.getX() + Constants.Frame.FRAME_WIDTH / 2.0,
                 Constants.Climber.ROOT_MECHANISM_POSE.getY());
-        private LoggedMechanismLigament2d climber_setpoint = root_setpoint.append(new LoggedMechanismLigament2d(
+        private LoggedMechanismLigament2d climberNodeSetpoint = rootNodeSetpoint.append(new LoggedMechanismLigament2d(
                 "climber",
                 Constants.Climber.LENGTH.in(Meters),
                 Constants.Climber.ANGLE_OFFSET,
-                3,
+                LINE_WIDTH,
                 new Color8Bit(Color.kViolet)));
 
         public void update(double angle) {
-            climber.setAngle(Units.radiansToDegrees(Constants.Climber.ANGLE_OFFSET + angle));
+            climberNode.setAngle(Units.radiansToDegrees(Constants.Climber.ANGLE_OFFSET + angle));
         }
 
         public void updateSetpoint(double angle) {
-            climber_setpoint.setAngle(Units.radiansToDegrees(Constants.Climber.ANGLE_OFFSET + angle));
+            climberNodeSetpoint.setAngle(Units.radiansToDegrees(Constants.Climber.ANGLE_OFFSET + angle));
         }
 
         @Override
@@ -384,12 +385,12 @@ public class RobotModel extends ManagedSubsystemBase {
             return POSE_COUNT;
         }
 
+        private static final Translation3d SHAFT_ORIGIN = new Translation3d(-0.2921, 0, 0.4097);
+
         @Override
         public void updatePoses(Pose3d[] poses, int i) {
             poses[i] = new Pose3d(0, 0, 0, new Rotation3d())
-                    .rotateAround(
-                            new Translation3d(-0.2921, 0, 0.4097),
-                            new Rotation3d(0, Units.degreesToRadians(climber.getAngle()), 0));
+                    .rotateAround(SHAFT_ORIGIN, new Rotation3d(0, Units.degreesToRadians(climberNode.getAngle()), 0));
         }
     }
 
@@ -398,25 +399,27 @@ public class RobotModel extends ManagedSubsystemBase {
     public final Climber climber = new Climber();
     public final CoralIntake coralIntake = new CoralIntake();
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public Pose3d[] mechanismPoses =
             new Pose3d[Elevator.POSE_COUNT + ElevatorArm.POSE_COUNT + CoralIntake.POSE_COUNT + Climber.POSE_COUNT];
 
     public RobotModel() {
-        periodic();
+        periodicManaged();
     }
 
     @Override
     public void periodicManaged() {
         updatePoses(elevator, elevatorArm, coralIntake, climber);
 
-        // Logger.recordOutput(
-        //     "IGamePositions",
-        //     IGamePosition.aggregatePositions(
-        //         Constants.Game.CoralPosition.values(),
-        //         Constants.Game.AlgaePosition.values(),
-        //         Constants.Game.SourcePosition.values(),
-        //         Constants.Game.ProcessorPosition.values()));
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.DEBUG_SIM)) {
+            Logger.recordOutput(
+                    "IGamePositions",
+                    IGamePosition.aggregatePositions(
+                            Constants.Game.CoralPosition.values(),
+                            Constants.Game.AlgaePosition.values(),
+                            Constants.Game.SourcePosition.values(),
+                            Constants.Game.ProcessorPosition.values()));
+        }
     }
 
     private void updatePoses(RobotMechanism... mechanisms) {
@@ -432,7 +435,7 @@ public class RobotModel extends ManagedSubsystemBase {
         }
     }
 
-    @AutoLogLevel(level = Level.Sim)
+    @AutoLogLevel(level = Level.SIM)
     private Pose3d[] getCoralPositions() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             List<Pose3d> coralPoses = SimulatedArena.getInstance().getGamePiecesPosesByType("Coral");
@@ -446,7 +449,8 @@ public class RobotModel extends ManagedSubsystemBase {
         }
     }
 
-    @AutoLogLevel(level = Level.Sim)
+    @AutoLogLevel(level = Level.SIM)
+    @SuppressWarnings("java:S2325") // rest of the getters are non-static
     private Pose3d[] getAlgaePositions() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             return SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
@@ -455,7 +459,8 @@ public class RobotModel extends ManagedSubsystemBase {
         }
     }
 
-    @AutoLogLevel(level = Level.Sim)
+    @AutoLogLevel(level = Level.SIM)
+    @SuppressWarnings("java:S2325") // rest of the getters are non-static
     public Pose2d getRobot() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             return RobotContainer.drivetrain.getSwerveDriveSimulation().getSimulatedDriveTrainPose();
@@ -465,9 +470,21 @@ public class RobotModel extends ManagedSubsystemBase {
     }
 
     public static class RobotCoral {
-        public Supplier<Pose3d> poseSupplier;
+        private Supplier<Pose3d> poseSupplier;
 
         public RobotCoral(Supplier<Pose3d> poseSupplier) {
+            this.poseSupplier = poseSupplier;
+        }
+
+        public Supplier<Pose3d> getPoseSupplier() {
+            return poseSupplier;
+        }
+
+        public Pose3d getPose() {
+            return poseSupplier.get();
+        }
+
+        public void setPoseSupplier(Supplier<Pose3d> poseSupplier) {
             this.poseSupplier = poseSupplier;
         }
     }

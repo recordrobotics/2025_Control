@@ -37,13 +37,13 @@ public abstract class AbstractLayout {
     protected abstract NetworkTable getNetworkTable();
 
     public SendableBuilder buildSendable(String topic, NTSendable sendable) {
-        SendableBuilderImpl m_builder = new SendableBuilderImpl();
-        m_builder.setTable(getNetworkTable().getSubTable(topic));
-        sendable.initSendable(m_builder);
-        m_builder.startListeners();
-        m_builder.update();
-        sendableBuilders.add(m_builder);
-        return m_builder;
+        SendableBuilderImpl builder = new SendableBuilderImpl();
+        builder.setTable(getNetworkTable().getSubTable(topic));
+        sendable.initSendable(builder);
+        builder.startListeners();
+        builder.update();
+        sendableBuilders.add(builder);
+        return builder;
     }
 
     public <T> void addValueSendable(String topic, Supplier<T> supplier, String type) {

@@ -5,8 +5,8 @@ import frc.robot.utils.KillableSubsystem;
 
 public class KillSpecified extends Command {
 
-    private KillableSubsystem[] _subsytems;
-    private Boolean _shouldContinuouslyExecute;
+    private KillableSubsystem[] subsytems;
+    private Boolean shouldContinuouslyExecute;
 
     /**
      * Kills all subsystems inputted
@@ -25,29 +25,31 @@ public class KillSpecified extends Command {
      */
     public KillSpecified(Boolean shouldContinuouslyExecute, KillableSubsystem... subsystems) {
         addRequirements(subsystems);
-        _subsytems = subsystems;
-        _shouldContinuouslyExecute = shouldContinuouslyExecute;
+        this.subsytems = subsystems;
+        this.shouldContinuouslyExecute = shouldContinuouslyExecute;
     }
 
     @Override
     public void initialize() {
-        for (KillableSubsystem subsystem : _subsytems) {
+        for (KillableSubsystem subsystem : subsytems) {
             subsystem.kill();
         }
     }
 
     @Override
     public void execute() {
-        for (KillableSubsystem subsystem : _subsytems) {
+        for (KillableSubsystem subsystem : subsytems) {
             subsystem.kill();
         }
     }
 
     @Override
-    public void end(boolean interrupted) {}
+    public void end(boolean interrupted) {
+        /* nothing to do on end */
+    }
 
     @Override
     public boolean isFinished() {
-        return !_shouldContinuouslyExecute;
+        return !shouldContinuouslyExecute;
     }
 }

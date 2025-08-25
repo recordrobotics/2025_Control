@@ -28,18 +28,22 @@ public class ElevatorMove extends Command {
         RobotContainer.elevatorArm.set(targetHeight.getArmAngle());
     }
 
+    private static final double STALL_VELOCITY_THRESHOLD = 0.03;
+    private static final double STALL_TIME_THRESHOLD = 0.1;
+
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
         RobotContainer.elevator.moveTo(targetHeight);
         RobotContainer.elevatorArm.set(targetHeight.getArmAngle());
 
-        if (Math.abs(RobotContainer.elevator.getCurrentVelocity()) >= 0.03 || RobotContainer.elevator.atGoal()) {
+        if (Math.abs(RobotContainer.elevator.getCurrentVelocity()) >= STALL_VELOCITY_THRESHOLD
+                || RobotContainer.elevator.atGoal()) {
             lastMoveTime = Timer.getTimestamp();
         } else {
             // If the elevator is not moving, check if it has been stationary for too long
             double currentTime = Timer.getTimestamp();
-            if (currentTime - lastMoveTime > 0.1) { // elevator stalled
+            if (currentTime - lastMoveTime > STALL_TIME_THRESHOLD) { // elevator stalled
                 // Reset the elevator and arm to their initial positions
                 RobotContainer.elevator.set(initialElevatorHeight);
                 RobotContainer.elevatorArm.set(initialArmAngle);
@@ -50,7 +54,9 @@ public class ElevatorMove extends Command {
 
     // Called once the command ends or is interrupted.
     @Override
-    public void end(boolean interrupted) {}
+    public void end(boolean interrupted) {
+        /* nothing to do on end */
+    }
 
     // Returns true when the command should end.
     @Override

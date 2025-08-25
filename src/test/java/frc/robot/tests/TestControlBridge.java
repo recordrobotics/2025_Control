@@ -14,16 +14,16 @@ import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.Game.SourcePosition;
 import frc.robot.RobotContainer;
 import frc.robot.control.AbstractControl;
-import frc.robot.dashboard.OverviewLayout;
+import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.DrivetrainControl;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
-public class TestControlBridge extends AbstractControl {
+public class TestControlBridge implements AbstractControl {
 
     static {
-        OverviewLayout.setTestControl(getInstance());
+        DashboardUI.Overview.setTestControl(getInstance());
     }
 
     private ReefLevelSwitchValue reefswitch = ReefLevelSwitchValue.L4;
@@ -34,8 +34,8 @@ public class TestControlBridge extends AbstractControl {
     private Transform2d acceleration = new Transform2d();
     private Transform2d jerk = new Transform2d();
 
-    private Map<Button, Integer> buttonStates = new HashMap<>();
-    private Map<Axis, Double> axisStates = new HashMap<>();
+    private EnumMap<Button, Integer> buttonStates = new EnumMap<>(Button.class);
+    private EnumMap<Axis, Double> axisStates = new EnumMap<>(Axis.class);
 
     private static TestControlBridge instance;
 
@@ -65,19 +65,25 @@ public class TestControlBridge extends AbstractControl {
             }
         }
 
-        Pair<Double, Double> xy =
-                getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive() || getClimbRelativeDrive()));
+        Pair<Double, Double> xy;
+        if (isCoralIntakeRelativeDriveTriggered()
+                || isElevatorRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
+            xy = getXYRaw();
+        } else {
+            xy = getXYOriented();
+        }
 
         double x = xy.getFirst() * getDirectionalSpeedLevel();
         double y = xy.getSecond() * getDirectionalSpeedLevel();
 
-        if (getCoralIntakeRelativeDrive()) {
+        if (isCoralIntakeRelativeDriveTriggered()) {
             y = -y;
-        } else if (getElevatorRelativeDrive()) {
+        } else if (isElevatorRelativeDriveTriggered()) {
             double temp = y;
             y = -x;
             x = -temp;
-        } else if (getClimbRelativeDrive()) {
+        } else if (isClimbRelativeDriveTriggered()) {
             double temp = y;
             y = x;
             x = temp;
@@ -104,7 +110,9 @@ public class TestControlBridge extends AbstractControl {
 
     @Override
     public DrivetrainControl getDrivetrainControl() {
-        if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive() || getClimbRelativeDrive()) {
+        if (isElevatorRelativeDriveTriggered()
+                || isCoralIntakeRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
             return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
         } else {
             return DrivetrainControl.createFieldRelative(
@@ -117,72 +125,75 @@ public class TestControlBridge extends AbstractControl {
 
     @Override
     public Transform2d getRawDriverInput() {
-        Pair<Double, Double> xy = getXY(false);
+        Pair<Double, Double> xy = getXYRaw();
         // Returns the raw driver input as a Transform2d
         return new Transform2d(xy.getFirst(), xy.getSecond(), Rotation2d.fromRadians(getSpin()));
     }
 
-    public Boolean getAutoAlign() {
+    public boolean isAutoAlignTriggered() {
         return getButton(Button.AUTO_ALIGN);
     }
 
-    public Boolean getAutoAlignNear() {
-        return getButton(Button.AUTO_ALIGN_NEAR);
-    }
-
-    public Boolean getElevatorRelativeDrive() {
+    public boolean isElevatorRelativeDriveTriggered() {
         return getButton(Button.ELEVATOR_RELATIVE_DRIVE)
-                || (getAutoScore()
+                || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() != ReefLevelSwitchValue.L1); // elevator relative when auto score
     }
 
-    public Boolean getCoralIntakeRelativeDrive() {
+    public boolean isCoralIntakeRelativeDriveTriggered() {
         return getButton(Button.CORAL_INTAKE_RELATIVE_DRIVE)
-                || (getAutoScore()
+                || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() == ReefLevelSwitchValue.L1); // coral relative when auto score
     }
 
-    public Boolean getClimbRelativeDrive() {
+    public boolean isClimbRelativeDriveTriggered() {
         return getButton(Button.CLIMB_RELATIVE_DRIVE);
     }
 
-    public Pair<Double, Double> getXY(boolean orient) {
-        double X = SimpleMath.ApplyThresholdAndSensitivity(
+    public Pair<Double, Double> getXYRaw() {
+        double x = SimpleMath.applyThresholdAndSensitivity(
                 axisStates.getOrDefault(Axis.X, 0.0),
                 Constants.Control.JOYSTICK_X_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
-        double Y = SimpleMath.ApplyThresholdAndSensitivity(
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
+        double y = SimpleMath.applyThresholdAndSensitivity(
                 axisStates.getOrDefault(Axis.Y, 0.0),
                 Constants.Control.JOYSTICK_Y_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
 
-        if (orient) return super.OrientXY(new Pair<Double, Double>(X, Y));
-        else return new Pair<Double, Double>(X, Y);
+        return new Pair<>(x, y);
+    }
+
+    public Pair<Double, Double> getXYOriented() {
+        Pair<Double, Double> xy = getXYRaw();
+        return AbstractControl.orientXY(new Pair<>(xy.getFirst(), xy.getSecond()));
     }
 
     public Double getSpin() {
         // Gets raw twist value
-        return SimpleMath.ApplyThresholdAndSensitivity(
-                -SimpleMath.Remap(axisStates.getOrDefault(Axis.TWIST, 0.0), -1.0, 1.0, -1.0, 1.0),
+        return SimpleMath.applyThresholdAndSensitivity(
+                -SimpleMath.remap(axisStates.getOrDefault(Axis.TWIST, 0.0), -1.0, 1.0, -1.0, 1.0),
                 Constants.Control.JOYSTICK_SPIN_THRESHOLD,
                 Constants.Control.JOYSTICK_SPIN_SENSITIVITY);
     }
 
-    public Boolean getHalfSpeed() {
-        return getAutoScore(); // half speed auto enabled when scoring
+    public boolean isHalfSpeedTriggered() {
+        return isAutoScoreTriggered(); // half speed auto enabled when scoring
     }
+
+    private static final double HALF_SPEED_DIRECTIONAL_DIVIDER = 3;
+    private static final double HALF_SPEED_SPIN_DIVIDER = 2;
 
     public Double getDirectionalSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 axisStates.getOrDefault(Axis.SPEED_LEVEL, 0.0),
                 1,
                 -1,
                 Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
                 Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 3;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_DIRECTIONAL_DIVIDER;
         }
 
         return speed;
@@ -190,90 +201,92 @@ public class TestControlBridge extends AbstractControl {
 
     public Double getSpinSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 axisStates.getOrDefault(Axis.SPEED_LEVEL, 0.0),
                 1,
                 -1,
                 Constants.Control.SPIN_SPEED_METER_LOW,
                 Constants.Control.SPIN_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 2;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_SPIN_DIVIDER;
         }
 
         return speed;
     }
 
     @Override
-    public Boolean getPoseReset() {
+    public boolean isPoseResetTriggered() {
         return getButton(Button.POSE_RESET);
     }
 
     @Override
-    public Boolean getLimelightReset() {
+    public boolean isLimelightResetTriggered() {
         return getButton(Button.LIMELIGHT_RESET);
     }
 
     @Override
-    public Boolean getKill() {
+    public boolean isKillTriggered() {
         return getButton(Button.KILL);
     }
 
     @Override
-    public void vibrate(RumbleType type, double value) {} // no vibrate
+    public void vibrate(RumbleType type, double value) {
+        /* no vibrate */
+    }
 
     @Override
-    public Boolean getAutoScore() {
+    public boolean isAutoScoreTriggered() {
         return getButton(Button.AUTO_SCORE);
     }
 
     @Override
-    public Boolean getElevatorL2() {
+    public boolean isElevatorL2Triggered() {
         return getButton(Button.L2);
     }
 
     @Override
-    public Boolean getElevatorL3() {
+    public boolean isElevatorL3Triggered() {
         return getButton(Button.L3);
     }
 
     @Override
-    public Boolean getElevatorL4() {
+    public boolean isElevatorL4Triggered() {
         return getButton(Button.L4);
     }
 
     @Override
-    public Boolean getCoralShoot() {
+    public boolean isCoralShootTriggered() {
         return getButton(Button.CORAL_SHOOT);
     }
 
     @Override
-    public Boolean getCoralGroundIntake() {
+    public boolean isCoralGroundIntakeTriggered() {
         return getButton(Button.GROUND_INTAKE);
     }
 
     @Override
-    public Boolean getCoralGroundIntakeSimple() {
+    public boolean isCoralGroundIntakeSimpleTriggered() {
         return getButton(Button.GROUND_INTAKE_SIMPLE);
     }
 
     @Override
-    public Boolean getReefAlgaeSimple() {
+    public boolean isReefAlgaeSimpleTriggered() {
         return getButton(Button.REEF_ALGAE_SIMPLE);
     }
 
     @Override
-    public Boolean getCoralSourceIntake() {
+    public boolean isCoralSourceIntakeTriggered() {
         return getButton(Button.SOURCE_INTAKE);
     }
 
     @Override
-    public Boolean getElevatorAlgaeLow() {
+    public boolean isElevatorAlgaeLowTriggered() {
         return getButton(Button.ALGAE_LOW);
     }
 
     @Override
-    public Boolean getElevatorAlgaeHigh() {
+    public boolean isElevatorAlgaeHighTriggered() {
         return getButton(Button.ALGAE_HIGH);
     }
 
@@ -283,59 +296,65 @@ public class TestControlBridge extends AbstractControl {
     }
 
     @Override
-    public Boolean getManualOverride() {
+    public boolean isManualOverrideTriggered() {
         return getButton(Button.MANUAL_OVERRIDE);
     }
 
     @Override
-    public Boolean getGroundAlgae() {
+    public boolean isGroundAlgaeTriggered() {
         return getButton(Button.GROUND_ALGAE);
     }
 
     @Override
-    public Boolean getScoreAlgae() {
+    public boolean isScoreAlgaeTriggered() {
         return getButton(Button.SCORE_ALGAE);
     }
 
     @Override
-    public Boolean getCoralIntakeScoreL1() {
+    public boolean isCoralIntakeScoreL1Triggered() {
         return getButton(Button.INTAKE_SCORE_L1);
     }
+
+    private static final LinearVelocity MANUAL_ELEVATOR_VELOCITY_MAX =
+            Centimeters.of(50).per(Second);
+    private static final AngularVelocity MANUAL_ELEVATOR_ARM_VELOCITY_MAX =
+            Degrees.of(180).per(Second);
 
     @Override
     public LinearVelocity getManualElevatorVelocity() {
         double axis = SimpleMath.povToVector((int) Math.round(axisStates.getOrDefault(Axis.POV, -1.0)))
                 .getY();
-        return Centimeters.of(50).per(Seconds).times(axis);
+        return MANUAL_ELEVATOR_VELOCITY_MAX.times(axis);
     }
 
     @Override
     public AngularVelocity getManualElevatorArmVelocity() {
         double axis = SimpleMath.povToVector((int) Math.round(axisStates.getOrDefault(Axis.POV, -1.0)))
                 .getX();
-        return Degrees.of(180).per(Seconds).times(axis);
+        return MANUAL_ELEVATOR_ARM_VELOCITY_MAX.times(axis);
     }
 
     @Override
-    public Boolean getClimb() {
+    public boolean isClimbTriggered() {
         return getButton(Button.CLIMB);
     }
 
+    private static final double AUTO_SOURCE_MAX_DISTANCE = 2.3; // meters
+    private static final double AUTO_SOURCE_MAX_ANGLE_DIFF = 80; // degrees
+
     @Override
-    public Boolean getCoralSourceIntakeAuto() {
+    public boolean isCoralSourceIntakeAutoTriggered() {
         Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
         SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());
 
-        boolean nearSource = closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < 2.3
+        return closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < AUTO_SOURCE_MAX_DISTANCE
                 && Math.abs(closestSource
                                 .getPose()
                                 .getRotation()
                                 .minus(robot.getRotation())
                                 .getMeasure()
                                 .abs(Degrees))
-                        < 80;
-
-        return nearSource;
+                        < AUTO_SOURCE_MAX_ANGLE_DIFF;
     }
 
     /**
@@ -400,8 +419,11 @@ public class TestControlBridge extends AbstractControl {
     }
 
     public enum Button {
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         AUTO_ALIGN,
-        AUTO_ALIGN_NEAR,
         ELEVATOR_RELATIVE_DRIVE,
         CORAL_INTAKE_RELATIVE_DRIVE,
         CLIMB_RELATIVE_DRIVE,
@@ -409,19 +431,67 @@ public class TestControlBridge extends AbstractControl {
         LIMELIGHT_RESET,
         KILL,
         AUTO_SCORE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         L2,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         L3,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         L4,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         CORAL_SHOOT,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         GROUND_INTAKE,
         GROUND_INTAKE_SIMPLE,
         REEF_ALGAE_SIMPLE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         SOURCE_INTAKE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         ALGAE_LOW,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         ALGAE_HIGH,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         MANUAL_OVERRIDE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         GROUND_ALGAE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         SCORE_ALGAE,
+        /**
+         * @deprecated This is an old control scheme trigger and will be removed
+         */
+        @Deprecated(forRemoval = true)
         INTAKE_SCORE_L1,
         CLIMB
     }

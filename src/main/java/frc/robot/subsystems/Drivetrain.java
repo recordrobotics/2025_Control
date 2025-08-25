@@ -13,21 +13,27 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
+import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.subsystems.io.real.SwerveModuleReal;
 import frc.robot.subsystems.io.sim.SwerveModuleSim;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.DCMotors;
 import frc.robot.utils.KillableSubsystem;
+import frc.robot.utils.ModuleConstants;
+import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.modifiers.DrivetrainControl;
 import frc.robot.utils.modifiers.IDrivetrainControlModifier;
@@ -42,23 +48,28 @@ import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
 import org.littletonrobotics.junction.Logger;
 
 /** Represents a swerve drive style drivetrain. */
-public class Drivetrain extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
+public final class Drivetrain extends KillableSubsystem implements PoweredSubsystem {
     // Creates swerve module objects
-    private final SwerveModule m_frontLeft;
-    private final SwerveModule m_frontRight;
-    private final SwerveModule m_backLeft;
-    private final SwerveModule m_backRight;
+    private final SwerveModule frontLeft;
+    private final SwerveModule frontRight;
+    private final SwerveModule backLeft;
+    private final SwerveModule backRight;
+
+    private static final int FL = 0;
+    private static final int FR = 1;
+    private static final int BL = 2;
+    private static final int BR = 3;
 
     private final SysIdRoutine sysIdRoutineDriveMotorsSpin;
     private final SysIdRoutine sysIdRoutineDriveMotorsForward;
     private final SysIdRoutine sysIdRoutineTurnMotors;
 
     // Creates swerve kinematics
-    private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
-            Constants.Swerve.frontLeftConstants.wheelLocation,
-            Constants.Swerve.frontRightConstants.wheelLocation,
-            Constants.Swerve.backLeftConstants.wheelLocation,
-            Constants.Swerve.backRightConstants.wheelLocation);
+    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
+            Constants.Swerve.FRONT_LEFT_WHEEL_LOCATION,
+            Constants.Swerve.FRONT_RIGHT_WHEEL_LOCATION,
+            Constants.Swerve.BACK_LEFT_WHEEL_LOCATION,
+            Constants.Swerve.BACK_RIGHT_WHEEL_LOCATION);
 
     // Create and configure a drivetrain simulation configuration
     private final DriveTrainSimulationConfig driveTrainSimulationConfig = DriveTrainSimulationConfig.Default()
@@ -97,40 +108,58 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
     public final List<IDrivetrainControlModifier> modifiers = new ArrayList<>();
 
     public SwerveModule getFrontLeftModule() {
-        return m_frontLeft;
+        return frontLeft;
     }
 
     public SwerveModule getFrontRightModule() {
-        return m_frontRight;
+        return frontRight;
     }
 
     public SwerveModule getBackLeftModule() {
-        return m_backLeft;
+        return backLeft;
     }
 
     public SwerveModule getBackRightModule() {
-        return m_backRight;
+        return backRight;
     }
 
     public SwerveDriveSimulation getSwerveDriveSimulation() {
         return swerveDriveSimulation;
     }
 
-    public Drivetrain() {
+    private static final double ENCODER_STABILIZATION_TIME = 2.3;
+
+    private static final Velocity<VoltageUnit> SYSID_DRIVE_RAMP_RATE =
+            Volts.of(3.0).per(Second);
+    private static final Voltage SYSID_DRIVE_STEP_VOLTAGE = Volts.of(3.0);
+    private static final Time SYSID_DRIVE_TIMEOUT = Seconds.of(1.5);
+
+    private static final Velocity<VoltageUnit> SYSID_TURN_RAMP_RATE =
+            Volts.of(6.0).per(Second);
+    private static final Voltage SYSID_TURN_STEP_VOLTAGE = Volts.of(2.0);
+    private static final Time SYSID_TURN_TIMEOUT = Seconds.of(1.0);
+
+    public Drivetrain() throws InvalidConfigException {
+        ModuleConstants frontLeftConstants = Constants.Swerve.getFrontLeftConstants();
+        ModuleConstants frontRightConstants = Constants.Swerve.getFrontRightConstants();
+        ModuleConstants backLeftConstants = Constants.Swerve.getBackLeftConstants();
+        ModuleConstants backRightConstants = Constants.Swerve.getBackRightConstants();
+
+        SwerveModuleIO frontLeftIO;
+        SwerveModuleIO frontRightIO;
+        SwerveModuleIO backLeftIO;
+        SwerveModuleIO backRightIO;
+
         if (Constants.RobotState.getMode() == Mode.REAL) {
             swerveDriveSimulation = null;
-            m_frontLeft = new SwerveModule(
-                    Constants.Swerve.frontLeftConstants,
-                    new SwerveModuleReal(Constants.Swerve.kDt, Constants.Swerve.frontLeftConstants));
-            m_frontRight = new SwerveModule(
-                    Constants.Swerve.frontRightConstants,
-                    new SwerveModuleReal(Constants.Swerve.kDt, Constants.Swerve.frontRightConstants));
-            m_backLeft = new SwerveModule(
-                    Constants.Swerve.backLeftConstants,
-                    new SwerveModuleReal(Constants.Swerve.kDt, Constants.Swerve.backLeftConstants));
-            m_backRight = new SwerveModule(
-                    Constants.Swerve.backRightConstants,
-                    new SwerveModuleReal(Constants.Swerve.kDt, Constants.Swerve.backRightConstants));
+
+            frontLeftIO = new SwerveModuleReal(Constants.Swerve.PERIODIC, frontLeftConstants);
+            frontRightIO = new SwerveModuleReal(Constants.Swerve.PERIODIC, frontRightConstants);
+            backLeftIO = new SwerveModuleReal(Constants.Swerve.PERIODIC, backLeftConstants);
+            backRightIO = new SwerveModuleReal(Constants.Swerve.PERIODIC, backRightConstants);
+
+            // delay to wait for encoder values to stabilize
+            Timer.delay(ENCODER_STABILIZATION_TIME);
         } else {
             /* Create a swerve drive simulation */
             swerveDriveSimulation = new SwerveDriveSimulation(
@@ -142,24 +171,21 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
             // Register the drivetrain simulation to the default simulation world
             SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
 
-            m_frontLeft = new SwerveModule(
-                    Constants.Swerve.frontLeftConstants,
-                    new SwerveModuleSim(swerveDriveSimulation.getModules()[0], Constants.Swerve.frontLeftConstants));
-            m_frontRight = new SwerveModule(
-                    Constants.Swerve.frontRightConstants,
-                    new SwerveModuleSim(swerveDriveSimulation.getModules()[1], Constants.Swerve.frontRightConstants));
-            m_backLeft = new SwerveModule(
-                    Constants.Swerve.backLeftConstants,
-                    new SwerveModuleSim(swerveDriveSimulation.getModules()[2], Constants.Swerve.backLeftConstants));
-            m_backRight = new SwerveModule(
-                    Constants.Swerve.backRightConstants,
-                    new SwerveModuleSim(swerveDriveSimulation.getModules()[3], Constants.Swerve.backRightConstants));
+            frontLeftIO = new SwerveModuleSim(swerveDriveSimulation.getModules()[FL], frontLeftConstants);
+            frontRightIO = new SwerveModuleSim(swerveDriveSimulation.getModules()[FR], frontRightConstants);
+            backLeftIO = new SwerveModuleSim(swerveDriveSimulation.getModules()[BL], backLeftConstants);
+            backRightIO = new SwerveModuleSim(swerveDriveSimulation.getModules()[BR], backRightConstants);
         }
 
+        frontLeft = new SwerveModule(frontLeftConstants, frontLeftIO);
+        frontRight = new SwerveModule(frontRightConstants, frontRightIO);
+        backLeft = new SwerveModule(backLeftConstants, backLeftIO);
+        backRight = new SwerveModule(backRightConstants, backRightIO);
+
         setpointGenerator = new SwerveSetpointGenerator(
-                Constants.Swerve.PPDefaultConfig,
+                Constants.Swerve.PP_DEFAULT_CONFIG,
                 Units.rotationsToRadians(
-                        Constants.Swerve.TurnMaxAngularVelocity) // The max rotation velocity of a swerve module in
+                        Constants.Swerve.TURN_MAX_ANGULAR_VELOCITY) // The max rotation velocity of a swerve module in
                 // radians per second
                 );
 
@@ -167,37 +193,34 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
         ChassisSpeeds currentSpeeds = getChassisSpeeds();
         SwerveModuleState[] currentStates = getModuleStates();
         previousSetpoint = new SwerveSetpoint(
-                currentSpeeds, currentStates, DriveFeedforwards.zeros(Constants.Swerve.PPDefaultConfig.numModules));
+                currentSpeeds, currentStates, DriveFeedforwards.zeros(Constants.Swerve.PP_DEFAULT_CONFIG.numModules));
 
         sysIdRoutineDriveMotorsSpin = new SysIdRoutine(
-                // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
                 new SysIdRoutine.Config(
-                        Volts.of(3.0).per(Second),
-                        Volts.of(3.0),
-                        Seconds.of(1.5),
-                        (state -> Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsSpin, null, this));
+                        SYSID_DRIVE_RAMP_RATE,
+                        SYSID_DRIVE_STEP_VOLTAGE,
+                        SYSID_DRIVE_TIMEOUT,
+                        state -> Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString())),
+                new SysIdRoutine.Mechanism(this::sysIdOnlyDriveMotorsSpin, null, this));
 
         sysIdRoutineDriveMotorsForward = new SysIdRoutine(
-                // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
                 new SysIdRoutine.Config(
-                        Volts.of(3.0).per(Second),
-                        Volts.of(3.0),
-                        Seconds.of(1.5),
-                        (state -> Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism(this::SysIdOnlyDriveMotorsForward, null, this));
+                        SYSID_DRIVE_RAMP_RATE,
+                        SYSID_DRIVE_STEP_VOLTAGE,
+                        SYSID_DRIVE_TIMEOUT,
+                        state -> Logger.recordOutput("Drivetrain/Drive/SysIdTestState", state.toString())),
+                new SysIdRoutine.Mechanism(this::sysIdOnlyDriveMotorsForward, null, this));
 
         sysIdRoutineTurnMotors = new SysIdRoutine(
-                // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
                 new SysIdRoutine.Config(
-                        Volts.of(6).per(Second),
-                        Volts.of(2),
-                        Seconds.of(1.0),
-                        (state -> Logger.recordOutput("Drivetrain/Turn/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism(this::SysIdOnlyTurnMotors, null, this));
+                        SYSID_TURN_RAMP_RATE,
+                        SYSID_TURN_STEP_VOLTAGE,
+                        SYSID_TURN_TIMEOUT,
+                        state -> Logger.recordOutput("Drivetrain/Turn/SysIdTestState", state.toString())),
+                new SysIdRoutine.Mechanism(this::sysIdOnlyTurnMotors, null, this));
     }
 
-    private DrivetrainControl getDrivetrainControl() {
+    private static DrivetrainControl getDrivetrainControl() {
         if (RobotState.isTeleop()) {
             return DashboardUI.Overview.getControl().getDrivetrainControl();
         } else {
@@ -211,10 +234,8 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
 
         int applyCount = 0;
         for (IDrivetrainControlModifier modifier : modifiers) {
-            if (modifier.isEnabled()) {
-                if (modifier.apply(drivetrainControl)) {
-                    applyCount++;
-                }
+            if (modifier.isEnabled() && modifier.apply(drivetrainControl)) {
+                applyCount++;
             }
         }
 
@@ -227,18 +248,18 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
         previousSetpoint = setpointGenerator.generateSetpoint(
                 previousSetpoint, // The previous setpoint
                 nonDiscreteSpeeds, // The desired target speeds
-                0.02 // The loop time of the robot code, in seconds
+                RobotContainer.ROBOT_PERIODIC // The loop time of the robot code, in seconds
                 );
 
         SwerveModuleState[] swerveModuleStates = previousSetpoint.moduleStates();
 
         // Sets state for each module
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainSpin
-                && SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DrivetrainForward) {
-            m_frontLeft.setDesiredState(swerveModuleStates[0]);
-            m_frontRight.setDesiredState(swerveModuleStates[1]);
-            m_backLeft.setDesiredState(swerveModuleStates[2]);
-            m_backRight.setDesiredState(swerveModuleStates[3]);
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DRIVETRAIN_SPIN
+                && SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DRIVETRAIN_FORWARD) {
+            frontLeft.setDesiredState(swerveModuleStates[FL]);
+            frontRight.setDesiredState(swerveModuleStates[FR]);
+            backLeft.setDesiredState(swerveModuleStates[BL]);
+            backRight.setDesiredState(swerveModuleStates[BR]);
         }
 
         lastModuleSetpoints = swerveModuleStates;
@@ -248,112 +269,106 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
     public void periodicManaged() {
         driveInternal();
 
-        m_frontLeft.periodic();
-        m_frontRight.periodic();
-        m_backLeft.periodic();
-        m_backRight.periodic();
+        frontLeft.periodic();
+        frontRight.periodic();
+        backLeft.periodic();
+        backRight.periodic();
     }
 
     @Override
     public void simulationPeriodicManaged() {
-        m_frontLeft.simulationPeriodic();
-        m_frontRight.simulationPeriodic();
-        m_backLeft.simulationPeriodic();
-        m_backRight.simulationPeriodic();
+        frontLeft.simulationPeriodic();
+        frontRight.simulationPeriodic();
+        backLeft.simulationPeriodic();
+        backRight.simulationPeriodic();
     }
 
-    public void SysIdOnlyDriveMotorsSpin(Voltage volts) {
-        m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(360 - 45)));
-        m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-        m_backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 45)));
-        m_backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 - 45)));
+    public void sysIdOnlyDriveMotorsSpin(Voltage volts) {
+        frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(360 - 45.0)));
+        frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45.0)));
+        backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 45.0)));
+        backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 - 45.0)));
 
-        m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
     }
 
-    public void SysIdOnlyDriveMotorsForward(Voltage volts) {
+    public void sysIdOnlyDriveMotorsForward(Voltage volts) {
 
         SwerveModuleState state = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
 
-        m_frontLeft.setDesiredState(state);
-        m_frontRight.setDesiredState(state);
-        m_backLeft.setDesiredState(state);
-        m_backRight.setDesiredState(state);
+        frontLeft.setDesiredState(state);
+        frontRight.setDesiredState(state);
+        backLeft.setDesiredState(state);
+        backRight.setDesiredState(state);
 
-        m_frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        backLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
+        backRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetDriveMotorVolts() {
-        // average of all drive motors .get() values
-        return (m_frontLeft.getDriveMotorVoltsSysIdOnly()
-                        + m_frontRight.getDriveMotorVoltsSysIdOnly()
-                        + m_backLeft.getDriveMotorVoltsSysIdOnly()
-                        + m_backRight.getDriveMotorVoltsSysIdOnly())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetDriveMotorVolts() {
+        return SimpleMath.average4(
+                frontLeft.getDriveMotorVoltsSysIdOnly(),
+                frontRight.getDriveMotorVoltsSysIdOnly(),
+                backLeft.getDriveMotorVoltsSysIdOnly(),
+                backRight.getDriveMotorVoltsSysIdOnly());
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetDriveMotorPosition() {
-        // average
-        return (m_frontLeft.getDriveWheelDistance()
-                        + m_frontRight.getDriveWheelDistance()
-                        + m_backLeft.getDriveWheelDistance()
-                        + m_backRight.getDriveWheelDistance())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetDriveMotorPosition() {
+        return SimpleMath.average4(
+                frontLeft.getDriveWheelDistance(),
+                frontRight.getDriveWheelDistance(),
+                backLeft.getDriveWheelDistance(),
+                backRight.getDriveWheelDistance());
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetDriveMotorVelocity() {
-        // average
-        return (m_frontLeft.getDriveWheelVelocity()
-                        + m_frontRight.getDriveWheelVelocity()
-                        + m_backLeft.getDriveWheelVelocity()
-                        + m_backRight.getDriveWheelVelocity())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetDriveMotorVelocity() {
+        return SimpleMath.average4(
+                frontLeft.getDriveWheelVelocity(),
+                frontRight.getDriveWheelVelocity(),
+                backLeft.getDriveWheelVelocity(),
+                backRight.getDriveWheelVelocity());
     }
 
-    public void SysIdOnlyTurnMotors(Voltage volts) {
-        m_frontLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
-        m_frontRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
-        m_backRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+    public void sysIdOnlyTurnMotors(Voltage volts) {
+        frontLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+        frontRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+        backLeft.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
+        backRight.setTurnMotorVoltsSysIdOnly(volts.in(Volts));
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetTurnMotorVolts() {
-        // average of all turn motors .get() values
-        return (m_frontLeft.getTurnMotorVoltsSysIdOnly()
-                        + m_frontRight.getTurnMotorVoltsSysIdOnly()
-                        + m_backLeft.getTurnMotorVoltsSysIdOnly()
-                        + m_backRight.getTurnMotorVoltsSysIdOnly())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetTurnMotorVolts() {
+        return SimpleMath.average4(
+                frontLeft.getTurnMotorVoltsSysIdOnly(),
+                frontRight.getTurnMotorVoltsSysIdOnly(),
+                backLeft.getTurnMotorVoltsSysIdOnly(),
+                backRight.getTurnMotorVoltsSysIdOnly());
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetTurnMotorPosition() {
-        // average
-        return (m_frontLeft.getTurnWheelRotation2d().getRotations()
-                        + m_frontRight.getTurnWheelRotation2d().getRotations()
-                        + m_backLeft.getTurnWheelRotation2d().getRotations()
-                        + m_backRight.getTurnWheelRotation2d().getRotations())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetTurnMotorPosition() {
+        return SimpleMath.average4(
+                frontLeft.getTurnWheelRotation2d().getRotations(),
+                frontRight.getTurnWheelRotation2d().getRotations(),
+                backLeft.getTurnWheelRotation2d().getRotations(),
+                backRight.getTurnWheelRotation2d().getRotations());
     }
 
-    @AutoLogLevel(level = Level.Sysid)
-    public double SysIdOnlyGetTurnMotorVelocity() {
-        // average
-        return (m_frontLeft.getTurnWheelVelocity()
-                        + m_frontRight.getTurnWheelVelocity()
-                        + m_backLeft.getTurnWheelVelocity()
-                        + m_backRight.getTurnWheelVelocity())
-                / 4;
+    @AutoLogLevel(level = Level.SYSID)
+    public double sysIdOnlyGetTurnMotorVelocity() {
+        return SimpleMath.average4(
+                frontLeft.getTurnWheelVelocity(),
+                frontRight.getTurnWheelVelocity(),
+                backLeft.getTurnWheelVelocity(),
+                backRight.getTurnWheelVelocity());
     }
 
     /**
@@ -365,10 +380,10 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
      */
     @Override
     public void kill() {
-        m_frontLeft.stop();
-        m_frontRight.stop();
-        m_backLeft.stop();
-        m_backRight.stop();
+        frontLeft.stop();
+        frontRight.stop();
+        backLeft.stop();
+        backRight.stop();
     }
 
     /**
@@ -379,13 +394,13 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
      *
      * @return The current relative chassis speeds as a ChassisSpeeds object.
      */
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public ChassisSpeeds getChassisSpeeds() {
-        return m_kinematics.toChassisSpeeds(
-                m_frontLeft.getModuleState(),
-                m_frontRight.getModuleState(),
-                m_backLeft.getModuleState(),
-                m_backRight.getModuleState());
+        return kinematics.toChassisSpeeds(
+                frontLeft.getModuleState(),
+                frontRight.getModuleState(),
+                backLeft.getModuleState(),
+                backRight.getModuleState());
     }
 
     /**
@@ -396,16 +411,16 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
      *
      * @return The current relative chassis acceleration as a ChassisSpeeds object.
      */
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public ChassisSpeeds getChassisAcceleration() {
-        return m_kinematics.toChassisSpeeds(
-                m_frontLeft.getModuleStateAcceleration(),
-                m_frontRight.getModuleStateAcceleration(),
-                m_backLeft.getModuleStateAcceleration(),
-                m_backRight.getModuleStateAcceleration());
+        return kinematics.toChassisSpeeds(
+                frontLeft.getModuleStateAcceleration(),
+                frontRight.getModuleStateAcceleration(),
+                backLeft.getModuleStateAcceleration(),
+                backRight.getModuleStateAcceleration());
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public int getModifiersAppliedCount() {
         return lastModifiersAppliedCount;
     }
@@ -416,29 +431,29 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
      * @return The SwerveDriveKinematics object associated with this drivetrain.
      */
     public SwerveDriveKinematics getKinematics() {
-        return m_kinematics;
+        return kinematics;
     }
 
     public SwerveModulePosition[] getModulePositions() {
         return new SwerveModulePosition[] {
-            m_frontLeft.getModulePosition(),
-            m_frontRight.getModulePosition(),
-            m_backLeft.getModulePosition(),
-            m_backRight.getModulePosition()
+            frontLeft.getModulePosition(),
+            frontRight.getModulePosition(),
+            backLeft.getModulePosition(),
+            backRight.getModulePosition()
         };
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public SwerveModuleState[] getModuleStates() {
         return new SwerveModuleState[] {
-            m_frontLeft.getModuleState(),
-            m_frontRight.getModuleState(),
-            m_backLeft.getModuleState(),
-            m_backRight.getModuleState()
+            frontLeft.getModuleState(),
+            frontRight.getModuleState(),
+            backLeft.getModuleState(),
+            backRight.getModuleState()
         };
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public SwerveModuleState[] getModuleSetpoints() {
         return lastModuleSetpoints;
     }
@@ -468,26 +483,19 @@ public class Drivetrain extends KillableSubsystem implements ShuffleboardPublish
     }
 
     /** frees up all hardware allocations */
-    public void close() throws Exception {
-        m_backLeft.close();
-        m_backRight.close();
-        m_frontLeft.close();
-        m_frontRight.close();
-    }
-
     @Override
-    public void setupShuffleboard() {
-        SwerveModule[] modules = {m_frontLeft, m_frontRight, m_backLeft, m_backRight};
-        for (SwerveModule module : modules) {
-            module.setupShuffleboard();
-        }
+    public void close() throws Exception {
+        backLeft.close();
+        backRight.close();
+        frontLeft.close();
+        frontRight.close();
     }
 
     @Override
     public double getCurrentDrawAmps() {
-        return m_frontLeft.getCurrentDrawAmps()
-                + m_frontRight.getCurrentDrawAmps()
-                + m_backLeft.getCurrentDrawAmps()
-                + m_backRight.getCurrentDrawAmps();
+        return frontLeft.getCurrentDrawAmps()
+                + frontRight.getCurrentDrawAmps()
+                + backLeft.getCurrentDrawAmps()
+                + backRight.getCurrentDrawAmps();
     }
 }

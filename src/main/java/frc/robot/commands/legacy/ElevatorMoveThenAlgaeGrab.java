@@ -12,7 +12,11 @@ import frc.robot.commands.ElevatorMove;
 import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 
-public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
+/**
+ * @deprecated This is an old control scheme command and will be removed
+ */
+@Deprecated(forRemoval = true)
+public final class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
 
     private Command algaeGrabberLightsCommand;
 
@@ -57,9 +61,13 @@ public class ElevatorMoveThenAlgaeGrab extends SequentialCommandGroup {
         RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF);
     }
 
+    /**
+     * @deprecated This is an old control scheme command and will be removed
+     */
+    @Deprecated(forRemoval = true)
     public static Command create(ElevatorHeight targetHeight, boolean withProxy) {
         ElevatorMoveThenAlgaeGrab cmd = new ElevatorMoveThenAlgaeGrab(targetHeight, withProxy);
-        return cmd.handleInterrupt( // reffers to the method that registers a callback on interrupt
-                cmd::handleInterrupt); // reffers to the method that handles the interrupt
+        return cmd.handleInterrupt( // refers to the method that registers a callback on interrupt
+                cmd::handleInterrupt); // refers to the method that handles the interrupt
     }
 }

@@ -120,5 +120,7 @@ public class CoralIntakeReal implements CoralIntakeIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

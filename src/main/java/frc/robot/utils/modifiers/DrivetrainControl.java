@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
-public class DrivetrainControl {
+public final class DrivetrainControl {
 
     private Transform2d driverVelocity;
     private Transform2d driverAcceleration;
@@ -61,7 +61,7 @@ public class DrivetrainControl {
      *     stacking modifiers challenging. Only use this if you know what you're doing
      *     {@code @SuppressWarnings("deprecation")}
      */
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public Transform2d getDriverVelocity() {
         return driverVelocity;
     }

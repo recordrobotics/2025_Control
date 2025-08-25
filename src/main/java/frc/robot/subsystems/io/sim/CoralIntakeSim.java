@@ -22,13 +22,11 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
-import frc.robot.commands.simulation.CoralIntakeToElevator;
 import frc.robot.subsystems.io.CoralIntakeIO;
 import frc.robot.utils.DCMotors;
 import frc.robot.utils.IntakeSimulationUtils;
 import frc.robot.utils.ProjectileSimulationUtils;
 import frc.robot.utils.SimpleMath;
-import java.util.Set;
 import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
@@ -38,6 +36,9 @@ import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgae
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnField;
 
 public class CoralIntakeSim implements CoralIntakeIO {
+
+    private static final Distance WIDTH = Inches.of(21.25);
+    private static final Distance LENGTH_EXTENDED = Inches.of(8.419554);
 
     private final double periodicDt;
 
@@ -51,7 +52,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
     private final DCMotor armMotor = DCMotors.getKrakenX44(1);
 
     private final DCMotorSim wheelSimModel = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(Constants.CoralIntake.wheel_kV, Constants.CoralIntake.wheel_kA),
+            LinearSystemId.createDCMotorSystem(Constants.CoralIntake.WHEEL_KV, Constants.CoralIntake.WHEEL_KA),
             wheelMotor,
             0.01,
             0.01);
@@ -71,6 +72,8 @@ public class CoralIntakeSim implements CoralIntakeIO {
     private final AbstractDriveTrainSimulation drivetrainSim;
     private final IntakeSimulation intakeSimulation;
 
+    private static final double INTAKE_ANGLE_THRESHOLD = Units.degreesToRadians(30); // TODO check with real-world tests
+
     public CoralIntakeSim(double periodicDt, AbstractDriveTrainSimulation drivetrainSim) {
         this.periodicDt = periodicDt;
         this.drivetrainSim = drivetrainSim;
@@ -80,10 +83,8 @@ public class CoralIntakeSim implements CoralIntakeIO {
         wheelSim = new SparkMaxSim(wheel, wheelMotor);
         armSim = arm.getSimState();
 
-        Distance width = Inches.of(21.25);
-        Distance lengthExtended = Inches.of(8.419554);
         Rectangle intakeRect = IntakeSimulationUtils.getIntakeRectangle(
-                drivetrainSim, width.in(Meters), lengthExtended.in(Meters), IntakeSimulation.IntakeSide.LEFT);
+                drivetrainSim, WIDTH.in(Meters), LENGTH_EXTENDED.in(Meters), IntakeSimulation.IntakeSide.LEFT);
         intakeRect.translate(Constants.CoralIntake.INTAKE_X_OFFSET.in(Meters), 0);
 
         intakeSimulation = new IntakeSimulation("Coral", drivetrainSim, intakeRect, 1);
@@ -97,8 +98,8 @@ public class CoralIntakeSim implements CoralIntakeIO {
                                     .getRadians()
                             + Math.PI)
                     % Math.PI; // intake is bidirectional
-            boolean coralAlignedWithRobot = SimpleMath.isWithinTolerance(
-                    coralPointing, robotPointing, Units.degreesToRadians(30)); // TODO check with real-world tests
+            boolean coralAlignedWithRobot =
+                    SimpleMath.isWithinTolerance(coralPointing, robotPointing, INTAKE_ANGLE_THRESHOLD);
             return isNotStack && coralAlignedWithRobot;
         });
     }
@@ -133,7 +134,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
                 * Units.radiansToRotations(wheelSimModel.getAngularPositionRad()));
         wheelSim.setVelocity(Constants.CoralIntake.WHEEL_GEAR_RATIO
                 * Units.radiansToRotations(wheelSimModel.getAngularVelocityRadPerSec())
-                * 60.0);
+                * SimpleMath.SECONDS_PER_MINUTE);
 
         // Update internal raw position offset
         wheel.getEncoder().setPosition(newValue);
@@ -236,8 +237,19 @@ public class CoralIntakeSim implements CoralIntakeIO {
 
     private boolean hadGamePieces = false;
 
+    private static final double INTAKE_VELOCITY_THRESHOLD = 1.0;
+    private static final double INTAKE_ARM_MAX_ANGLE_FOR_PROJECTILE_EJECT = Units.degreesToRadians(70);
+    private static final double CORAL_PROJECTILE_EJECT_SPEED = 2.0;
+    private static final double CORAL_GROUND_TOUCH_HEIGHT = 0.2;
+
     @Override
     public void simulationPeriodic() {
+        updateMotorSimulations();
+        handleIntakeSimulation();
+        updateGamePieceState();
+    }
+
+    private void updateMotorSimulations() {
         armSim.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         double wheelVoltage = wheelSim.getAppliedOutput() * wheelSim.getBusVoltage();
@@ -252,7 +264,7 @@ public class CoralIntakeSim implements CoralIntakeIO {
         wheelSim.iterate(
                 Constants.CoralIntake.WHEEL_GEAR_RATIO
                         * Units.radiansToRotations(wheelSimModel.getAngularVelocityRadPerSec())
-                        * 60.0,
+                        * SimpleMath.SECONDS_PER_MINUTE,
                 RobotController.getBatteryVoltage(),
                 periodicDt);
 
@@ -260,100 +272,73 @@ public class CoralIntakeSim implements CoralIntakeIO {
                 * Units.radiansToRotations(armSimModel.getAngleRads() - Constants.CoralIntake.ARM_START_POS));
         armSim.setRotorVelocity(
                 Constants.CoralIntake.ARM_GEAR_RATIO * Units.radiansToRotations(armSimModel.getVelocityRadPerSec()));
+    }
 
-        if (RobotContainer.coralIntake.getWheelVelocity() < -1) {
+    private void handleIntakeSimulation() {
+        double wheelVelocity = RobotContainer.coralIntake.getWheelVelocity();
+
+        if (wheelVelocity < -INTAKE_VELOCITY_THRESHOLD) {
             intakeSimulation.startIntake();
-        } else if (RobotContainer.coralIntake.getWheelVelocity() > 1) {
-            if (intakeSimulation.obtainGamePieceFromIntake()
-                    && RobotContainer.coralIntake.getArmAngle() < Units.degreesToRadians(70)) {
-                Pose3d ejectPose = RobotContainer.model
-                        .coralIntake
-                        .getCoralTargetPose()
-                        .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
-                RobotContainer.model.getRobotCoral().poseSupplier = () -> null;
-
-                Rotation2d rot = drivetrainSim.getSimulatedDriveTrainPose().getRotation();
-                double launchingSpeed = 2.0;
-
-                SimulatedArena.getInstance()
-                        .addGamePieceProjectile(new GamePieceProjectile(
-                                        ReefscapeCoralOnField.REEFSCAPE_CORAL_INFO,
-                                        // Obtain robot position from drive simulation
-                                        drivetrainSim
-                                                .getSimulatedDriveTrainPose()
-                                                .getTranslation()
-                                                .plus(ejectPose
-                                                        .toPose2d()
-                                                        .getTranslation()
-                                                        .rotateBy(rot)),
-                                        ProjectileSimulationUtils.calculateInitialProjectileVelocityMPS(
-                                                ejectPose.toPose2d().getTranslation(),
-                                                drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
-                                                rot.plus(Rotation2d.kCCW_90deg),
-                                                launchingSpeed * Math.cos(RobotContainer.coralIntake.getArmAngle())),
-                                        ejectPose.getZ(),
-                                        launchingSpeed * Math.sin(RobotContainer.coralIntake.getArmAngle()),
-                                        RobotContainer.model
-                                                .coralIntake
-                                                .getCoralTargetPose()
-                                                .getRotation())
-                                .withTouchGroundHeight(0.2)
-                                .enableBecomesGamePieceOnFieldAfterTouchGround());
-            }
+        } else if (wheelVelocity > INTAKE_VELOCITY_THRESHOLD) {
+            handleCoralEjection();
             intakeSimulation.stopIntake();
         } else {
             intakeSimulation.stopIntake();
         }
+    }
 
+    private void handleCoralEjection() {
+        if (intakeSimulation.obtainGamePieceFromIntake()
+                && RobotContainer.coralIntake.getArmAngle() < INTAKE_ARM_MAX_ANGLE_FOR_PROJECTILE_EJECT) {
+            createCoralProjectile();
+        }
+    }
+
+    private void createCoralProjectile() {
+        Pose3d ejectPose = RobotContainer.model
+                .coralIntake
+                .getCoralTargetPose()
+                .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
+        RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
+
+        Rotation2d rot = drivetrainSim.getSimulatedDriveTrainPose().getRotation();
+
+        SimulatedArena.getInstance()
+                .addGamePieceProjectile(new GamePieceProjectile(
+                                ReefscapeCoralOnField.REEFSCAPE_CORAL_INFO,
+                                drivetrainSim
+                                        .getSimulatedDriveTrainPose()
+                                        .getTranslation()
+                                        .plus(ejectPose
+                                                .toPose2d()
+                                                .getTranslation()
+                                                .rotateBy(rot)),
+                                ProjectileSimulationUtils.calculateInitialProjectileVelocityMPS(
+                                        ejectPose.toPose2d().getTranslation(),
+                                        drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+                                        rot.plus(Rotation2d.kCCW_90deg),
+                                        CORAL_PROJECTILE_EJECT_SPEED
+                                                * Math.cos(RobotContainer.coralIntake.getArmAngle())),
+                                ejectPose.getZ(),
+                                CORAL_PROJECTILE_EJECT_SPEED * Math.sin(RobotContainer.coralIntake.getArmAngle()),
+                                RobotContainer.model
+                                        .coralIntake
+                                        .getCoralTargetPose()
+                                        .getRotation())
+                        .withTouchGroundHeight(CORAL_GROUND_TOUCH_HEIGHT)
+                        .enableBecomesGamePieceOnFieldAfterTouchGround());
+    }
+
+    private void updateGamePieceState() {
         if (intakeSimulation.getGamePiecesAmount() != 0) {
             if (!hadGamePieces) {
-                RobotContainer.model.getRobotCoral().poseSupplier =
-                        () -> RobotContainer.model.coralIntake.getCoralTargetPose();
+                RobotContainer.model
+                        .getRobotCoral()
+                        .setPoseSupplier(RobotContainer.model.coralIntake::getCoralTargetPose);
                 hadGamePieces = true;
             }
         } else {
             hadGamePieces = false;
-        }
-
-        // source intake simulation
-        if (RobotContainer.elevatorHead.getVelocity() > 0.6
-                && RobotContainer.model.getRobotCoral().poseSupplier.get() == null) {
-            Pose3d sourceTarget = RobotContainer.model.elevator.getCoralIntakeEjectFinalPose();
-
-            Set<GamePieceProjectile> projectiles = SimulatedArena.getInstance().gamePieceLaunched();
-            for (GamePieceProjectile projectile : projectiles) {
-                if (projectile.gamePieceType.equals("Coral")) {
-                    if (projectile.getPose3d().getTranslation().getDistance(sourceTarget.getTranslation()) < 0.2
-                            && // position matches
-                            projectile
-                                            .getPose3d()
-                                            .getRotation()
-                                            .toVector()
-                                            .unit()
-                                            .dot(sourceTarget
-                                                    .getRotation()
-                                                    .toVector()
-                                                    .unit())
-                                    < -0.9
-                            && // TODO: rotation matches (always -1 idk why but works anyways)
-                            projectile
-                                            .getVelocity3dMPS()
-                                            .toVector()
-                                            .unit()
-                                            .dot(sourceTarget
-                                                    .getRotation()
-                                                    .toVector()
-                                                    .unit())
-                                    < -0.2 // velocity is in direction of target
-                    ) {
-                        SimulatedArena.getInstance().removeProjectile(projectile);
-                        Pose3d pose = projectile.getPose3d();
-                        RobotContainer.model.getRobotCoral().poseSupplier = () -> pose;
-                        new CoralIntakeToElevator().schedule();
-                        break;
-                    }
-                }
-            }
         }
     }
 }

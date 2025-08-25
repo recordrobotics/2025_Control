@@ -14,22 +14,34 @@ public class CoralIntakeStub implements CoralIntakeIO {
     }
 
     @Override
-    public void applyArmTalonFXConfig(TalonFXConfiguration configuration) {}
+    public void applyArmTalonFXConfig(TalonFXConfiguration configuration) {
+        /* stub */
+    }
 
     @Override
-    public void setWheelVoltage(double outputVolts) {}
+    public void setWheelVoltage(double outputVolts) {
+        /* stub */
+    }
 
     @Override
-    public void setArmVoltage(double outputVolts) {}
+    public void setArmVoltage(double outputVolts) {
+        /* stub */
+    }
 
     @Override
-    public void setWheelPosition(double newValue) {}
+    public void setWheelPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setArmPosition(double newValue) {}
+    public void setArmPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setArmMotionMagic(MotionMagicExpoVoltage request) {}
+    public void setArmMotionMagic(MotionMagicExpoVoltage request) {
+        /* stub */
+    }
 
     @Override
     public double getWheelVoltage() {
@@ -62,10 +74,14 @@ public class CoralIntakeStub implements CoralIntakeIO {
     }
 
     @Override
-    public void setWheelPercent(double newValue) {}
+    public void setWheelPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setArmPercent(double newValue) {}
+    public void setArmPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getWheelPercent() {
@@ -88,8 +104,12 @@ public class CoralIntakeStub implements CoralIntakeIO {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        /* stub */
+    }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 }

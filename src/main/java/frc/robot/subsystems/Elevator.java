@@ -12,26 +12,27 @@ import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorIO;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.EncoderResettableSubsystem;
-import frc.robot.utils.KillableSubsystem;
+import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SysIdManager;
 import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 
-public class Elevator extends KillableSubsystem
-        implements ShuffleboardPublisher, PoweredSubsystem, EncoderResettableSubsystem {
+public final class Elevator extends ManagedSubsystemBase implements PoweredSubsystem, EncoderResettableSubsystem {
     private final ElevatorIO io;
 
     private final MotionMagicExpoVoltage elevatorRequest;
@@ -41,30 +42,34 @@ public class Elevator extends KillableSubsystem
     private double leadVelocityCached = 0;
     private double leadVoltageCached = 0;
 
+    private static final Velocity<VoltageUnit> SYSID_RAMP_RATE = Volts.of(4.5).per(Second);
+    private static final Voltage SYSID_STEP_VOLTAGE = Volts.of(3.0);
+    private static final Time SYSID_TIMEOUT = Seconds.of(1.2);
+
     public Elevator(ElevatorIO io) {
         this.io = io;
 
         TalonFXConfiguration elevatorConfig = new TalonFXConfiguration();
 
         // set slot 0 gains
-        Slot0Configs slot0Configs_elevator = elevatorConfig.Slot0;
-        slot0Configs_elevator.kS = Constants.Elevator.kS;
-        slot0Configs_elevator.kV = Constants.Elevator.kV;
-        slot0Configs_elevator.kA = Constants.Elevator.kA;
-        slot0Configs_elevator.kG = Constants.Elevator.kG;
-        slot0Configs_elevator.kP = Constants.Elevator.kP;
-        slot0Configs_elevator.kI = Constants.Elevator.kI;
-        slot0Configs_elevator.kD = Constants.Elevator.kD;
-        slot0Configs_elevator.GravityType = GravityTypeValue.Elevator_Static;
+        Slot0Configs slot0ConfigsElevator = elevatorConfig.Slot0;
+        slot0ConfigsElevator.kS = Constants.Elevator.KS;
+        slot0ConfigsElevator.kV = Constants.Elevator.KV;
+        slot0ConfigsElevator.kA = Constants.Elevator.KA;
+        slot0ConfigsElevator.kG = Constants.Elevator.KG;
+        slot0ConfigsElevator.kP = Constants.Elevator.KP;
+        slot0ConfigsElevator.kI = 0;
+        slot0ConfigsElevator.kD = Constants.Elevator.KD;
+        slot0ConfigsElevator.GravityType = GravityTypeValue.Elevator_Static;
         elevatorConfig.Feedback.SensorToMechanismRatio = 1.0 / Constants.Elevator.METERS_PER_ROTATION;
 
         // set Motion Magic settings
-        MotionMagicConfigs motionMagicConfigs_elevator = elevatorConfig.MotionMagic;
-        motionMagicConfigs_elevator.MotionMagicCruiseVelocity = Constants.Elevator.kMaxVelocity;
-        motionMagicConfigs_elevator.MotionMagicAcceleration = Constants.Elevator.kMaxAcceleration;
-        motionMagicConfigs_elevator.MotionMagicJerk = 1600;
-        motionMagicConfigs_elevator.MotionMagicExpo_kV = 5.8;
-        motionMagicConfigs_elevator.MotionMagicExpo_kA = 1.5;
+        MotionMagicConfigs motionMagicConfigsElevator = elevatorConfig.MotionMagic;
+        motionMagicConfigsElevator.MotionMagicCruiseVelocity = Constants.Elevator.MAX_VELOCITY;
+        motionMagicConfigsElevator.MotionMagicAcceleration = Constants.Elevator.MAX_ACCELERATION;
+        motionMagicConfigsElevator.MotionMagicJerk = Constants.Elevator.MAX_JERK;
+        motionMagicConfigsElevator.MotionMagicExpo_kV = Constants.Elevator.MMEXPO_KV;
+        motionMagicConfigsElevator.MotionMagicExpo_kA = Constants.Elevator.MMEXPO_KA;
 
         io.applyTalonFXConfig(elevatorConfig
                 .withMotorOutput(new MotorOutputConfigs()
@@ -90,42 +95,42 @@ public class Elevator extends KillableSubsystem
         sysIdRoutine = new SysIdRoutine(
                 // Empty config defaults to 1 volt/second ramp rate and 7 volt step voltage.
                 new SysIdRoutine.Config(
-                        Volts.of(4.5).per(Second),
-                        Volts.of(3.0),
-                        Seconds.of(1.2),
-                        (state -> Logger.recordOutput("Elevator/SysIdTestState", state.toString()))),
+                        SYSID_RAMP_RATE,
+                        SYSID_STEP_VOLTAGE,
+                        SYSID_TIMEOUT,
+                        state -> Logger.recordOutput("Elevator/SysIdTestState", state.toString())),
                 new SysIdRoutine.Mechanism(v -> io.setLeadMotorVoltage(v.in(Volts)), null, this));
 
         SmartDashboard.putNumber("Elevator", Constants.Elevator.STARTING_HEIGHT);
     }
 
     private final SysIdRoutine sysIdRoutine;
-    private double m_setpoint;
+    private double setpoint;
 
     /** Height of the elevator in meters */
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getCurrentHeight() {
         return leadPositionCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getCurrentVelocity() {
         return leadVelocityCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getCurrentVoltage() {
         return leadVoltageCached;
     }
 
-    @AutoLogLevel(level = Level.DebugReal)
-    private boolean getBottomEndStopPressed() {
-        return io.getBottomEndStop();
+    @AutoLogLevel(level = Level.DEBUG_REAL)
+    private boolean isBottomEndStopPressed() {
+        return io.isBottomEndStopPressed();
     }
 
-    @AutoLogLevel(level = Level.DebugReal)
-    private boolean getTopEndStopPressed() {
-        return io.getTopEndStop();
+    @AutoLogLevel(level = Level.DEBUG_REAL)
+    private boolean isTopEndStopPressed() {
+        return io.isTopEndStopPressed();
     }
 
     @Override
@@ -133,15 +138,13 @@ public class Elevator extends KillableSubsystem
 
         leadPositionCached = io.getLeadMotorPosition();
         leadVelocityCached = io.getLeadMotorVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.SYSID)) {
             leadVoltageCached = io.getLeadMotorVoltage();
         }
 
-        // set(SmartDashboard.getNumber("Elevator", Constants.Elevator.STARTING_HEIGHT));
-
         // Update mechanism
         RobotContainer.model.elevator.update(getCurrentHeight());
-        RobotContainer.model.elevator.updateSetpoint(m_setpoint);
+        RobotContainer.model.elevator.updateSetpoint(setpoint);
     }
 
     @Override
@@ -150,9 +153,9 @@ public class Elevator extends KillableSubsystem
     }
 
     public void set(double heightMeters) {
-        m_setpoint = heightMeters;
+        setpoint = heightMeters;
 
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Elevator) {
+        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR) {
             io.setLeadMotionMagic(elevatorRequest.withPosition(heightMeters));
         }
     }
@@ -161,7 +164,7 @@ public class Elevator extends KillableSubsystem
         set(height.getHeight());
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public ElevatorHeight getNearestHeight() {
         double currentHeight = getCurrentHeight();
         double currentArmAngle = RobotContainer.elevatorArm.getArmAngle();
@@ -176,7 +179,7 @@ public class Elevator extends KillableSubsystem
     }
 
     public boolean atGoal() {
-        return Math.abs(m_setpoint - getCurrentHeight()) < Constants.Elevator.AT_GOAL_POSITION_TOLERANCE
+        return Math.abs(setpoint - getCurrentHeight()) < Constants.Elevator.AT_GOAL_POSITION_TOLERANCE
                 && Math.abs(getCurrentVelocity()) < Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE;
     }
 
@@ -189,17 +192,8 @@ public class Elevator extends KillableSubsystem
     }
 
     @Override
-    public void kill() {}
-
-    @Override
     public void close() throws Exception {
         io.close();
-    }
-
-    @Override
-    public void setupShuffleboard() {
-        DashboardUI.Test.addSlider("Elevator Target", m_setpoint, 0, ElevatorHeight.L4.getHeight())
-                .subscribe(this::set);
     }
 
     @Override

@@ -22,17 +22,21 @@ public class ManualElevator extends Command {
         height = RobotContainer.elevator.getCurrentHeight();
     }
 
+    private static final double DEADBAND = 0.001;
+
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
         AbstractControl controls = DashboardUI.Overview.getControl();
 
         LinearVelocity manualElevatorVelocity = controls.getManualElevatorVelocity();
-        double delta = manualElevatorVelocity.times(Milliseconds.of(20)).in(Meters);
+        double delta = manualElevatorVelocity
+                .times(Seconds.of(RobotContainer.ROBOT_PERIODIC))
+                .in(Meters);
         height += delta;
         height = MathUtil.clamp(height, Constants.Elevator.STARTING_HEIGHT, Constants.Elevator.MAX_HEIGHT);
 
-        if (Math.abs(delta) > 0.001) {
+        if (Math.abs(delta) > DEADBAND) {
             RobotContainer.elevator.set(height);
         }
     }

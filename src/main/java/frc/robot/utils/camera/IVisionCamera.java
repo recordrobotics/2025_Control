@@ -10,9 +10,7 @@ public interface IVisionCamera {
 
     boolean isConnected();
 
-    double getConfidence();
-
-    double getUnprocessedConfidence();
+    double getMeasurementStdDevs();
 
     int getNumTags();
 

@@ -7,7 +7,10 @@ import org.dyn4j.geometry.Vector2;
 import org.ironmaple.simulation.IntakeSimulation.IntakeSide;
 import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 
-public class IntakeSimulationUtils {
+public final class IntakeSimulationUtils {
+    private IntakeSimulationUtils() {}
+
+    @SuppressWarnings("java:S109")
     public static Rectangle getIntakeRectangle(
             AbstractDriveTrainSimulation driveTrainSimulation, double width, double lengthExtended, IntakeSide side) {
         final Rectangle intakeRectangle = new Rectangle(width, lengthExtended);

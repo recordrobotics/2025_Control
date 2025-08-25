@@ -1,4 +1,4 @@
-package frc.robot.utils.mapleSim;
+package frc.robot.utils.maplesim;
 
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
@@ -22,6 +22,8 @@ import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeAlgaeOnFly
  * can be scored. It will automatically launch the algae scored into the apposing barge and always
  * hit.
  */
+// This is a MapleSim library class modified to support custom features, so ignore the warnings
+@SuppressWarnings({"java:S109", "java:S3626"})
 public class ImprovedReefscapeProcessorSimulation extends Goal {
 
     protected static final Translation3d blueProcessorPose = new Translation3d(6.34, -0.5, 0);

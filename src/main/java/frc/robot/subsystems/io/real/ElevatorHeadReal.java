@@ -55,7 +55,7 @@ public class ElevatorHeadReal implements ElevatorHeadIO {
     }
 
     @Override
-    public boolean getCoralDetector() {
+    public boolean isCoralDetectorTriggered() {
         return coralDetector.get();
     }
 
@@ -71,5 +71,7 @@ public class ElevatorHeadReal implements ElevatorHeadIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

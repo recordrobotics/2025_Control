@@ -13,42 +13,39 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ElevatorHeadIO;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
-public class ElevatorHead extends KillableSubsystem implements ShuffleboardPublisher, PoweredSubsystem {
+public final class ElevatorHead extends KillableSubsystem implements PoweredSubsystem {
 
     private final ElevatorHeadIO io;
 
-    private static Boolean debounced_value = false;
-    private static Boolean debounced_for_sure_value = false;
-    private Debouncer m_debouncer = new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
-    private Debouncer m_debouncer_for_sure =
-            new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME_FOR_SURE, Debouncer.DebounceType.kBoth);
+    private boolean debouncedValue = false;
+    private boolean debouncedCertainValue = false;
+    private Debouncer debouncer = new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
+    private Debouncer debouncerCertain =
+            new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME_CERTAIN, Debouncer.DebounceType.kBoth);
 
-    private final PIDController pid =
-            new PIDController(Constants.ElevatorHead.kP, Constants.ElevatorHead.kI, Constants.ElevatorHead.kD);
+    private final PIDController pid = new PIDController(Constants.ElevatorHead.KP, 0, Constants.ElevatorHead.KD);
     private final ProfiledPIDController positionPid = new ProfiledPIDController(
-            Constants.ElevatorHead.kP_position,
-            Constants.ElevatorHead.kI_position,
-            Constants.ElevatorHead.kD_position,
+            Constants.ElevatorHead.KP_POSITION,
+            0,
+            Constants.ElevatorHead.KD_POSITION,
             new TrapezoidProfile.Constraints(
                     Constants.ElevatorHead.POSITION_MODE_MAX_VELOCITY,
                     Constants.ElevatorHead.POSITION_MODE_MAX_ACCELERATION));
     private final SimpleMotorFeedforward feedForward =
-            new SimpleMotorFeedforward(Constants.ElevatorHead.kS, Constants.ElevatorHead.kV, Constants.ElevatorHead.kA);
+            new SimpleMotorFeedforward(Constants.ElevatorHead.KS, Constants.ElevatorHead.KV, Constants.ElevatorHead.KA);
 
     private CoralShooterStates currentState = CoralShooterStates.OFF;
 
@@ -64,7 +61,6 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
         this.io = io;
 
         set(CoralShooterStates.OFF); // initialize as off
-        DashboardUI.Test.addSlider("Elevator Head", io.getPercent(), -1, 1).subscribe(io::setPercent);
 
         io.setPosition(0);
         positionCached = 0;
@@ -81,15 +77,13 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
                         null,
                         (state -> Logger.recordOutput("ElevatorHead/SysIdTestState", state.toString()))),
                 new SysIdRoutine.Mechanism(v -> io.setVoltage(v.in(Volts)), null, this));
-
-        SmartDashboard.putNumber("ElevatorHead_Value", 0);
     }
 
-    public ElevatorHeadSim getSimIO() throws Exception {
-        if (io instanceof ElevatorHeadSim) {
-            return (ElevatorHeadSim) io;
+    public ElevatorHeadSim getSimIO() throws IllegalStateException {
+        if (io instanceof ElevatorHeadSim simIO) {
+            return simIO;
         } else {
-            throw new Exception("ElevatorHeadIO is not a simulation");
+            throw new IllegalStateException("ElevatorHeadIO is not a simulation");
         }
     }
 
@@ -114,37 +108,40 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
         OFF;
     }
 
-    public enum GamePiece {
-        NONE(false, ""),
-        ALGAE(false, "algae"),
-        CORAL(false, "coral"),
-        CORAL_CERTAIN(true, "coral");
+    private static final String GP_NAME_NONE = "";
+    private static final String GP_NAME_ALGAE = "algae";
+    private static final String GP_NAME_CORAL = "coral";
 
-        private boolean certain;
+    public enum GamePiece {
+        NONE(0, GP_NAME_NONE),
+        ALGAE(0, GP_NAME_ALGAE),
+        CORAL(0, GP_NAME_CORAL),
+        CORAL_CERTAIN(1, GP_NAME_CORAL),
+        CORAL_POSITIONED(2, GP_NAME_CORAL);
+
+        private int tier;
         private String gpName;
 
-        private GamePiece(boolean certain, String gpName) {
-            this.certain = certain;
+        private GamePiece(int tier, String gpName) {
+            this.tier = tier;
             this.gpName = gpName;
         }
 
         public boolean atLeast(GamePiece other) {
-            // CoralCertain.atLeast(Coral) == true
-            // Coral.atLeast(CoralCertain) == false
-            return this.gpName.equals(other.gpName) && ((this.certain == other.certain) || !other.certain);
+            return this.gpName.equals(other.gpName) && this.tier >= other.tier;
         }
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getVelocity() {
         return velocityCached
-                / 60.0
+                / SimpleMath.SECONDS_PER_MINUTE
                 / Constants.ElevatorHead.GEAR_RATIO
                 * Math.PI
-                * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* RPM -> RPS */
+                * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* RPM -> RPS -> METERS */
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getPosition() {
         return positionCached
                 / Constants.ElevatorHead.GEAR_RATIO
@@ -152,7 +149,7 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
                 * Constants.ElevatorHead.WHEEL_DIAMETER.in(Meters); /* Rotations -> Meters */
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getVoltage() {
         return voltageCached;
     }
@@ -258,11 +255,13 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
         }
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public GamePiece getGamePiece() {
-        if (debounced_for_sure_value) {
+        if (debouncedCertainValue && positionAtGoal()) {
+            return GamePiece.CORAL_POSITIONED;
+        } else if (debouncedCertainValue) {
             return GamePiece.CORAL_CERTAIN;
-        } else if (debounced_value) {
+        } else if (debouncedValue) {
             return GamePiece.CORAL;
         } else if (hasAlgae) {
             return GamePiece.ALGAE;
@@ -271,33 +270,40 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
         }
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public CoralShooterStates getCurrentCoralShooterState() {
         return currentState;
     }
 
-    public boolean positionAtGoal() {
+    private boolean positionAtGoal() {
         return positionPid.atGoal();
     }
 
+    private static final double CORAL_READY_MAX_VELOCITY = 0.1; // m/s
+
+    /**
+     * @return true if the coral shooter is ready to shoot coral (at low velocity or has coral and at goal position)
+     * @deprecated use getGamePiece().atLeast(GamePiece.CORAL_POSITIONED) instead
+     */
+    @Deprecated(forRemoval = true)
     public boolean coralReady() {
-        return Math.abs(getVelocity()) < 0.1 || (getGamePiece().atLeast(GamePiece.CORAL) && positionAtGoal());
+        return Math.abs(getVelocity()) < CORAL_READY_MAX_VELOCITY
+                || (getGamePiece().atLeast(GamePiece.CORAL) && positionAtGoal());
     }
 
     private double lastSpeed = 0;
+
+    private static final double WAITING_FOR_ALGAE_MIN_VELOCITY = 1.0; // TODO: tune
+    private static final double ALGAE_ACQUIRED_MAX_VELOCITY = 0.5; // TODO: tune
 
     @Override
     public void periodicManaged() {
 
         positionCached = io.getPosition();
         velocityCached = io.getVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.SYSID)) {
             voltageCached = io.getVoltage();
         }
-
-        // set(0);
-        // currentState = CoralShooterStates.POSITION;
-        // positionPid.setGoal(SmartDashboard.getNumber("CoralShooter_Value", 0));
 
         if (currentState == CoralShooterStates.POSITION) {
             double pidOutput = positionPid.calculate(getPosition());
@@ -307,7 +313,7 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
             double feedforwardOutput =
                     feedForward.calculateWithVelocities(lastSpeed, positionPid.getSetpoint().velocity);
 
-            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorHead) {
+            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR_HEAD) {
                 io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
             }
 
@@ -316,25 +322,25 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
             double pidOutput = pid.calculate(getVelocity());
             double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
 
-            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ElevatorHead) {
+            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR_HEAD) {
                 io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
             }
 
             lastSpeed = pid.getSetpoint();
 
-            if (waitingForIntakeSpeed && Math.abs(getVelocity()) > 1.0) { // TODO: tune
+            if (waitingForIntakeSpeed && Math.abs(getVelocity()) > WAITING_FOR_ALGAE_MIN_VELOCITY) {
                 waitingForIntakeSpeed = false;
                 waitingForAlgae = true;
             }
 
-            if (waitingForAlgae && Math.abs(getVelocity()) < 0.5) {
+            if (waitingForAlgae && Math.abs(getVelocity()) < ALGAE_ACQUIRED_MAX_VELOCITY) {
                 hasAlgae = true;
                 waitingForAlgae = false;
             }
         }
 
-        debounced_value = !m_debouncer.calculate(io.getCoralDetector());
-        debounced_for_sure_value = !m_debouncer_for_sure.calculate(io.getCoralDetector());
+        debouncedValue = !debouncer.calculate(io.isCoralDetectorTriggered());
+        debouncedCertainValue = !debouncerCertain.calculate(io.isCoralDetectorTriggered());
     }
 
     @Override
@@ -348,11 +354,6 @@ public class ElevatorHead extends KillableSubsystem implements ShuffleboardPubli
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return sysIdRoutine.dynamic(direction);
-    }
-
-    @Override
-    public void setupShuffleboard() {
-        DashboardUI.Test.addSlider("Elevator Head", io.getPercent(), -1, 1).subscribe(io::setPercent);
     }
 
     @Override

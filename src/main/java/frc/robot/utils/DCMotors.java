@@ -3,7 +3,9 @@ package frc.robot.utils;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
-public class DCMotors {
+@SuppressWarnings("java:S109")
+public final class DCMotors {
+    private DCMotors() {}
 
     /**
      * Return a gearbox of Kraken X44 brushless motors.

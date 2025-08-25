@@ -11,17 +11,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class PoseAnimator extends Command {
+public final class PoseAnimator extends Command {
 
     /** The timer used for waiting. */
-    protected Timer m_timer = new Timer();
+    private final Timer timer = new Timer();
 
-    private final double m_duration;
+    private final double duration;
 
-    private final Pose3d m_startPose;
-    private final Supplier<Pose3d> m_endPoseSupplier;
+    private final Pose3d startPose;
+    private final Supplier<Pose3d> endPoseSupplier;
 
-    private final Consumer<Pose3d> m_poseConsumer;
+    private final Consumer<Pose3d> poseConsumer;
 
     /**
      * Creates a new WaitCommand. This command will do nothing, and end after the specified duration.
@@ -31,10 +31,10 @@ public class PoseAnimator extends Command {
     @SuppressWarnings("this-escape")
     public PoseAnimator(
             Pose3d startPose, Supplier<Pose3d> endPoseSupplier, Consumer<Pose3d> poseConsumer, double seconds) {
-        m_duration = seconds;
-        m_startPose = startPose;
-        m_endPoseSupplier = endPoseSupplier;
-        m_poseConsumer = poseConsumer;
+        duration = seconds;
+        this.startPose = startPose;
+        this.endPoseSupplier = endPoseSupplier;
+        this.poseConsumer = poseConsumer;
 
         SendableRegistry.setName(this, getName() + ": " + seconds + " seconds");
     }
@@ -49,28 +49,28 @@ public class PoseAnimator extends Command {
     }
 
     public Pose3d getPose() {
-        return m_startPose.interpolate(m_endPoseSupplier.get(), m_timer.get() / m_duration);
+        return startPose.interpolate(endPoseSupplier.get(), timer.get() / duration);
     }
 
     @Override
     public void initialize() {
-        m_timer.restart();
-        m_poseConsumer.accept(getPose());
+        timer.restart();
+        poseConsumer.accept(getPose());
     }
 
     @Override
     public void execute() {
-        m_poseConsumer.accept(getPose());
+        poseConsumer.accept(getPose());
     }
 
     @Override
     public void end(boolean interrupted) {
-        m_timer.stop();
+        timer.stop();
     }
 
     @Override
     public boolean isFinished() {
-        return m_timer.hasElapsed(m_duration);
+        return timer.hasElapsed(duration);
     }
 
     @Override
@@ -81,6 +81,6 @@ public class PoseAnimator extends Command {
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
-        builder.addDoubleProperty("duration", () -> m_duration, null);
+        builder.addDoubleProperty("duration", () -> duration, null);
     }
 }

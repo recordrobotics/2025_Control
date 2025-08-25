@@ -16,7 +16,7 @@ public interface ElevatorHeadIO extends AutoCloseable {
 
     double getPercent();
 
-    boolean getCoralDetector();
+    boolean isCoralDetectorTriggered();
 
     double getCurrentDrawAmps();
 

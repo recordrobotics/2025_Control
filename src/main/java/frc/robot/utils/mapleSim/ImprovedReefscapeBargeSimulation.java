@@ -1,4 +1,4 @@
-package frc.robot.utils.mapleSim;
+package frc.robot.utils.maplesim;
 
 import static edu.wpi.first.units.Units.Centimeters;
 
@@ -19,6 +19,8 @@ import org.ironmaple.simulation.gamepieces.GamePiece;
  * <p>This class simulates a <strong>BARGE</strong>s on the field where <strong>ALGAE</strong> can
  * be scored.
  */
+// This is a MapleSim library class modified to support custom features, so ignore the warnings
+@SuppressWarnings({"java:S109"})
 public class ImprovedReefscapeBargeSimulation extends Goal {
 
     protected static final Translation3d redBargePose = new Translation3d(8.805, 2.1, 1.57);

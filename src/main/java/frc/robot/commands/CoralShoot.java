@@ -14,15 +14,13 @@ import frc.robot.subsystems.ElevatorHead.GamePiece;
 
 public class CoralShoot extends SequentialCommandGroup {
 
-    public static boolean failedToShoot = false;
+    private static boolean failedToShoot = false;
 
     public CoralShoot() {
         addRequirements(RobotContainer.elevatorHead);
 
         addCommands(
-                new InstantCommand(() -> {
-                    failedToShoot = false;
-                }),
+                new InstantCommand(() -> setFailedToShoot(false)),
                 new ScheduleCommand(RobotContainer.lights
                         .coralShooter
                         .runPattern(Constants.Lights.elevatorHeadPattern)
@@ -34,7 +32,7 @@ public class CoralShoot extends SequentialCommandGroup {
                 new InstantCommand(
                         () -> {
                             if (RobotContainer.elevator.getNearestHeight() == ElevatorHeight.L4
-                                    || RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE)
+                                    || RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALGAE)
                                 RobotContainer.elevatorHead.set(CoralShooterStates.OUT_BACKWARD);
                             else RobotContainer.elevatorHead.set(CoralShooterStates.OUT_FORWARD);
                         },
@@ -50,7 +48,7 @@ public class CoralShoot extends SequentialCommandGroup {
                                             < Constants.ElevatorHead.SHOOT_STALL_THRESHOLD;
 
                                     if (stalled) {
-                                        failedToShoot = true;
+                                        setFailedToShoot(true);
                                     }
 
                                     return stalled;
@@ -70,11 +68,11 @@ public class CoralShoot extends SequentialCommandGroup {
                                                 () -> RobotContainer.elevatorHead.moveBy(
                                                         Constants.ElevatorHead.CORAL_INTAKE_DISTANCE),
                                                 RobotContainer.elevatorHead))
-                                .andThen(new WaitUntilCommand(() -> RobotContainer.elevatorHead.positionAtGoal())),
+                                .andThen(new WaitUntilCommand(() -> RobotContainer.elevatorHead
+                                        .getGamePiece()
+                                        .atLeast(GamePiece.CORAL_POSITIONED))),
                         new WaitCommand(Constants.ElevatorHead.SHOOT_TIME),
-                        () -> {
-                            return failedToShoot;
-                        }),
+                        () -> failedToShoot),
                 new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(CoralShooterStates.OFF), RobotContainer.elevatorHead),
                 new ScheduleCommand(RobotContainer.lights
@@ -82,5 +80,13 @@ public class CoralShoot extends SequentialCommandGroup {
                         .runPattern(Constants.Lights.FLASHING_GREEN)
                         .alongWith(RobotContainer.lights.stateVisualizer.runPattern(Constants.Lights.PULSATING_GREEN))
                         .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME)));
+    }
+
+    private static void setFailedToShoot(boolean value) {
+        failedToShoot = value;
+    }
+
+    public static boolean failedToShoot() {
+        return failedToShoot;
     }
 }

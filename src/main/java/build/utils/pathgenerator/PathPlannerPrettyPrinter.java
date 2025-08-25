@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
-public class PathPlannerPrettyPrinter extends DefaultPrettyPrinter {
+public final class PathPlannerPrettyPrinter extends DefaultPrettyPrinter {
+    private static final long serialVersionUID = 1L;
+
     public PathPlannerPrettyPrinter() {
         this._objectFieldValueSeparatorWithSpaces = ": ";
         this.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);

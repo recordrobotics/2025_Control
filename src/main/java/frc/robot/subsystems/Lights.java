@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLED.ColorOrder;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.lights.AlgaeGrabberLights;
@@ -11,24 +10,25 @@ import frc.robot.subsystems.lights.CoralIntakeLights;
 import frc.robot.subsystems.lights.CoralShooterLights;
 import frc.robot.subsystems.lights.ElevatorLights;
 import frc.robot.subsystems.lights.StateVisualizerLights;
+import frc.robot.utils.ManagedSubsystemBase;
 
-public class Lights extends SubsystemBase implements AutoCloseable {
+public class Lights extends ManagedSubsystemBase {
 
-    public AlgaeGrabberLights algaeGrabber;
-    public CoralIntakeLights coralIntake;
-    public CoralShooterLights coralShooter;
-    public ElevatorLights elevator;
-    public StateVisualizerLights stateVisualizer;
+    public final AlgaeGrabberLights algaeGrabber;
+    public final CoralIntakeLights coralIntake;
+    public final CoralShooterLights coralShooter;
+    public final ElevatorLights elevator;
+    public final StateVisualizerLights stateVisualizer;
 
-    private AddressableLED LEDs;
+    private AddressableLED leds;
     private AddressableLEDBuffer buffer;
 
     public Lights() {
-        LEDs = new AddressableLED(RobotMap.Lights.LED_ID);
+        leds = new AddressableLED(RobotMap.Lights.LED_ID);
         buffer = new AddressableLEDBuffer(Constants.Lights.LENGTH);
-        LEDs.setColorOrder(ColorOrder.kRGB);
-        LEDs.setLength(Constants.Lights.LENGTH);
-        LEDs.start();
+        leds.setColorOrder(ColorOrder.kRGB);
+        leds.setLength(Constants.Lights.LENGTH);
+        leds.start();
 
         algaeGrabber = new AlgaeGrabberLights(this);
         coralIntake = new CoralIntakeLights(this);
@@ -37,16 +37,18 @@ public class Lights extends SubsystemBase implements AutoCloseable {
         stateVisualizer = new StateVisualizerLights(this);
     }
 
+    @Override
     public void periodicManaged() {
         // Send the latest LED color data to the LED strip
-        LEDs.setData(buffer);
+        leds.setData(buffer);
     }
 
     public AddressableLEDBuffer getBuffer() {
         return buffer;
     }
 
+    @Override
     public void close() {
-        LEDs.close();
+        leds.close();
     }
 }

@@ -31,10 +31,10 @@ public class HumanPlayerSimulation extends SubsystemBase {
     }
 
     public enum HumanPlayerSource {
-        RedLeft,
-        RedRight,
-        BlueLeft,
-        BlueRight
+        RED_LEFT,
+        RED_RIGHT,
+        BLUE_LEFT,
+        BLUE_RIGHT
     }
 
     private LoggedDashboardChooser<HumanPlayerSimulationStrategy> humanPlayerStrategyChooser;
@@ -49,10 +49,10 @@ public class HumanPlayerSimulation extends SubsystemBase {
                     HumanPlayerSimulationStrategy.GROUND_WHEN_OCCUPIED.toString(),
                     HumanPlayerSimulationStrategy.GROUND_WHEN_OCCUPIED);
 
-            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.RedLeft));
-            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.RedRight));
-            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.BlueLeft));
-            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.BlueRight));
+            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.RED_LEFT));
+            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.RED_RIGHT));
+            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.BLUE_LEFT));
+            humanPlayers.add(new HumanPlayer(humanPlayerStrategyChooser.get(), HumanPlayerSource.BLUE_RIGHT));
         }
     }
 
@@ -82,40 +82,43 @@ public class HumanPlayerSimulation extends SubsystemBase {
             return source;
         }
 
+        public static final int MAX_CORAL_PER_STATION = 30;
+
         private double lastDropTime = 0;
-        private int coralLeft = 30;
+        private int coralLeft = MAX_CORAL_PER_STATION;
         private Random random = new Random();
 
         public void reset() {
             lastDropTime = 0;
-            coralLeft = 30;
+            coralLeft = MAX_CORAL_PER_STATION;
         }
 
         private Pose2d getSourcePose() {
-            switch (source) {
-                case RedLeft:
-                    return Constants.Game.SourceCoralSpawnPosition.RedCoralLeft.getPose();
-                case RedRight:
-                    return Constants.Game.SourceCoralSpawnPosition.RedCoralRight.getPose();
-                case BlueLeft:
-                    return Constants.Game.SourceCoralSpawnPosition.BlueCoralLeft.getPose();
-                case BlueRight:
-                    return Constants.Game.SourceCoralSpawnPosition.BlueCoralRight.getPose();
-                default:
-                    throw new IllegalArgumentException("Invalid source: " + source);
-            }
+            return switch (source) {
+                case RED_LEFT -> Constants.Game.SourceCoralSpawnPosition.RED_CORAL_LEFT.getPose();
+                case RED_RIGHT -> Constants.Game.SourceCoralSpawnPosition.RED_CORAL_RIGHT.getPose();
+                case BLUE_LEFT -> Constants.Game.SourceCoralSpawnPosition.BLUE_CORAL_LEFT.getPose();
+                case BLUE_RIGHT -> Constants.Game.SourceCoralSpawnPosition.BLUE_CORAL_RIGHT.getPose();
+            };
         }
+
+        private static final double SOURCE_WIDTH = 0.75;
+        private static final double INTAKE_OFFSET = 0.1;
+        private static final double SOURCE_HEIGHT = 1.16;
 
         private Pose3d getEjectPose(Pose2d target) {
             Pose3d sourcePose = new Pose3d(getSourcePose());
 
             Pose3d relativeTarget = new Pose3d(target).relativeTo(sourcePose);
 
-            Pose3d coralPose = sourcePose.transformBy(new Transform3d(
-                    MathUtil.clamp(relativeTarget.getX() + 0.1, -0.75, 0.75), 0, 1.16, new Rotation3d(0, 0, 0)));
-
-            return coralPose;
+            return sourcePose.transformBy(new Transform3d(
+                    MathUtil.clamp(relativeTarget.getX() + INTAKE_OFFSET, -SOURCE_WIDTH, SOURCE_WIDTH),
+                    0,
+                    SOURCE_HEIGHT,
+                    new Rotation3d(0, 0, 0)));
         }
+
+        private static final double CORAL_GROUND_TOUCH_HEIGHT = 0.2;
 
         public void dropWithVelocity(Pose2d target, double velocity) {
             if (coralLeft <= 0) {
@@ -135,56 +138,77 @@ public class HumanPlayerSimulation extends SubsystemBase {
                                     ejectPose.getZ(),
                                     xyzVelocity.getZ(),
                                     ejectPose.getRotation())
-                            .withTouchGroundHeight(0.2)
+                            .withTouchGroundHeight(CORAL_GROUND_TOUCH_HEIGHT)
                             .enableBecomesGamePieceOnFieldAfterTouchGround());
         }
 
-        public static double GROUND_NEAR_VELOCITY = 1.0;
-        public static double GROUND_FAR_VELOCITY = 4.0;
-        public static double SOURCE_VELOCITY = 2.0;
+        public static final double GROUND_NEAR_VELOCITY = 1.0;
+        public static final double GROUND_FAR_VELOCITY = 4.0;
+        public static final double SOURCE_VELOCITY = 2.0;
+
+        private static final double GROUND_INTERVAL_MIN = 1.0;
+        private static final double GROUND_INTERVAL_MAX = 2.3;
+        private static final double SOURCE_INTERVAL_MIN = 1.4;
+        private static final double SOURCE_INTERVAL_MAX = 2.0;
+
+        private void runOnlyGroundNear() {
+            if (Timer.getTimestamp() - lastDropTime > random.nextDouble(GROUND_INTERVAL_MIN, GROUND_INTERVAL_MAX)) {
+                lastDropTime = Timer.getTimestamp();
+                dropWithVelocity(RobotContainer.model.getRobot(), GROUND_NEAR_VELOCITY);
+            }
+        }
+
+        private void runOnlyGroundFar() {
+            if (Timer.getTimestamp() - lastDropTime > random.nextDouble(GROUND_INTERVAL_MIN, GROUND_INTERVAL_MAX)) {
+                lastDropTime = Timer.getTimestamp();
+                dropWithVelocity(RobotContainer.model.getRobot(), GROUND_FAR_VELOCITY);
+            }
+        }
+
+        private void runOnlySource() {
+            if (Timer.getTimestamp() - lastDropTime > random.nextDouble(SOURCE_INTERVAL_MIN, SOURCE_INTERVAL_MAX)
+                    && RobotContainer.model
+                                    .getRobot()
+                                    .getTranslation()
+                                    .getDistance(getSourcePose().getTranslation())
+                            < 1.0) {
+                lastDropTime = Timer.getTimestamp();
+                dropWithVelocity(RobotContainer.model.getRobot(), SOURCE_VELOCITY);
+            }
+        }
+
+        private void runGroundWhenOccupied() {
+            if (Timer.getTimestamp() - lastDropTime > random.nextDouble(SOURCE_INTERVAL_MIN, SOURCE_INTERVAL_MAX)) {
+                if (RobotContainer.model
+                                .getRobot()
+                                .getTranslation()
+                                .getDistance(getSourcePose().getTranslation())
+                        < 1.0) {
+                    lastDropTime = Timer.getTimestamp();
+                    dropWithVelocity(RobotContainer.model.getRobot(), SOURCE_VELOCITY);
+                } else if (
+                /*TODO: is occupied */ false) {
+                    lastDropTime = Timer.getTimestamp();
+                    dropWithVelocity(RobotContainer.model.getRobot(), GROUND_FAR_VELOCITY);
+                }
+            }
+        }
 
         public void periodic() {
             switch (strategy) {
                 case NONE:
                     break;
                 case ONLY_GROUND_NEAR:
-                    if (Timer.getTimestamp() - lastDropTime > random.nextDouble(1.0, 2.3)) {
-                        lastDropTime = Timer.getTimestamp();
-                        dropWithVelocity(RobotContainer.model.getRobot(), GROUND_NEAR_VELOCITY);
-                    }
+                    runOnlyGroundNear();
                     break;
                 case ONLY_GROUND_FAR:
-                    if (Timer.getTimestamp() - lastDropTime > random.nextDouble(1.0, 2.3)) {
-                        lastDropTime = Timer.getTimestamp();
-                        dropWithVelocity(RobotContainer.model.getRobot(), GROUND_FAR_VELOCITY);
-                    }
+                    runOnlyGroundFar();
                     break;
                 case ONLY_SOURCE:
-                    if (Timer.getTimestamp() - lastDropTime > random.nextDouble(1.4, 2.0)
-                            && RobotContainer.model
-                                            .getRobot()
-                                            .getTranslation()
-                                            .getDistance(getSourcePose().getTranslation())
-                                    < 1.0) {
-                        lastDropTime = Timer.getTimestamp();
-                        dropWithVelocity(RobotContainer.model.getRobot(), SOURCE_VELOCITY);
-                    }
+                    runOnlySource();
                     break;
                 case GROUND_WHEN_OCCUPIED:
-                    if (Timer.getTimestamp() - lastDropTime > random.nextDouble(1.4, 2.0)) {
-                        if (RobotContainer.model
-                                        .getRobot()
-                                        .getTranslation()
-                                        .getDistance(getSourcePose().getTranslation())
-                                < 1.0) {
-                            lastDropTime = Timer.getTimestamp();
-                            dropWithVelocity(RobotContainer.model.getRobot(), SOURCE_VELOCITY);
-                        } else if (
-                        /*TODO: is occupied */ false) {
-                            lastDropTime = Timer.getTimestamp();
-                            dropWithVelocity(RobotContainer.model.getRobot(), GROUND_FAR_VELOCITY);
-                        }
-                    }
+                    runGroundWhenOccupied();
                     break;
             }
         }

@@ -81,6 +81,181 @@
   "files.autoSaveDelay": 1000,
   "iis.configDir": "",
   "java.debug.settings.onBuildFailureProceed": true,
-  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
-  "wpilib.skipTests": true
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx8G -Xms100m -Xlog:disable",
+  "wpilib.skipTests": true,
+  "cSpell.enabled": true,
+  "cSpell.diagnosticLevel": "Error",
+  "cSpell.enabledFileTypes": {
+    "json": true,
+    "jsonc": true,
+    "yaml": true,
+    "yml": true,
+    "markdown": true,
+    "plaintext": true,
+    "python": true,
+    "java": true,
+    "html": true,
+    "htm": true,
+    "xml": true,
+    "ignore": false
+  },
+  "cSpell.allowCompoundWords": true,
+  "sonarlint.rules": {
+    "java:S2925": {
+      "level": "off"
+    },
+    "java:S1698": {
+      "level": "on"
+    },
+    "java:S2156": {
+      "level": "on"
+    },
+    "java:S2165": {
+      "level": "on"
+    },
+    "java:S1194": {
+      "level": "on"
+    },
+    "java:S2096": {
+      "level": "on"
+    },
+    "java:S3553": {
+      "level": "on"
+    },
+    "java:S2325": {
+      "level": "on"
+    },
+    "java:S2057": {
+      "level": "on"
+    },
+    "java:S4266": {
+      "level": "on"
+    },
+    "java:S1114": {
+      "level": "on"
+    },
+    "java:S1151": {
+      "level": "on"
+    },
+    "java:S1821": {
+      "level": "on"
+    },
+    "java:S1610": {
+      "level": "on"
+    },
+    "java:S1694": {
+      "level": "on"
+    },
+    "java:S1943": {
+      "level": "on"
+    },
+    "java:S2141": {
+      "level": "on"
+    },
+    "java:S2974": {
+      "level": "on"
+    },
+    "java:S2063": {
+      "level": "on"
+    },
+    "java:S1699": {
+      "level": "on"
+    },
+    "java:S6211": {
+      "level": "on"
+    },
+    "java:S3254": {
+      "level": "on"
+    },
+    "java:S4551": {
+      "level": "on"
+    },
+    "java:S888": {
+      "level": "on"
+    },
+    "java:S1939": {
+      "level": "on"
+    },
+    "java:S1244": {
+      "level": "on"
+    },
+    "java:S3725": {
+      "level": "on"
+    },
+    "java:S2444": {
+      "level": "on"
+    },
+    "java:S2701": {
+      "level": "on"
+    },
+    "java:S109": {
+      "level": "on",
+      "parameters": {
+        "authorizedNumbers": "-1,0,1,2,0.5,90,-90,180,-180,360,-360,45,-45,270"
+      }
+    },
+    "java:S3242": {
+      "level": "on"
+    },
+    "java:S1541": {
+      "level": "on"
+    },
+    "java:S2131": {
+      "level": "on"
+    },
+    "java:S2301": {
+      "level": "on"
+    },
+    "java:S1176": {
+      "level": "on"
+    },
+    "java:S4248": {
+      "level": "on"
+    },
+    "java:S1641": {
+      "level": "on"
+    },
+    "java:S2196": {
+      "level": "on"
+    },
+    "java:S5977": {
+      "level": "on"
+    },
+    "java:S2047": {
+      "level": "on"
+    },
+    "java:S2693": {
+      "level": "on"
+    },
+    "java:S6411": {
+      "level": "on"
+    },
+    "java:S2148": {
+      "level": "on"
+    },
+    "java:S3658": {
+      "level": "on"
+    },
+    "java:S5194": {
+      "level": "on"
+    },
+    "java:S1941": {
+      "level": "on"
+    },
+    "java:S6374": {
+      "level": "on"
+    },
+    "java:S1659": {
+      "level": "off"
+    },
+    "java:S106": {
+      "level": "off"
+    },
+    "java:S107": {
+      "level": "off"
+    },
+    "java:S2160": {
+      "level": "off"
+    }
+  },
 }

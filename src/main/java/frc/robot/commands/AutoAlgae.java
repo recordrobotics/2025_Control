@@ -28,6 +28,14 @@ public class AutoAlgae extends SequentialCommandGroup {
         isRunning = false;
     }
 
+    private static void resetCancel() {
+        cancelCommand = false;
+    }
+
+    private static void startRunning() {
+        isRunning = true;
+    }
+
     public static Command algaeGrabCommand(ElevatorHeight targetHeight) {
         return new ElevatorMove(targetHeight)
                 .andThen(new InstantCommand(
@@ -39,16 +47,22 @@ public class AutoAlgae extends SequentialCommandGroup {
                         RobotContainer.elevatorHead));
     }
 
+    private static final double AUTO_LOWER_DISTANCE = 1.0;
+
+    // 8s timeout for first waypoint
+    private static final double FIRST_WAYPOINT_TIMEOUT = 8.0;
+    // 4s for second
+    private static final double OTHER_WAYPOINT_TIMEOUT = 4.0;
+
     public AutoAlgae(AlgaePosition reefPole) {
         addCommands(
                 new InstantCommand(() -> {
-                    cancelCommand = false;
-                    isRunning = true;
+                    resetCancel();
+                    startRunning();
                 }),
                 WaypointAlign.alignWithCommand(
                                 AlgaeAlign.generateWaypoints(reefPole),
-                                // 8s timeout for first waypoint, 4s for second
-                                new Double[] {8.0, 4.0},
+                                new Double[] {FIRST_WAYPOINT_TIMEOUT, OTHER_WAYPOINT_TIMEOUT},
                                 // start elevator immediately
                                 -1,
                                 // elevator has to be fully extended before moving to second waypoint
@@ -64,7 +78,7 @@ public class AutoAlgae extends SequentialCommandGroup {
                             .getTranslation()
                             .getDistance(pose.getTranslation());
 
-                    return cancelCommand || (dist > 1.0);
+                    return cancelCommand || (dist > AUTO_LOWER_DISTANCE);
                 }),
                 new ElevatorMoveThenAlgaeGrabEnd(reefPole.getLevel().getHeight(), true).asProxy());
     }

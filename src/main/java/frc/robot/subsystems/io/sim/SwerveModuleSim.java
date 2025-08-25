@@ -20,12 +20,12 @@ import org.ironmaple.simulation.motorsims.SimulatedMotorController;
 
 public class SwerveModuleSim implements SwerveModuleIO {
 
-    private final TalonFX m_driveMotor;
-    private final TalonFX m_turningMotor;
+    private final TalonFX driveMotor;
+    private final TalonFX turningMotor;
     private final DutyCycleEncoder absoluteTurningMotorEncoder;
 
-    private final TalonFXSimState m_driveMotorSim;
-    private final TalonFXSimState m_turningMotorSim;
+    private final TalonFXSimState driveMotorSim;
+    private final TalonFXSimState turningMotorSim;
     private final SimDouble absoluteTurningMotorEncoderPosition;
 
     public static class TalonFXMotorControllerSim implements SimulatedMotorController {
@@ -53,81 +53,81 @@ public class SwerveModuleSim implements SwerveModuleIO {
     }
 
     public SwerveModuleSim(SwerveModuleSimulation moduleSimulation, ModuleConstants m) {
-        m_driveMotor = new TalonFX(m.driveMotorChannel);
-        m_turningMotor = new TalonFX(m.turningMotorChannel);
+        driveMotor = new TalonFX(m.driveMotorChannel());
+        turningMotor = new TalonFX(m.turningMotorChannel());
 
-        absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel);
+        absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel());
         SimDeviceSim absoluteTurningMotorEncoderSim =
-                new SimDeviceSim("DutyCycle:DutyCycleEncoder", m.absoluteTurningMotorEncoderChannel);
+                new SimDeviceSim("DutyCycle:DutyCycleEncoder", m.absoluteTurningMotorEncoderChannel());
         absoluteTurningMotorEncoderPosition = absoluteTurningMotorEncoderSim.getDouble("Position");
 
-        m_driveMotorSim = m_driveMotor.getSimState();
-        m_turningMotorSim = m_turningMotor.getSimState();
+        driveMotorSim = driveMotor.getSimState();
+        turningMotorSim = turningMotor.getSimState();
 
-        m_turningMotorSim.Orientation = ChassisReference.Clockwise_Positive;
+        turningMotorSim.Orientation = ChassisReference.Clockwise_Positive;
 
-        moduleSimulation.useDriveMotorController(new TalonFXMotorControllerSim(m_driveMotor));
-        moduleSimulation.useSteerMotorController(new TalonFXMotorControllerSim(m_turningMotor));
+        moduleSimulation.useDriveMotorController(new TalonFXMotorControllerSim(driveMotor));
+        moduleSimulation.useSteerMotorController(new TalonFXMotorControllerSim(turningMotor));
     }
 
     @Override
     public void applyDriveTalonFXConfig(TalonFXConfiguration configuration) {
-        m_driveMotor.getConfigurator().apply(configuration);
+        driveMotor.getConfigurator().apply(configuration);
     }
 
     @Override
     public void applyTurnTalonFXConfig(TalonFXConfiguration configuration) {
-        m_turningMotor.getConfigurator().apply(configuration);
+        turningMotor.getConfigurator().apply(configuration);
     }
 
     @Override
     public void setDriveMotorVoltage(double newValue) {
-        m_driveMotor.setVoltage(newValue);
+        driveMotor.setVoltage(newValue);
     }
 
     @Override
     public void setTurnMotorVoltage(double newValue) {
-        m_turningMotor.setVoltage(newValue);
+        turningMotor.setVoltage(newValue);
     }
 
     @Override
     public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {
-        m_turningMotor.setControl(request);
+        turningMotor.setControl(request);
     }
 
     @Override
     public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {
-        m_driveMotor.setControl(request);
+        driveMotor.setControl(request);
     }
 
     @Override
     public double getDriveMotorVoltage() {
-        return m_driveMotor.getMotorVoltage().getValueAsDouble();
+        return driveMotor.getMotorVoltage().getValueAsDouble();
     }
 
     @Override
     public double getTurnMotorVoltage() {
-        return m_turningMotor.getMotorVoltage().getValueAsDouble();
+        return turningMotor.getMotorVoltage().getValueAsDouble();
     }
 
     @Override
     public void setDriveMotorPercent(double newValue) {
-        m_driveMotor.set(newValue);
+        driveMotor.set(newValue);
     }
 
     @Override
     public void setTurnMotorPercent(double newValue) {
-        m_turningMotor.set(newValue);
+        turningMotor.set(newValue);
     }
 
     @Override
     public double getDriveMotorPercent() {
-        return m_driveMotor.get();
+        return driveMotor.get();
     }
 
     @Override
     public double getTurnMotorPercent() {
-        return m_turningMotor.get();
+        return turningMotor.get();
     }
 
     @Override
@@ -137,57 +137,57 @@ public class SwerveModuleSim implements SwerveModuleIO {
 
     @Override
     public double getTurnMechanismPosition() {
-        return m_turningMotor.getPosition().getValueAsDouble();
+        return turningMotor.getPosition().getValueAsDouble();
     }
 
     @Override
     public double getTurnMechanismVelocity() {
-        return m_turningMotor.getVelocity().getValueAsDouble();
+        return turningMotor.getVelocity().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismPosition() {
-        return m_driveMotor.getPosition().getValueAsDouble();
+        return driveMotor.getPosition().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismVelocity() {
-        return m_driveMotor.getVelocity().getValueAsDouble();
+        return driveMotor.getVelocity().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismAcceleration() {
-        return m_driveMotor.getAcceleration().getValueAsDouble();
+        return driveMotor.getAcceleration().getValueAsDouble();
     }
 
     @Override
     public void setDriveMechanismPosition(double newValue) {
-        // m_driveMotor.setPosition(newValue);
+        driveMotor.setPosition(newValue);
     }
 
     @Override
     public void setTurnMechanismPosition(double newValue) {
-        // m_turningMotor.setPosition(newValue);
+        /* don't reset position in simulation */
     }
 
     @Override
     public double getDriveMotorCurrentDrawAmps() {
-        if (m_driveMotorSim.Orientation == ChassisReference.Clockwise_Positive)
-            return m_driveMotor.getSupplyCurrent().getValueAsDouble();
-        else return -m_driveMotor.getSupplyCurrent().getValueAsDouble();
+        if (driveMotorSim.Orientation == ChassisReference.Clockwise_Positive)
+            return driveMotor.getSupplyCurrent().getValueAsDouble();
+        else return -driveMotor.getSupplyCurrent().getValueAsDouble();
     }
 
     @Override
     public double getTurnMotorCurrentDrawAmps() {
-        if (m_turningMotorSim.Orientation == ChassisReference.Clockwise_Positive)
-            return m_turningMotor.getSupplyCurrent().getValueAsDouble();
-        else return -m_turningMotor.getSupplyCurrent().getValueAsDouble();
+        if (turningMotorSim.Orientation == ChassisReference.Clockwise_Positive)
+            return turningMotor.getSupplyCurrent().getValueAsDouble();
+        else return -turningMotor.getSupplyCurrent().getValueAsDouble();
     }
 
     @Override
     public void close() throws Exception {
-        m_driveMotor.close();
-        m_turningMotor.close();
+        driveMotor.close();
+        turningMotor.close();
         absoluteTurningMotorEncoder.close();
     }
 

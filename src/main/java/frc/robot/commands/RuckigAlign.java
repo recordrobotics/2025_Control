@@ -158,15 +158,15 @@ public class RuckigAlign extends Command {
     private static final InputParameter3 input = new InputParameter3();
     private static final OutputParameter3 output = new OutputParameter3();
 
-    private static final PIDController xpid = new PIDController(5, 0, 0.03);
-    private static final PIDController ypid = new PIDController(5, 0, 0.03);
-    private static final PIDController rpid = new PIDController(7, 0, 0.04);
+    private static final PIDController xPid = new PIDController(5, 0, 0.03);
+    private static final PIDController yPid = new PIDController(5, 0, 0.03);
+    private static final PIDController rPid = new PIDController(7, 0, 0.04);
 
-    private static AlignMode currentMode = AlignMode.Position;
+    private static AlignMode currentMode = AlignMode.POSITION;
 
     public enum AlignMode {
-        Position, // Full stop at target
-        Velocity // Keep moving at target velocity
+        POSITION, // Full stop at target
+        VELOCITY // Keep moving at target velocity
     }
 
     public record RuckigAlignState(KinematicState kinematicState, AlignMode alignMode) {}
@@ -177,7 +177,7 @@ public class RuckigAlign extends Command {
         input.setPerDoFSynchronization(
                 new Synchronization[] {Synchronization.Phase, Synchronization.Phase, Synchronization.None});
         setPositionModeTolerance();
-        rpid.enableContinuousInput(-Math.PI, Math.PI);
+        rPid.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     private final Supplier<RuckigAlignState> targetStateSupplier;
@@ -236,9 +236,9 @@ public class RuckigAlign extends Command {
         input.setTargetAcceleration(state.acceleration());
     }
 
-    private void applyAlignState(RuckigAlignState state) {
+    private static void applyAlignState(RuckigAlignState state) {
         setTargetState(state.kinematicState());
-        if (state.alignMode() == AlignMode.Position) {
+        if (state.alignMode() == AlignMode.POSITION) {
             setPositionModeTolerance();
         } else {
             setVelocityModeTolerance();
@@ -252,9 +252,9 @@ public class RuckigAlign extends Command {
                 RobotContainer.drivetrain.getChassisSpeeds(), pose.getRotation())));
         input.setCurrentAcceleration(chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(
                 RobotContainer.drivetrain.getChassisAcceleration(), pose.getRotation())));
-        xpid.reset();
-        ypid.reset();
-        rpid.reset();
+        xPid.reset();
+        yPid.reset();
+        rPid.reset();
         result = Result.Working;
     }
 
@@ -262,21 +262,26 @@ public class RuckigAlign extends Command {
      * Tight tolerance for position mode (final full-stop target)
      */
     private static void setPositionModeTolerance() {
-        xpid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
-        ypid.setTolerance(Constants.Align.translationalTolerance, Constants.Align.translationalVelocityTolerance);
-        rpid.setTolerance(Constants.Align.rotationalTolerance, Constants.Align.rotationalVelocityTolerance);
-        currentMode = AlignMode.Position;
+        xPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
+        yPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
+        rPid.setTolerance(Constants.Align.ROTATIONAL_TOLERANCE, Constants.Align.ROTATIONAL_VELOCITY_TOLERANCE);
+        currentMode = AlignMode.POSITION;
     }
+
+    private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
 
     /**
      * Increases the tolerance for velocity mode
      * to insure smooth waypoint following (final target is still in position mode)
      */
     private static void setVelocityModeTolerance() {
-        xpid.setTolerance(Constants.Align.translationalTolerance * 5, Double.POSITIVE_INFINITY);
-        ypid.setTolerance(Constants.Align.translationalTolerance * 5, Double.POSITIVE_INFINITY);
-        rpid.setTolerance(Constants.Align.rotationalTolerance * 5, Double.POSITIVE_INFINITY);
-        currentMode = AlignMode.Velocity;
+        xPid.setTolerance(
+                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        yPid.setTolerance(
+                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        rPid.setTolerance(
+                Constants.Align.ROTATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        currentMode = AlignMode.VELOCITY;
     }
 
     @Override
@@ -291,10 +296,10 @@ public class RuckigAlign extends Command {
 
         applyAlignState(targetStateSupplier.get());
 
-        lastAlignSuccessful = false;
+        setLastAlignSuccessful(false);
     }
 
-    private double feedforward(double velocity, double acceleration, double jerk) {
+    private static double feedforward(double velocity, double acceleration, double jerk) {
         final double kV = 1.0;
         final double kA = 0.1;
         final double kJ = 0.01;
@@ -332,14 +337,14 @@ public class RuckigAlign extends Command {
         Logger.recordOutput("Ruckig/SetpointJerk", new Transform2d(newJerk[0], newJerk[1], new Rotation2d(newJerk[2])));
 
         // Calculate the new velocities using PID and velocity feedforward
-        double vx = xpid.calculate(currentPose.getX(), newPosition[0])
+        double vx = xPid.calculate(currentPose.getX(), newPosition[0])
                 + feedforward(newVelocity[0], newAcceleration[0], newJerk[0]);
-        double vy = ypid.calculate(currentPose.getY(), newPosition[1])
+        double vy = yPid.calculate(currentPose.getY(), newPosition[1])
                 + feedforward(newVelocity[1], newAcceleration[1], newJerk[1]);
-        double vr = rpid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
+        double vr = rPid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
                 + feedforward(newVelocity[2], newAcceleration[2], newJerk[2]);
 
-        AutoPath.controlModifier.drive(
+        AutoPath.CONTROL_MODIFER.drive(
                 ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(vx, vy, vr), currentPose.getRotation()));
 
         output.passToInput(input);
@@ -359,29 +364,33 @@ public class RuckigAlign extends Command {
         }
     }
 
+    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
+
     @Override
     public boolean isFinished() {
         boolean finished = false;
-        switch (currentMode) {
-            case Position:
-                finished = result != Result.Working && xpid.atSetpoint() && ypid.atSetpoint() && rpid.atSetpoint();
-                break;
-            case Velocity:
-                Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-                double distanceToTarget = Math.hypot(
-                        currentPose.getX() - input.getTargetPosition()[0],
-                        currentPose.getY() - input.getTargetPosition()[1]);
-                finished = distanceToTarget < 0.05 || result != Result.Working;
-                break;
+
+        if (currentMode == AlignMode.POSITION) {
+            finished = result != Result.Working && xPid.atSetpoint() && yPid.atSetpoint() && rPid.atSetpoint();
+        } else if (currentMode == AlignMode.VELOCITY) {
+            Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+            double distanceToTarget = Math.hypot(
+                    currentPose.getX() - input.getTargetPosition()[0],
+                    currentPose.getY() - input.getTargetPosition()[1]);
+            finished = distanceToTarget < VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD || result != Result.Working;
         }
 
         if (finished) {
-            lastAlignSuccessful = true;
+            setLastAlignSuccessful(true);
         }
         return finished;
     }
 
     public static boolean lastAlignSuccessful() {
         return lastAlignSuccessful;
+    }
+
+    private static void setLastAlignSuccessful(boolean value) {
+        lastAlignSuccessful = value;
     }
 }

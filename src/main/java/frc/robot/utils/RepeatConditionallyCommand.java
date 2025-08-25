@@ -22,11 +22,11 @@ import java.util.function.BooleanSupplier;
  *
  * <p>This class is provided by the NewCommands VendorDep
  */
-public class RepeatConditionallyCommand extends Command {
-    private final Command m_command;
-    private boolean m_ended;
-    private BooleanSupplier m_condition;
-    private boolean m_runAtleastOnce;
+public final class RepeatConditionallyCommand extends Command {
+    private final Command command;
+    private boolean ended;
+    private BooleanSupplier condition;
+    private boolean runAtLeastOnce;
 
     /**
      * Creates a new RepeatCommand. Will run another command repeatedly, restarting it whenever it
@@ -35,10 +35,10 @@ public class RepeatConditionallyCommand extends Command {
      * @param command the command to run repeatedly
      */
     @SuppressWarnings("this-escape")
-    public RepeatConditionallyCommand(Command command, BooleanSupplier condition, boolean runAtleastOnce) {
-        m_command = requireNonNullParam(command, "command", "RepeatConditionallyCommand");
-        m_condition = condition;
-        m_runAtleastOnce = runAtleastOnce;
+    public RepeatConditionallyCommand(Command command, BooleanSupplier condition, boolean runAtLeastOnce) {
+        this.command = requireNonNullParam(command, "command", "RepeatConditionallyCommand");
+        this.condition = condition;
+        this.runAtLeastOnce = runAtLeastOnce;
         CommandScheduler.getInstance().registerComposedCommands(command);
         addRequirements(command.getRequirements());
         setName("RepeatConditionally(" + command.getName() + ")");
@@ -46,46 +46,45 @@ public class RepeatConditionallyCommand extends Command {
 
     @Override
     public void initialize() {
-        m_ended = false;
-        if (m_condition.getAsBoolean() || m_runAtleastOnce) {
+        ended = false;
+        if (condition.getAsBoolean() || runAtLeastOnce) {
             try {
-                m_command.initialize();
+                command.initialize();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            m_ended = true;
+            ended = true;
         }
     }
 
     @Override
     public void execute() {
-        if (m_ended && m_condition.getAsBoolean()) {
-            m_ended = false;
+        if (ended && condition.getAsBoolean()) {
+            ended = false;
             try {
-                m_command.initialize();
+                command.initialize();
             } catch (Exception e) {
                 e.printStackTrace();
                 return;
             }
         }
 
-        if (!m_ended) {
+        if (!ended) {
             try {
-                m_command.execute();
+                command.execute();
             } catch (Exception e) {
                 e.printStackTrace();
                 return;
             }
             try {
-                if (m_command.isFinished()) {
+                if (command.isFinished()) {
                     // restart command
-                    m_command.end(false);
-                    m_ended = true;
+                    command.end(false);
+                    ended = true;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return;
             }
         }
     }
@@ -99,29 +98,29 @@ public class RepeatConditionallyCommand extends Command {
     public void end(boolean interrupted) {
         // Make sure we didn't already call end() (which would happen if the command finished in the
         // last call to our execute())
-        if (!m_ended) {
+        if (!ended) {
             try {
-                m_command.end(interrupted);
+                command.end(interrupted);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            m_ended = true;
+            ended = true;
         }
     }
 
     @Override
     public boolean runsWhenDisabled() {
-        return m_command.runsWhenDisabled();
+        return command.runsWhenDisabled();
     }
 
     @Override
     public InterruptionBehavior getInterruptionBehavior() {
-        return m_command.getInterruptionBehavior();
+        return command.getInterruptionBehavior();
     }
 
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
-        builder.addStringProperty("command", m_command::getName, null);
+        builder.addStringProperty("command", command::getName, null);
     }
 }

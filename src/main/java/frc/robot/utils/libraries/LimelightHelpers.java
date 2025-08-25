@@ -33,6 +33,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * cameras in FRC. This library supports all Limelight features including AprilTag tracking, Neural
  * Networks, and standard color/retroreflective tracking.
  */
+// This is a Limelight library file, so ignore the warnings
+@SuppressWarnings({
+    "java:S109",
+    "java:S1118",
+    "java:S101",
+    "java:S116",
+    "java:S100",
+    "java:S1186",
+    "java:S1104",
+    "java:S117",
+    "java:S125",
+    "java:S1941",
+    "java:S7476",
+    "java:S1244",
+    "java:S2047",
+    "java:S6355",
+    "java:S1192",
+    "java:S1845",
+    "java:S2259",
+    "java:S1602"
+})
 public class LimelightHelpers {
 
     private static final Map<String, DoubleArrayEntry> doubleArrayEntries = new ConcurrentHashMap<>();
@@ -592,7 +613,7 @@ public class LimelightHelpers {
     static boolean profileJSON = false;
 
     static final String sanitizeName(String name) {
-        if (name == "" || name == null) {
+        if ("".equals(name) || name == null) {
             return "limelight";
         }
         return name;
@@ -970,7 +991,7 @@ public class LimelightHelpers {
     }
 
     /**
-     * T2D is an array that contains several targeting metrcis
+     * T2D is an array that contains several targeting metrics
      *
      * @param limelightName Name of the Limelight camera
      * @return Array containing [targetValid, targetCount, targetLatency, captureLatency, tx, ty,
@@ -1100,6 +1121,7 @@ public class LimelightHelpers {
      *
      * @param limelightName
      * @return
+     * @deprecated
      */
     @Deprecated
     public static double[] getBotpose(String limelightName) {
@@ -1111,6 +1133,7 @@ public class LimelightHelpers {
      *
      * @param limelightName
      * @return
+     * @deprecated
      */
     @Deprecated
     public static double[] getBotpose_wpiRed(String limelightName) {
@@ -1122,6 +1145,7 @@ public class LimelightHelpers {
      *
      * @param limelightName
      * @return
+     * @deprecated
      */
     @Deprecated
     public static double[] getBotpose_wpiBlue(String limelightName) {
@@ -1518,7 +1542,7 @@ public class LimelightHelpers {
      * @param y Y offset in meters
      * @param z Z offset in meters
      */
-    public static void SetFidcuial3DOffset(String limelightName, double x, double y, double z) {
+    public static void SetFiducial3DOffset(String limelightName, double x, double y, double z) {
 
         double[] entries = new double[3];
         entries[0] = x;
@@ -1619,7 +1643,7 @@ public class LimelightHelpers {
         try {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            if (snapshotName != null && snapshotName != "") {
+            if (snapshotName != null && !"".equals(snapshotName)) {
                 connection.setRequestProperty("snapname", snapshotName);
             }
 
@@ -1659,7 +1683,7 @@ public class LimelightHelpers {
         double millis = (end - start) * .000001;
         results.latency_jsonParse = millis;
         if (profileJSON) {
-            System.out.printf("lljson: %.2f\r\n", millis);
+            System.out.printf("lljson: %.2f%n", millis);
         }
 
         return results;

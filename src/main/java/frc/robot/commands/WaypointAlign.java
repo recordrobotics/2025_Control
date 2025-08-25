@@ -13,6 +13,7 @@ import frc.robot.commands.RuckigAlign.RuckigAlignGroup;
 import frc.robot.commands.RuckigAlign.RuckigAlignState;
 import frc.robot.utils.SimpleMath;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.recordrobotics.ruckig.Trajectory3.KinematicState;
@@ -21,7 +22,7 @@ public class WaypointAlign {
 
     public static List<Pose2d> createWaypointsToTarget(Pose2d target, Transform2d[] targetTransforms) {
 
-        List<Pose2d> waypoints = new ArrayList<Pose2d>(targetTransforms.length + 1);
+        List<Pose2d> waypoints = new ArrayList<>(targetTransforms.length + 1);
 
         for (Transform2d transform : targetTransforms) {
             waypoints.add(target.plus(transform));
@@ -64,6 +65,19 @@ public class WaypointAlign {
         double ln = Math.hypot(dnx, dny);
         double t = lp < ln ? lp / (2 * ln) : (1 - ln / (2 * lp));
 
+        double[] velocity = calculateVelocity(dpx, dpy, dpr, dnx, dny, dnr, t, maxVelocity);
+        double[] acceleration =
+                useAcceleration ? calculateAcceleration(dnx, dny, dnr, maxAcceleration) : new double[] {0, 0, 0};
+
+        return new KinematicState(
+                new double[] {cx, cy, cr}, // position
+                velocity, // velocity
+                acceleration // acceleration
+                );
+    }
+
+    private static double[] calculateVelocity(
+            double dpx, double dpy, double dpr, double dnx, double dny, double dnr, double t, double[] maxVelocity) {
         double dx = dnx * t + dpx * (1 - t);
         double dy = dny * t + dpy * (1 - t);
         double dr = dnr * t + dpr * (1 - t);
@@ -71,59 +85,41 @@ public class WaypointAlign {
 
         double dist = Math.hypot(dx, dy);
         if (dist > 1e-6) {
-            double max_v = Math.hypot(maxVelocity[0], maxVelocity[1]);
+            double maxV = Math.hypot(maxVelocity[0], maxVelocity[1]);
             if (Math.abs(dr) > 1e-6) {
-                max_v /= Math.abs(dr);
+                maxV /= Math.abs(dr);
             }
-            if (dist > max_v) {
-                dx /= dist;
-                dy /= dist;
-                double v_peak = max_v;
-                dx *= v_peak;
-                dy *= v_peak;
+            if (dist > maxV) {
+                dx = (dx / dist) * maxV;
+                dy = (dy / dist) * maxV;
             }
         } else {
             dx = 0.0;
             dy = 0.0;
         }
 
-        double t_vx = 0, t_vy = 0, t_vr = 0;
-        double t_ax = 0, t_ay = 0, t_ar = 0;
+        return new double[] {dx, dy, dr};
+    }
 
-        if (useAcceleration) {
-            dnr = MathUtil.clamp(dnr, -maxAcceleration[2], maxAcceleration[2]);
-            double dist_a = Math.hypot(dnx, dny);
-            if (dist_a > 1e-6) {
-                double max_a = Math.hypot(maxAcceleration[0], maxAcceleration[1]);
-                if (Math.abs(dnr) > 1e-6) {
-                    max_a /= Math.abs(dnr);
-                }
-                if (dist_a > max_a) {
-                    dnx /= dist_a;
-                    dny /= dist_a;
-                    double a_peak = max_a;
-                    dnx *= a_peak;
-                    dny *= a_peak;
-                }
-            } else {
-                dnx = 0.0;
-                dny = 0.0;
+    private static double[] calculateAcceleration(double dnx, double dny, double dnr, double[] maxAcceleration) {
+        dnr = MathUtil.clamp(dnr, -maxAcceleration[2], maxAcceleration[2]);
+        double distA = Math.hypot(dnx, dny);
+
+        if (distA > 1e-6) {
+            double maxA = Math.hypot(maxAcceleration[0], maxAcceleration[1]);
+            if (Math.abs(dnr) > 1e-6) {
+                maxA /= Math.abs(dnr);
             }
-
-            t_ax = dnx;
-            t_ay = dny;
-            t_ar = dnr;
+            if (distA > maxA) {
+                dnx = (dnx / distA) * maxA;
+                dny = (dny / distA) * maxA;
+            }
+        } else {
+            dnx = 0.0;
+            dny = 0.0;
         }
 
-        t_vx = dx;
-        t_vy = dy;
-        t_vr = dr;
-
-        return new KinematicState(
-                new double[] {cx, cy, cr}, // position
-                new double[] {t_vx, t_vy, t_vr}, // velocity
-                new double[] {t_ax, t_ay, t_ar} // acceleration
-                );
+        return new double[] {dnx, dny, dnr};
     }
 
     private static int getCurrentWaypoint(List<Pose2d> waypoints) {
@@ -164,7 +160,7 @@ public class WaypointAlign {
     }
 
     private static double moduleToRobotRadians(double moduleValue) {
-        return moduleValue / Constants.Swerve.locDist;
+        return moduleValue / Constants.Swerve.WHEEL_BASE_RADIUS;
     }
 
     public record KinematicConstraints(double[] maxVelocity, double[] maxAcceleration, double[] maxJerk) {
@@ -185,6 +181,32 @@ public class WaypointAlign {
                     moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2)
                 } // max jerk
                 );
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            KinematicConstraints that = (KinematicConstraints) obj;
+            return Arrays.equals(maxVelocity, that.maxVelocity)
+                    && Arrays.equals(maxAcceleration, that.maxAcceleration)
+                    && Arrays.equals(maxJerk, that.maxJerk);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Arrays.hashCode(maxVelocity);
+            result = 31 * result + Arrays.hashCode(maxAcceleration);
+            result = 31 * result + Arrays.hashCode(maxJerk);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "KinematicConstraints{" + "maxVelocity="
+                    + Arrays.toString(maxVelocity) + ", maxAcceleration="
+                    + Arrays.toString(maxAcceleration) + ", maxJerk="
+                    + Arrays.toString(maxJerk) + '}';
+        }
     }
 
     /**
@@ -244,8 +266,8 @@ public class WaypointAlign {
             boolean stopAtEndWaypoint,
             Double[] waypointTimeouts,
             KinematicConstraints constraints) {
-        RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<WaypointData>(
-                constraints.maxVelocity, constraints.maxAcceleration, constraints.maxJerk);
+        RuckigAlignGroup<WaypointData> waypointGroup =
+                new RuckigAlignGroup<>(constraints.maxVelocity, constraints.maxAcceleration, constraints.maxJerk);
         return align(waypoints, startWaypoint, endWaypoint, stopAtEndWaypoint, waypointTimeouts, waypointGroup)
                 .build();
     }
@@ -270,6 +292,17 @@ public class WaypointAlign {
             Double[] waypointTimeouts,
             RuckigAlignGroup<WaypointData> waypointGroup) {
 
+        validateAlignParameters(waypoints, startWaypoint, endWaypoint, waypointTimeouts);
+
+        for (int i = startWaypoint; i <= endWaypoint; i++) {
+            addWaypointToGroup(waypoints, i, endWaypoint, stopAtEndWaypoint, waypointTimeouts, waypointGroup);
+        }
+
+        return waypointGroup;
+    }
+
+    private static void validateAlignParameters(
+            List<Pose2d> waypoints, int startWaypoint, int endWaypoint, Double[] waypointTimeouts) {
         if (waypoints.size() > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
         }
@@ -281,47 +314,64 @@ public class WaypointAlign {
         if (endWaypoint < 0 || endWaypoint >= waypoints.size()) {
             throw new IllegalArgumentException("endWaypoint is out of bounds");
         }
+    }
 
-        for (int i = startWaypoint; i <= endWaypoint; i++) {
-            final int index = i;
-            waypointGroup.addAlign(
-                    () -> {
-                        final KinematicState fullStopState = new KinematicState(
-                                new double[] {
-                                    waypoints.get(index).getX(),
-                                    waypoints.get(index).getY(),
-                                    waypoints.get(index).getRotation().getRadians()
-                                },
-                                new double[] {0, 0, 0},
-                                new double[] {0, 0, 0});
+    private static void addWaypointToGroup(
+            List<Pose2d> waypoints,
+            int index,
+            int endWaypoint,
+            boolean stopAtEndWaypoint,
+            Double[] waypointTimeouts,
+            RuckigAlignGroup<WaypointData> waypointGroup) {
 
-                        final KinematicState velocityState;
-                        if (index != waypoints.size() - 1) {
-                            velocityState = getKinematicStateForWaypoint(
-                                    index == 0
-                                            ? RobotContainer.poseSensorFusion.getEstimatedPosition()
-                                            : waypoints.get(index - 1),
-                                    waypoints.get(index),
-                                    waypoints.get(index + 1),
-                                    waypointGroup.getMaxVelocity(),
-                                    waypointGroup.getMaxAcceleration(),
-                                    true);
-                        } else {
-                            velocityState = null;
-                        }
-                        return new WaypointData(fullStopState, velocityState);
-                    },
-                    data -> {
-                        if (index == waypoints.size() - 1 || (stopAtEndWaypoint && index == endWaypoint)) {
-                            return new RuckigAlignState(data.fullStopState, AlignMode.Position);
-                        } else {
-                            return new RuckigAlignState(data.velocityState, AlignMode.Velocity);
-                        }
-                    },
-                    waypointTimeouts[i]);
+        waypointGroup.addAlign(
+                () -> createWaypointData(waypoints, index, waypointGroup),
+                data -> createRuckigAlignState(data, index, endWaypoint, stopAtEndWaypoint, waypoints.size()),
+                waypointTimeouts[index]);
+    }
+
+    private static WaypointData createWaypointData(
+            List<Pose2d> waypoints, int index, RuckigAlignGroup<WaypointData> waypointGroup) {
+        final KinematicState fullStopState = createFullStopState(waypoints.get(index));
+        final KinematicState velocityState = createVelocityState(waypoints, index, waypointGroup);
+        return new WaypointData(fullStopState, velocityState);
+    }
+
+    private static KinematicState createFullStopState(Pose2d waypoint) {
+        return new KinematicState(
+                new double[] {
+                    waypoint.getX(), waypoint.getY(), waypoint.getRotation().getRadians()
+                },
+                new double[] {0, 0, 0},
+                new double[] {0, 0, 0});
+    }
+
+    private static KinematicState createVelocityState(
+            List<Pose2d> waypoints, int index, RuckigAlignGroup<WaypointData> waypointGroup) {
+        if (index == waypoints.size() - 1) {
+            return null;
         }
 
-        return waypointGroup;
+        Pose2d previousWaypoint =
+                index == 0 ? RobotContainer.poseSensorFusion.getEstimatedPosition() : waypoints.get(index - 1);
+
+        return getKinematicStateForWaypoint(
+                previousWaypoint,
+                waypoints.get(index),
+                waypoints.get(index + 1),
+                waypointGroup.getMaxVelocity(),
+                waypointGroup.getMaxAcceleration(),
+                true);
+    }
+
+    private static RuckigAlignState createRuckigAlignState(
+            WaypointData data, int index, int endWaypoint, boolean stopAtEndWaypoint, int waypointsSize) {
+        boolean shouldStop = index == waypointsSize - 1 || (stopAtEndWaypoint && index == endWaypoint);
+        if (shouldStop) {
+            return new RuckigAlignState(data.fullStopState, AlignMode.POSITION);
+        } else {
+            return new RuckigAlignState(data.velocityState, AlignMode.VELOCITY);
+        }
     }
 
     /**
@@ -384,7 +434,7 @@ public class WaypointAlign {
 
         return Commands.defer(
                 () -> {
-                    RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<WaypointData>(
+                    RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<>(
                             constraints.maxVelocity, constraints.maxAcceleration, constraints.maxJerk);
 
                     align(

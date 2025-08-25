@@ -11,27 +11,40 @@ public class SwerveModuleStub implements SwerveModuleIO {
     @SuppressWarnings("unused")
     private final double periodicDt;
 
+    @SuppressWarnings("java:S1172")
     public SwerveModuleStub(double periodicDt, ModuleConstants m) {
         this.periodicDt = periodicDt;
     }
 
     @Override
-    public void applyDriveTalonFXConfig(TalonFXConfiguration configuration) {}
+    public void applyDriveTalonFXConfig(TalonFXConfiguration configuration) {
+        /* stub */
+    }
 
     @Override
-    public void applyTurnTalonFXConfig(TalonFXConfiguration configuration) {}
+    public void applyTurnTalonFXConfig(TalonFXConfiguration configuration) {
+        /* stub */
+    }
 
     @Override
-    public void setDriveMotorVoltage(double newValue) {}
+    public void setDriveMotorVoltage(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setTurnMotorVoltage(double newValue) {}
+    public void setTurnMotorVoltage(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {}
+    public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {
+        /* stub */
+    }
 
     @Override
-    public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {}
+    public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {
+        /* stub */
+    }
 
     @Override
     public double getDriveMotorVoltage() {
@@ -44,10 +57,14 @@ public class SwerveModuleStub implements SwerveModuleIO {
     }
 
     @Override
-    public void setDriveMotorPercent(double newValue) {}
+    public void setDriveMotorPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setTurnMotorPercent(double newValue) {}
+    public void setTurnMotorPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getDriveMotorPercent() {
@@ -90,13 +107,19 @@ public class SwerveModuleStub implements SwerveModuleIO {
     }
 
     @Override
-    public void setDriveMechanismPosition(double newValue) {}
+    public void setDriveMechanismPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setTurnMechanismPosition(double newValue) {}
+    public void setTurnMechanismPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        /* stub */
+    }
 
     @Override
     public double getDriveMotorCurrentDrawAmps() {
@@ -109,5 +132,7 @@ public class SwerveModuleStub implements SwerveModuleIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 }

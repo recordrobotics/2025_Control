@@ -30,12 +30,14 @@ import java.util.Optional;
 import java.util.Set;
 import org.littletonrobotics.junction.Logger;
 
-public class AutoPath {
+public final class AutoPath {
+    private AutoPath() {}
 
-    public static AutoPathControlModifier controlModifier = new AutoPathControlModifier();
+    public static final AutoPathControlModifier CONTROL_MODIFER = new AutoPathControlModifier();
 
-    public AutoPath() {
-        RobotConfig config = Constants.Swerve.PPDefaultConfig;
+    @SuppressWarnings("java:S109")
+    public static void initialize() {
+        RobotConfig config = Constants.Swerve.PP_DEFAULT_CONFIG;
         try {
             config = RobotConfig.fromGUISettings();
         } catch (Exception e) {
@@ -43,7 +45,7 @@ public class AutoPath {
             Notifications.send(NotificationLevel.ERROR, "AutoPath failed to load config", "Error message in console");
         }
 
-        RobotContainer.drivetrain.modifiers.add(0, controlModifier);
+        RobotContainer.drivetrain.modifiers.add(0, CONTROL_MODIFER);
 
         // Registering named commands (so that the pathplanner can call them by name)
 
@@ -54,7 +56,7 @@ public class AutoPath {
                 "AutoAlign",
                 Commands.defer(
                         () -> CommandUtils.finishOnInterrupt(WaypointAlign.align(
-                                ReefAlign.generateWaypointsClosest(CoralLevel.L4, false, true),
+                                ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
                                 0,
                                 1,
                                 true,
@@ -105,10 +107,8 @@ public class AutoPath {
                 RobotContainer.drivetrain::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
 
                 // Method that will drive the robot given ROBOT RELATIVE speeds
-                (speeds, feedforwards) -> {
-                    controlModifier.drive(speeds);
-                },
-                Constants.Swerve.PPDriveController,
+                (speeds, feedforwards) -> CONTROL_MODIFER.drive(speeds),
+                Constants.Swerve.PP_DRIVE_CONTROLLER,
                 config,
 
                 // Boolean supplier that controls when the path will be mirrored for the red alliance
@@ -125,12 +125,10 @@ public class AutoPath {
                 // Reference to this subsystem to set requirements
                 RobotContainer.drivetrain);
 
-        PathPlannerLogging.setLogActivePathCallback((activePath) -> {
-            Logger.recordOutput("Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-        });
-        PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
-            Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-        });
+        PathPlannerLogging.setLogActivePathCallback(activePath ->
+                Logger.recordOutput("Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()])));
+        PathPlannerLogging.setLogTargetPoseCallback(
+                targetPose -> Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose));
         PathfindingCommand.warmupCommand().schedule();
     }
 }

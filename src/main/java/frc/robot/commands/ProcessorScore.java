@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -10,6 +9,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.ElevatorHead.AlgaeGrabberStates;
+import frc.robot.utils.CommandUtils;
 
 public class ProcessorScore extends SequentialCommandGroup {
 
@@ -26,7 +26,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                         .runPattern(Constants.Lights.PULSATING_ORANGE)
                         .onlyWhile(this::isScheduled)),
                 Commands.either(
-                        maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR))
+                        CommandUtils.maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.GROUND_ALGAE_PROCESSOR))
                                 .andThen(new InstantCommand(
                                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_GROUND),
                                         RobotContainer.elevatorHead))
@@ -34,7 +34,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                                 .andThen(new InstantCommand(
                                         () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                                         RobotContainer.elevatorHead))
-                                .andThen(maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
+                                .andThen(CommandUtils.maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
                         Commands.either(
                                 new InstantCommand(
                                                 () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.SHOOT_BARGE),
@@ -43,7 +43,7 @@ public class ProcessorScore extends SequentialCommandGroup {
                                         .andThen(new InstantCommand(
                                                 () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                                                 RobotContainer.elevatorHead)),
-                                maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE))
+                                CommandUtils.maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.PROCESSOR_SCORE))
                                         .andThen(new InstantCommand(
                                                 () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OUT_REEF),
                                                 RobotContainer.elevatorHead))
@@ -51,17 +51,14 @@ public class ProcessorScore extends SequentialCommandGroup {
                                         .andThen(new InstantCommand(
                                                 () -> RobotContainer.elevatorHead.set(AlgaeGrabberStates.OFF),
                                                 RobotContainer.elevatorHead))
-                                        .andThen(maybeProxy(withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
-                                () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALAGAE),
+                                        .andThen(CommandUtils.maybeProxy(
+                                                withProxy, new ElevatorMove(ElevatorHeight.BOTTOM))),
+                                () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALGAE),
                         () -> RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE),
                 new ScheduleCommand(RobotContainer.lights
                         .algaeGrabber
                         .runPattern(Constants.Lights.FLASHING_GREEN)
                         .alongWith(RobotContainer.lights.stateVisualizer.runPattern(Constants.Lights.PULSATING_GREEN))
                         .withTimeout(Constants.Lights.SUCCESS_FLASH_TIME)));
-    }
-
-    private Command maybeProxy(boolean withProxy, Command cmd) {
-        return withProxy ? cmd.asProxy() : cmd;
     }
 }

@@ -36,9 +36,9 @@ public interface ElevatorIO extends AutoCloseable {
 
     double getLeadMotorPercent();
 
-    boolean getTopEndStop();
+    boolean isTopEndStopPressed();
 
-    boolean getBottomEndStop();
+    boolean isBottomEndStopPressed();
 
     double getLeadMotorCurrentDraw();
 

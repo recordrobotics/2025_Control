@@ -13,77 +13,77 @@ public class SwerveModuleReal implements SwerveModuleIO {
     @SuppressWarnings("unused")
     private final double periodicDt;
 
-    private final TalonFX m_driveMotor;
-    private final TalonFX m_turningMotor;
+    private final TalonFX driveMotor;
+    private final TalonFX turningMotor;
     private final DutyCycleEncoder absoluteTurningMotorEncoder;
 
     public SwerveModuleReal(double periodicDt, ModuleConstants m) {
         this.periodicDt = periodicDt;
 
-        m_driveMotor = new TalonFX(m.driveMotorChannel);
-        m_turningMotor = new TalonFX(m.turningMotorChannel);
+        driveMotor = new TalonFX(m.driveMotorChannel());
+        turningMotor = new TalonFX(m.turningMotorChannel());
 
-        absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel);
+        absoluteTurningMotorEncoder = new DutyCycleEncoder(m.absoluteTurningMotorEncoderChannel());
     }
 
     @Override
     public void applyDriveTalonFXConfig(TalonFXConfiguration configuration) {
-        m_driveMotor.getConfigurator().apply(configuration);
+        driveMotor.getConfigurator().apply(configuration);
     }
 
     @Override
     public void applyTurnTalonFXConfig(TalonFXConfiguration configuration) {
-        m_turningMotor.getConfigurator().apply(configuration);
+        turningMotor.getConfigurator().apply(configuration);
     }
 
     @Override
     public void setDriveMotorVoltage(double newValue) {
-        m_driveMotor.setVoltage(newValue);
+        driveMotor.setVoltage(newValue);
     }
 
     @Override
     public void setTurnMotorVoltage(double newValue) {
-        m_turningMotor.setVoltage(newValue);
+        turningMotor.setVoltage(newValue);
     }
 
     @Override
     public void setTurnMotorMotionMagic(MotionMagicExpoVoltage request) {
-        m_turningMotor.setControl(request);
+        turningMotor.setControl(request);
     }
 
     @Override
     public void setDriveMotorMotionMagic(MotionMagicVelocityVoltage request) {
-        m_driveMotor.setControl(request);
+        driveMotor.setControl(request);
     }
 
     @Override
     public double getDriveMotorVoltage() {
-        return m_driveMotor.getMotorVoltage().getValueAsDouble();
+        return driveMotor.getMotorVoltage().getValueAsDouble();
     }
 
     @Override
     public double getTurnMotorVoltage() {
-        return m_turningMotor.getMotorVoltage().getValueAsDouble();
+        return turningMotor.getMotorVoltage().getValueAsDouble();
     }
 
     @Override
     public void setDriveMotorPercent(double newValue) {
-        m_driveMotor.set(newValue);
+        driveMotor.set(newValue);
     }
 
     @Override
     public void setTurnMotorPercent(double newValue) {
-        m_turningMotor.set(newValue);
+        turningMotor.set(newValue);
     }
 
     @Override
     public double getDriveMotorPercent() {
-        return m_driveMotor.get();
+        return driveMotor.get();
     }
 
     @Override
     public double getTurnMotorPercent() {
-        return m_turningMotor.get();
+        return turningMotor.get();
     }
 
     @Override
@@ -93,56 +93,58 @@ public class SwerveModuleReal implements SwerveModuleIO {
 
     @Override
     public double getTurnMechanismPosition() {
-        return m_turningMotor.getPosition().getValueAsDouble();
+        return turningMotor.getPosition().getValueAsDouble();
     }
 
     @Override
     public double getTurnMechanismVelocity() {
-        return m_turningMotor.getVelocity().getValueAsDouble();
+        return turningMotor.getVelocity().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismPosition() {
-        return m_driveMotor.getPosition().getValueAsDouble();
+        return driveMotor.getPosition().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismVelocity() {
-        return m_driveMotor.getVelocity().getValueAsDouble();
+        return driveMotor.getVelocity().getValueAsDouble();
     }
 
     @Override
     public double getDriveMechanismAcceleration() {
-        return m_driveMotor.getAcceleration().getValueAsDouble();
+        return driveMotor.getAcceleration().getValueAsDouble();
     }
 
     @Override
     public void setDriveMechanismPosition(double newValue) {
-        m_driveMotor.setPosition(newValue);
+        driveMotor.setPosition(newValue);
     }
 
     @Override
     public void setTurnMechanismPosition(double newValue) {
-        m_turningMotor.setPosition(newValue);
+        turningMotor.setPosition(newValue);
     }
 
     @Override
     public void close() throws Exception {
-        m_driveMotor.close();
-        m_turningMotor.close();
+        driveMotor.close();
+        turningMotor.close();
         absoluteTurningMotorEncoder.close();
     }
 
     @Override
     public double getDriveMotorCurrentDrawAmps() {
-        return m_driveMotor.getSupplyCurrent().getValueAsDouble();
+        return driveMotor.getSupplyCurrent().getValueAsDouble();
     }
 
     @Override
     public double getTurnMotorCurrentDrawAmps() {
-        return m_turningMotor.getSupplyCurrent().getValueAsDouble();
+        return turningMotor.getSupplyCurrent().getValueAsDouble();
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

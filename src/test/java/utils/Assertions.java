@@ -2,8 +2,8 @@ package utils;
 
 import static org.junit.jupiter.api.AssertionFailureBuilder.*;
 
-import frc.robot.utils.mapleSim.ImprovedArena2025Reefscape;
-import frc.robot.utils.mapleSim.ImprovedReefscapeReefBranch;
+import frc.robot.utils.maplesim.ImprovedArena2025Reefscape;
+import frc.robot.utils.maplesim.ImprovedReefscapeReefBranch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -111,7 +111,7 @@ public class Assertions {
             }
         }
 
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
             assertionFailure()
                     .message(sb.toString())
                     .expected(reefString)

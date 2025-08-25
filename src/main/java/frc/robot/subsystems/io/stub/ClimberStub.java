@@ -14,16 +14,24 @@ public class ClimberStub implements ClimberIO {
     }
 
     @Override
-    public void applyTalonFXConfig(TalonFXConfiguration configuration) {}
+    public void applyTalonFXConfig(TalonFXConfiguration configuration) {
+        /* stub */
+    }
 
     @Override
-    public void setVoltage(double outputVolts) {}
+    public void setVoltage(double outputVolts) {
+        /* stub */
+    }
 
     @Override
-    public void setPosition(double newValue) {}
+    public void setPosition(double newValue) {
+        /* stub */
+    }
 
     @Override
-    public void setMotionMagic(MotionMagicVoltage request) {}
+    public void setMotionMagic(MotionMagicVoltage request) {
+        /* stub */
+    }
 
     @Override
     public double getPosition() {
@@ -36,7 +44,9 @@ public class ClimberStub implements ClimberIO {
     }
 
     @Override
-    public void setPercent(double newValue) {}
+    public void setPercent(double newValue) {
+        /* stub */
+    }
 
     @Override
     public double getPercent() {
@@ -54,11 +64,17 @@ public class ClimberStub implements ClimberIO {
     }
 
     @Override
-    public void setRatchet(double value) {}
+    public void setRatchet(double value) {
+        /* stub */
+    }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* stub */
+    }
 
     @Override
-    public void close() {}
+    public void close() {
+        /* stub */
+    }
 }

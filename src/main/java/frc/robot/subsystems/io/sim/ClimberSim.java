@@ -6,7 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.hal.PWMJNI;
+import edu.wpi.first.hal.DIOJNI;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.hal.SimDouble;
@@ -35,7 +35,7 @@ public class ClimberSim implements ClimberIO {
     private final SimDouble ratchetValue;
 
     private final SingleJointedArmSim simModel = new SingleJointedArmSim(
-            LinearSystemId.createDCMotorSystem(Constants.Climber.kV, Constants.Climber.kA),
+            LinearSystemId.createDCMotorSystem(Constants.Climber.KV, Constants.Climber.KA),
             dcMotor,
             Constants.Climber.GEAR_RATIO,
             Units.inchesToMeters(88),
@@ -46,6 +46,7 @@ public class ClimberSim implements ClimberIO {
             0.001,
             0.001);
 
+    @SuppressWarnings("java:S2583") // SimDevice.create can return null
     public ClimberSim(double periodicDt) {
         this.periodicDt = periodicDt;
 
@@ -58,7 +59,7 @@ public class ClimberSim implements ClimberIO {
         if (ratchetSim != null) ratchetValue = ratchetSim.createDouble("Value", Direction.kOutput, 0);
         else ratchetValue = null;
 
-        if (ratchetSim != null) PWMJNI.setDIOSimDevice(ratchet.getHandle(), ratchetSim.getNativeHandle());
+        if (ratchetSim != null) DIOJNI.setDIOSimDevice(ratchet.getHandle(), ratchetSim.getNativeHandle());
         else ratchet.close();
     }
 

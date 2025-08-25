@@ -9,27 +9,26 @@ import java.util.EnumSet;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-public class OverviewLayout extends AbstractLayout {
+public final class OverviewLayout extends AbstractLayout {
 
     public enum DriverOrientation {
-        XAxisTowardsTrigger("Competition"),
-        YAxisTowardsTrigger("Y Axis"),
-        XAxisInvertTowardsTrigger("Couch Drive");
+        X_AXIS_TOWARDS_TRIGGER("Competition"),
+        Y_AXIS_TOWARDS_TRIGGER("Y Axis"),
+        X_AXIS_INVERTED_TOWARDS_TRIGGER("Couch Drive");
 
-        public final String display_name;
+        public final String displayName;
 
         DriverOrientation(String orientation) {
-            display_name = orientation;
+            displayName = orientation;
         }
     }
 
-    private static LoggedDashboardChooser<DriverOrientation> driverOrientation =
+    private LoggedDashboardChooser<DriverOrientation> driverOrientation =
             new LoggedDashboardChooser<>("Driver Orientation");
-    private static LoggedDashboardChooser<AbstractControl> driveMode = new LoggedDashboardChooser<>("Drive Mode");
-    private static AbstractControl _defaultControl;
-    private static AbstractControl _testControl;
+    private LoggedDashboardChooser<AbstractControl> driveMode = new LoggedDashboardChooser<>("Drive Mode");
+    private AbstractControl defaultControl;
+    private AbstractControl testControl;
 
-    // private Supplier<Boolean> poseCertainValue = () -> false;
     private Supplier<Boolean> navSensorValue = () -> false;
 
     public OverviewLayout() {
@@ -43,7 +42,7 @@ public class OverviewLayout extends AbstractLayout {
      * @param controls any other control objects you want to initialize
      */
     public void addControls(AbstractControl defaultControl, AbstractControl... controls) {
-        _defaultControl = defaultControl;
+        this.defaultControl = defaultControl;
 
         // Sets up drive mode options
         for (AbstractControl abstractControl : controls) {
@@ -51,9 +50,9 @@ public class OverviewLayout extends AbstractLayout {
         }
         driveMode.addDefaultOption(defaultControl.getClass().getSimpleName(), defaultControl);
 
-        EnumSet.allOf(DriverOrientation.class).forEach(v -> driverOrientation.addOption(v.display_name, v));
+        EnumSet.allOf(DriverOrientation.class).forEach(v -> driverOrientation.addOption(v.displayName, v));
         driverOrientation.addDefaultOption(
-                DriverOrientation.XAxisTowardsTrigger.display_name, DriverOrientation.XAxisTowardsTrigger);
+                DriverOrientation.X_AXIS_TOWARDS_TRIGGER.displayName, DriverOrientation.X_AXIS_TOWARDS_TRIGGER);
     }
 
     public void setNavSensor(Supplier<Boolean> navSensor) {
@@ -74,20 +73,20 @@ public class OverviewLayout extends AbstractLayout {
         return driverOrientation.get();
     }
 
-    public static void setTestControl(AbstractControl testControl) {
+    public void setTestControl(AbstractControl testControl) {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.TEST) return;
-        _testControl = testControl;
+        this.testControl = testControl;
     }
 
     public AbstractControl getControl() {
         if (Constants.RobotState.getMode() == Constants.RobotState.Mode.TEST) {
-            if (_testControl == null) {
+            if (testControl == null) {
                 throw new IllegalStateException("Test control is not set!");
             }
-            return _testControl;
+            return testControl;
         }
 
-        if (driveMode.get() == null) return _defaultControl;
+        if (driveMode.get() == null) return defaultControl;
         return driveMode.get();
     }
 }

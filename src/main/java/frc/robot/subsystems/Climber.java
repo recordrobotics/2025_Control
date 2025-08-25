@@ -11,13 +11,16 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.ClimberIO;
 import frc.robot.subsystems.io.sim.ClimberSim;
 import frc.robot.utils.AutoLogLevel;
@@ -25,23 +28,25 @@ import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.EncoderResettableSubsystem;
 import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import org.littletonrobotics.junction.Logger;
 
-public class Climber extends KillableSubsystem
-        implements ShuffleboardPublisher, PoweredSubsystem, EncoderResettableSubsystem {
+public final class Climber extends KillableSubsystem implements PoweredSubsystem, EncoderResettableSubsystem {
 
     private final ClimberIO io;
     private final SysIdRoutine sysIdRoutine;
     private final MotionMagicVoltage armRequest;
 
-    private ClimberState currentState = ClimberState.Park;
+    private ClimberState currentState = ClimberState.PARK;
 
     private double positionCached = 0;
     private double velocityCached = 0;
     private double voltageCached = 0;
+
+    private static final Velocity<VoltageUnit> SYSID_RAMP_RATE = Volts.of(4.0).per(Second);
+    private static final Voltage SYSID_STEP_VOLTAGE = Volts.of(3.5);
+    private static final Time SYSID_TIMEOUT = Seconds.of(1.0);
 
     public Climber(ClimberIO io) {
         this.io = io;
@@ -50,13 +55,13 @@ public class Climber extends KillableSubsystem
 
         // set slot 0 gains
         Slot0Configs slot0Configs = config.Slot0;
-        slot0Configs.kS = Constants.Climber.kS;
-        slot0Configs.kV = Constants.Climber.kV;
-        slot0Configs.kA = Constants.Climber.kA;
-        slot0Configs.kG = Constants.Climber.kG;
-        slot0Configs.kP = Constants.Climber.kP;
-        slot0Configs.kI = Constants.Climber.kI;
-        slot0Configs.kD = Constants.Climber.kD;
+        slot0Configs.kS = Constants.Climber.KS;
+        slot0Configs.kV = Constants.Climber.KV;
+        slot0Configs.kA = Constants.Climber.KA;
+        slot0Configs.kG = Constants.Climber.KG;
+        slot0Configs.kP = Constants.Climber.KP;
+        slot0Configs.kI = 0;
+        slot0Configs.kD = Constants.Climber.KD;
         slot0Configs.GravityType = GravityTypeValue.Elevator_Static;
         config.Feedback.SensorToMechanismRatio = Constants.Climber.GEAR_RATIO;
 
@@ -64,7 +69,7 @@ public class Climber extends KillableSubsystem
         MotionMagicConfigs motionMagicConfigs = config.MotionMagic;
         motionMagicConfigs.MotionMagicCruiseVelocity = Constants.Climber.MAX_ARM_VELOCITY;
         motionMagicConfigs.MotionMagicAcceleration = Constants.Climber.MAX_ARM_ACCELERATION;
-        motionMagicConfigs.MotionMagicJerk = 1600;
+        motionMagicConfigs.MotionMagicJerk = Constants.Climber.MAX_ARM_JERK;
 
         io.applyTalonFXConfig(config.withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
                 .withCurrentLimits(new CurrentLimitsConfigs()
@@ -75,27 +80,26 @@ public class Climber extends KillableSubsystem
 
         positionCached = io.getPosition();
         armRequest = new MotionMagicVoltage(Constants.Climber.START_ROTATIONS.in(Rotations));
-        set(ClimberState.Park);
+        set(ClimberState.PARK);
 
         sysIdRoutine = new SysIdRoutine(
                 new SysIdRoutine.Config(
-                        Volts.of(4.0).per(Second),
-                        Volts.of(3.5),
-                        Seconds.of(1.0),
-                        (state -> Logger.recordOutput("Climber/SysIdTestState", state.toString()))),
-                new SysIdRoutine.Mechanism((v) -> io.setVoltage(v.in(Volts)), null, this));
+                        SYSID_RAMP_RATE,
+                        SYSID_STEP_VOLTAGE,
+                        SYSID_TIMEOUT,
+                        state -> Logger.recordOutput("Climber/SysIdTestState", state.toString())),
+                new SysIdRoutine.Mechanism(v -> io.setVoltage(v.in(Volts)), null, this));
 
         SmartDashboard.putNumber("Climber", Constants.Climber.START_ROTATIONS.in(Rotations));
         SmartDashboard.putBoolean("Ratchet", false);
     }
 
     public enum ClimberState {
-        Park,
-        Extend,
-        Climb
+        PARK,
+        EXTEND,
+        CLIMB
     }
 
-    private boolean ratchetEngaged = false;
     private double lastClimbVoltage = 0.0;
     private double lastExpectedKVTime = 0;
 
@@ -105,9 +109,12 @@ public class Climber extends KillableSubsystem
         velocityCached = io.getVelocity();
         voltageCached = io.getVoltage();
 
-        if (currentState == ClimberState.Climb) {
+        if (currentState == ClimberState.CLIMB) {
             lastClimbVoltage = SimpleMath.slewRateLimitLinear(
-                    lastClimbVoltage, atGoal() ? 0 : 12, 0.02, Constants.Climber.CLIMB_VOLTAGE_SLEW_RATE);
+                    lastClimbVoltage,
+                    atGoal() ? 0 : Constants.Climber.CLIMB_VOLTAGE_MAX,
+                    RobotContainer.ROBOT_PERIODIC,
+                    Constants.Climber.CLIMB_VOLTAGE_SLEW_RATE);
 
             if (getEstimatedkV() >= Constants.Climber.CLIMB_EXPECTED_KV_MIN) {
                 lastExpectedKVTime = Timer.getTimestamp();
@@ -117,7 +124,7 @@ public class Climber extends KillableSubsystem
                     && !atGoal()) {
                 // If we haven't seen a expected kV value in a while, set the voltage to 0 and park
                 lastClimbVoltage = 0;
-                set(ClimberState.Park);
+                set(ClimberState.PARK);
             } else {
                 io.setVoltage(lastClimbVoltage);
             }
@@ -127,67 +134,68 @@ public class Climber extends KillableSubsystem
         RobotContainer.model.climber.update(getRotations());
     }
 
-    @AutoLogLevel(level = Level.DebugReal)
+    private static final double GOAL_POSITION_TOLERANCE = 0.01; // in rotations
+
+    @AutoLogLevel(level = Level.DEBUG_REAL)
     public boolean atGoal() {
-        if (currentState == ClimberState.Climb) {
+        if (currentState == ClimberState.CLIMB) {
             return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
-        } else if (currentState == ClimberState.Extend) {
-            return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)) < 0.01;
+        } else if (currentState == ClimberState.EXTEND) {
+            return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations))
+                    < GOAL_POSITION_TOLERANCE;
         } else {
-            return Math.abs(getRotations() - Constants.Climber.PARK_ROTATIONS.in(Rotations)) < 0.01;
+            return Math.abs(getRotations() - Constants.Climber.PARK_ROTATIONS.in(Rotations)) < GOAL_POSITION_TOLERANCE;
         }
     }
 
     public void set(ClimberState state) {
         currentState = state;
         switch (state) {
-            case Park:
+            case PARK:
                 io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
-                ratchetEngaged = false;
-
-                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CLIMBER) {
                     io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
                 }
                 break;
-            case Extend:
+            case EXTEND:
                 io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
-                ratchetEngaged = false;
-                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.Climber) {
+                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CLIMBER) {
                     io.setMotionMagic(armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
                 }
                 break;
-            case Climb:
+            case CLIMB:
                 io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
                 lastClimbVoltage = 0.0;
                 lastExpectedKVTime = Timer.getTimestamp();
-                ratchetEngaged = true;
                 break;
         }
     }
 
-    @AutoLogLevel(level = Level.Real)
+    @AutoLogLevel(level = Level.REAL)
     public ClimberState getCurrentState() {
         return currentState;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getRotations() {
         return positionCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getVelocity() {
         return velocityCached;
     }
 
-    @AutoLogLevel(level = Level.Sysid)
+    @AutoLogLevel(level = Level.SYSID)
     public double getArmSetTo() {
         return voltageCached;
     }
 
-    @AutoLogLevel(level = Level.DebugReal)
+    private static final double KV_ZERO_CLIP_THRESHOLD = 0.2;
+
+    @AutoLogLevel(level = Level.DEBUG_REAL)
     public double getEstimatedkV() {
-        if (MathUtil.isNear(0, velocityCached, 0.2)) return 0;
+        if (MathUtil.isNear(0, velocityCached, KV_ZERO_CLIP_THRESHOLD)) return 0;
         return voltageCached / velocityCached;
     }
 
@@ -196,11 +204,11 @@ public class Climber extends KillableSubsystem
         io.simulationPeriodic();
     }
 
-    public ClimberSim getSimIO() throws Exception {
-        if (io instanceof ClimberSim) {
-            return (ClimberSim) io;
+    public ClimberSim getSimIO() throws IllegalStateException {
+        if (io instanceof ClimberSim simIO) {
+            return simIO;
         } else {
-            throw new Exception("ClimberIO is not a simulation");
+            throw new IllegalStateException("ClimberIO is not a simulation");
         }
     }
 
@@ -213,19 +221,12 @@ public class Climber extends KillableSubsystem
     }
 
     @Override
-    public void setupShuffleboard() {
-        DashboardUI.Test.addToggle("Climber Ratchet", () -> ratchetEngaged).subscribe(v -> {
-            ratchetEngaged = v;
-            io.setRatchet(v ? Constants.Climber.RATCHET_ENGAGED : Constants.Climber.RATCHET_DISENGAGED);
-        });
-    }
-
-    @Override
     public void kill() {
         io.setVoltage(0);
     }
 
     /** frees up all hardware allocations */
+    @Override
     public void close() throws Exception {
         io.close();
     }

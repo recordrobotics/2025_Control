@@ -10,9 +10,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import java.util.Random;
 
-public class SimpleMath {
+public final class SimpleMath {
+    private SimpleMath() {}
 
+    public static final double PI2 = Math.PI * 2;
     public static final double SQRT2 = Math.sqrt(2);
+    public static final double SECONDS_PER_MINUTE = 60;
 
     /**
      * Remaps a value between a range to a different range
@@ -26,7 +29,7 @@ public class SimpleMath {
      * @apiNote THIS DOES NOT CLAMP THE OUTPUT! If input is outside the input range, the output will
      *     also be outside the output range
      */
-    public static double Remap(double value, double inputMin, double inputMax, double outputMin, double outputMax) {
+    public static double remap(double value, double inputMin, double inputMax, double outputMin, double outputMax) {
         return (value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin;
     }
 
@@ -38,8 +41,8 @@ public class SimpleMath {
      * @param max Max range of output value
      * @return Value in range of output range (ALWAYS INSIDE, CLAMPED)
      */
-    public static double Remap(double value01, double min, double max) {
-        return Remap(MathUtil.clamp(value01, 0, 1), 0, 1, min, max);
+    public static double remap(double value01, double min, double max) {
+        return remap(MathUtil.clamp(value01, 0, 1), 0, 1, min, max);
     }
 
     /**
@@ -52,11 +55,11 @@ public class SimpleMath {
      * @param sensitivity
      * @return
      */
-    public static double ApplyThresholdAndSensitivity(double input, double threshold, double sensitivity) {
+    public static double applyThresholdAndSensitivity(double input, double threshold, double sensitivity) {
         // How much the input is above the threshold (absolute value)
-        double subtract_threshold = Math.max(0, Math.abs(input) - threshold);
+        double subtractThreshold = Math.max(0, Math.abs(input) - threshold);
         // What proportion (threshold to value) is of (threshold to 1)
-        double proportion = subtract_threshold / (1 - threshold);
+        double proportion = subtractThreshold / (1 - threshold);
         // Multiplies by spin sensitivity and returns
         return Math.signum(input) * proportion * sensitivity;
     }
@@ -116,27 +119,19 @@ public class SimpleMath {
         return next;
     }
 
+    @SuppressWarnings("java:S109")
     public static Translation2d povToVector(int pov) {
-        switch (pov) {
-            case 0:
-                return new Translation2d(0, 1);
-            case 45:
-                return new Translation2d(1, 1);
-            case 90:
-                return new Translation2d(1, 0);
-            case 135:
-                return new Translation2d(1, -1);
-            case 180:
-                return new Translation2d(0, -1);
-            case 225:
-                return new Translation2d(-1, -1);
-            case 270:
-                return new Translation2d(-1, 0);
-            case 315:
-                return new Translation2d(-1, 1);
-            default:
-                return new Translation2d(0, 0);
-        }
+        return switch (pov) {
+            case 0 -> new Translation2d(0, 1);
+            case 45 -> new Translation2d(1, 1);
+            case 90 -> new Translation2d(1, 0);
+            case 135 -> new Translation2d(1, -1);
+            case 180 -> new Translation2d(0, -1);
+            case 225 -> new Translation2d(-1, -1);
+            case 270 -> new Translation2d(-1, 0);
+            case 315 -> new Translation2d(-1, 1);
+            default -> new Translation2d(0, 0);
+        };
     }
 
     public static boolean isWithinTolerance(double value, double target, double tolerance) {
@@ -161,19 +156,38 @@ public class SimpleMath {
      * @return Closest unbounded position to the target angle
      */
     public static double closestTarget(double currentPos, double targetAngle) {
-        double twoPi = 2.0 * Math.PI;
         // Compute the nearest multiple of 2pi
-        double k = Math.round((currentPos - targetAngle) / twoPi);
+        double k = Math.round((currentPos - targetAngle) / PI2);
         // Return the unbounded target position
-        return targetAngle + k * twoPi;
+        return targetAngle + k * PI2;
     }
 
     /**
      *  Normalize an angle to [-PI, PI] (for use with {@link #closestTarget})
      */
     public static double normalizeAngle(double angle) {
-        double twoPi = 2.0 * Math.PI;
-        angle = ((angle + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
+        angle = ((angle + Math.PI) % PI2 + PI2) % PI2 - Math.PI;
         return angle;
+    }
+
+    @SuppressWarnings("java:S1244") // comparing signum is fine because it returns EXACT values
+    public static boolean signEq(double a, double b) {
+        return Math.signum(a) == Math.signum(b);
+    }
+
+    public static double average(double... values) {
+        if (values.length == 0) {
+            throw new IllegalArgumentException("Cannot compute average of zero values");
+        }
+        double sum = 0;
+        for (double v : values) {
+            sum += v;
+        }
+        return sum / values.length;
+    }
+
+    @SuppressWarnings("java:S109")
+    public static double average4(double a, double b, double c, double d) {
+        return (a + b + c + d) / 4.0;
     }
 }

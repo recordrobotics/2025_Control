@@ -22,17 +22,21 @@ public class ManualElevatorArm extends Command {
         angle = RobotContainer.elevatorArm.getArmAngle();
     }
 
+    private static final double DEADBAND = 0.001;
+
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
         AbstractControl controls = DashboardUI.Overview.getControl();
 
         AngularVelocity manualElevatorArmVelocity = controls.getManualElevatorArmVelocity();
-        double delta = manualElevatorArmVelocity.times(Milliseconds.of(20)).in(Radians);
+        double delta = manualElevatorArmVelocity
+                .times(Seconds.of(RobotContainer.ROBOT_PERIODIC))
+                .in(Radians);
         angle += delta;
         angle = MathUtil.clamp(angle, Constants.ElevatorArm.MIN_POS, Constants.ElevatorArm.MAX_POS);
 
-        if (Math.abs(delta) > 0.001) {
+        if (Math.abs(delta) > DEADBAND) {
             RobotContainer.elevatorArm.set(angle);
         }
     }

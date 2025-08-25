@@ -2,7 +2,7 @@ package frc.robot.control;
 
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Second;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -22,24 +22,25 @@ import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.DrivetrainControl;
 
-public class JoystickXboxSimple extends AbstractControl {
+@SuppressWarnings({"java:S109"})
+public class JoystickXboxSimple implements AbstractControl {
 
     private Joystick joystick;
-    private XboxController xbox_controller;
+    private XboxController xboxController;
 
     private ReefLevelSwitchValue reefswitch = ReefLevelSwitchValue.L4;
 
     public JoystickXboxSimple(int joystickPort, int xboxPort) {
         joystick = new Joystick(joystickPort);
-        xbox_controller = new XboxController(xboxPort);
+        xboxController = new XboxController(xboxPort);
 
-        new Trigger(() -> xbox_controller.getAButtonPressed())
+        new Trigger(() -> xboxController.getAButtonPressed())
                 .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L1).ignoringDisable(true));
-        new Trigger(() -> xbox_controller.getXButtonPressed())
+        new Trigger(() -> xboxController.getXButtonPressed())
                 .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L2).ignoringDisable(true));
-        new Trigger(() -> xbox_controller.getBButtonPressed())
+        new Trigger(() -> xboxController.getBButtonPressed())
                 .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L3).ignoringDisable(true));
-        new Trigger(() -> xbox_controller.getYButtonPressed())
+        new Trigger(() -> xboxController.getYButtonPressed())
                 .onTrue(new InstantCommand(() -> reefswitch = ReefLevelSwitchValue.L4).ignoringDisable(true));
     }
 
@@ -51,19 +52,25 @@ public class JoystickXboxSimple extends AbstractControl {
 
     @Override
     public void update() {
-        Pair<Double, Double> xy =
-                getXY(!(getCoralIntakeRelativeDrive() || getElevatorRelativeDrive() || getClimbRelativeDrive()));
+        Pair<Double, Double> xy;
+        if (isCoralIntakeRelativeDriveTriggered()
+                || isElevatorRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
+            xy = getXYRaw();
+        } else {
+            xy = getXYOriented();
+        }
 
         double x = xy.getFirst() * getDirectionalSpeedLevel();
         double y = xy.getSecond() * getDirectionalSpeedLevel();
 
-        if (getCoralIntakeRelativeDrive()) {
+        if (isCoralIntakeRelativeDriveTriggered()) {
             y = -y;
-        } else if (getElevatorRelativeDrive()) {
+        } else if (isElevatorRelativeDriveTriggered()) {
             double temp = y;
             y = -x;
             x = -temp;
-        } else if (getClimbRelativeDrive()) {
+        } else if (isClimbRelativeDriveTriggered()) {
             double temp = y;
             y = x;
             x = temp;
@@ -73,16 +80,16 @@ public class JoystickXboxSimple extends AbstractControl {
         acceleration = new Transform2d(
                         velocity.getTranslation()
                                 .minus(lastVelocity.getTranslation())
-                                .div(0.02),
+                                .div(RobotContainer.ROBOT_PERIODIC),
                         velocity.getRotation().minus(lastVelocity.getRotation()))
-                .div(0.02);
+                .div(RobotContainer.ROBOT_PERIODIC);
         jerk = new Transform2d(
                         acceleration
                                 .getTranslation()
                                 .minus(lastAcceleration.getTranslation())
-                                .div(0.02),
+                                .div(RobotContainer.ROBOT_PERIODIC),
                         acceleration.getRotation().minus(lastAcceleration.getRotation()))
-                .div(0.02);
+                .div(RobotContainer.ROBOT_PERIODIC);
 
         lastVelocity = velocity;
         lastAcceleration = acceleration;
@@ -90,7 +97,9 @@ public class JoystickXboxSimple extends AbstractControl {
 
     @Override
     public DrivetrainControl getDrivetrainControl() {
-        if (getElevatorRelativeDrive() || getCoralIntakeRelativeDrive() || getClimbRelativeDrive()) {
+        if (isElevatorRelativeDriveTriggered()
+                || isCoralIntakeRelativeDriveTriggered()
+                || isClimbRelativeDriveTriggered()) {
             return DrivetrainControl.createRobotRelative(velocity, acceleration, jerk);
         } else {
             return DrivetrainControl.createFieldRelative(
@@ -103,72 +112,79 @@ public class JoystickXboxSimple extends AbstractControl {
 
     @Override
     public Transform2d getRawDriverInput() {
-        Pair<Double, Double> xy = getXY(false);
+        Pair<Double, Double> xy = getXYRaw();
         // Returns the raw driver input as a Transform2d
         return new Transform2d(xy.getFirst(), xy.getSecond(), Rotation2d.fromRadians(getSpin()));
     }
 
-    public Boolean getAutoAlign() {
+    public boolean isAutoAlignTriggered() {
         return false;
     }
 
-    public Boolean getAutoAlignNear() {
+    public boolean isAutoAlignNearTriggered() {
         return false;
     }
 
-    public Boolean getElevatorRelativeDrive() {
+    public boolean isElevatorRelativeDriveTriggered() {
         return joystick.getRawButton(8)
-                || (getAutoScore()
+                || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() != ReefLevelSwitchValue.L1); // elevator relative when auto score
     }
 
-    public Boolean getCoralIntakeRelativeDrive() {
+    public boolean isCoralIntakeRelativeDriveTriggered() {
         return joystick.getRawButton(10)
-                || (getAutoScore()
+                || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() == ReefLevelSwitchValue.L1); // coral relative when auto score
     }
 
-    public Boolean getClimbRelativeDrive() {
+    public boolean isClimbRelativeDriveTriggered() {
         return joystick.getRawButton(12);
     }
 
-    public Pair<Double, Double> getXY(boolean orient) {
-        double X = SimpleMath.ApplyThresholdAndSensitivity(
+    public Pair<Double, Double> getXYRaw() {
+        double x = SimpleMath.applyThresholdAndSensitivity(
                 joystick.getX(),
                 Constants.Control.JOYSTICK_X_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
-        double Y = SimpleMath.ApplyThresholdAndSensitivity(
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
+        double y = SimpleMath.applyThresholdAndSensitivity(
                 joystick.getY(),
                 Constants.Control.JOYSTICK_Y_THRESHOLD,
-                Constants.Control.JOSYSTICK_DIRECTIONAL_SENSITIVITY);
+                Constants.Control.JOYSTICK_DIRECTIONAL_SENSITIVITY);
 
-        if (orient) return super.OrientXY(new Pair<Double, Double>(X, Y));
-        else return new Pair<Double, Double>(X, Y);
+        return new Pair<>(x, y);
+    }
+
+    public Pair<Double, Double> getXYOriented() {
+        Pair<Double, Double> xy = getXYRaw();
+        return AbstractControl.orientXY(new Pair<>(xy.getFirst(), xy.getSecond()));
     }
 
     public Double getSpin() {
         // Gets raw twist value
-        return SimpleMath.ApplyThresholdAndSensitivity(
-                -SimpleMath.Remap(joystick.getTwist(), -1.0, 1.0, -1.0, 1.0),
+        return SimpleMath.applyThresholdAndSensitivity(
+                -SimpleMath.remap(joystick.getTwist(), -1.0, 1.0, -1.0, 1.0),
                 Constants.Control.JOYSTICK_SPIN_THRESHOLD,
                 Constants.Control.JOYSTICK_SPIN_SENSITIVITY);
     }
 
-    public Boolean getHalfSpeed() {
-        return getAutoScore(); // half speed auto enabled when scoring
+    public boolean isHalfSpeedTriggered() {
+        return isAutoScoreTriggered(); // half speed auto enabled when scoring
     }
+
+    private static final double HALF_SPEED_DIRECTIONAL_DIVIDER = 3;
+    private static final double HALF_SPEED_SPIN_DIVIDER = 2;
 
     public Double getDirectionalSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 joystick.getRawAxis(3),
                 1,
                 -1,
                 Constants.Control.DIRECTIONAL_SPEED_METER_LOW,
                 Constants.Control.DIRECTIONAL_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 3;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_DIRECTIONAL_DIVIDER;
         }
 
         return speed;
@@ -176,90 +192,92 @@ public class JoystickXboxSimple extends AbstractControl {
 
     public Double getSpinSpeedLevel() {
         // Remaps speed meter from -1 -> 1 to 0.5 -> 4, then returns
-        double speed = SimpleMath.Remap(
+        double speed = SimpleMath.remap(
                 joystick.getRawAxis(3),
                 1,
                 -1,
                 Constants.Control.SPIN_SPEED_METER_LOW,
                 Constants.Control.SPIN_SPEED_METER_HIGH);
 
-        if (getHalfSpeed()) {
-            speed /= 2;
+        if (isHalfSpeedTriggered()) {
+            speed /= HALF_SPEED_SPIN_DIVIDER;
         }
 
         return speed;
     }
 
     @Override
-    public Boolean getPoseReset() {
+    public boolean isPoseResetTriggered() {
         return joystick.getRawButtonPressed(5);
     }
 
     @Override
-    public Boolean getLimelightReset() {
+    public boolean isLimelightResetTriggered() {
         return joystick.getRawButtonPressed(6);
     }
 
     @Override
-    public Boolean getKill() {
+    public boolean isKillTriggered() {
         return joystick.getRawButton(4);
     }
 
     @Override
-    public void vibrate(RumbleType type, double value) {} // no vibrate on the joystick
+    public void vibrate(RumbleType type, double value) {
+        /* no vibrate on the joystick  */
+    }
 
     @Override
-    public Boolean getAutoScore() {
+    public boolean isAutoScoreTriggered() {
         return joystick.getRawButton(1);
     }
 
     @Override
-    public Boolean getElevatorL2() {
+    public boolean isElevatorL2Triggered() {
         return false;
     }
 
     @Override
-    public Boolean getElevatorL3() {
+    public boolean isElevatorL3Triggered() {
         return false;
     }
 
     @Override
-    public Boolean getElevatorL4() {
+    public boolean isElevatorL4Triggered() {
         return false;
     }
 
     @Override
-    public Boolean getCoralShoot() {
+    public boolean isCoralShootTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getCoralGroundIntake() {
+    public boolean isCoralGroundIntakeTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getCoralGroundIntakeSimple() {
+    public boolean isCoralGroundIntakeSimpleTriggered() {
         return joystick.getRawButton(2);
     }
 
     @Override
-    public Boolean getReefAlgaeSimple() {
+    public boolean isReefAlgaeSimpleTriggered() {
         return joystick.getRawButton(3);
     }
 
     @Override
-    public Boolean getCoralSourceIntake() {
+    public boolean isCoralSourceIntakeTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getElevatorAlgaeLow() {
+    public boolean isElevatorAlgaeLowTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getElevatorAlgaeHigh() {
+    public boolean isElevatorAlgaeHighTriggered() {
         return false;
     }
 
@@ -269,56 +287,62 @@ public class JoystickXboxSimple extends AbstractControl {
     }
 
     @Override
-    public Boolean getManualOverride() {
+    public boolean isManualOverrideTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getGroundAlgae() {
+    public boolean isGroundAlgaeTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getScoreAlgae() {
+    public boolean isScoreAlgaeTriggered() {
         return false;
     }
 
     @Override
-    public Boolean getCoralIntakeScoreL1() {
+    public boolean isCoralIntakeScoreL1Triggered() {
         return false;
     }
+
+    private static final LinearVelocity MANUAL_ELEVATOR_VELOCITY_MAX =
+            Centimeters.of(50).per(Second);
+    private static final AngularVelocity MANUAL_ELEVATOR_ARM_VELOCITY_MAX =
+            Degrees.of(180).per(Second);
 
     @Override
     public LinearVelocity getManualElevatorVelocity() {
         double axis = SimpleMath.povToVector(joystick.getPOV()).getY();
-        return Centimeters.of(50).per(Seconds).times(axis);
+        return MANUAL_ELEVATOR_VELOCITY_MAX.times(axis);
     }
 
     @Override
     public AngularVelocity getManualElevatorArmVelocity() {
         double axis = SimpleMath.povToVector(joystick.getPOV()).getX();
-        return Degrees.of(180).per(Seconds).times(axis);
+        return MANUAL_ELEVATOR_ARM_VELOCITY_MAX.times(axis);
     }
 
     @Override
-    public Boolean getClimb() {
+    public boolean isClimbTriggered() {
         return joystick.getRawButton(7);
     }
 
+    private static final double AUTO_SOURCE_MAX_DISTANCE = 2.3; // meters
+    private static final double AUTO_SOURCE_MAX_ANGLE_DIFF = 80; // degrees
+
     @Override
-    public Boolean getCoralSourceIntakeAuto() {
+    public boolean isCoralSourceIntakeAutoTriggered() {
         Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
         SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());
 
-        boolean nearSource = closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < 2.3
+        return closestSource.getPose().getTranslation().getDistance(robot.getTranslation()) < AUTO_SOURCE_MAX_DISTANCE
                 && Math.abs(closestSource
                                 .getPose()
                                 .getRotation()
                                 .minus(robot.getRotation())
                                 .getMeasure()
                                 .abs(Degrees))
-                        < 80;
-
-        return nearSource;
+                        < AUTO_SOURCE_MAX_ANGLE_DIFF;
     }
 }

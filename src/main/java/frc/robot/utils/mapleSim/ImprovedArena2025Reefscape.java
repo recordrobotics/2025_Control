@@ -1,4 +1,4 @@
-package frc.robot.utils.mapleSim;
+package frc.robot.utils.maplesim;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -20,6 +20,8 @@ import org.ironmaple.utils.FieldMirroringUtils;
  * <p>It extends {@link SimulatedArena} and includes specific details of the Reefscape game
  * environment.
  */
+// This is a MapleSim library class modified to support custom features, so ignore the warnings
+@SuppressWarnings({"java:S109"})
 public class ImprovedArena2025Reefscape extends SimulatedArena {
     public static final class ReefscapeFieldObstacleMap extends FieldMap {
         public ReefscapeFieldObstacleMap() {

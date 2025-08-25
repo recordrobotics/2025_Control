@@ -1,0 +1,64 @@
+// cSpell Settings
+{
+    // Version of the setting file.  Always 0.2
+    "version": "0.2",
+    // language - current active spelling language
+    "language": "en",
+    // words - list of words to be always considered correct
+    "words": [
+        "AHRS",
+        "apriltag",
+        "blue",
+        "debouncer",
+        "Debouncers",
+        "estimatedkV",
+        "fiducials",
+        "fpga",
+        "holonomic",
+        "imu",
+        "ispe",
+        "jni",
+        "lljson",
+        "LLOS",
+        "llpython",
+        "llrobot",
+        "log",
+        "lvuser",
+        "mjpeg",
+        "MMEXPO",
+        "mode",
+        "nocross",
+        "nocrosshair",
+        "NOSONAR",
+        "nums",
+        "pid",
+        "dio",
+        "pnp",
+        "priorityid",
+        "pwm",
+        "raw",
+        "red",
+        "reefscape",
+        "rio",
+        "roborio",
+        "Ruckig",
+        "Simulatable",
+        "solve",
+        "STDDEV",
+        "subsytems",
+        "SVPRO",
+        "tcclass",
+        "tclass",
+        "tdclass",
+        "teleop",
+        "teleoperated",
+        "txnc",
+        "tync",
+        "wpi",
+        "wpilibj"
+    ],
+    // flagWords - list of words to be always considered incorrect
+    "flagWords": [
+        "FLACON"
+    ]
+}

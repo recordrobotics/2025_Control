@@ -15,23 +15,19 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.Constants.RobotState.Mode;
-import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.io.SwerveModuleIO;
 import frc.robot.utils.AutoLogLevel.Level;
 import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.PoweredSubsystem;
-import frc.robot.utils.ShuffleboardPublisher;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
 import org.littletonrobotics.junction.Logger;
 
-public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, PoweredSubsystem {
+public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
 
     // Creates variables for motors and absolute encoders
     private int driveMotorChannel;
-    private int turningMotorChannel;
-    private int encoderChannel;
 
     private final SwerveModuleIO io;
 
@@ -40,9 +36,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     private double targetDriveVelocity;
     private double targetTurnPosition;
 
-    private final double TURN_GEAR_RATIO;
-    private final double DRIVE_GEAR_RATIO;
-    private final double WHEEL_DIAMETER;
+    private final double turnGearRatio;
+    private final double driveGearRatio;
+    private final double wheelDiameter;
 
     final MotionMagicExpoVoltage turnRequest;
     final MotionMagicVelocityVoltage driveRequest;
@@ -65,79 +61,72 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         this.io = io;
 
         // Creates TalonFX objects
-        driveMotorChannel = m.driveMotorChannel;
-        turningMotorChannel = m.turningMotorChannel;
-        encoderChannel = m.absoluteTurningMotorEncoderChannel;
+        driveMotorChannel = m.driveMotorChannel();
 
         // Creates Motor Encoder object and gets offset
-        turningEncoderOffset = m.turningEncoderOffset;
+        turningEncoderOffset = m.turningEncoderOffset();
 
         // Creates other variables
-        this.TURN_GEAR_RATIO = m.TURN_GEAR_RATIO;
-        this.DRIVE_GEAR_RATIO = m.DRIVE_GEAR_RATIO;
-        this.WHEEL_DIAMETER = m.WHEEL_DIAMETER;
+        this.turnGearRatio = m.turnGearRatio();
+        this.driveGearRatio = m.driveGearRatio();
+        this.wheelDiameter = m.wheelDiameter();
 
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
 
         // set slot 0 gains
-        Slot0Configs slot0Configs_drive = driveConfig.Slot0;
-        slot0Configs_drive.kS = m.DRIVE_KS;
-        slot0Configs_drive.kV = m.DRIVE_KV;
-        slot0Configs_drive.kA = m.DRIVE_KA;
-        slot0Configs_drive.kP = m.DRIVE_P;
-        slot0Configs_drive.kI = 0;
-        slot0Configs_drive.kD = 0;
-        double wheelCircumference = WHEEL_DIAMETER * Math.PI;
-        driveConfig.Feedback.SensorToMechanismRatio = DRIVE_GEAR_RATIO / wheelCircumference;
+        Slot0Configs slot0ConfigsDrive = driveConfig.Slot0;
+        slot0ConfigsDrive.kS = m.driveKs();
+        slot0ConfigsDrive.kV = m.driveKv();
+        slot0ConfigsDrive.kA = m.driveKa();
+        slot0ConfigsDrive.kP = m.driveKp();
+        slot0ConfigsDrive.kI = 0;
+        slot0ConfigsDrive.kD = 0;
+        double wheelCircumference = wheelDiameter * Math.PI;
+        driveConfig.Feedback.SensorToMechanismRatio = driveGearRatio / wheelCircumference;
 
         // set Motion Magic settings
-        MotionMagicConfigs motionMagicConfigs_drive = driveConfig.MotionMagic;
-        motionMagicConfigs_drive.MotionMagicAcceleration = Constants.Swerve.DriveMaxAcceleration;
-        motionMagicConfigs_drive.MotionMagicJerk = Constants.Swerve.DriveMaxJerk;
+        MotionMagicConfigs motionMagicConfigsDrive = driveConfig.MotionMagic;
+        motionMagicConfigsDrive.MotionMagicAcceleration = Constants.Swerve.DRIVE_MAX_ACCELERATION;
+        motionMagicConfigsDrive.MotionMagicJerk = Constants.Swerve.DRIVE_MAX_JERK;
 
         io.applyDriveTalonFXConfig(driveConfig
                 .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withSupplyCurrentLimit(m.driveMotorSupplyCurrentLimit)
-                        .withStatorCurrentLimit(m.driveMotorStatorCurrentLimit)
+                        .withSupplyCurrentLimit(m.driveMotorSupplyCurrentLimit())
+                        .withStatorCurrentLimit(m.driveMotorStatorCurrentLimit())
                         .withSupplyCurrentLimitEnable(true)
                         .withStatorCurrentLimitEnable(true)));
 
         TalonFXConfiguration turnConfig = new TalonFXConfiguration();
 
         // set slot 0 gains
-        Slot0Configs slot0Configs_turn = turnConfig.Slot0;
-        slot0Configs_turn.kS = m.TURN_KS;
-        slot0Configs_turn.kV = m.TURN_KV;
-        slot0Configs_turn.kA = m.TURN_KA;
-        slot0Configs_turn.kP = m.TURN_P;
-        slot0Configs_turn.kI = 0;
-        slot0Configs_turn.kD = m.TURN_D;
+        Slot0Configs slot0ConfigsTurn = turnConfig.Slot0;
+        slot0ConfigsTurn.kS = m.turnKs();
+        slot0ConfigsTurn.kV = m.turnKv();
+        slot0ConfigsTurn.kA = m.turnKa();
+        slot0ConfigsTurn.kP = m.turnKp();
+        slot0ConfigsTurn.kI = 0;
+        slot0ConfigsTurn.kD = m.turnKd();
         turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
-        turnConfig.Feedback.SensorToMechanismRatio = TURN_GEAR_RATIO;
+        turnConfig.Feedback.SensorToMechanismRatio = turnGearRatio;
 
         // set Motion Magic settings
-        MotionMagicConfigs motionMagicConfigs_turn = turnConfig.MotionMagic;
-        motionMagicConfigs_turn.MotionMagicCruiseVelocity = m.TurnMaxAngularVelocity;
-        motionMagicConfigs_turn.MotionMagicAcceleration = m.TurnMaxAngularAcceleration;
-        motionMagicConfigs_turn.MotionMagicJerk = 1600;
-        motionMagicConfigs_turn.MotionMagicExpo_kV = 5.8;
-        motionMagicConfigs_turn.MotionMagicExpo_kA = 1.5;
+        MotionMagicConfigs motionMagicConfigsTurn = turnConfig.MotionMagic;
+        motionMagicConfigsTurn.MotionMagicCruiseVelocity = m.turnMaxAngularVelocity();
+        motionMagicConfigsTurn.MotionMagicAcceleration = m.turnMaxAngularAcceleration();
+        motionMagicConfigsTurn.MotionMagicJerk = Constants.Swerve.TURN_MAX_JERK;
+        motionMagicConfigsTurn.MotionMagicExpo_kV = Constants.Swerve.TURN_MMEXPO_KV;
+        motionMagicConfigsTurn.MotionMagicExpo_kA = Constants.Swerve.TURN_MMEXPO_KA;
 
         io.applyTurnTalonFXConfig(turnConfig
                 .withMotorOutput(new MotorOutputConfigs()
                         .withInverted(InvertedValue.Clockwise_Positive)
                         .withNeutralMode(NeutralModeValue.Brake))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withSupplyCurrentLimit(m.turnMotorSupplyCurrentLimit)
-                        .withStatorCurrentLimit(m.turnMotorStatorCurrentLimit)
+                        .withSupplyCurrentLimit(m.turnMotorSupplyCurrentLimit())
+                        .withStatorCurrentLimit(m.turnMotorStatorCurrentLimit())
                         .withSupplyCurrentLimitEnable(true)
                         .withStatorCurrentLimitEnable(true)));
-
-        // ~2 Seconds delay per swerve module to wait for encoder values to stabilize
-        if (Constants.RobotState.getMode() == Mode.REAL) {
-            Timer.delay(2.3);
-        }
 
         // Sets motor speeds to 0
         io.setDriveMotorVoltage(0);
@@ -155,22 +144,31 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         driveRequest = new MotionMagicVelocityVoltage(0);
     }
 
+    @SuppressWarnings("java:S1244") // value is exactly 1.0 when disconnected
     public boolean isAbsEncoderConnected() {
-        return io.getAbsoluteEncoder() != 1; // value is exactly 1.0 when disconnected
+        return io.getAbsoluteEncoder() != 1;
     }
 
     /**
-     * *custom function
+     * Calculates the offset-corrected absolute position of the wheel's turning mechanism.
      *
-     * @return The current offset absolute position of the wheel's turn
+     * This method takes the raw absolute encoder reading, subtracts the configured turning
+     * encoder offset to account for mechanical alignment, adds 1 to handle negative values,
+     * and uses modulo 1 to normalize the result to a range of [0, 1) representing rotations.
+     *
+     * The calculation handles the case where the encoder reading minus offset could be negative
+     * by adding 1 before applying the modulo operation, ensuring the result is always positive
+     * and within the expected range.
+     *
+     * @return The normalized absolute position of the wheel's turn in rotations (0.0 to 1.0),
+     *         where 0.0 represents the calibrated zero position and values approaching 1.0
+     *         represent nearly one full rotation from that position
      */
     private double getAbsWheelTurnOffset() {
-        double absEncoderPosition = (io.getAbsoluteEncoder() - turningEncoderOffset + 1) % 1;
-        return absEncoderPosition;
+        return (io.getAbsoluteEncoder() - turningEncoderOffset + 1) % 1;
     }
 
     /**
-     * *custom function
      *
      * @return The raw rotations of the turning motor (rotation 2d object).
      */
@@ -178,11 +176,9 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         // Get the wheel's current turn position in rotations
         double numWheelRotations = turnPositionCached;
         // Convert wheel rotations to radians
-        double wheelRadians = numWheelRotations * 2 * Math.PI;
+        double wheelRadians = numWheelRotations * SimpleMath.PI2;
         // Create a Rotation2d object from the wheel's angle in radians
-        Rotation2d wheelRotation = new Rotation2d(wheelRadians);
-
-        return wheelRotation;
+        return new Rotation2d(wheelRadians);
     }
 
     public double getTurnWheelVelocity() {
@@ -242,19 +238,22 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
     private double lastMovementTime = Timer.getTimestamp();
     private boolean hasResetAbs = false;
 
-    public void periodic() {
+    private static final double STATIONARY_DRIVE_VELOCITY_THRESHOLD = 0.08;
+    private static final double STATIONARY_TURN_VELOCITY_THRESHOLD = 1.0;
 
+    public void periodic() {
         drivePositionCached = io.getDriveMechanismPosition();
         driveVelocityCached = io.getDriveMechanismVelocity();
         driveAccelerationCached = io.getDriveMechanismAcceleration();
         turnPositionCached = io.getTurnMechanismPosition();
         turnVelocityCached = io.getTurnMechanismVelocity();
-        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.Sysid)) {
+        if (Constants.RobotState.AUTO_LOG_LEVEL.isAtOrLowerThan(Level.SYSID)) {
             driveVoltageCached = io.getDriveMotorVoltage();
             turnVoltageCached = io.getTurnMotorVoltage();
         }
 
-        if (Math.abs(driveVelocityCached) > 0.08 || Math.abs(turnVelocityCached) > 1.0) {
+        if (Math.abs(driveVelocityCached) > STATIONARY_DRIVE_VELOCITY_THRESHOLD
+                || Math.abs(turnVelocityCached) > STATIONARY_TURN_VELOCITY_THRESHOLD) {
             hasResetAbs = false;
             lastMovementTime = Timer.getTimestamp();
         } else if (Timer.getTimestamp() - lastMovementTime > 2.0
@@ -275,7 +274,7 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
         Logger.recordOutput("Swerve/" + driveMotorChannel + "/Current", getDriveWheelVelocity());
         Logger.recordOutput("Swerve/" + driveMotorChannel + "/Target", actualTargetDriveVelocity);
 
-        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.DrivetrainTurn) {
+        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.DRIVETRAIN_TURN) {
             io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));
         }
     }
@@ -304,17 +303,6 @@ public class SwerveModule implements ShuffleboardPublisher, AutoCloseable, Power
 
     public double getTurnMotorVoltsSysIdOnly() {
         return turnVoltageCached;
-    }
-
-    @Override
-    public void setupShuffleboard() {
-        DashboardUI.Test.addSlider("Drive " + driveMotorChannel, io.getDriveMotorPercent(), -1, 1)
-                .subscribe(io::setDriveMotorPercent);
-
-        DashboardUI.Test.addSlider("Turn " + turningMotorChannel, io.getTurnMotorPercent(), -1, 1)
-                .subscribe(io::setTurnMotorPercent);
-
-        DashboardUI.Test.addNumber("Encoder " + encoderChannel, io::getAbsoluteEncoder);
     }
 
     /** frees up all hardware allocations */

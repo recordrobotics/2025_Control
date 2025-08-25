@@ -32,14 +32,13 @@ public class IndependentSwervePoseEstimator {
         robotPose = initialRobotEstimate;
     }
 
-    public void update(Rotation2d gyroAngle) {
-        // update individual modules
+    private void updateModules(Rotation2d gyroAngle) {
         for (IndependentSwerveModuleState module : modules) {
             module.update(gyroAngle);
         }
+    }
 
-        // use two closest approximations to correct other two
-        Pose2d[] estimatedRobotPoses = getEstimatedRobotPoses();
+    private static PoseDistance getClosestPose(Pose2d[] estimatedRobotPoses) {
         PoseDistance closest = null;
 
         for (int i = 0; i < estimatedRobotPoses.length; i++) {
@@ -48,28 +47,40 @@ public class IndependentSwervePoseEstimator {
                     double distance = estimatedRobotPoses[i]
                             .getTranslation()
                             .getDistance(estimatedRobotPoses[j].getTranslation());
-                    if (closest == null || distance < closest.getDistance()) {
+                    if (closest == null || distance < closest.distance()) {
                         closest = new PoseDistance(i, j, distance);
                     }
                 }
             }
         }
 
-        if (closest != null) {
-            robotPose =
-                    estimatedRobotPoses[closest.getPoseA()].interpolate(estimatedRobotPoses[closest.getPoseB()], 0.5);
+        return closest;
+    }
 
-            for (int i = 0; i < modules.length; i++) {
-                if (i != closest.getPoseA() && i != closest.getPoseB()) {
-                    modules[i].reset(
-                            robotPose.getRotation(),
-                            modules[i]
-                                    .getModuleRobotPosition()
-                                    .plus(robotPose.getTranslation())
-                                    .rotateAround(robotPose.getTranslation(), robotPose.getRotation()));
-                }
+    private void resetModules(PoseDistance closest) {
+        for (int i = 0; i < modules.length; i++) {
+            if (i != closest.poseA() && i != closest.poseB()) {
+                modules[i].reset(
+                        robotPose.getRotation(),
+                        modules[i]
+                                .getModuleRobotPosition()
+                                .plus(robotPose.getTranslation())
+                                .rotateAround(robotPose.getTranslation(), robotPose.getRotation()));
             }
+        }
+    }
 
+    public void update(Rotation2d gyroAngle) {
+        // update individual modules
+        updateModules(gyroAngle);
+
+        // use two closest approximations to correct other two
+        Pose2d[] estimatedRobotPoses = getEstimatedRobotPoses();
+        PoseDistance closest = getClosestPose(estimatedRobotPoses);
+
+        if (closest != null) {
+            robotPose = estimatedRobotPoses[closest.poseA()].interpolate(estimatedRobotPoses[closest.poseB()], 0.5);
+            resetModules(closest);
         } else if (estimatedRobotPoses.length > 0) {
             robotPose = estimatedRobotPoses[0];
         }
@@ -107,29 +118,7 @@ public class IndependentSwervePoseEstimator {
         return robotPose;
     }
 
-    private static final class PoseDistance {
-        private final int poseA;
-        private final int poseB;
-        private final double distance;
-
-        public PoseDistance(int poseA, int poseB, double distance) {
-            this.poseA = poseA;
-            this.poseB = poseB;
-            this.distance = distance;
-        }
-
-        public int getPoseA() {
-            return poseA;
-        }
-
-        public int getPoseB() {
-            return poseB;
-        }
-
-        public double getDistance() {
-            return distance;
-        }
-    }
+    private record PoseDistance(int poseA, int poseB, double distance) {}
 
     public static final class IndependentSwerveModuleState {
         private Pose2d position;

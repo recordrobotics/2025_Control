@@ -17,19 +17,21 @@ import java.util.EnumSet;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-public class AutonomousLayout extends AbstractLayout {
+@SuppressWarnings("java:S2325")
+public final class AutonomousLayout extends AbstractLayout {
 
-    private static final Field2d field = new Field2d();
-    private static LoggedDashboardChooser<Command> autoChooser;
-    private static LoggedDashboardChooser<FieldStartingLocation> fieldStartingLocationChooser =
+    private final Field2d field = new Field2d();
+    private LoggedDashboardChooser<Command> autoChooser;
+    private LoggedDashboardChooser<FieldStartingLocation> fieldStartingLocationChooser =
             new LoggedDashboardChooser<>("Starting Location");
 
     public AutonomousLayout() {
         buildSendable("Field", field);
 
-        EnumSet.allOf(FieldStartingLocation.class).forEach(v -> fieldStartingLocationChooser.addOption(v.name(), v));
+        EnumSet.allOf(FieldStartingLocation.class)
+                .forEach(v -> fieldStartingLocationChooser.addOption(v.toString(), v));
         fieldStartingLocationChooser.addDefaultOption(
-                FieldStartingLocation.BargeCenter.name(), FieldStartingLocation.BargeCenter);
+                FieldStartingLocation.BARGE_CENTER.toString(), FieldStartingLocation.BARGE_CENTER);
 
         SmartDashboard.putBoolean("Autonomous/ResetLocationButton", false);
         SmartDashboard.putBoolean("Autonomous/LimelightRotation", false);
@@ -75,23 +77,23 @@ public class AutonomousLayout extends AbstractLayout {
 
     public FieldStartingLocation getStartingLocation() {
         return fieldStartingLocationChooser.get() == null
-                ? FieldStartingLocation.BargeCenter
+                ? FieldStartingLocation.BARGE_CENTER
                 : fieldStartingLocationChooser.get();
     }
 
-    public boolean getResetLocation() {
+    public boolean isResetLocationPressed() {
         return SmartDashboard.getBoolean("Autonomous/ResetLocationButton", false);
     }
 
-    public boolean getLimelightRotation() {
+    public boolean isLimelightRotationPressed() {
         return SmartDashboard.getBoolean("Autonomous/LimelightRotation", false);
     }
 
-    public boolean getEncoderReset() {
+    public boolean isEncoderResetPressed() {
         return SmartDashboard.getBoolean("Autonomous/EncoderReset", false);
     }
 
-    public boolean getForceMT1() {
+    public boolean isForceMT1Pressed() {
         return SmartDashboard.getBoolean("Autonomous/ForceMT1", false);
     }
 }

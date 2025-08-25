@@ -3,7 +3,8 @@ package frc.robot.utils;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.WrapperCommand;
 
-public class CommandUtils {
+public final class CommandUtils {
+    private CommandUtils() {}
 
     /**
      * Wraps a command to ensure that it finishes when interrupted. This is useful for commands that
@@ -36,6 +37,7 @@ public class CommandUtils {
         };
     }
 
+    @SuppressWarnings("java:S2301") // this is a conditional method
     public static Command maybeProxy(boolean doProxy, Command command) {
         return doProxy ? command.asProxy() : command;
     }

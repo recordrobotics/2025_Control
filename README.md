@@ -12,5 +12,40 @@ Here are our [goals](https://recordrobotics.notion.site/1714851f43d58095ac37c44f
 
 Docs at [docs.recordrobotics.org](https://docs.recordrobotics.org/)
 
+---
+
+## Extensions
+
+This repository recommends the following VS Code extensions for the best development experience:
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker">
+        <img src="https://raw.githubusercontent.com/streetsidesoftware/vscode-spell-checker/main/images/icon.png" width="64" alt="Code Spell Checker"/><br/>
+        <b>Code Spell Checker</b>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode">
+        <img src="https://raw.githubusercontent.com/SonarSource/sonarlint-vscode/develop/images/icon.png" width="64" alt="SonarLint"/><br/>
+        <b>SonarLint</b>
+      </a>
+    </td>
+  </tr>
+</table>
+
+### SonarLint Setup
+
+To use the custom SonarLint rules configured for this repository, you need to copy the SonarLint rules from [`.vscode/settings.json`](.vscode/settings.json) into your **user settings**:
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac).
+2. Type and select **Preferences: Open User Settings (JSON)**.
+3. Copy the `"sonarlint.rules"` section from [`.vscode/settings.json`](.vscode/settings.json) into your user settings file.
+
+This ensures SonarLint uses the same code quality rules as the repository.
+
+---
+
 -------------------------------------------------
 [Record Robotics](https://www.recordrobotics.org/)

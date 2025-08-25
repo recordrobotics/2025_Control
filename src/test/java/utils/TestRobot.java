@@ -20,7 +20,6 @@ import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.tests.TestControlBridge;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -34,7 +33,7 @@ public class TestRobot {
             NetworkTableInstance.getDefault().startLocal(); // disable nt
         }
         Unmanaged.setPhoenixDiagnosticsStartTime(-1); // disable phoenix
-        Constants.RobotState.runningAsUnitTest = true;
+        Constants.RobotState.setRunningAsUnitTest();
         RobotController.setTimeSource(TestRobot::getTimestamp);
     }
 
@@ -183,7 +182,7 @@ public class TestRobot {
      */
     public static void testUntil(
             Supplier<Boolean> stopCondition,
-            Optional<Supplier<Boolean>> periodic,
+            Supplier<Boolean> periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction) {
         testUntil(stopCondition, periodic, robotConfig, testFunction, Seconds.of(10.0));
@@ -200,7 +199,7 @@ public class TestRobot {
      */
     public static void testUntil(
             Supplier<Boolean> stopCondition,
-            Optional<Supplier<Boolean>> periodic,
+            Supplier<Boolean> periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction,
             Time timeout) {
@@ -218,7 +217,7 @@ public class TestRobot {
             CommandScheduler.getInstance().onCommandFinish(TestRobot::onCommandFinish);
 
             robotThread = new Thread(() -> {
-                Constants.RobotState.runningAsUnitTest = true;
+                Constants.RobotState.setRunningAsUnitTest();
                 RobotBase.startRobot(() -> testRobot);
             });
             robotThread.setDaemon(true);
@@ -230,8 +229,8 @@ public class TestRobot {
         m_runMutex.lock();
         TestRobot.waitForInit();
         robotConfig.accept(testRobot);
-        if (periodic != null && periodic.isPresent()) {
-            m_periodicRunnables.add(periodic.get());
+        if (periodic != null) {
+            m_periodicRunnables.add(periodic);
         }
         m_runMutex.unlock();
 
@@ -251,9 +250,9 @@ public class TestRobot {
                 }
             }
         } finally {
-            if (periodic != null && periodic.isPresent()) {
+            if (periodic != null) {
                 m_runMutex.lock();
-                m_periodicRunnables.remove(periodic.get());
+                m_periodicRunnables.remove(periodic);
                 m_runMutex.unlock();
             }
         }

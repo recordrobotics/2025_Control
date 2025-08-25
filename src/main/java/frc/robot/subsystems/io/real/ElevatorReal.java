@@ -104,12 +104,12 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
-    public boolean getTopEndStop() {
+    public boolean isTopEndStopPressed() {
         return topEndStop.get();
     }
 
     @Override
-    public boolean getBottomEndStop() {
+    public boolean isBottomEndStopPressed() {
         return bottomEndStop.get();
     }
 
@@ -132,5 +132,7 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

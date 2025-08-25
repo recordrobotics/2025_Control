@@ -6,43 +6,45 @@ import frc.robot.subsystems.io.NavSensorIO;
 
 public class NavSensorReal implements NavSensorIO {
 
-    private final AHRS _nav = new AHRS(NavXComType.kUSB1);
+    private final AHRS nav = new AHRS(NavXComType.kUSB1);
 
     @Override
     public void reset() {
-        _nav.reset();
+        nav.reset();
     }
 
     @Override
     public void resetDisplacement() {
-        _nav.resetDisplacement();
+        nav.resetDisplacement();
     }
 
     @Override
     public double getAngle() {
-        return -_nav.getAngle();
+        return -nav.getAngle();
     }
 
     @Override
     public double getWorldLinearAccelX() {
-        return _nav.getWorldLinearAccelX();
+        return nav.getWorldLinearAccelX();
     }
 
     @Override
     public double getWorldLinearAccelY() {
-        return _nav.getWorldLinearAccelY();
+        return nav.getWorldLinearAccelY();
     }
 
     @Override
     public boolean isConnected() {
-        return _nav.isConnected();
+        return nav.isConnected();
     }
 
     @Override
     public void close() throws Exception {
-        _nav.close();
+        nav.close();
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        /* real */
+    }
 }

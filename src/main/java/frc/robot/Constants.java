@@ -10,12 +10,12 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -33,17 +33,22 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.subsystems.Climber.ClimberState;
+import frc.robot.subsystems.CoralDetection;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.ModuleConstants;
+import frc.robot.utils.ModuleConstants.DriveMotorType;
+import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.ModuleConstants.MotorLocation;
-import frc.robot.utils.ModuleConstants.MotorType;
+import frc.robot.utils.ModuleConstants.TurnMotorType;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.function.Supplier;
 
 /**
@@ -55,7 +60,11 @@ import java.util.function.Supplier;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+    private Constants() {}
+
     public final class Game {
+        private Game() {}
+
         public static final AprilTagFieldLayout APRILTAG_LAYOUT =
                 AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
@@ -102,21 +111,22 @@ public final class Constants {
         }
 
         public static final Distance ALGAE_OFFSET = Meters.of(-0.1055532306);
+        public static final Distance ALGAE_REEF_DISTANCE = Centimeters.of(6);
 
         public enum AlgaePosition implements IGamePosition {
-            BlueAB(AlgaeLevel.HIGH, 18),
-            BlueCD(AlgaeLevel.LOW, 17),
-            BlueEF(AlgaeLevel.HIGH, 22),
-            BlueGH(AlgaeLevel.LOW, 21),
-            BlueIJ(AlgaeLevel.HIGH, 20),
-            BlueKL(AlgaeLevel.LOW, 19),
+            BLUE_AB(AlgaeLevel.HIGH, 18),
+            BLUE_CD(AlgaeLevel.LOW, 17),
+            BLUE_EF(AlgaeLevel.HIGH, 22),
+            BLUE_GH(AlgaeLevel.LOW, 21),
+            BLUE_IJ(AlgaeLevel.HIGH, 20),
+            BLUE_KL(AlgaeLevel.LOW, 19),
 
-            RedAB(AlgaeLevel.HIGH, 7),
-            RedCD(AlgaeLevel.LOW, 8),
-            RedEF(AlgaeLevel.HIGH, 9),
-            RedGH(AlgaeLevel.LOW, 10),
-            RedIJ(AlgaeLevel.HIGH, 11),
-            RedKL(AlgaeLevel.LOW, 6);
+            RED_AB(AlgaeLevel.HIGH, 7),
+            RED_CD(AlgaeLevel.LOW, 8),
+            RED_EF(AlgaeLevel.HIGH, 9),
+            RED_GH(AlgaeLevel.LOW, 10),
+            RED_IJ(AlgaeLevel.HIGH, 11),
+            RED_KL(AlgaeLevel.LOW, 6);
 
             private AlgaeLevel level;
             private Pose2d pose;
@@ -127,13 +137,15 @@ public final class Constants {
             }
 
             private static Pose2d calculatePoseFromAprilTag(int apriltagId) {
-                return APRILTAG_LAYOUT
-                        .getTagPose(apriltagId)
-                        .get()
+                Optional<Pose3d> tagPose = APRILTAG_LAYOUT.getTagPose(apriltagId);
+                if (tagPose.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
+                }
+
+                return tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
-                                Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2
-                                        + Centimeters.of(6).in(Meters),
+                                Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2 + ALGAE_REEF_DISTANCE.in(Meters),
                                 ALGAE_OFFSET.in(Meters),
                                 Rotation2d.k180deg));
             }
@@ -164,35 +176,35 @@ public final class Constants {
             }
         }
 
-        private static Distance REEF_SEGMENT_OFFSET = Meters.of(0.1743095);
-        private static Distance SHOOTER_OFFSET = Meters.of(0.182088);
+        private static final Distance REEF_SEGMENT_OFFSET = Meters.of(0.1743095);
+        private static final Distance SHOOTER_OFFSET = Meters.of(0.182088);
 
         public enum CoralPosition implements IGamePosition {
-            BlueA(18, 0),
-            BlueB(18, 1),
-            BlueC(17, 0),
-            BlueD(17, 1),
-            BlueE(22, 0),
-            BlueF(22, 1),
-            BlueG(21, 0),
-            BlueH(21, 1),
-            BlueI(20, 0),
-            BlueJ(20, 1),
-            BlueK(19, 0),
-            BlueL(19, 1),
+            BLUE_A(18, 0),
+            BLUE_B(18, 1),
+            BLUE_C(17, 0),
+            BLUE_D(17, 1),
+            BLUE_E(22, 0),
+            BLUE_F(22, 1),
+            BLUE_G(21, 0),
+            BLUE_H(21, 1),
+            BLUE_I(20, 0),
+            BLUE_J(20, 1),
+            BLUE_K(19, 0),
+            BLUE_L(19, 1),
 
-            RedA(7, 0),
-            RedB(7, 1),
-            RedC(8, 0),
-            RedD(8, 1),
-            RedE(9, 0),
-            RedF(9, 1),
-            RedG(10, 0),
-            RedH(10, 1),
-            RedI(11, 0),
-            RedJ(11, 1),
-            RedK(6, 0),
-            RedL(6, 1);
+            RED_A(7, 0),
+            RED_B(7, 1),
+            RED_C(8, 0),
+            RED_D(8, 1),
+            RED_E(9, 0),
+            RED_F(9, 1),
+            RED_G(10, 0),
+            RED_H(10, 1),
+            RED_I(11, 0),
+            RED_J(11, 1),
+            RED_K(6, 0),
+            RED_L(6, 1);
 
             private Pose2d pose;
             public final int apriltagId;
@@ -203,9 +215,12 @@ public final class Constants {
             }
 
             private static Pose2d calculatePoseFromAprilTag(int apriltagId, int side) {
-                return APRILTAG_LAYOUT
-                        .getTagPose(apriltagId)
-                        .get()
+                Optional<Pose3d> tagPose = APRILTAG_LAYOUT.getTagPose(apriltagId);
+                if (tagPose.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
+                }
+
+                return tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
@@ -213,8 +228,14 @@ public final class Constants {
                                 Rotation2d.k180deg));
             }
 
+            public static final double FIRST_WAYPOINT_OFFSET = 0.2;
+            public static final double L1_REEF_OFFSET = 0.4;
+            public static final double L2L3_REEF_OFFSET = 0.02;
+            public static final double L4_REEF_OFFSET = 0.05;
+
             public Pose2d getFirstStagePose() {
-                return pose.transformBy(new Transform2d(-0.2, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
+                return pose.transformBy(
+                        new Transform2d(-FIRST_WAYPOINT_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
             }
 
             public Pose2d getPose() {
@@ -222,27 +243,24 @@ public final class Constants {
             }
 
             public Pose2d getPose(CoralLevel level) {
-                switch (level) {
-                    case L1:
-                        return pose.transformBy(
-                                new Transform2d(-0.4, CoralIntake.INTAKE_X_OFFSET.in(Meters), Rotation2d.kCW_90deg));
-                    case L2:
-                    case L3:
-                        return pose.transformBy(new Transform2d(-0.02, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
-                    case L4:
-                        return pose.transformBy(new Transform2d(-0.05, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
-                    default:
-                        return pose; // this is bad
-                }
+                return switch (level) {
+                    case L1 -> pose.transformBy(new Transform2d(
+                            -L1_REEF_OFFSET, CoralIntake.INTAKE_X_OFFSET.in(Meters), Rotation2d.kCW_90deg));
+                    case L2, L3 -> pose.transformBy(
+                            new Transform2d(-L2L3_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
+                    case L4 -> pose.transformBy(
+                            new Transform2d(-L4_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
+                    default -> throw new IllegalArgumentException("Invalid Coral Level: " + level);
+                };
             }
         }
 
         public enum SourceCoralSpawnPosition implements IGamePosition {
             // Coral is only used for simulation, no point in making a april tag version
-            BlueCoralLeft(new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608))),
-            BlueCoralRight(new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608))),
-            RedCoralLeft(BlueCoralLeft),
-            RedCoralRight(BlueCoralRight);
+            BLUE_CORAL_LEFT(new Pose2d(0.702, 7.545, Rotation2d.fromDegrees(215.988608))),
+            BLUE_CORAL_RIGHT(new Pose2d(0.648, 0.489, Rotation2d.fromDegrees(-35.988608))),
+            RED_CORAL_LEFT(BLUE_CORAL_LEFT),
+            RED_CORAL_RIGHT(BLUE_CORAL_RIGHT);
 
             private Pose2d pose;
 
@@ -260,15 +278,15 @@ public final class Constants {
         }
 
         public enum SourcePosition implements IGamePosition {
-            BlueOuterLeft(13, 1),
-            BlueOuterRight(12, 1),
-            BlueInnerLeft(13, 0),
-            BlueInnerRight(12, 0),
+            BLUE_OUTER_LEFT(13, 1),
+            BLUE_OUTER_RIGHT(12, 1),
+            BLUE_INNER_LEFT(13, 0),
+            BLUE_INNER_RIGHT(12, 0),
 
-            RedOuterLeft(1, 1),
-            RedOuterRight(2, 1),
-            RedInnerLeft(1, 0),
-            RedInnerRight(2, 0);
+            RED_OUTER_LEFT(1, 1),
+            RED_OUTER_RIGHT(2, 1),
+            RED_INNER_LEFT(1, 0),
+            RED_INNER_RIGHT(2, 0);
 
             private Pose2d pose;
 
@@ -277,13 +295,16 @@ public final class Constants {
             }
 
             private SourcePosition(int apriltagId, int side) {
-                this.pose = calculatePoseFromAprilTag(apriltagId, side);
+                this(calculatePoseFromAprilTag(apriltagId, side));
             }
 
             private static Pose2d calculatePoseFromAprilTag(int apriltagId, int side) {
-                return APRILTAG_LAYOUT
-                        .getTagPose(apriltagId)
-                        .get()
+                Optional<Pose3d> tagPose = APRILTAG_LAYOUT.getTagPose(apriltagId);
+                if (tagPose.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
+                }
+
+                return tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
@@ -299,8 +320,8 @@ public final class Constants {
         }
 
         public enum ProcessorPosition implements IGamePosition {
-            BlueProcessor(16),
-            RedProcessor(3);
+            BLUE_PROCESSOR(16),
+            RED_PROCESSOR(3);
 
             private Pose2d pose;
 
@@ -309,9 +330,12 @@ public final class Constants {
             }
 
             private static Pose2d calculatePoseFromAprilTag(int apriltagId) {
-                return APRILTAG_LAYOUT
-                        .getTagPose(apriltagId)
-                        .get()
+                Optional<Pose3d> tagPose = APRILTAG_LAYOUT.getTagPose(apriltagId);
+                if (tagPose.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
+                }
+
+                return tagPose.get()
                         .toPose2d()
                         .transformBy(
                                 new Transform2d(Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2, 0, Rotation2d.k180deg));
@@ -324,35 +348,37 @@ public final class Constants {
     }
 
     public enum FieldStartingLocation {
-        BargeLeft(new Pose2d(7.004, 6.171, Rotation2d.fromDegrees(-152.840))),
-        BargeCenter(new Pose2d(7.145, 4.026, Rotation2d.fromDegrees(180.000))),
-        BargeRight(new Pose2d(6.961, 1.939, Rotation2d.fromDegrees(127.847))),
-        ReefTest(new Pose2d(2.082, 4.053, Rotation2d.fromDegrees(-120))),
-        ProccessorTest(new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90)));
+        BARGE_LEFT(new Pose2d(7.004, 6.171, Rotation2d.fromDegrees(-152.840))),
+        BARGE_CENTER(new Pose2d(7.145, 4.026, Rotation2d.fromDegrees(180.000))),
+        BARGE_RIGHT(new Pose2d(6.961, 1.939, Rotation2d.fromDegrees(127.847))),
+        REEF_TEST(new Pose2d(2.082, 4.053, Rotation2d.fromDegrees(-120))),
+        PROCESSOR_TEST(new Pose2d(6.148, 0.606, Rotation2d.fromDegrees(-90)));
 
-        private final Pose2d m_transformRed;
-        private final Pose2d m_transformBlue;
+        private final Pose2d transformRed;
+        private final Pose2d transformBlue;
 
         private FieldStartingLocation(Pose2d poseBlue) {
-            m_transformRed = FlippingUtil.flipFieldPose(poseBlue);
-            m_transformBlue = poseBlue;
+            transformRed = FlippingUtil.flipFieldPose(poseBlue);
+            transformBlue = poseBlue;
         }
 
         public Pose2d getPose() {
-            return DriverStationUtils.getCurrentAlliance() == Alliance.Red ? m_transformRed : m_transformBlue;
+            return DriverStationUtils.getCurrentAlliance() == Alliance.Red ? transformRed : transformBlue;
         }
     }
 
     public final class Align {
-        public static final double MAX_VELOCITY = Constants.Swerve.robotMaxSpeed; // m/s
+        private Align() {}
+
+        public static final double MAX_VELOCITY = Constants.Swerve.ROBOT_MAX_SPEED; // m/s
         public static final double MAX_ANGULAR_VELOCITY = 1.8; // rad/s
         public static final double MAX_ACCELERATION = 3.3228; // m/s^2
         public static final double MAX_JERK = 7.0711; // m/s^3
 
-        public static final double translationalTolerance = 0.01; // Meters
-        public static final double translationalVelocityTolerance = 0.05; // Meters/s
-        public static final double rotationalTolerance = Math.toRadians(1); // Radians
-        public static final double rotationalVelocityTolerance = Math.toRadians(5); // Radians/s
+        public static final double TRANSLATIONAL_TOLERANCE = 0.01; // Meters
+        public static final double TRANSLATIONAL_VELOCITY_TOLERANCE = 0.05; // Meters/s
+        public static final double ROTATIONAL_TOLERANCE = Math.toRadians(1); // Radians
+        public static final double ROTATIONAL_VELOCITY_TOLERANCE = Math.toRadians(5); // Radians/s
 
         public static final double MAX_REEF_ALIGN_DISTANCE = 2.5; // Meters
 
@@ -367,19 +393,21 @@ public final class Constants {
     }
 
     public final class PhotonVision {
+        private PhotonVision() {}
+
         public static final String PHOTON_L1_NAME = "photon-l1";
         public static final String PHOTON_SOURCE_NAME = "photon-source";
         public static final String PHOTON_CORAL_INTAKE = "coral-intake";
 
-        public static final Transform3d l1TransformRobotToCamera = new Transform3d(
+        public static final Transform3d ROBOT_TO_CAMERA_L1 = new Transform3d(
                 new Translation3d(-0.031750, 0.373120, 0.196097),
                 new Rotation3d(0, Units.degreesToRadians(-12.894), Units.degreesToRadians(90)));
-        public static final Transform3d sourceTransformRobotToCamera = new Transform3d(
+        public static final Transform3d ROBOT_TO_CAMERA_SOURCE = new Transform3d(
                 new Translation3d(-0.006350, -0.370769, 0.197020),
                 new Rotation3d(0, Units.degreesToRadians(-18.951), Units.degreesToRadians(-90)));
-        public static final Transform3d groundIntakeTransformRobotToCamera = new Transform3d(
+        public static final Transform3d ROBOT_TO_CAMERA_GROUND_INTAKE = new Transform3d(
                 new Translation3d(Meters.of(0.142850), Meters.of(0.369435), Meters.of(0.526114)),
-                new Rotation3d(Degrees.of(0), Degrees.of(-20), Degrees.of(90 + 25)));
+                new Rotation3d(Degrees.of(0), Degrees.of(-20), Degrees.of(90.0 + 25.0)));
 
         public static final Distance CORAL_ID_DISTANCE = Inches.of(8);
         public static final Time CORAL_TIMEOUT = Seconds.of(0.5);
@@ -389,56 +417,49 @@ public final class Constants {
         public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
     }
 
-    public final class HybridConstants {
-        // Create the constraints to use while pathfinding. The constraints defined in
-        // the path will
-        // only be used for the path. docs are here:
-        // http://gabybot.com/RobotCoreDoc/classcom_1_1pathplanner_1_1lib_1_1path_1_1_path_constraints.html
-        public static final PathConstraints constraints = new PathConstraints(
-                3, // Max velocity meters per second
-                9, // Max acceleration meters per second per second
-                Units.degreesToRadians(540), // Max angular velocity radians per second
-                Units.degreesToRadians(720)); // Max angular acceleration radians per second per second
-
-        public static final double processorTriggerDistance = 3.0; // Meters
-        public static final double reefTriggerDistance = 3.0; // Meters
-    }
-
     public final class Limelight {
+        private Limelight() {}
+
         public static final String LIMELIGHT_LEFT_NAME = "limelight-left";
         public static final String LIMELIGHT_CENTER_NAME = "limelight-center";
 
-        public static final Transform3d leftTransformRobotToCamera = new Transform3d(
+        public static final Transform3d ROBOT_TO_CAMERA_LEFT = new Transform3d(
                 new Translation3d(0.311558, -0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
-        public static final Transform3d centerTransformRobotToCamera = new Transform3d(
+        public static final Transform3d ROBOT_TO_CAMERA_CENTER = new Transform3d(
                 new Translation3d(0.219412, 0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
 
         public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
     }
 
-    public final class Assits {
-        public static final Distance GROUND_ASSIST_MAX_CORAL_DISTANCE = Meters.of(3);
+    public final class Assists {
+        private Assists() {}
+
+        public static final Distance GROUND_ASSIST_MAX_CORAL_DISTANCE = Meters.of(4);
         public static final Angle GROUND_ASSIST_MAX_ANGLE_ERROR = Degrees.of(60);
         public static final double GROUND_ASSIST_ROTATION_P = 5.0;
-        public static final double GROUND_ASSIST_TRANSLATION_P = 9.0;
+        public static final double GROUND_ASSIST_TRANSLATION_P = 6.0;
     }
 
     public final class Climber {
+        private Climber() {}
+
         public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(40);
         public static final Current STATOR_CURRENT_LIMIT = Amps.of(100);
 
         public static final double MAX_ARM_VELOCITY = 10;
         public static final double MAX_ARM_ACCELERATION = 15;
+        public static final double MAX_ARM_JERK = 1600;
 
-        public static final double kP = 14.403;
-        public static final double kI = 0;
-        public static final double kD = 0.1524;
-        public static final double kG = 0;
-        public static final double kS = 0.02808;
-        public static final double kV = 5.4441;
-        public static final double kA = 0.1539;
+        public static final double KP = 14.403;
+        public static final double KD = 0.1524;
+        public static final double KG = 0;
+        public static final double KS = 0.02808;
+        public static final double KV = 5.4441;
+        public static final double KA = 0.1539;
 
-        public static final double CLIMB_VOLTAGE_SLEW_RATE = 12.0 / 0.3; /* Go from 0 - 12 in 0.3 seconds */
+        public static final double CLIMB_VOLTAGE_MAX = 12.0;
+        public static final double CLIMB_VOLTAGE_SLEW_RATE =
+                CLIMB_VOLTAGE_MAX / 0.3; /* Go from 0 - max in 0.3 seconds */
 
         public static final double CLIMB_EXPECTED_KV_MIN = 6.0;
         public static final Time CLIMB_EXPECTED_KV_TIMEOUT = Seconds.of(0.9);
@@ -461,19 +482,24 @@ public final class Constants {
     }
 
     public final class ElevatorArm {
+        private ElevatorArm() {}
+
         public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(15);
         public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
 
         public static final double MAX_ARM_VELOCITY = 12;
         public static final double MAX_ARM_ACCELERATION = 40;
 
-        public static final double kP = 43.839;
-        public static final double kI = 0;
-        public static final double kD = 4.1082;
-        public static final double kG = 0.53175;
-        public static final double kS = 0.17279;
-        public static final double kV = 3.1543;
-        public static final double kA = 0.048931;
+        public static final double KP = 43.839;
+        public static final double KD = 4.1082;
+        public static final double KG = 0.53175;
+        public static final double KS = 0.17279;
+        public static final double KV = 3.1543;
+        public static final double KA = 0.048931;
+
+        public static final double MAX_JERK = 1600;
+        public static final double MMEXPO_KV = 1.931;
+        public static final double MMEXPO_KA = 1.1;
 
         public static final double START_POS = Units.degreesToRadians(-90);
         public static final double MIN_POS = Units.degreesToRadians(-103.54);
@@ -502,7 +528,7 @@ public final class Constants {
         GROUND_ALGAE(Constants.Elevator.LOWEST_HOLD_HEIGHT, Units.degreesToRadians(-36)),
         GROUND_ALGAE_PROCESSOR(0.04, Units.degreesToRadians(5)),
         PROCESSOR_SCORE(0.04, Units.degreesToRadians(-60)),
-        BARGE_ALAGAE(1.309, Units.degreesToRadians(110));
+        BARGE_ALGAE(1.309, Units.degreesToRadians(110));
 
         private double height;
         private double armAngleRadians;
@@ -520,24 +546,31 @@ public final class Constants {
             return armAngleRadians;
         }
 
+        private static final double HEIGHT_DIFFERENCE_TOLERANCE = 0.1; // meters
+        private static final double ANGLE_DIFFERENCE_TOLERANCE = Units.degreesToRadians(4); // radians
+
         public double getDifference(double height, double angle) {
-            return Math.abs(this.height - height) / 0.1
-                    + Math.abs(this.armAngleRadians - angle) / Units.degreesToRadians(4);
+            return Math.abs(this.height - height) / HEIGHT_DIFFERENCE_TOLERANCE
+                    + Math.abs(this.armAngleRadians - angle) / ANGLE_DIFFERENCE_TOLERANCE;
         }
     }
 
     public final class Elevator {
-        public static final double kDt = 0.02;
-        public static final double kMaxVelocity = 2.3;
-        public static final double kMaxAcceleration = 10;
-        public static final double kV = 6.8;
-        public static final double kA = 0.21006;
-        public static final double kG = 0.20027;
-        public static final double kS = 0.016248;
+        private Elevator() {}
 
-        public static final double kP = 68.424;
-        public static final double kI = 0.0;
-        public static final double kD = 9.2646;
+        public static final double MAX_VELOCITY = 2.3;
+        public static final double MAX_ACCELERATION = 10;
+        public static final double KV = 6.8;
+        public static final double KA = 0.21006;
+        public static final double KG = 0.20027;
+        public static final double KS = 0.016248;
+
+        public static final double KP = 68.424;
+        public static final double KD = 9.2646;
+
+        public static final double MAX_JERK = 1600;
+        public static final double MMEXPO_KV = 5.8;
+        public static final double MMEXPO_KA = 1.5;
 
         public static final double STARTING_HEIGHT = 0;
         public static final double LOWEST_HOLD_HEIGHT = Units.inchesToMeters(1.25);
@@ -563,15 +596,15 @@ public final class Constants {
     }
 
     public final class ElevatorHead {
-        public static final double kP = 0.047421;
-        public static final double kI = 0.0;
-        public static final double kD = 0.0;
-        public static final double kP_position = 6.9;
-        public static final double kI_position = 0.0;
-        public static final double kD_position = 0.132;
-        public static final double kS = 0.19168;
-        public static final double kV = 3.1111;
-        public static final double kA = 0.23988;
+        private ElevatorHead() {}
+
+        public static final double KP = 0.047421;
+        public static final double KD = 0.0;
+        public static final double KP_POSITION = 6.9;
+        public static final double KD_POSITION = 0.132;
+        public static final double KS = 0.19168;
+        public static final double KV = 3.1111;
+        public static final double KA = 0.23988;
 
         public static final double GEAR_RATIO = 10.0;
         public static final Distance DISTANCE_BETWEEN_AXLES = Inches.of(7);
@@ -588,7 +621,7 @@ public final class Constants {
 
         public static final double OUT_SPEED_FORWARD = 2.5;
         public static final double OUT_SPEED_BACKWARD = -1.5;
-        public static final double INTAKE_SPEED = 0.85; // -0.35;
+        public static final double INTAKE_SPEED = 0.85;
 
         public static final double AT_GOAL_POSITION_TOLERANCE = 0.05;
         public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.07;
@@ -597,7 +630,7 @@ public final class Constants {
         public static final Time SHOOT_STALL_TIME = Seconds.of(0.3);
 
         public static final double DEBOUNCE_TIME = 0.02;
-        public static final double DEBOUNCE_TIME_FOR_SURE = 0.2;
+        public static final double DEBOUNCE_TIME_CERTAIN = 0.2;
 
         public static final double HOW_FAR_FORWARDS_FROM_THE_ELEVATOR_IS_THE_CORAL_SHOOTER = 0.25;
 
@@ -615,16 +648,16 @@ public final class Constants {
     }
 
     public final class CoralIntake {
+        private CoralIntake() {}
 
         public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(10);
         public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
 
-        public static final double wheel_kP = 0.037121;
-        public static final double wheel_kI = 0.0;
-        public static final double wheel_kD = 0.0;
-        public static final double wheel_kS = 0.1709;
-        public static final double wheel_kV = 0.61705;
-        public static final double wheel_kA = 0.039556;
+        public static final double WHEEL_KP = 0.037121;
+        public static final double WHEEL_KD = 0.0;
+        public static final double WHEEL_KS = 0.1709;
+        public static final double WHEEL_KV = 0.61705;
+        public static final double WHEEL_KA = 0.039556;
 
         public static final double MAX_ARM_VELOCITY = 8;
         public static final double MAX_ARM_ACCELERATION = 22;
@@ -637,21 +670,25 @@ public final class Constants {
 
         public static final double PUSH_OUT_RAMP_TIME = 0.5;
 
-        public static final double arm_kP = 68.721;
-        public static final double arm_kI = 0;
-        public static final double arm_kD = 8.7176;
-        public static final double arm_kG = 0.47407;
-        public static final double arm_kS = 0.41583;
-        public static final double arm_kV = 5.3;
-        public static final double arm_kA = 0.1;
+        public static final double ARM_KP = 68.721;
+        public static final double ARM_KD = 8.7176;
+        public static final double ARM_KG = 0.47407;
+        public static final double ARM_KS = 0.41583;
+        public static final double ARM_KV = 5.3;
+        public static final double ARM_KA = 0.1;
+
+        public static final double MAX_ARM_JERK = 1600;
+        public static final double ARM_MMEXPO_KV = 1.931;
+        public static final double ARM_MMEXPO_KA = 1.1;
 
         public static final double ARM_UP = Units.degreesToRadians(80.19);
         public static final double ARM_PUSH = Units.degreesToRadians(84.19);
         public static final double ARM_INTAKE = Units.degreesToRadians(77.08);
         public static final double ARM_SCORE_L1 = Units.degreesToRadians(22.35);
         public static final double ARM_DOWN = Units.degreesToRadians(-52);
-        public static final double ARM_START_POS =
-                SysIdManager.getSysIdRoutine() == SysIdRoutine.CoralIntakeArm ? ARM_DOWN : Units.degreesToRadians(89.3);
+        public static final double ARM_START_POS = SysIdManager.getSysIdRoutine() == SysIdRoutine.CORAL_INTAKE_ARM
+                ? ARM_DOWN
+                : Units.degreesToRadians(89.3);
 
         public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18
 
@@ -667,6 +704,8 @@ public final class Constants {
     }
 
     public final class Lights {
+        private Lights() {}
+
         public static final int LENGTH = 150;
 
         public static final Dimensionless MULTIPLIER = Percent.of(100);
@@ -690,8 +729,12 @@ public final class Constants {
         public static final LEDPattern FLASHING_GREEN =
                 LEDPattern.solid(Color.kGreen).blink(Constants.Lights.FLASH_FREQUENCY);
 
+        @SuppressWarnings("java:S6411") // LEDReader as Key is inefficient but acceptable
         private static HashMap<LEDReader, Long> lastSparkles = new HashMap<>();
 
+        private static final Random rand = new Random();
+
+        @SuppressWarnings("java:S109")
         private static LEDPattern sparkle(Frequency frequency, Frequency fadeFrequency) {
             final double periodMicros = frequency.asPeriod().in(Microseconds);
             final double fadePeriodSeconds = fadeFrequency.asPeriod().in(Seconds);
@@ -706,7 +749,7 @@ public final class Constants {
                     lastSparkle = now;
                     lastSparkles.put(reader, lastSparkle);
 
-                    int led = (int) (Math.random() * reader.getLength());
+                    int led = rand.nextInt(reader.getLength());
                     writer.setLED(led, Color.kWhite);
                 }
 
@@ -761,7 +804,7 @@ public final class Constants {
                                 .blend(LEDPattern.solid(Color.kBlue));
 
         public static final Supplier<LEDPattern> ALLIANCE_COLOR_FANCY_WITH_CLIMB =
-                () -> RobotContainer.climber.getCurrentState() != ClimberState.Park
+                () -> RobotContainer.climber.getCurrentState() != ClimberState.PARK
                         ? CLIMB_PATTERN
                         : ALLIANCE_COLOR_FANCY.get();
 
@@ -802,6 +845,7 @@ public final class Constants {
     }
 
     public final class Control {
+        private Control() {}
 
         // Sensitivity for speed meter
         public static final double DIRECTIONAL_SPEED_METER_LOW = 0.25;
@@ -810,7 +854,7 @@ public final class Constants {
         public static final double SPIN_SPEED_METER_HIGH = 2.4;
 
         // Sensitivies for directional controls (XY) and spin (theta)
-        public static final double JOSYSTICK_DIRECTIONAL_SENSITIVITY = 1;
+        public static final double JOYSTICK_DIRECTIONAL_SENSITIVITY = 1;
         public static final double JOYSTICK_SPIN_SENSITIVITY = 2;
         public static final double JOYSTICK_X_THRESHOLD = 0.15;
         public static final double JOYSTICK_Y_THRESHOLD = 0.15;
@@ -827,6 +871,7 @@ public final class Constants {
     }
 
     public final class Frame {
+        private Frame() {}
 
         /**
          * Distance between wheels (width aka between left and right and length aka between front and
@@ -846,18 +891,22 @@ public final class Constants {
     }
 
     public final class Swerve {
+        private Swerve() {}
 
-        public static double kDt = 0.020;
+        public static final double PERIODIC = 0.02;
 
         // Works out module locations
-        private static final double locX = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
-        private static final double locY = Frame.ROBOT_WHEEL_DISTANCE_LENGTH / 2;
-        public static final double locDist = Math.sqrt(locX * locX + locY * locY);
+        public static final double WHEEL_EXTENT_X = Frame.ROBOT_WHEEL_DISTANCE_WIDTH / 2;
+        public static final double WHEEL_EXTENT_Y = Frame.ROBOT_WHEEL_DISTANCE_LENGTH / 2;
+        // Distance from center of robot to wheel
+        public static final double WHEEL_BASE_RADIUS = Math.hypot(WHEEL_EXTENT_X, WHEEL_EXTENT_Y);
 
-        private static final Translation2d frontLeftLocation = new Translation2d(locX, locY);
-        private static final Translation2d frontRightLocation = new Translation2d(locX, -locY);
-        private static final Translation2d backLeftLocation = new Translation2d(-locX, locY);
-        private static final Translation2d backRightLocation = new Translation2d(-locX, -locY);
+        public static final Translation2d FRONT_LEFT_WHEEL_LOCATION = new Translation2d(WHEEL_EXTENT_X, WHEEL_EXTENT_Y);
+        public static final Translation2d FRONT_RIGHT_WHEEL_LOCATION =
+                new Translation2d(WHEEL_EXTENT_X, -WHEEL_EXTENT_Y);
+        public static final Translation2d BACK_LEFT_WHEEL_LOCATION = new Translation2d(-WHEEL_EXTENT_X, WHEEL_EXTENT_Y);
+        public static final Translation2d BACK_RIGHT_WHEEL_LOCATION =
+                new Translation2d(-WHEEL_EXTENT_X, -WHEEL_EXTENT_Y);
 
         // Gear ratios for falcon and kraken
         public static final double FALCON_TURN_GEAR_RATIO =
@@ -881,103 +930,98 @@ public final class Constants {
         public static final double FALCON_DRIVE_KS = 0.12373;
         public static final double FALCON_DRIVE_KV = 2.5609;
         public static final double FALCON_DRIVE_KA = 0.10075;
-        public static final double FALCON_DRIVE_P = 0.1;
+        public static final double FALCON_DRIVE_KP = 0.1;
 
         public static final double FALCON_TURN_KV = 1.7518;
         public static final double FALCON_TURN_KA = 0.015791;
         public static final double FALCON_TURN_KS = 0.08889;
-        public static final double FALCON_TURN_P = 1.2;
-        public static final double FALCON_TURN_D = 0.2;
+        public static final double FALCON_TURN_KP = 1.2;
+        public static final double FALCON_TURN_KD = 0.2;
 
         public static final double KRAKEN_DRIVE_KS = 0.13192;
         public static final double KRAKEN_DRIVE_KV = 2.7547;
         public static final double KRAKEN_DRIVE_KA = 0.24758;
-        public static final double KRAKEN_DRIVE_P = 4.6957;
+        public static final double KRAKEN_DRIVE_KP = 4.6957;
 
         public static final double KRAKEN_TURN_KV = 1.2993;
         public static final double KRAKEN_TURN_KA = 0.058972;
         public static final double KRAKEN_TURN_KS = 0.51562;
-        public static final double KRAKEN_TURN_P = 55.543;
-        public static final double KRAKEN_TURN_D = 2.3952;
+        public static final double KRAKEN_TURN_KP = 55.543;
+        public static final double KRAKEN_TURN_KD = 2.3952;
 
         // Wheel diameter
         public static final double WHEEL_DIAMETER = Units.inchesToMeters(4);
 
         // Turn max velocity and acceleration
         // Calculated from motor rpm 5000 / 60 (rps) / gear ratio (15.43)
-        public static final double TurnMaxAngularVelocity = 5; // ROTATIONS / SECOND
+        public static final double TURN_MAX_ANGULAR_VELOCITY = 5; // ROTATIONS / SECOND
         // Calculated from max velocity / time to reach (0.1)
-        public static final double TurnMaxAngularAcceleration = 20; // ROTATIONS / SECOND / SECOND
+        public static final double TURN_MAX_ANGULAR_ACCELERATION = 20; // ROTATIONS / SECOND / SECOND
 
-        public static final double DriveMaxAcceleration = 13.18;
-        public static final double DriveMaxJerk = 131.28;
+        public static final double DRIVE_MAX_ACCELERATION = 13.18;
+        public static final double DRIVE_MAX_JERK = 131.28;
+
+        public static final double TURN_MAX_JERK = 1600; // TODO: tune
+        public static final double TURN_MMEXPO_KV = 5.8; // TODO: tune
+        public static final double TURN_MMEXPO_KA = 1.5; // TODO: tune
 
         /** The max speed the robot can travel safely */
-        public static final double robotMaxSpeed = 4.35;
+        public static final double ROBOT_MAX_SPEED = 4.35;
 
-        /** The max jerk of the robot below which the pose is certain (in G/s) */
-        public static final double MaxPoseCertaintyJerk = 80;
-
-        public static final RobotConfig PPDefaultConfig = new RobotConfig(
+        public static final RobotConfig PP_DEFAULT_CONFIG = new RobotConfig(
                 Constants.Frame.ROBOT_MASS,
                 Constants.Frame.ROBOT_MOI,
                 new ModuleConfig(
                         WHEEL_DIAMETER / 2,
-                        robotMaxSpeed,
+                        ROBOT_MAX_SPEED,
                         1.2,
                         DCMotor.getKrakenX60(1),
                         Constants.Swerve.KRAKEN_DRIVE_GEAR_RATIO,
                         52,
                         1),
-                frontLeftLocation,
-                frontRightLocation,
-                backLeftLocation,
-                backRightLocation);
+                FRONT_LEFT_WHEEL_LOCATION,
+                FRONT_RIGHT_WHEEL_LOCATION,
+                BACK_LEFT_WHEEL_LOCATION,
+                BACK_RIGHT_WHEEL_LOCATION);
 
-        public static final PPHolonomicDriveController PPDriveController = new PPHolonomicDriveController(
+        public static final PPHolonomicDriveController PP_DRIVE_CONTROLLER = new PPHolonomicDriveController(
                 new PIDConstants(1.5, 0.0, 0.0), // Translation PID constants
                 new PIDConstants(1.5, 0.0, 0.0) // Rotation PID constants
                 );
 
         // Module Creation
 
-        /**
-         * ===================== NOTE !!!!!! ======================== THESE ARE BACKUP CONSTANTS - NOT
-         * USED IF EVERYTHING WORKS EDIT deploy/swerve/motors.json instead
-         */
+        public static ModuleConstants getFrontLeftConstants() throws InvalidConfigException {
+            return ModuleConstants.fromConfig(MotorLocation.FRONT_LEFT, DriveMotorType.KRAKEN, TurnMotorType.KRAKEN);
+        }
 
-        // #region BACKUP
-        public static final ModuleConstants BACKUP_frontLeftConstants =
-                new ModuleConstants(2, 3, 0, 0.6353, frontLeftLocation, MotorType.Kraken, MotorType.Kraken);
+        public static ModuleConstants getFrontRightConstants() throws InvalidConfigException {
+            return ModuleConstants.fromConfig(MotorLocation.FRONT_RIGHT, DriveMotorType.KRAKEN, TurnMotorType.KRAKEN);
+        }
 
-        public static final ModuleConstants BACKUP_frontRightConstants =
-                new ModuleConstants(4, 5, 1, 0.8357, frontRightLocation, MotorType.Kraken, MotorType.Kraken);
-        public static final ModuleConstants BACKUP_backLeftConstants =
-                new ModuleConstants(8, 9, 2, 0.8596, backLeftLocation, MotorType.Kraken, MotorType.Kraken);
-        public static final ModuleConstants BACKUP_backRightConstants =
-                new ModuleConstants(6, 7, 3, 0.5079, backRightLocation, MotorType.Kraken, MotorType.Kraken);
-        // #endregion
+        public static ModuleConstants getBackLeftConstants() throws InvalidConfigException {
+            return ModuleConstants.fromConfig(MotorLocation.BACK_LEFT, DriveMotorType.KRAKEN, TurnMotorType.KRAKEN);
+        }
 
-        public static final ModuleConstants frontLeftConstants =
-                ModuleConstants.fromConfig(MotorLocation.FrontLeft, MotorType.Kraken);
-
-        public static final ModuleConstants frontRightConstants =
-                ModuleConstants.fromConfig(MotorLocation.FrontRight, MotorType.Kraken);
-
-        public static final ModuleConstants backLeftConstants =
-                ModuleConstants.fromConfig(MotorLocation.BackLeft, MotorType.Kraken);
-
-        public static final ModuleConstants backRightConstants =
-                ModuleConstants.fromConfig(MotorLocation.BackRight, MotorType.Kraken);
+        public static ModuleConstants getBackRightConstants() throws InvalidConfigException {
+            return ModuleConstants.fromConfig(MotorLocation.BACK_RIGHT, DriveMotorType.KRAKEN, TurnMotorType.KRAKEN);
+        }
     }
 
     public final class Auto {
+        private Auto() {}
+
         public static final Time SOURCE_TIMEOUT = Seconds.of(0.8);
     }
 
     public final class RobotState {
+        private RobotState() {}
 
-        public static boolean runningAsUnitTest = false;
+        private static boolean runningAsUnitTest = false;
+
+        public static void setRunningAsUnitTest() {
+            runningAsUnitTest = true;
+        }
 
         public static Mode getMode() {
             if (RobotBase.isReal()) return Mode.REAL;
@@ -987,13 +1031,23 @@ public final class Constants {
 
         public static final boolean MOTOR_LOGGING_ENABLED = false;
 
-        public static final AutoLogLevel.Level AUTO_LOG_LEVEL = RobotBase.isReal()
-                ? (SysIdManager.getSysIdRoutine() != SysIdRoutine.None
-                        ? AutoLogLevel.Level.Sysid
-                        : AutoLogLevel.Level.Real)
-                : AutoLogLevel.Level.Sim;
+        private static AutoLogLevel.Level getAutoLogLevel() {
+            if (RobotBase.isReal()) {
+                return SysIdManager.getSysIdRoutine() != SysIdRoutine.NONE
+                        ? AutoLogLevel.Level.SYSID
+                        : AutoLogLevel.Level.REAL;
+            } else {
+                return AutoLogLevel.Level.SIM;
+            }
+        }
+
+        public static final AutoLogLevel.Level AUTO_LOG_LEVEL = getAutoLogLevel();
 
         public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.MAPLE_CLEAN;
+
+        // change to use an external photonvision client for coral detection simulation
+        public static final CoralDetection.CoralDetectionSimulationMode CORAL_DETECTION_SIMULATION_MODE =
+                CoralDetection.CoralDetectionSimulationMode.MAPLE_SIM;
 
         /**
          * <p>
