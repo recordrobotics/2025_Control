@@ -22,13 +22,13 @@ This repository recommends the following VS Code extensions for the best develop
   <tr>
     <td align="center">
       <a href="https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker">
-        <img src="https://raw.githubusercontent.com/streetsidesoftware/vscode-spell-checker/main/images/icon.png" width="64" alt="Code Spell Checker"/><br/>
+        <img src="https://streetsidesoftware.gallerycdn.vsassets.io/extensions/streetsidesoftware/code-spell-checker/4.2.3/1753028947698/Microsoft.VisualStudio.Services.Icons.Default" width="64" alt="Code Spell Checker"/><br/>
         <b>Code Spell Checker</b>
       </a>
     </td>
     <td align="center">
       <a href="https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode">
-        <img src="https://raw.githubusercontent.com/SonarSource/sonarlint-vscode/develop/images/icon.png" width="64" alt="SonarLint"/><br/>
+        <img src="https://sonarsource.gallerycdn.vsassets.io/extensions/sonarsource/sonarlint-vscode/4.29.0/1755515927519/Microsoft.VisualStudio.Services.Icons.Default" width="64" alt="SonarLint"/><br/>
         <b>SonarLint</b>
       </a>
     </td>
@@ -44,8 +44,6 @@ To use the custom SonarLint rules configured for this repository, you need to co
 3. Copy the `"sonarlint.rules"` section from [`.vscode/settings.json`](.vscode/settings.json) into your user settings file.
 
 This ensures SonarLint uses the same code quality rules as the repository.
-
----
 
 -------------------------------------------------
 [Record Robotics](https://www.recordrobotics.org/)
