@@ -3,7 +3,6 @@ package frc.robot.commands;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -24,12 +23,260 @@ import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 import org.recordrobotics.ruckig.enums.DurationDiscretization;
 import org.recordrobotics.ruckig.enums.Result;
 import org.recordrobotics.ruckig.enums.Synchronization;
+import org.recordrobotics.ruckig.wpi.RuckigTelemetry;
 
 public class RuckigAlign extends Command {
 
-    public enum AlignMode {
-        POSITION, // Full stop at target
-        VELOCITY // Keep moving at target velocity
+    private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
+    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
+
+    private static final Ruckig3 ruckig = new Ruckig3("RuckigAlign", RobotContainer.ROBOT_PERIODIC);
+    private static final InputParameter3 input = new InputParameter3();
+    private static final OutputParameter3 output = new OutputParameter3();
+
+    private static final PIDController xPid = new PIDController(5, 0, 0.03);
+    private static final PIDController yPid = new PIDController(5, 0, 0.03);
+    private static final PIDController rPid = new PIDController(7, 0, 0.04);
+
+    private static AlignMode currentMode = AlignMode.POSITION;
+
+    private static boolean lastAlignSuccessful = false;
+
+    public record RuckigAlignState(KinematicState kinematicState, AlignMode alignMode) {}
+
+    static {
+        input.setDurationDiscretization(DurationDiscretization.Discrete);
+        input.setDefaultSynchronization(Synchronization.Phase);
+        input.setPerDoFSynchronization(
+                new Synchronization[] {Synchronization.Phase, Synchronization.Phase, Synchronization.None});
+        setPositionModeTolerance();
+        rPid.enableContinuousInput(-Math.PI, Math.PI);
+    }
+
+    private final Supplier<RuckigAlignState> targetStateSupplier;
+    private final double[] maxVelocity;
+    private final double[] maxAcceleration;
+    private final double[] maxJerk;
+    private final boolean resetTrajectory;
+    private final RuckigAlignGroup<?> group;
+
+    private final AutoControlModifier controlModifier;
+
+    private Result result;
+
+    public RuckigAlign(
+            AutoControlModifier controlModifier,
+            Supplier<RuckigAlignState> targetStateSupplier,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxJerk) {
+        this(controlModifier, targetStateSupplier, maxVelocity, maxAcceleration, maxJerk, true, null);
+    }
+
+    private RuckigAlign(
+            AutoControlModifier controlModifier,
+            Supplier<RuckigAlignState> targetStateSupplier,
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxJerk,
+            boolean resetTrajectory,
+            RuckigAlignGroup<?> group) {
+        this.controlModifier = controlModifier;
+        this.targetStateSupplier = targetStateSupplier;
+        this.maxVelocity = maxVelocity;
+        this.maxAcceleration = maxAcceleration;
+        this.maxJerk = maxJerk;
+        this.resetTrajectory = resetTrajectory;
+        this.group = group;
+
+        addRequirements(RobotContainer.drivetrain);
+    }
+
+    private static double[] processPoseForRuckig(Pose2d pose) {
+        return new double[] {
+            pose.getX(),
+            pose.getY(),
+            SimpleMath.closestTarget(
+                    input.getCurrentPosition()[2],
+                    SimpleMath.normalizeAngle(pose.getRotation().getRadians()))
+        };
+    }
+
+    private static double[] chassisSpeedsToArray(ChassisSpeeds speeds) {
+        return new double[] {speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond};
+    }
+
+    private static double[] processChassisSpeeds(ChassisSpeeds speeds, Pose2d pose) {
+        return chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(speeds, pose.getRotation()));
+    }
+
+    private static void setTargetState(KinematicState state) {
+        double[] targetPosition = state.position();
+        targetPosition[2] =
+                SimpleMath.closestTarget(input.getCurrentPosition()[2], SimpleMath.normalizeAngle(targetPosition[2]));
+        input.setTargetPosition(targetPosition);
+        input.setTargetVelocity(state.velocity());
+        input.setTargetAcceleration(state.acceleration());
+    }
+
+    private static void applyAlignState(RuckigAlignState state) {
+        setTargetState(state.kinematicState());
+        if (state.alignMode() == AlignMode.POSITION) {
+            setPositionModeTolerance();
+        } else {
+            setVelocityModeTolerance();
+        }
+    }
+
+    private void reset() {
+        Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+        input.setCurrentPosition(processPoseForRuckig(pose));
+        input.setCurrentVelocity(processChassisSpeeds(RobotContainer.drivetrain.getChassisSpeeds(), pose));
+        input.setCurrentAcceleration(processChassisSpeeds(RobotContainer.drivetrain.getChassisAcceleration(), pose));
+        xPid.reset();
+        yPid.reset();
+        rPid.reset();
+        result = Result.Working;
+    }
+
+    /**
+     * Tight tolerance for position mode (final full-stop target)
+     */
+    private static void setPositionModeTolerance() {
+        xPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
+        yPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
+        rPid.setTolerance(Constants.Align.ROTATIONAL_TOLERANCE, Constants.Align.ROTATIONAL_VELOCITY_TOLERANCE);
+        currentMode = AlignMode.POSITION;
+    }
+
+    /**
+     * Increases the tolerance for velocity mode
+     * to insure smooth waypoint following (final target is still in position mode)
+     */
+    private static void setVelocityModeTolerance() {
+        xPid.setTolerance(
+                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        yPid.setTolerance(
+                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        rPid.setTolerance(
+                Constants.Align.ROTATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
+        currentMode = AlignMode.VELOCITY;
+    }
+
+    @Override
+    public void initialize() {
+        input.setMaxVelocity(maxVelocity);
+        input.setMaxAcceleration(maxAcceleration);
+        input.setMaxJerk(maxJerk);
+
+        if (resetTrajectory) {
+            reset();
+        }
+
+        applyAlignState(targetStateSupplier.get());
+
+        setLastAlignSuccessful(false);
+
+        if (group != null) {
+            ruckig.publishWaypointsToTelemetry(group.getTelemetryWaypoints());
+        } else {
+            ruckig.publishWaypointsToTelemetry(new RuckigTelemetry.WaypointData[] {});
+        }
+    }
+
+    private static double feedforward(double velocity, double acceleration, double jerk) {
+        final double kV = 1.0;
+        final double kA = 0.1;
+        final double kJ = 0.01;
+        return kV * velocity + kA * acceleration + kJ * jerk;
+    }
+
+    @Override
+    public void execute() {
+        applyAlignState(targetStateSupplier.get());
+
+        result = ruckig.update(input, output);
+
+        Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+
+        ruckig.updateTelemetry(
+                new double[] {
+                    currentPose.getX(),
+                    currentPose.getY(),
+                    currentPose.getRotation().getRadians()
+                },
+                processChassisSpeeds(RobotContainer.drivetrain.getChassisSpeeds(), currentPose),
+                Constants.Frame.FRAME_WITH_BUMPER_WIDTH);
+
+        double[] newPosition = output.getNewPosition();
+        double[] newVelocity = output.getNewVelocity();
+        double[] newAcceleration = output.getNewAcceleration();
+        double[] newJerk = output.getNewJerk();
+
+        Logger.recordOutput(
+                "Ruckig/Target",
+                new Pose2d(
+                        input.getTargetPosition()[0],
+                        input.getTargetPosition()[1],
+                        new Rotation2d(input.getTargetPosition()[2])));
+
+        Logger.recordOutput(
+                "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
+
+        // Calculate the new velocities using PID and velocity feedforward
+        double vx = xPid.calculate(currentPose.getX(), newPosition[0])
+                + feedforward(newVelocity[0], newAcceleration[0], newJerk[0]);
+        double vy = yPid.calculate(currentPose.getY(), newPosition[1])
+                + feedforward(newVelocity[1], newAcceleration[1], newJerk[1]);
+        double vr = rPid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
+                + feedforward(newVelocity[2], newAcceleration[2], newJerk[2]);
+
+        controlModifier.drive(
+                ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(vx, vy, vr), currentPose.getRotation()));
+
+        output.passToInput(input);
+
+        double ex = Math.abs(currentPose.getX() - newPosition[0]);
+        double ey = Math.abs(currentPose.getY() - newPosition[1]);
+        double er = Math.abs(SimpleMath.closestTarget(
+                        newPosition[2],
+                        SimpleMath.normalizeAngle(currentPose.getRotation().getRadians()))
+                - newPosition[2]);
+
+        Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
+
+        // If the error is too large, reset the trajectory to current position for more accurate motion
+        if (ex * ex + ey * ey > 0.5 || Math.abs(er) > 1.0) {
+            reset();
+        }
+    }
+
+    @Override
+    public boolean isFinished() {
+        boolean finished = false;
+
+        if (currentMode == AlignMode.POSITION) {
+            finished = result != Result.Working && xPid.atSetpoint() && yPid.atSetpoint() && rPid.atSetpoint();
+        } else if (currentMode == AlignMode.VELOCITY) {
+            Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+            double distanceToTarget = Math.hypot(
+                    currentPose.getX() - input.getTargetPosition()[0],
+                    currentPose.getY() - input.getTargetPosition()[1]);
+            finished = distanceToTarget < VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD || result != Result.Working;
+        }
+
+        if (finished) {
+            setLastAlignSuccessful(true);
+        }
+        return finished;
+    }
+
+    public static boolean lastAlignSuccessful() {
+        return lastAlignSuccessful;
+    }
+
+    private static void setLastAlignSuccessful(boolean value) {
+        lastAlignSuccessful = value;
     }
 
     /**
@@ -190,250 +437,29 @@ public class RuckigAlign extends Command {
                                             maxVelocity,
                                             maxAcceleration,
                                             maxJerk,
-                                            index == 0);
+                                            index == 0,
+                                            this);
                                 },
                                 Set.of(RobotContainer.drivetrain))
                         .withTimeout(entry.timeout()));
             }
         }
-    }
 
-    private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
-    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
-
-    private static final Ruckig3 ruckig = new Ruckig3();
-    private static final InputParameter3 input = new InputParameter3();
-    private static final OutputParameter3 output = new OutputParameter3();
-
-    private static final PIDController xPid = new PIDController(5, 0, 0.03);
-    private static final PIDController yPid = new PIDController(5, 0, 0.03);
-    private static final PIDController rPid = new PIDController(7, 0, 0.04);
-
-    private static AlignMode currentMode = AlignMode.POSITION;
-
-    private static boolean lastAlignSuccessful = false;
-
-    public record RuckigAlignState(KinematicState kinematicState, AlignMode alignMode) {}
-
-    static {
-        input.setDurationDiscretization(DurationDiscretization.Discrete);
-        input.setDefaultSynchronization(Synchronization.Phase);
-        input.setPerDoFSynchronization(
-                new Synchronization[] {Synchronization.Phase, Synchronization.Phase, Synchronization.None});
-        setPositionModeTolerance();
-        rPid.enableContinuousInput(-Math.PI, Math.PI);
-    }
-
-    private final Supplier<RuckigAlignState> targetStateSupplier;
-    private final double[] maxVelocity;
-    private final double[] maxAcceleration;
-    private final double[] maxJerk;
-    private final boolean resetTrajectory;
-
-    private final AutoControlModifier controlModifier;
-
-    private Result result;
-
-    public RuckigAlign(
-            AutoControlModifier controlModifier,
-            Supplier<RuckigAlignState> targetStateSupplier,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxJerk) {
-        this(controlModifier, targetStateSupplier, maxVelocity, maxAcceleration, maxJerk, true);
-    }
-
-    private RuckigAlign(
-            AutoControlModifier controlModifier,
-            Supplier<RuckigAlignState> targetStateSupplier,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxJerk,
-            boolean resetTrajectory) {
-        this.controlModifier = controlModifier;
-        this.targetStateSupplier = targetStateSupplier;
-        this.maxVelocity = maxVelocity;
-        this.maxAcceleration = maxAcceleration;
-        this.maxJerk = maxJerk;
-        this.resetTrajectory = resetTrajectory;
-
-        addRequirements(RobotContainer.drivetrain);
-    }
-
-    private static double[] pose2dToArray(Pose2d pose) {
-        return new double[] {
-            pose.getX(),
-            pose.getY(),
-            SimpleMath.closestTarget(
-                    input.getCurrentPosition()[2],
-                    SimpleMath.normalizeAngle(pose.getRotation().getRadians()))
-        };
-    }
-
-    private static double[] chassisSpeedsToArray(ChassisSpeeds speeds) {
-        return new double[] {speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond};
-    }
-
-    private static void setTargetState(KinematicState state) {
-        double[] targetPosition = state.position();
-        targetPosition[2] =
-                SimpleMath.closestTarget(input.getCurrentPosition()[2], SimpleMath.normalizeAngle(targetPosition[2]));
-        input.setTargetPosition(targetPosition);
-        input.setTargetVelocity(state.velocity());
-        input.setTargetAcceleration(state.acceleration());
-    }
-
-    private static void applyAlignState(RuckigAlignState state) {
-        setTargetState(state.kinematicState());
-        if (state.alignMode() == AlignMode.POSITION) {
-            setPositionModeTolerance();
-        } else {
-            setVelocityModeTolerance();
+        private RuckigTelemetry.WaypointData[] getTelemetryWaypoints() {
+            RuckigTelemetry.WaypointData[] waypoints = new RuckigTelemetry.WaypointData[states.size()];
+            for (int i = 0; i < states.size(); i++) {
+                KinematicState ks = states.get(i)
+                        .state()
+                        .apply(states.get(i).initializer().get())
+                        .kinematicState();
+                waypoints[i] = new RuckigTelemetry.WaypointData(ks.position(), ks.velocity(), ks.acceleration());
+            }
+            return waypoints;
         }
     }
 
-    private void reset() {
-        Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-        input.setCurrentPosition(pose2dToArray(pose));
-        input.setCurrentVelocity(chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(
-                RobotContainer.drivetrain.getChassisSpeeds(), pose.getRotation())));
-        input.setCurrentAcceleration(chassisSpeedsToArray(ChassisSpeeds.fromRobotRelativeSpeeds(
-                RobotContainer.drivetrain.getChassisAcceleration(), pose.getRotation())));
-        xPid.reset();
-        yPid.reset();
-        rPid.reset();
-        result = Result.Working;
-    }
-
-    /**
-     * Tight tolerance for position mode (final full-stop target)
-     */
-    private static void setPositionModeTolerance() {
-        xPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
-        yPid.setTolerance(Constants.Align.TRANSLATIONAL_TOLERANCE, Constants.Align.TRANSLATIONAL_VELOCITY_TOLERANCE);
-        rPid.setTolerance(Constants.Align.ROTATIONAL_TOLERANCE, Constants.Align.ROTATIONAL_VELOCITY_TOLERANCE);
-        currentMode = AlignMode.POSITION;
-    }
-
-    /**
-     * Increases the tolerance for velocity mode
-     * to insure smooth waypoint following (final target is still in position mode)
-     */
-    private static void setVelocityModeTolerance() {
-        xPid.setTolerance(
-                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
-        yPid.setTolerance(
-                Constants.Align.TRANSLATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
-        rPid.setTolerance(
-                Constants.Align.ROTATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
-        currentMode = AlignMode.VELOCITY;
-    }
-
-    @Override
-    public void initialize() {
-        input.setMaxVelocity(maxVelocity);
-        input.setMaxAcceleration(maxAcceleration);
-        input.setMaxJerk(maxJerk);
-
-        if (resetTrajectory) {
-            reset();
-        }
-
-        applyAlignState(targetStateSupplier.get());
-
-        setLastAlignSuccessful(false);
-    }
-
-    private static double feedforward(double velocity, double acceleration, double jerk) {
-        final double kV = 1.0;
-        final double kA = 0.1;
-        final double kJ = 0.01;
-        return kV * velocity + kA * acceleration + kJ * jerk;
-    }
-
-    @Override
-    public void execute() {
-        applyAlignState(targetStateSupplier.get());
-
-        result = ruckig.update(input, output);
-
-        Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-
-        double[] newPosition = output.getNewPosition();
-        double[] newVelocity = output.getNewVelocity();
-        double[] newAcceleration = output.getNewAcceleration();
-        double[] newJerk = output.getNewJerk();
-
-        Logger.recordOutput(
-                "Ruckig/Target",
-                new Pose2d(
-                        input.getTargetPosition()[0],
-                        input.getTargetPosition()[1],
-                        new Rotation2d(input.getTargetPosition()[2])));
-
-        Logger.recordOutput(
-                "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
-        Logger.recordOutput(
-                "Ruckig/SetpointVelocity",
-                new Transform2d(newVelocity[0], newVelocity[1], new Rotation2d(newVelocity[2])));
-        Logger.recordOutput(
-                "Ruckig/SetpointAcceleration",
-                new Transform2d(newAcceleration[0], newAcceleration[1], new Rotation2d(newAcceleration[2])));
-        Logger.recordOutput("Ruckig/SetpointJerk", new Transform2d(newJerk[0], newJerk[1], new Rotation2d(newJerk[2])));
-
-        // Calculate the new velocities using PID and velocity feedforward
-        double vx = xPid.calculate(currentPose.getX(), newPosition[0])
-                + feedforward(newVelocity[0], newAcceleration[0], newJerk[0]);
-        double vy = yPid.calculate(currentPose.getY(), newPosition[1])
-                + feedforward(newVelocity[1], newAcceleration[1], newJerk[1]);
-        double vr = rPid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
-                + feedforward(newVelocity[2], newAcceleration[2], newJerk[2]);
-
-        controlModifier.drive(
-                ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(vx, vy, vr), currentPose.getRotation()));
-
-        output.passToInput(input);
-
-        double ex = Math.abs(currentPose.getX() - newPosition[0]);
-        double ey = Math.abs(currentPose.getY() - newPosition[1]);
-        double er = Math.abs(SimpleMath.closestTarget(
-                        newPosition[2],
-                        SimpleMath.normalizeAngle(currentPose.getRotation().getRadians()))
-                - newPosition[2]);
-
-        Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
-
-        // If the error is too large, reset the trajectory to current position for more accurate motion
-        if (ex * ex + ey * ey > 0.5 || Math.abs(er) > 1.0) {
-            reset();
-        }
-    }
-
-    @Override
-    public boolean isFinished() {
-        boolean finished = false;
-
-        if (currentMode == AlignMode.POSITION) {
-            finished = result != Result.Working && xPid.atSetpoint() && yPid.atSetpoint() && rPid.atSetpoint();
-        } else if (currentMode == AlignMode.VELOCITY) {
-            Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-            double distanceToTarget = Math.hypot(
-                    currentPose.getX() - input.getTargetPosition()[0],
-                    currentPose.getY() - input.getTargetPosition()[1]);
-            finished = distanceToTarget < VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD || result != Result.Working;
-        }
-
-        if (finished) {
-            setLastAlignSuccessful(true);
-        }
-        return finished;
-    }
-
-    public static boolean lastAlignSuccessful() {
-        return lastAlignSuccessful;
-    }
-
-    private static void setLastAlignSuccessful(boolean value) {
-        lastAlignSuccessful = value;
+    public enum AlignMode {
+        POSITION, // Full stop at target
+        VELOCITY // Keep moving at target velocity
     }
 }
