@@ -8,7 +8,7 @@ public enum CameraType {
     int width;
     int height;
     double downscale;
-    double fov;
+    double fov; // diagonal
     double fps;
     double pxError;
     double pxErrorStdDev;
@@ -19,7 +19,7 @@ public enum CameraType {
             int width,
             int height,
             double downscale,
-            double fov,
+            double fov, // diagonal
             double fps,
             double pxError,
             double pxErrorStdDev,
