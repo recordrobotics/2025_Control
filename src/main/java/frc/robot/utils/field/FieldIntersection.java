@@ -32,7 +32,7 @@ public final class FieldIntersection {
                         new Translation2d(FieldMirroringUtils.FIELD_WIDTH - pointAtBlue.getX(), pointAtBlue.getY()))
                 .toArray(Translation2d[]::new);
 
-        // Define field polygons (in feet)
+        // Define field polygons (in meters)
         float[][] polygons = new float[][] {
             // blue coral stations
             createTriangle(new Translation2d(0, 1.270), new Translation2d(1.672, 0), new Translation2d(0, 0)),
