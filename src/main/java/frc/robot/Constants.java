@@ -382,7 +382,9 @@ public final class Constants {
         public static final double MAX_VELOCITY = Constants.Swerve.ROBOT_MAX_SPEED; // m/s
         public static final double MAX_ANGULAR_VELOCITY = 1.8; // rad/s
         public static final double MAX_ACCELERATION = 3.3228; // m/s^2
-        public static final double MAX_JERK = 7.0711; // m/s^3
+        public static final double MAX_DECELERATION = 11.0; // m/s^2
+        public static final double MAX_JERK = 2 * 7.0711; // m/s^3
+        public static final double MAX_DEJERK = 2 * 7.0711; // m/s^3
 
         public static final double TRANSLATIONAL_TOLERANCE = 0.01; // Meters
         public static final double TRANSLATIONAL_VELOCITY_TOLERANCE = 0.05; // Meters/s

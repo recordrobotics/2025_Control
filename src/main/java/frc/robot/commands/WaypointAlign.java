@@ -164,7 +164,12 @@ public class WaypointAlign {
         return moduleValue / Constants.Swerve.WHEEL_BASE_RADIUS;
     }
 
-    public record KinematicConstraints(double[] maxVelocity, double[] maxAcceleration, double[] maxJerk) {
+    public record KinematicConstraints(
+            double[] maxVelocity,
+            double[] maxAcceleration,
+            double[] maxDeceleration,
+            double[] maxJerk,
+            double[] maxDejerk) {
         public static final KinematicConstraints DEFAULT = new KinematicConstraints(
                 new double[] {
                     Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
@@ -177,10 +182,21 @@ public class WaypointAlign {
                     moduleToRobotRadians(Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2)
                 }, // max acceleration
                 new double[] {
+                    Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
+                    Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
+                    moduleToRobotRadians(
+                            Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2) /* rotation can use accel */
+                }, // max deceleration
+                new double[] {
                     Constants.Align.MAX_JERK / SimpleMath.SQRT2,
                     Constants.Align.MAX_JERK / SimpleMath.SQRT2,
                     moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2)
-                } // max jerk
+                }, // max jerk
+                new double[] {
+                    Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
+                    Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
+                    moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2) /* rotation can use jerk */
+                } // max dejerk
                 );
 
         @Override
@@ -274,7 +290,12 @@ public class WaypointAlign {
             KinematicConstraints constraints,
             AutoControlModifier controlModifier) {
         RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<>(
-                controlModifier, constraints.maxVelocity, constraints.maxAcceleration, constraints.maxJerk);
+                controlModifier,
+                constraints.maxVelocity,
+                constraints.maxAcceleration,
+                constraints.maxDeceleration,
+                constraints.maxJerk,
+                constraints.maxDejerk);
         return align(waypoints, startWaypoint, endWaypoint, stopAtEndWaypoint, waypointTimeouts, waypointGroup)
                 .build();
     }
@@ -447,7 +468,12 @@ public class WaypointAlign {
         return Commands.defer(
                 () -> {
                     RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<>(
-                            controlModifier, constraints.maxVelocity, constraints.maxAcceleration, constraints.maxJerk);
+                            controlModifier,
+                            constraints.maxVelocity,
+                            constraints.maxAcceleration,
+                            constraints.maxDeceleration,
+                            constraints.maxJerk,
+                            constraints.maxDejerk);
 
                     align(
                             waypoints,

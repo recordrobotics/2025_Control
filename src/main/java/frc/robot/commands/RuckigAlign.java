@@ -11,6 +11,7 @@ import frc.robot.RobotContainer;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -29,6 +30,8 @@ public class RuckigAlign extends Command {
 
     private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
     private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
+
+    private static final double DECELERATION_ACCEL_THRESHOLD = 0.9; // meters/s^2
 
     private static final Ruckig3 ruckig = new Ruckig3("RuckigAlign", RobotContainer.ROBOT_PERIODIC);
     private static final InputParameter3 input = new InputParameter3();
@@ -56,21 +59,35 @@ public class RuckigAlign extends Command {
     private final Supplier<RuckigAlignState> targetStateSupplier;
     private final double[] maxVelocity;
     private final double[] maxAcceleration;
+    private final double[] maxDeceleration;
     private final double[] maxJerk;
+    private final double[] maxDejerk;
     private final boolean resetTrajectory;
     private final RuckigAlignGroup<?> group;
 
     private final AutoControlModifier controlModifier;
 
     private Result result;
+    private final boolean[] isDecelerating;
 
     public RuckigAlign(
             AutoControlModifier controlModifier,
             Supplier<RuckigAlignState> targetStateSupplier,
             double[] maxVelocity,
             double[] maxAcceleration,
-            double[] maxJerk) {
-        this(controlModifier, targetStateSupplier, maxVelocity, maxAcceleration, maxJerk, true, null);
+            double[] maxDeceleration,
+            double[] maxJerk,
+            double[] maxDejerk) {
+        this(
+                controlModifier,
+                targetStateSupplier,
+                maxVelocity,
+                maxAcceleration,
+                maxDeceleration,
+                maxJerk,
+                maxDejerk,
+                true,
+                null);
     }
 
     private RuckigAlign(
@@ -78,16 +95,22 @@ public class RuckigAlign extends Command {
             Supplier<RuckigAlignState> targetStateSupplier,
             double[] maxVelocity,
             double[] maxAcceleration,
+            double[] maxDeceleration,
             double[] maxJerk,
+            double[] maxDejerk,
             boolean resetTrajectory,
             RuckigAlignGroup<?> group) {
         this.controlModifier = controlModifier;
         this.targetStateSupplier = targetStateSupplier;
         this.maxVelocity = maxVelocity;
         this.maxAcceleration = maxAcceleration;
+        this.maxDeceleration = maxDeceleration;
         this.maxJerk = maxJerk;
+        this.maxDejerk = maxDejerk;
         this.resetTrajectory = resetTrajectory;
         this.group = group;
+
+        isDecelerating = new boolean[maxVelocity.length];
 
         addRequirements(RobotContainer.drivetrain);
     }
@@ -119,13 +142,64 @@ public class RuckigAlign extends Command {
         input.setTargetAcceleration(state.acceleration());
     }
 
-    private static void applyAlignState(RuckigAlignState state) {
+    private void applyAlignState(RuckigAlignState state) {
         setTargetState(state.kinematicState());
+        maximizeConstraints(maxVelocity, getProcessedMaxAcceleration());
+        input.setMaxJerk(getProcessedMaxJerk());
         if (state.alignMode() == AlignMode.POSITION) {
             setPositionModeTolerance();
         } else {
             setVelocityModeTolerance();
         }
+    }
+
+    private double[] getProcessedMaxAcceleration() {
+        double[] processedMaxAcceleration = maxAcceleration.clone();
+
+        for (int i = 0; i < maxAcceleration.length; i++) {
+            if (isDecelerating[i]) {
+                processedMaxAcceleration[i] = maxDeceleration[i];
+            }
+        }
+
+        return processedMaxAcceleration;
+    }
+
+    private double[] getProcessedMaxJerk() {
+        double[] processedMaxJerk = maxJerk.clone();
+
+        for (int i = 0; i < maxJerk.length; i++) {
+            if (isDecelerating[i]) {
+                processedMaxJerk[i] = maxDejerk[i];
+            }
+        }
+
+        return processedMaxJerk;
+    }
+
+    private static void maximizeConstraints(double[] maxVelocity, double[] maxAcceleration) {
+        if (maxVelocity.length != maxAcceleration.length) {
+            throw new IllegalArgumentException("maxVelocity and maxAcceleration must have same length");
+        }
+
+        double[] maxVelocityOutput = maxVelocity.clone();
+        double[] maxAccelerationOutput = maxAcceleration.clone();
+
+        double[] currentVel = input.getCurrentVelocity();
+        double[] currentAcc = input.getCurrentAcceleration();
+
+        for (int i = 0; i < maxVelocity.length; i++) {
+            if (Math.abs(currentVel[i]) > Math.abs(maxVelocity[i])) {
+                maxVelocityOutput[i] = Math.abs(currentVel[i]);
+            }
+
+            if (Math.abs(currentAcc[i]) > Math.abs(maxAcceleration[i])) {
+                maxAccelerationOutput[i] = Math.abs(currentAcc[i]);
+            }
+        }
+
+        input.setMaxVelocity(maxVelocityOutput);
+        input.setMaxAcceleration(maxAccelerationOutput);
     }
 
     private void reset() {
@@ -137,6 +211,7 @@ public class RuckigAlign extends Command {
         yPid.reset();
         rPid.reset();
         result = Result.Working;
+        Arrays.fill(isDecelerating, false);
     }
 
     /**
@@ -165,6 +240,7 @@ public class RuckigAlign extends Command {
 
     @Override
     public void initialize() {
+        Arrays.fill(isDecelerating, false);
         input.setMaxVelocity(maxVelocity);
         input.setMaxAcceleration(maxAcceleration);
         input.setMaxJerk(maxJerk);
@@ -212,6 +288,13 @@ public class RuckigAlign extends Command {
         double[] newVelocity = output.getNewVelocity();
         double[] newAcceleration = output.getNewAcceleration();
         double[] newJerk = output.getNewJerk();
+
+        for (int i = 0; i < isDecelerating.length; i++) {
+            isDecelerating[i] = Math.abs(newAcceleration[i]) > DECELERATION_ACCEL_THRESHOLD
+                    && !SimpleMath.signEq(newVelocity[i], newAcceleration[i]);
+        }
+
+        Logger.recordOutput("Ruckig/Decelerating", isDecelerating);
 
         Logger.recordOutput(
                 "Ruckig/Target",
@@ -293,7 +376,9 @@ public class RuckigAlign extends Command {
         private final List<Group> groups = new ArrayList<>();
         private final double[] maxVelocity;
         private final double[] maxAcceleration;
+        private final double[] maxDeceleration;
         private final double[] maxJerk;
+        private final double[] maxDejerk;
 
         private final AutoControlModifier defaultControlModifier;
 
@@ -307,11 +392,15 @@ public class RuckigAlign extends Command {
                 AutoControlModifier defaultControlModifier,
                 double[] maxVelocity,
                 double[] maxAcceleration,
-                double[] maxJerk) {
+                double[] maxDeceleration,
+                double[] maxJerk,
+                double[] maxDejerk) {
             this.defaultControlModifier = defaultControlModifier;
             this.maxVelocity = maxVelocity;
             this.maxAcceleration = maxAcceleration;
+            this.maxDeceleration = maxDeceleration;
             this.maxJerk = maxJerk;
+            this.maxDejerk = maxDejerk;
         }
 
         /**
@@ -436,7 +525,9 @@ public class RuckigAlign extends Command {
                                             () -> entry.state().apply(param),
                                             maxVelocity,
                                             maxAcceleration,
+                                            maxDeceleration,
                                             maxJerk,
+                                            maxDejerk,
                                             index == 0,
                                             this);
                                 },
