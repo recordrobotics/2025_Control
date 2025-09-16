@@ -260,5 +260,11 @@
   "java.checkstyle.version": "11.0.0",
   "java.checkstyle.properties": {
     "configDirectory": "${workspaceFolder}/config/checkstyle"
+  },
+  "command-runner.showRunCommandInEditorContextMenu": false,
+  "command-runner.showRunCommandInExplorerContextMenu": false,
+  "command-runner.terminal.autoClear": true,
+  "command-runner.commands": {
+    "tuning swerve encoders": "./gradlew tuning --args \"swerveencoders ${input:kraken}\""
   }
 }

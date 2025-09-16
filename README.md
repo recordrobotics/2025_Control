@@ -40,6 +40,12 @@ This repository recommends the following VS Code extensions for the best develop
         <b>Checkstyle for Java</b>
       </a>
     </td>
+    <td align="center">
+      <a href="https://marketplace.visualstudio.com/items?itemName=edonet.vscode-command-runner">
+        <img src="https://edonet.gallerycdn.vsassets.io/extensions/edonet/vscode-command-runner/0.0.124/1680934084102/Microsoft.VisualStudio.Services.Icons.Default" width="64" alt="Command Runner"/><br/>
+        <b>Command Runner</b>
+      </a>
+    </td>
   </tr>
 </table>
 
@@ -52,6 +58,28 @@ To use the custom SonarLint rules configured for this repository, you need to co
 3. Copy the `"sonarlint.rules"` section from [`.vscode/settings.json`](.vscode/settings.json) into your user settings file.
 
 This ensures SonarLint uses the same code quality rules as the repository.
+
+### How to use Command Runner
+
+This repository is set up to show useful commands in a menu when pressing `Ctrl+Shift+R`
+
+<img width="1244" height="160" alt="image" src="https://github.com/user-attachments/assets/bbc890e2-5ade-4d3b-a0a5-5e3c6b319964" />
+
+#### Available commands
+
+- **tuning swerve encoders** — when selecting this command an additional window prompting for the type of module appears. The options are `kraken|falcon` with default `kraken`
+
+  <img width="996" height="141" alt="image" src="https://github.com/user-attachments/assets/5431c4f5-0d50-4350-90ad-8c85f21207a4" />
+
+#### Keybindings
+
+An example keybinding is provided in [`.vscode/keybindings.json`](.vscode/keybindings.json), allowing you to set custom keybinds to certain commands.
+
+**IMPORTANT:** to add keybinds:
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac).
+2. Type and select **Preferences: Open Keyboard Shortcuts (JSON)**.
+3. This is where you can define the custom keybinds (**this applies for your whole vscode user not just this repo**)
 
 -------------------------------------------------
 [Record Robotics](https://www.recordrobotics.org/)
