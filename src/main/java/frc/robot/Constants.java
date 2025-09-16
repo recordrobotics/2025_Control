@@ -1063,7 +1063,7 @@ public final class Constants {
          * RUNNING TESTS IN PARALLEL IS NOT SUPPORTED
          * </p>
          *
-         * Example: {@code ./gradlew test --tests "*ReefAutoScoreTestCases`$Blue4"}
+         * Example: {@code ./gradlew test --tests "*ReefAutoScoreTests`$Blue4"}
          */
         public static final boolean UNIT_TESTS_ENABLE_ADVANTAGE_SCOPE = false;
 
