@@ -30,6 +30,9 @@ public class RuckigAlign extends Command {
 
     private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
     private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
+    // slightly larger threshold to avoid deceleration oscillation
+    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD_BYPASS = 0.08; // meters
+    private static final double VELOCITY_MODE_BYPASS_VELOCITY_ERROR_THRESHOLD = 1.0; // m/s
 
     private static final double DECELERATION_ACCEL_THRESHOLD = 0.9; // meters/s^2
 
@@ -360,7 +363,19 @@ public class RuckigAlign extends Command {
             double distanceToTarget = Math.hypot(
                     currentPose.getX() - input.getTargetPosition()[0],
                     currentPose.getY() - input.getTargetPosition()[1]);
-            finished = distanceToTarget < VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD || result != Result.Working;
+
+            double velocityError = Math.hypot(
+                    input.getCurrentVelocity()[0] - input.getTargetVelocity()[0],
+                    input.getCurrentVelocity()[1] - input.getTargetVelocity()[1]);
+
+            finished = distanceToTarget
+                            < (velocityError >= VELOCITY_MODE_BYPASS_VELOCITY_ERROR_THRESHOLD
+                                    ? VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD_BYPASS
+                                    : VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD)
+                    || result != Result.Working;
+
+            Logger.recordOutput("Ruckig/DistanceToTarget", distanceToTarget);
+            Logger.recordOutput("Ruckig/VelocityError", velocityError);
         }
 
         if (finished) {
