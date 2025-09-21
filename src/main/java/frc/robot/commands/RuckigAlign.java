@@ -68,7 +68,13 @@ public class RuckigAlign extends Command {
     private final AutoControlModifier controlModifier;
 
     private Result result;
-    private final boolean[] isDecelerating;
+    private final DeceleratingState[] isDecelerating;
+
+    private enum DeceleratingState {
+        NOT_DECELERATING,
+        DECELERATING,
+        DONE_DECELERATING
+    }
 
     public RuckigAlign(
             AutoControlModifier controlModifier,
@@ -110,7 +116,8 @@ public class RuckigAlign extends Command {
         this.resetTrajectory = resetTrajectory;
         this.group = group;
 
-        isDecelerating = new boolean[maxVelocity.length];
+        isDecelerating = new DeceleratingState[maxVelocity.length];
+        Arrays.fill(isDecelerating, DeceleratingState.NOT_DECELERATING);
 
         addRequirements(RobotContainer.drivetrain);
     }
@@ -157,7 +164,7 @@ public class RuckigAlign extends Command {
         double[] processedMaxAcceleration = maxAcceleration.clone();
 
         for (int i = 0; i < maxAcceleration.length; i++) {
-            if (isDecelerating[i]) {
+            if (isDecelerating[i] == DeceleratingState.DECELERATING) {
                 processedMaxAcceleration[i] = maxDeceleration[i];
             }
         }
@@ -169,7 +176,7 @@ public class RuckigAlign extends Command {
         double[] processedMaxJerk = maxJerk.clone();
 
         for (int i = 0; i < maxJerk.length; i++) {
-            if (isDecelerating[i]) {
+            if (isDecelerating[i] == DeceleratingState.DECELERATING) {
                 processedMaxJerk[i] = maxDejerk[i];
             }
         }
@@ -211,7 +218,7 @@ public class RuckigAlign extends Command {
         yPid.reset();
         rPid.reset();
         result = Result.Working;
-        Arrays.fill(isDecelerating, false);
+        Arrays.fill(isDecelerating, DeceleratingState.NOT_DECELERATING);
     }
 
     /**
@@ -240,7 +247,9 @@ public class RuckigAlign extends Command {
 
     @Override
     public void initialize() {
-        Arrays.fill(isDecelerating, false);
+        // assume already decelerated unless resetTrajectory which already resets it
+        if (!resetTrajectory) Arrays.fill(isDecelerating, DeceleratingState.DONE_DECELERATING);
+
         input.setMaxVelocity(maxVelocity);
         input.setMaxAcceleration(maxAcceleration);
         input.setMaxJerk(maxJerk);
@@ -290,8 +299,14 @@ public class RuckigAlign extends Command {
         double[] newJerk = output.getNewJerk();
 
         for (int i = 0; i < isDecelerating.length; i++) {
-            isDecelerating[i] = Math.abs(newAcceleration[i]) > DECELERATION_ACCEL_THRESHOLD
-                    && !SimpleMath.signEq(newVelocity[i], newAcceleration[i]);
+            if (Math.abs(newAcceleration[i]) > DECELERATION_ACCEL_THRESHOLD
+                    && !SimpleMath.signEq(newVelocity[i], newAcceleration[i])) {
+                if (isDecelerating[i] == DeceleratingState.NOT_DECELERATING) {
+                    isDecelerating[i] = DeceleratingState.DECELERATING;
+                }
+            } else if (isDecelerating[i] == DeceleratingState.DECELERATING) {
+                isDecelerating[i] = DeceleratingState.DONE_DECELERATING;
+            }
         }
 
         Logger.recordOutput("Ruckig/Decelerating", isDecelerating);
