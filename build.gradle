@@ -6,6 +6,7 @@ plugins {
     id "jacoco"
     id "org.sonarqube" version "6.2.0.5505"
     id "checkstyle"
+    id "net.ltgt.errorprone" version "4.3.0"
 }
 
 java {
@@ -111,6 +112,8 @@ dependencies {
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
+
+    errorprone "com.google.errorprone:error_prone_core:2.42.0"
 }
 
 test {
@@ -164,6 +167,10 @@ wpi.java.configureTestTasks(test)
 // Configure string concat to always inline compile
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disableWarningsInGeneratedCode = true
 }
 
 checkstyle {
