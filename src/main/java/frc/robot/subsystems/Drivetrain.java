@@ -286,9 +286,9 @@ public final class Drivetrain extends KillableSubsystem implements PoweredSubsys
 
     public void sysIdOnlyDriveMotorsSpin(Voltage volts) {
         frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(360 - 45.0)));
-        frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45.0)));
-        backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 45.0)));
-        backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 - 45.0)));
+        frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(180 + 90 - 45.0)));
+        backLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45.0)));
+        backRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90 + 45.0)));
 
         frontLeft.setDriveMotorVoltsSysIdOnly(volts.in(Volts));
         frontRight.setDriveMotorVoltsSysIdOnly(volts.in(Volts));

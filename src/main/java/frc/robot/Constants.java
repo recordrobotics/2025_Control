@@ -984,9 +984,9 @@ public final class Constants {
         public static final double DRIVE_MAX_ACCELERATION = 13.18;
         public static final double DRIVE_MAX_JERK = 131.28;
 
-        public static final double TURN_MAX_JERK = 1600; // TODO: tune
-        public static final double TURN_MMEXPO_KV = 5.8; // TODO: tune
-        public static final double TURN_MMEXPO_KA = 1.5; // TODO: tune
+        public static final double TURN_MAX_JERK = 1600;
+        public static final double TURN_MMEXPO_KV = 1.5;
+        public static final double TURN_MMEXPO_KA = 0.4;
 
         /** The max speed the robot can travel safely */
         public static final double ROBOT_MAX_SPEED = 4.35;
