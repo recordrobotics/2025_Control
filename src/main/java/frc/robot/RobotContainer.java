@@ -100,6 +100,10 @@ public final class RobotContainer {
     public static final double AUTO_ALIGN_FIRST_WAYPOINT_TIMEOUT = 2.0;
     public static final double AUTO_ALIGN_SECOND_WAYPOINT_TIMEOUT = 1.0;
 
+    // Min time remaining in which we can auto reset encoders if not already reset during autonomous
+    // (15 - 13 = 2 seconds at the start of auto)
+    public static final double FMS_AUTO_RESET_ENCODERS_MIN_TIME = 13;
+
     public static Drivetrain drivetrain;
     public static PoseSensorFusion poseSensorFusion;
     public static Elevator elevator;
@@ -191,9 +195,24 @@ public final class RobotContainer {
         /* nothing to do */
     }
 
+    public void autonomousInit() {
+        // FMS only reset encoders when enabling autonomous for the first time if not already reset (safety measure)
+        // Time limit is so that if the robot restarts during the auto we don't want to reset encoders
+        // Don't want to autoreset in teleop because motors keep their positions if you don't power cycle
+        if (DriverStation.isFMSAttached()
+                && DriverStation.getMatchTime() >= FMS_AUTO_RESET_ENCODERS_MIN_TIME
+                && noEncoderResetAlert.get()) {
+            resetEncoders();
+        }
+    }
+
     public void disabledExit() {
+        // For the generic any enable only reset if not connected to FMS
+        // because we don't want to reset encoders if robot restarts in the middle of the match
+        // since the motors keep their positions if you don't power cycle
+        // for FMS handling see autonomousInit
         // Reset encoders when enabling if not already reset (safety measure)
-        if (noEncoderResetAlert.get()) {
+        if (!DriverStation.isFMSAttached() && noEncoderResetAlert.get()) {
             resetEncoders();
         }
     }

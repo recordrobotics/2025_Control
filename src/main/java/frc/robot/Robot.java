@@ -283,6 +283,8 @@ public final class Robot extends LoggedRobot {
 
         DashboardUI.Autonomous.switchTo();
 
+        robotContainer.autonomousInit();
+
         hasRun = true;
     }
 
