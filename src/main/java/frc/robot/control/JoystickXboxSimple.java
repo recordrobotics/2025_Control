@@ -231,7 +231,7 @@ public class JoystickXboxSimple implements AbstractControl {
 
     @Override
     public void vibrate(RumbleType type, double value) {
-        /* no vibrate on the joystick  */
+        xboxController.setRumble(type, value);
     }
 
     @Override

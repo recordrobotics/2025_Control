@@ -20,7 +20,10 @@ import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.tests.TestControlBridge;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -43,6 +46,8 @@ public class TestRobot {
     private static final List<Supplier<Boolean>> m_periodicRunnables = new ArrayList<>();
     private static final List<Supplier<Boolean>> m_periodicRunnablesToRemove = new ArrayList<>();
     private static final List<Consumer<Command>> m_commandFinishListeners = new ArrayList<>();
+    private static final List<Consumer<Command>> m_commandInitializedListeners = new ArrayList<>();
+    private static final List<BiConsumer<Command, Optional<Command>>> m_commandInterruptedListeners = new ArrayList<>();
 
     private static long timestamp = 0;
     private static int periodicCount = 0;
@@ -96,6 +101,35 @@ public class TestRobot {
     }
 
     /**
+     * Local callback to handle command initializes
+     * @param cmd the command that just initialized
+     */
+    private static void onCommandInitialize(Command cmd) {
+        m_runMutex.lock();
+
+        for (Consumer<Command> c : m_commandInitializedListeners) {
+            c.accept(cmd);
+        }
+
+        m_runMutex.unlock();
+    }
+
+    /**
+     * Local callback to handle command interrupt
+     * @param cmd the command that just interrupted
+     * @param interrupting the command that interrupted it, if any
+     */
+    private static void onCommandInterrupt(Command cmd, Optional<Command> interrupting) {
+        m_runMutex.lock();
+
+        for (BiConsumer<Command, Optional<Command>> c : m_commandInterruptedListeners) {
+            c.accept(cmd, interrupting);
+        }
+
+        m_runMutex.unlock();
+    }
+
+    /**
      * Ends the robot and cleans up resources.
      * This should only be called after all tests are done running,
      * since the unit tests reuse the robot instance to save time
@@ -135,6 +169,62 @@ public class TestRobot {
             if (stop) {
                 m_runMutex.lock();
                 m_commandFinishListeners.remove(listener);
+                m_runMutex.unlock();
+            }
+            return stop;
+        };
+    }
+
+    /**
+     * Creates a stop condition that will return true when the command initializes that matches the given predicate.
+     * @param commandPredicate a predicate that tests the command to determine if it should stop
+     * @return a supplier that returns true when the command initializes that matches the predicate
+     */
+    public static Supplier<Boolean> stopOnCommandInit(Predicate<Command> commandPredicate) {
+        boolean[] shouldStop = {false};
+        Consumer<Command> listener = cmd -> {
+            if (commandPredicate.test(cmd)) {
+                shouldStop[0] = true;
+            }
+        };
+        m_runMutex.lock();
+        m_commandInitializedListeners.add(listener);
+        m_runMutex.unlock();
+
+        return () -> {
+            boolean stop = shouldStop[0];
+            if (stop) {
+                m_runMutex.lock();
+                m_commandInitializedListeners.remove(listener);
+                m_runMutex.unlock();
+            }
+            return stop;
+        };
+    }
+
+    /**
+     * Creates a stop condition that will return true when the command is interrupted that matches the given predicate.
+     * @param commandPredicate a predicate that tests the command (and optionally the interrupting command) to determine if it should stop
+     * @return a supplier that returns true when the command initializes that matches the predicate
+     */
+    public static Supplier<Boolean> stopOnCommandInterrupt(
+            BiFunction<Command, Optional<Command>, Boolean> commandPredicate) {
+        boolean[] shouldStop = {false};
+
+        BiConsumer<Command, Optional<Command>> listener = (cmd, intr) -> {
+            if (commandPredicate.apply(cmd, intr)) {
+                shouldStop[0] = true;
+            }
+        };
+        m_runMutex.lock();
+        m_commandInterruptedListeners.add(listener);
+        m_runMutex.unlock();
+
+        return () -> {
+            boolean stop = shouldStop[0];
+            if (stop) {
+                m_runMutex.lock();
+                m_commandInterruptedListeners.remove(listener);
                 m_runMutex.unlock();
             }
             return stop;
@@ -214,6 +304,8 @@ public class TestRobot {
 
             RobotController.setTimeSource(TestRobot::getTimestamp);
             testRobot.setPeriodicRunnable(TestRobot::periodicRunnable);
+            CommandScheduler.getInstance().onCommandInitialize(TestRobot::onCommandInitialize);
+            CommandScheduler.getInstance().onCommandInterrupt(TestRobot::onCommandInterrupt);
             CommandScheduler.getInstance().onCommandFinish(TestRobot::onCommandFinish);
 
             robotThread = new Thread(() -> {
@@ -243,6 +335,7 @@ public class TestRobot {
 
         try {
             while (!stopCondition.get()) {
+                System.out.println(getTimestamp() - startTime);
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {

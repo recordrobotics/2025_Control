@@ -49,6 +49,7 @@ public class TestControlBridge implements AbstractControl {
 
     private EnumMap<Button, Integer> buttonStates = new EnumMap<>(Button.class);
     private EnumMap<Axis, Double> axisStates = new EnumMap<>(Axis.class);
+    private EnumMap<RumbleType, Double> rumbleStates = new EnumMap<>(RumbleType.class);
 
     public static TestControlBridge getInstance() {
         if (instance == null) {
@@ -240,7 +241,7 @@ public class TestControlBridge implements AbstractControl {
 
     @Override
     public void vibrate(RumbleType type, double value) {
-        /* no vibrate */
+        rumbleStates.put(type, value);
     }
 
     @Override
@@ -355,6 +356,10 @@ public class TestControlBridge implements AbstractControl {
                                 .getMeasure()
                                 .abs(Degrees))
                         < AUTO_SOURCE_MAX_ANGLE_DIFF;
+    }
+
+    public double getRumble(RumbleType type) {
+        return rumbleStates.getOrDefault(type, 0.0);
     }
 
     /**

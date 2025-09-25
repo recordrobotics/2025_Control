@@ -65,6 +65,7 @@ import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
@@ -103,6 +104,11 @@ public final class RobotContainer {
     // Min time remaining in which we can auto reset encoders if not already reset during autonomous
     // (15 - 13 = 2 seconds at the start of auto)
     public static final double FMS_AUTO_RESET_ENCODERS_MIN_TIME = 13;
+
+    /**
+     * The time remaining in the match after which the endgame starts and it is time to climb
+     */
+    public static final double ENDGAME_CLIMB_TIME = 20.0; // seconds
 
     public static Drivetrain drivetrain;
     public static PoseSensorFusion poseSensorFusion;
@@ -188,7 +194,7 @@ public final class RobotContainer {
     }
 
     public void teleopInit() {
-        /* nothing to do */
+        DriverStationUtils.teleopInit();
     }
 
     public void disabledInit() {
@@ -393,6 +399,9 @@ public final class RobotContainer {
                                 new ClimbMove(ClimberState.EXTEND),
                                 () -> climber.getCurrentState() == ClimberState.EXTEND)
                         .alongWith(new InstantCommand(() -> Elastic.selectTab("Climb"))));
+
+        new Trigger(() -> DriverStationUtils.getTeleopMatchTime().orElse(Double.MAX_VALUE) <= ENDGAME_CLIMB_TIME)
+                .onTrue(new VibrateXbox(RumbleType.kBothRumble, 1.0).withTimeout(1.0));
 
         // Reset pose trigger
         new Trigger(() -> DashboardUI.Overview.getControl().isPoseResetTriggered())
