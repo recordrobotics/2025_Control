@@ -24,9 +24,9 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 
 public class TestRobot {
@@ -43,14 +43,14 @@ public class TestRobot {
     private static volatile Robot testRobot;
     private static Thread robotThread;
     private static final ReentrantLock m_runMutex = new ReentrantLock();
-    private static final List<Supplier<Boolean>> m_periodicRunnables = new ArrayList<>();
-    private static final List<Supplier<Boolean>> m_periodicRunnablesToRemove = new ArrayList<>();
+    private static final List<BooleanSupplier> m_periodicRunnables = new ArrayList<>();
+    private static final List<BooleanSupplier> m_periodicRunnablesToRemove = new ArrayList<>();
     private static final List<Consumer<Command>> m_commandFinishListeners = new ArrayList<>();
     private static final List<Consumer<Command>> m_commandInitializedListeners = new ArrayList<>();
     private static final List<BiConsumer<Command, Optional<Command>>> m_commandInterruptedListeners = new ArrayList<>();
 
-    private static long timestamp = 0;
-    private static int periodicCount = 0;
+    private static volatile long timestamp = 0;
+    private static volatile int periodicCount = 0;
 
     /**
      * Acts as the robot time source
@@ -72,8 +72,8 @@ public class TestRobot {
 
         m_runMutex.lock();
 
-        for (Supplier<Boolean> r : m_periodicRunnables) {
-            if (!r.get()) {
+        for (BooleanSupplier r : m_periodicRunnables) {
+            if (!r.getAsBoolean()) {
                 // If the runnable returns false, it is marked for removal
                 m_periodicRunnablesToRemove.add(r);
             }
@@ -91,13 +91,9 @@ public class TestRobot {
      * @param cmd the command that just finished
      */
     private static void onCommandFinish(Command cmd) {
-        m_runMutex.lock();
-
         for (Consumer<Command> c : m_commandFinishListeners) {
             c.accept(cmd);
         }
-
-        m_runMutex.unlock();
     }
 
     /**
@@ -105,13 +101,9 @@ public class TestRobot {
      * @param cmd the command that just initialized
      */
     private static void onCommandInitialize(Command cmd) {
-        m_runMutex.lock();
-
         for (Consumer<Command> c : m_commandInitializedListeners) {
             c.accept(cmd);
         }
-
-        m_runMutex.unlock();
     }
 
     /**
@@ -120,13 +112,9 @@ public class TestRobot {
      * @param interrupting the command that interrupted it, if any
      */
     private static void onCommandInterrupt(Command cmd, Optional<Command> interrupting) {
-        m_runMutex.lock();
-
         for (BiConsumer<Command, Optional<Command>> c : m_commandInterruptedListeners) {
             c.accept(cmd, interrupting);
         }
-
-        m_runMutex.unlock();
     }
 
     /**
@@ -153,7 +141,7 @@ public class TestRobot {
      * @param commandPredicate a predicate that tests the command to determine if it should stop
      * @return a supplier that returns true when the command ends that matches the predicate
      */
-    public static Supplier<Boolean> stopOnCommandEnd(Predicate<Command> commandPredicate) {
+    public static BooleanSupplierEx stopOnCommandEnd(Predicate<Command> commandPredicate) {
         boolean[] shouldStop = {false};
         Consumer<Command> listener = cmd -> {
             if (commandPredicate.test(cmd)) {
@@ -180,7 +168,7 @@ public class TestRobot {
      * @param commandPredicate a predicate that tests the command to determine if it should stop
      * @return a supplier that returns true when the command initializes that matches the predicate
      */
-    public static Supplier<Boolean> stopOnCommandInit(Predicate<Command> commandPredicate) {
+    public static BooleanSupplierEx stopOnCommandInit(Predicate<Command> commandPredicate) {
         boolean[] shouldStop = {false};
         Consumer<Command> listener = cmd -> {
             if (commandPredicate.test(cmd)) {
@@ -207,7 +195,7 @@ public class TestRobot {
      * @param commandPredicate a predicate that tests the command (and optionally the interrupting command) to determine if it should stop
      * @return a supplier that returns true when the command initializes that matches the predicate
      */
-    public static Supplier<Boolean> stopOnCommandInterrupt(
+    public static BooleanSupplierEx stopOnCommandInterrupt(
             BiFunction<Command, Optional<Command>, Boolean> commandPredicate) {
         boolean[] shouldStop = {false};
 
@@ -238,7 +226,7 @@ public class TestRobot {
      * @param stopCondition a supplier that returns true when the stop condition is met
      * @return a supplier that returns true when the stop condition is met after the specified cycles
      */
-    public static Supplier<Boolean> delayStop(int cycles, Supplier<Boolean> stopCondition) {
+    public static BooleanSupplierEx delayStop(int cycles, BooleanSupplierEx stopCondition) {
         if (stopCondition == null) throw new IllegalArgumentException("stopCondition cannot be null");
 
         if (cycles <= 0) {
@@ -247,7 +235,7 @@ public class TestRobot {
 
         int[] currentCount = {-1};
         return () -> {
-            boolean stop = stopCondition.get();
+            boolean stop = stopCondition.getAsBoolean();
             if (stop) {
                 if (currentCount[0] == -1) {
                     currentCount[0] = periodicCount;
@@ -271,8 +259,8 @@ public class TestRobot {
      * @param testFunction a runnable that runs after the stop condition is met to verify the robot's state
      */
     public static void testUntil(
-            Supplier<Boolean> stopCondition,
-            Supplier<Boolean> periodic,
+            BooleanSupplierEx stopCondition,
+            BooleanSupplierEx periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction) {
         testUntil(stopCondition, periodic, robotConfig, testFunction, Seconds.of(10.0));
@@ -288,8 +276,8 @@ public class TestRobot {
      * @param timeout the maximum time to run the test before failing, if less than or equal to 0, no timeout
      */
     public static void testUntil(
-            Supplier<Boolean> stopCondition,
-            Supplier<Boolean> periodic,
+            BooleanSupplierEx stopCondition,
+            BooleanSupplierEx periodic,
             Consumer<Robot> robotConfig,
             Runnable testFunction,
             Time timeout) {
@@ -320,6 +308,9 @@ public class TestRobot {
 
         m_runMutex.lock();
         TestRobot.waitForInit();
+        m_runMutex.unlock();
+        waitPeriodicCycles(1);
+        m_runMutex.lock();
         robotConfig.accept(testRobot);
         if (periodic != null) {
             m_periodicRunnables.add(periodic);
@@ -328,14 +319,11 @@ public class TestRobot {
 
         long startTime = getTimestamp();
         if (timeout.gt(Seconds.zero())) {
-            Supplier<Boolean> originalStopCondition = stopCondition;
-            stopCondition =
-                    () -> originalStopCondition.get() || (getTimestamp() - startTime) >= timeout.in(Microseconds);
+            stopCondition = stopCondition.or(() -> getTimestamp() - startTime >= timeout.in(Microseconds));
         }
 
         try {
-            while (!stopCondition.get()) {
-                System.out.println(getTimestamp() - startTime);
+            while (!stopCondition.getAsBoolean()) {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
@@ -406,6 +394,9 @@ public class TestRobot {
     public static void waitForInit() {
         TestControlBridge.getInstance().reset();
         SimulatedArena.getInstance().clearGamePieces();
+        DriverStationSim.setAutonomous(false);
+        DriverStationSim.setFmsAttached(false);
+        DriverStationSim.setMatchTime(0);
         DriverStationSim.setEnabled(false);
         DriverStationSim.notifyNewData();
 
@@ -436,6 +427,33 @@ public class TestRobot {
         RobotContainer.elevatorArm.set(ElevatorHeight.BOTTOM.getArmAngle());
         RobotContainer.elevatorHead.set(CoralShooterStates.OFF);
         RobotContainer.coralIntake.set(CoralIntakeState.UP);
+    }
+
+    /**
+     * Waits for a certain number of periodic cycles to pass.
+     * Note: this is a busy wait, so it will block the current thread - so DO NOT run on the robot thread (or inside any callback).
+     * @param cycles the number of periodic cycles to wait for
+     * @throws IllegalArgumentException if cycles is less than or equal to 0
+     */
+    public static void waitPeriodicCycles(int cycles) {
+        if (cycles <= 0) throw new IllegalArgumentException("cycles must be greater than 0");
+
+        int startCount = periodicCount;
+
+        while (true) {
+            int currentCount = periodicCount;
+
+            if (currentCount >= startCount + cycles) {
+                break;
+            }
+
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
     }
 
     /**

@@ -20,6 +20,7 @@ public final class DriverStationUtils {
         return Alliance.Blue;
     }
 
+    @SuppressWarnings("java:S1244") // matchTime is exactly -1
     public static void teleopInit() {
         inPracticeMode = false;
 
@@ -29,6 +30,11 @@ public final class DriverStationUtils {
         final double teleopInitMatchTime = DriverStation.getMatchTime();
         Commands.waitUntil(() -> {
                     double matchTime = DriverStation.getMatchTime();
+
+                    if (matchTime == -1) {
+                        // Match time not valid, can't be in practice mode
+                        return true;
+                    }
 
                     if (Math.abs(teleopInitMatchTime - matchTime) < 1e-4) return false; // Wait for update
 
