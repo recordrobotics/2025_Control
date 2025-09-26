@@ -40,9 +40,9 @@ public class RuckigAlign extends Command {
     private static final InputParameter3 input = new InputParameter3();
     private static final OutputParameter3 output = new OutputParameter3();
 
-    private static final PIDController xPid = new PIDController(6, 0, 0.03);
-    private static final PIDController yPid = new PIDController(6, 0, 0.03);
-    private static final PIDController rPid = new PIDController(7, 0, 0.04);
+    private static final PIDController xPid = new PIDController(3, 0, 0.03);
+    private static final PIDController yPid = new PIDController(3, 0, 0.03);
+    private static final PIDController rPid = new PIDController(5, 0, 0.04);
 
     private static AlignMode currentMode = AlignMode.POSITION;
 

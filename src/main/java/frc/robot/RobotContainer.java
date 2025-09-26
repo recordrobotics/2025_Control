@@ -401,7 +401,7 @@ public final class RobotContainer {
                         .alongWith(new InstantCommand(() -> Elastic.selectTab("Climb"))));
 
         new Trigger(() -> DriverStationUtils.getTeleopMatchTime().orElse(Double.MAX_VALUE) <= ENDGAME_CLIMB_TIME)
-                .onTrue(new VibrateXbox(RumbleType.kBothRumble, 1.0).withTimeout(1.0));
+                .onTrue(new VibrateXbox(RumbleType.kBothRumble, 1.0).withTimeout(2.0));
 
         // Reset pose trigger
         new Trigger(() -> DashboardUI.Overview.getControl().isPoseResetTriggered())
