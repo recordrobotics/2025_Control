@@ -194,8 +194,8 @@ public class CoralDetection extends ManagedSubsystemBase {
     /**
      * Uses law of sines assuming a constant height ground plane to project 2d targets into 3d
      *
-     * @param targets
-     * @return
+     * @param targets list of 2d targets from photonvision
+     * @return list of transforms from camera to target in 3d space
      */
     private static List<Transform3d> project2dPoses(List<PhotonTrackedTargetTimestamped> targets) {
         return targets.stream()

@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.io.CoralIntakeIO;
@@ -38,6 +39,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import frc.robot.utils.modifiers.GroundIntakeAssist;
 import org.littletonrobotics.junction.Logger;
 
@@ -120,7 +122,7 @@ public final class CoralIntake extends KillableSubsystem implements PoweredSubsy
                         null, // default 1 volt/second ramp rate
                         null, // default 7 volt step voltage
                         null,
-                        (state -> Logger.recordOutput("CoralIntake/Wheel/SysIdTestState", state.toString()))),
+                        state -> Logger.recordOutput("CoralIntake/Wheel/SysIdTestState", state.toString())),
                 new SysIdRoutine.Mechanism(v -> io.setWheelVoltage(v.in(Volts)), null, this));
 
         sysIdRoutineArm = new SysIdRoutine(
@@ -209,7 +211,7 @@ public final class CoralIntake extends KillableSubsystem implements PoweredSubsy
 
     public void setArm(double angleRadians) {
         currentSetpoint.position = angleRadians;
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CORAL_INTAKE_ARM) {
+        if (!(SysIdManager.getProvider() instanceof SysIdArm)) {
             io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
         }
     }
@@ -222,39 +224,39 @@ public final class CoralIntake extends KillableSubsystem implements PoweredSubsy
     public void set(CoralIntakeState state) {
         currentIntakeState = state;
         switch (state) {
-            case SOURCE:
+            case SOURCE -> {
                 setWheel(Constants.CoralIntake.SOURCE_SPEED);
                 setArm(Constants.CoralIntake.ARM_INTAKE);
-                break;
-            case PUSH_READY:
+            }
+            case PUSH_READY -> {
                 setWheel(Constants.CoralIntake.INTAKE_SPEED);
                 setArm(Constants.CoralIntake.ARM_PUSH);
-                break;
-            case PUSH_OUT:
+            }
+            case PUSH_OUT -> {
                 intakePushAndPullRampStart = Timer.getTimestamp();
                 setWheel(Constants.CoralIntake.PUSH_OUT_SPEED);
                 setArm(Constants.CoralIntake.ARM_PUSH);
-                break;
-            case GROUND:
+            }
+            case GROUND -> {
                 setWheel(Constants.CoralIntake.INTAKE_SPEED);
                 setArm(Constants.CoralIntake.ARM_DOWN);
-                break;
-            case L1_SCORE:
+            }
+            case L1_SCORE -> {
                 setWheel(Constants.CoralIntake.L1_SCORE_SPEED);
                 setArm(Constants.CoralIntake.ARM_SCORE_L1);
-                break;
-            case L1_DOWN:
+            }
+            case L1_DOWN -> {
                 setWheel(0);
                 setArm(Constants.CoralIntake.ARM_SCORE_L1);
-                break;
-            case UP:
+            }
+            case UP -> {
                 setWheel(0);
                 setArm(Constants.CoralIntake.ARM_UP);
-                break;
-            default: // should never happen
+            }
+            default -> { // should never happen
                 io.setArmVoltage(0);
                 setWheel(0);
-                break;
+            }
         }
     }
 
@@ -283,7 +285,7 @@ public final class CoralIntake extends KillableSubsystem implements PoweredSubsy
         double pidOutput = pid.calculate(getWheelVelocity());
         double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
 
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CORAL_INTAKE_WHEEL) {
+        if (!(SysIdManager.getProvider() instanceof SysIdWheel)) {
             io.setWheelVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
         }
 
@@ -335,5 +337,39 @@ public final class CoralIntake extends KillableSubsystem implements PoweredSubsy
     public void resetEncoders() {
         io.setArmPosition(Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS));
         armPositionCached = Units.radiansToRotations(Constants.CoralIntake.ARM_START_POS);
+    }
+
+    public static class SysIdArm implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.coralIntake.sysIdQuasistaticArm(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.coralIntake.sysIdDynamicArm(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+
+    public static class SysIdWheel implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.coralIntake.sysIdQuasistaticWheel(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.coralIntake.sysIdDynamicWheel(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

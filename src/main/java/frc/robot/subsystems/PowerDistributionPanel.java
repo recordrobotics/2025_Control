@@ -8,6 +8,7 @@ public class PowerDistributionPanel extends SubsystemBase implements AutoCloseab
     private static final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
 
     /** frees up all hardware allocations */
+    @Override
     public void close() {
         pdp.close();
     }

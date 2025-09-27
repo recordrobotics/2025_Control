@@ -101,7 +101,8 @@ public class AutoScore extends SequentialCommandGroup {
 
         private BackawayAutoControlModifier() {}
 
-        public static BackawayAutoControlModifier getDefault() {
+        @SuppressWarnings("EffectivelyPrivate")
+        public static synchronized BackawayAutoControlModifier getDefault() {
             if (defaultInstance == null) {
                 defaultInstance = ControlModifierService.getInstance()
                         .createModifier(BackawayAutoControlModifier::new, Priority.AUTO);

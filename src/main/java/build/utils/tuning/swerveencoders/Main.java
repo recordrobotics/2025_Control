@@ -90,13 +90,13 @@ public final class Main {
         private boolean hasValue = false;
         private double value = 0.0;
 
-        public synchronized void update(double newValue) {
+        private synchronized void update(double newValue) {
             hasValue = true;
             value = newValue;
         }
 
         @SuppressWarnings("java:S109")
-        public double waitForValue() {
+        double waitForValue() {
             while (true) {
                 synchronized (this) {
                     if (hasValue) {

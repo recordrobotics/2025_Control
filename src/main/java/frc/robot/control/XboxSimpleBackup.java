@@ -136,6 +136,7 @@ public class XboxSimpleBackup implements AbstractControl {
         return false;
     }
 
+    @Override
     public boolean isElevatorRelativeDriveTriggered() {
         return xboxController.getPOV() == 0 // POV up
                 || (isAutoScoreTriggered()
@@ -143,12 +144,14 @@ public class XboxSimpleBackup implements AbstractControl {
                                 != ReefLevelSwitchValue.L1); // elevator relative when auto score not L1
     }
 
+    @Override
     public boolean isCoralIntakeRelativeDriveTriggered() {
         return xboxController.getPOV() == 270 // POV left
                 || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() == ReefLevelSwitchValue.L1); // coral relative when auto score L1
     }
 
+    @Override
     public boolean isClimbRelativeDriveTriggered() {
         return xboxController.getPOV() == 180; // POV down
     }

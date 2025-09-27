@@ -1,9 +1,10 @@
 package frc.robot.utils;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.Constants;
+import frc.robot.utils.wrappers.ImmutableCurrent;
+import frc.robot.utils.wrappers.Translation2d;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -74,8 +75,8 @@ public record ModuleConstants(
         BACK_LEFT("back-left", Constants.Swerve.BACK_LEFT_WHEEL_LOCATION),
         BACK_RIGHT("back-right", Constants.Swerve.BACK_RIGHT_WHEEL_LOCATION);
 
-        private String id;
-        private Translation2d wheelLocation;
+        private final String id;
+        private final Translation2d wheelLocation;
 
         private MotorLocation(String id, Translation2d wheelLocation) {
             this.id = id;
@@ -83,7 +84,7 @@ public record ModuleConstants(
         }
 
         private JSONObject getMotor(JSONObject obj) throws InvalidConfigException {
-            return getProperty(obj, id);
+            return getProperty(obj, id, JSONObject.class);
         }
     }
 
@@ -91,7 +92,7 @@ public record ModuleConstants(
         String getJsonId();
 
         default double getEncoderOffset(JSONObject encoderOffset) throws InvalidConfigException {
-            return ModuleConstants.getProperty(encoderOffset, getJsonId());
+            return ModuleConstants.getProperty(encoderOffset, getJsonId(), Double.class);
         }
     }
 
@@ -119,8 +120,8 @@ public record ModuleConstants(
 
         private final String jsonId;
         private final double gearRatio;
-        private final Current supplyCurrentLimit;
-        private final Current statorCurrentLimit;
+        private final ImmutableCurrent supplyCurrentLimit;
+        private final ImmutableCurrent statorCurrentLimit;
 
         private final double kV;
         private final double kA;
@@ -131,8 +132,8 @@ public record ModuleConstants(
         TurnMotorType(
                 String jsonId,
                 double gearRatio,
-                Current supplyCurrentLimit,
-                Current statorCurrentLimit,
+                ImmutableCurrent supplyCurrentLimit,
+                ImmutableCurrent statorCurrentLimit,
                 double kV,
                 double kA,
                 double kS,
@@ -149,6 +150,7 @@ public record ModuleConstants(
             this.kD = kD;
         }
 
+        @Override
         public String getJsonId() {
             return jsonId;
         }
@@ -176,8 +178,8 @@ public record ModuleConstants(
 
         private final String jsonId;
         private final double gearRatio;
-        private final Current supplyCurrentLimit;
-        private final Current statorCurrentLimit;
+        private final ImmutableCurrent supplyCurrentLimit;
+        private final ImmutableCurrent statorCurrentLimit;
 
         private final double kV;
         private final double kA;
@@ -187,8 +189,8 @@ public record ModuleConstants(
         DriveMotorType(
                 String jsonId,
                 double gearRatio,
-                Current supplyCurrentLimit,
-                Current statorCurrentLimit,
+                ImmutableCurrent supplyCurrentLimit,
+                ImmutableCurrent statorCurrentLimit,
                 double kV,
                 double kA,
                 double kS,
@@ -203,6 +205,7 @@ public record ModuleConstants(
             this.kP = kP;
         }
 
+        @Override
         public String getJsonId() {
             return jsonId;
         }
@@ -238,12 +241,12 @@ public record ModuleConstants(
         }
 
         JSONObject motor = location.getMotor(obj);
-        JSONObject encoderOffset = getProperty(motor, "encoderOffset");
+        JSONObject encoderOffset = getProperty(motor, "encoderOffset", JSONObject.class);
 
         return new ModuleConstants(
-                Math.toIntExact(getProperty(motor, "driveMotorChannel")),
-                Math.toIntExact(getProperty(motor, "turningMotorChannel")),
-                Math.toIntExact(getProperty(motor, "encoderChannel")),
+                Math.toIntExact(getProperty(motor, "driveMotorChannel", Long.class)),
+                Math.toIntExact(getProperty(motor, "turningMotorChannel", Long.class)),
+                Math.toIntExact(getProperty(motor, "encoderChannel", Long.class)),
                 driveMotorType.getEncoderOffset(encoderOffset),
                 location.wheelLocation,
                 turnMotorType.gearRatio,
@@ -266,10 +269,11 @@ public record ModuleConstants(
                 Constants.Swerve.WHEEL_DIAMETER);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T getProperty(JSONObject obj, String id) throws InvalidConfigException {
+    private static <T> T getProperty(JSONObject obj, String id, Class<T> type) throws InvalidConfigException {
         Object val = obj.get(id);
         if (val == null) throw new InvalidConfigException("No " + id + " property in config");
-        else return (T) val;
+        if (!type.isInstance(val))
+            throw new InvalidConfigException("Property " + id + " is not of type " + type.getSimpleName());
+        return type.cast(val);
     }
 }

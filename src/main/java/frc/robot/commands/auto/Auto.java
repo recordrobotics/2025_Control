@@ -37,20 +37,22 @@ public class Auto {
                                 String.valueOf(p.position()
                                         .name()
                                         .charAt(p.position().name().length() - 1)),
-                                p.level().ordinal() + 1))
+                                p.level().getLevel()))
                         .toList(),
                 startPosition,
                 source.getRegion());
     }
 
     /**
+     * Create the autonomous command sequence to score on the given reef branches and levels,
+     * starting from the given position.
      * @param scoringPaths List of reef branches and levels to score on, in order
      * @param startPosition FieldStartingLocation
      * @param source "Left" or "Right"
      * @return the command
-     * @throws FileVersionException
-     * @throws IOException
-     * @throws ParseException
+     * @throws FileVersionException If the path files are of an incorrect version
+     * @throws IOException If there is an error in loading the path files
+     * @throws ParseException If there is an error in reading the path files
      */
     public Command create(List<PPScoringPath> scoringPaths, FieldStartingLocation startPosition, String source)
             throws FileVersionException, IOException, ParseException {

@@ -27,6 +27,7 @@ public abstract class AbstractLayout {
             this.supplier = supplier;
         }
 
+        @Override
         public Boolean update() {
             return consumer.apply(supplier.get());
         }

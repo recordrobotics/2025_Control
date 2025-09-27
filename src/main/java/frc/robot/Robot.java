@@ -19,7 +19,6 @@ import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
-import frc.robot.utils.SysIdManager.SysIdRoutine;
 import frc.robot.utils.maplesim.ImprovedArena2025Reefscape;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -45,7 +44,6 @@ public final class Robot extends LoggedRobot {
     private static final int ELASTIC_WEBSERVER_PORT = 5800;
 
     private Command autonomousCommand;
-    private RobotContainer robotContainer;
 
     private Runnable periodicRunnable;
     private volatile boolean initialized = false;
@@ -150,10 +148,6 @@ public final class Robot extends LoggedRobot {
         return initialized;
     }
 
-    public RobotContainer getRobotContainer() {
-        return robotContainer;
-    }
-
     /**
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
@@ -161,10 +155,10 @@ public final class Robot extends LoggedRobot {
     @Override
     public void robotInit() {
         Pathfinding.setPathfinder(new LocalADStarAK());
-        // Instantiate our RobotContainer. This will perform all our button bindings,
+        // Initialize our RobotContainer. This will perform all our button bindings,
         // and put our
         // autonomous chooser on the dashboard.
-        robotContainer = new RobotContainer();
+        RobotContainer.initialize();
 
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.TEST) {
             // Elastic layout webserver
@@ -234,12 +228,12 @@ public final class Robot extends LoggedRobot {
     /** This function is called once each time the robot enters Disabled mode. */
     @Override
     public void disabledInit() {
-        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.NONE && hasRun) {
+        if (SysIdManager.getProvider().isEnabled() && hasRun) {
             Logger.end();
             SignalLogger.stop();
         }
 
-        robotContainer.disabledInit();
+        RobotContainer.disabledInit();
     }
 
     @Override
@@ -249,13 +243,13 @@ public final class Robot extends LoggedRobot {
 
     @Override
     public void disabledExit() {
-        robotContainer.disabledExit();
+        RobotContainer.disabledExit();
     }
 
     /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
     @Override
     public void autonomousInit() {
-        autonomousCommand = robotContainer.getAutonomousCommand();
+        autonomousCommand = RobotContainer.getAutonomousCommand();
 
         // Cancel any previous commands
         CommandScheduler.getInstance().cancelAll();
@@ -280,7 +274,7 @@ public final class Robot extends LoggedRobot {
 
         DashboardUI.Autonomous.switchTo();
 
-        robotContainer.autonomousInit();
+        RobotContainer.autonomousInit();
 
         hasRun = true;
     }
@@ -303,7 +297,7 @@ public final class Robot extends LoggedRobot {
 
         new KillSpecified(RobotContainer.elevatorHead, RobotContainer.coralIntake).schedule();
 
-        robotContainer.teleopInit();
+        RobotContainer.teleopInit();
         hasRun = true;
 
         DashboardUI.Overview.switchTo();
@@ -330,7 +324,7 @@ public final class Robot extends LoggedRobot {
     @Override
     public void simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic();
-        robotContainer.simulationPeriodic();
+        RobotContainer.simulationPeriodic();
     }
 
     @Override

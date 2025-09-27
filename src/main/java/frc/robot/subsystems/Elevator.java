@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
@@ -29,6 +30,7 @@ import frc.robot.utils.EncoderResettableSubsystem;
 import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 
@@ -126,12 +128,12 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     }
 
     @AutoLogLevel(level = Level.DEBUG_REAL)
-    private boolean isBottomEndStopPressed() {
+    public boolean isBottomEndStopPressed() {
         return io.isBottomEndStopPressed();
     }
 
     @AutoLogLevel(level = Level.DEBUG_REAL)
-    private boolean isTopEndStopPressed() {
+    public boolean isTopEndStopPressed() {
         return io.isTopEndStopPressed();
     }
 
@@ -157,7 +159,7 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     public void set(double heightMeters) {
         setpoint = heightMeters;
 
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR) {
+        if (!(SysIdManager.getProvider() instanceof SysId)) {
             io.setLeadMotionMagic(elevatorRequest.withPosition(heightMeters));
         }
     }
@@ -209,5 +211,22 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
         io.setFollowerMotorPosition(Constants.Elevator.STARTING_HEIGHT);
 
         leadPositionCached = Constants.Elevator.STARTING_HEIGHT;
+    }
+
+    public static class SysId implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.elevator.sysIdQuasistatic(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.elevator.sysIdDynamic(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

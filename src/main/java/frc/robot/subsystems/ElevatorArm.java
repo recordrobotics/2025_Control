@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
@@ -32,6 +33,7 @@ import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import org.littletonrobotics.junction.Logger;
 
 public final class ElevatorArm extends ManagedSubsystemBase implements PoweredSubsystem, EncoderResettableSubsystem {
@@ -141,7 +143,7 @@ public final class ElevatorArm extends ManagedSubsystemBase implements PoweredSu
 
     public void set(double angleRadians) {
         currentSetpoint.position = angleRadians;
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR_ARM) {
+        if (!(SysIdManager.getProvider() instanceof SysId)) {
             io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(angleRadians)));
         }
     }
@@ -193,5 +195,22 @@ public final class ElevatorArm extends ManagedSubsystemBase implements PoweredSu
     public void resetEncoders() {
         io.setArmPosition(Units.radiansToRotations(Constants.ElevatorArm.START_POS));
         positionCached = Units.radiansToRotations(Constants.ElevatorArm.START_POS);
+    }
+
+    public static class SysId implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.elevatorArm.sysIdQuasistatic(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.elevatorArm.sysIdDynamic(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

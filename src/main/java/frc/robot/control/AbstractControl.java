@@ -140,34 +140,37 @@ public interface AbstractControl {
         double inputX = input.getFirst();
         double inputY = input.getSecond();
 
-        switch (DashboardUI.Overview.getDriverOrientation()) {
-            case X_AXIS_TOWARDS_TRIGGER:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(-inputY, -inputX);
-                else return new Pair<>(inputY, inputX);
-            case Y_AXIS_TOWARDS_TRIGGER:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(inputX, -inputY);
-                else return new Pair<>(-inputX, inputY);
-            case X_AXIS_INVERTED_TOWARDS_TRIGGER:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return new Pair<>(inputY, inputX);
-                else return new Pair<>(-inputY, -inputX);
-            default:
-                return new Pair<>(0.0, 0.0);
-        }
+        return switch (DashboardUI.Overview.getDriverOrientation()) {
+            case X_AXIS_TOWARDS_TRIGGER -> {
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) yield new Pair<>(-inputY, -inputX);
+                else yield new Pair<>(inputY, inputX);
+            }
+            case Y_AXIS_TOWARDS_TRIGGER -> {
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) yield new Pair<>(inputX, -inputY);
+                else yield new Pair<>(-inputX, inputY);
+            }
+            case X_AXIS_INVERTED_TOWARDS_TRIGGER -> {
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) yield new Pair<>(inputY, inputX);
+                else yield new Pair<>(-inputY, -inputX);
+            }
+            default -> new Pair<>(0.0, 0.0);
+        };
     }
 
     // Orient Angle
     static Rotation2d orientAngle(Rotation2d angle) {
-        switch (DashboardUI.Overview.getDriverOrientation()) {
-            case X_AXIS_TOWARDS_TRIGGER:
+        return switch (DashboardUI.Overview.getDriverOrientation()) {
+            case X_AXIS_TOWARDS_TRIGGER -> {
                 if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue)
-                    return new Rotation2d(angle.getRadians() - Math.PI / 2);
-                else return new Rotation2d(angle.getRadians() + Math.PI / 2);
-            case Y_AXIS_TOWARDS_TRIGGER:
-                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) return angle;
-                else return new Rotation2d(angle.getRadians() + Math.PI);
-            default:
-                return angle;
-        }
+                    yield new Rotation2d(angle.getRadians() - Math.PI / 2);
+                else yield new Rotation2d(angle.getRadians() + Math.PI / 2);
+            }
+            case Y_AXIS_TOWARDS_TRIGGER -> {
+                if (DriverStationUtils.getCurrentAlliance() == Alliance.Blue) yield angle;
+                else yield new Rotation2d(angle.getRadians() + Math.PI);
+            }
+            default -> angle;
+        };
     }
 
     enum ReefLevelSwitchValue {

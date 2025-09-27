@@ -5,15 +5,15 @@ public enum CameraType {
     LIMELIGHT_3G(1280, 960, 1, 100, 38, 0.007, 0.0005, 35, 5), // TODO: what is the actual fov of new lens we replaced
     SVPRO_GLOBAL_SHUTTER(1920, 1200, 1, 83, 33, 0.007, 0.0005, 35, 5);
 
-    int width;
-    int height;
-    double downscale;
-    double fov; // diagonal
-    double fps;
-    double pxError;
-    double pxErrorStdDev;
-    double latencyMs;
-    double latencyStdDevMs;
+    final int width;
+    final int height;
+    final double downscale;
+    final double fov; // diagonal
+    final double fps;
+    final double pxError;
+    final double pxErrorStdDev;
+    final double latencyMs;
+    final double latencyStdDevMs;
 
     CameraType(
             int width,

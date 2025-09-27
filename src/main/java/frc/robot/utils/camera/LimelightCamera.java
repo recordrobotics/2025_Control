@@ -95,42 +95,52 @@ public class LimelightCamera implements IVisionCamera {
         }
     }
 
+    @Override
     public boolean isConnected() {
         return limelightConnected;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public CameraType getCameraType() {
         return type;
     }
 
+    @Override
     public boolean hasVision() {
         return hasVision;
     }
 
+    @Override
     public int getNumTags() {
         return numTags;
     }
 
+    @Override
     public VisionCameraEstimate getCurrentEstimate() {
         return currentEstimate;
     }
 
+    @Override
     public VisionCameraEstimate getUnsafeEstimate() {
         return unsafeEstimate;
     }
 
+    @Override
     public double getMeasurementStdDevs() {
         return currentMeasurementStdDevs;
     }
 
+    @Override
     public void setPipeline(int pipeline) {
         LimelightHelpers.setPipelineIndex(name, pipeline);
     }
 
+    @Override
     public void updateEstimation(boolean trust, boolean ignore) {
         updateRobotOrientation();
 
@@ -398,6 +408,7 @@ public class LimelightCamera implements IVisionCamera {
 
     private record Measurements(PoseEstimate mt1, PoseEstimate mt2) {}
 
+    @Override
     public void logValues(String id) {
         String prefix = "Limelight/" + id + "/";
         Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose());

@@ -7,6 +7,17 @@ plugins {
     id "org.sonarqube" version "6.2.0.5505"
     id "checkstyle"
     id "net.ltgt.errorprone" version "4.3.0"
+    id 'com.adarshr.test-logger' version '4.0.0'
+}
+
+testlogger {
+    theme 'standard-parallel' // project level
+    slowThreshold 13000
+    showPassedStandardStreams false
+    showSkippedStandardStreams false
+    showFailedStandardStreams false
+    showStandardStreams false
+    showSimpleNames true
 }
 
 java {
@@ -91,6 +102,7 @@ dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'com.google.guava:guava:33.5.0-jre'
 
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
@@ -164,13 +176,25 @@ deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
 wpi.java.configureTestTasks(test)
 
+tasks.withType(Test).configureEach {
+    // Disable default Gradle test output
+    testLogging {
+        events = []
+        showStandardStreams = false
+    }
+}
+
 // Configure string concat to always inline compile
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.errorprone.disableWarningsInGeneratedCode = true
+    options.errorprone {
+        disableWarningsInGeneratedCode = true
+        excludedPaths = ".*/libraries/.*\\.java"
+    }
+    options.compilerArgs.addAll(["-Xlint:-removal"])
 }
 
 checkstyle {

@@ -22,6 +22,8 @@ import frc.robot.utils.ConsoleLogger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -50,15 +52,15 @@ public class TestRobot {
     private static final List<Consumer<Command>> m_commandInitializedListeners = new ArrayList<>();
     private static final List<BiConsumer<Command, Optional<Command>>> m_commandInterruptedListeners = new ArrayList<>();
 
-    private static volatile long timestamp = 0;
-    private static volatile int periodicCount = 0;
+    private static volatile AtomicLong timestamp = new AtomicLong(0);
+    private static final AtomicInteger periodicCount = new AtomicInteger(0);
 
     /**
      * Acts as the robot time source
      * Function to return the time in microseconds.
      */
     private static long getTimestamp() {
-        return timestamp;
+        return timestamp.get();
     }
 
     /**
@@ -68,23 +70,25 @@ public class TestRobot {
      * Also increments the timestamp by 20ms to simulate the robot time.
      */
     private static void periodicRunnable() {
-        timestamp += 20 * 1000; // 20ms in microseconds
-        periodicCount++;
+        timestamp.getAndAdd(20 * 1000); // 20ms in microseconds
+        periodicCount.getAndIncrement();
 
         m_runMutex.lock();
 
-        for (BooleanSupplier r : m_periodicRunnables) {
-            if (!r.getAsBoolean()) {
-                // If the runnable returns false, it is marked for removal
-                m_periodicRunnablesToRemove.add(r);
+        try {
+            for (BooleanSupplier r : m_periodicRunnables) {
+                if (!r.getAsBoolean()) {
+                    // If the runnable returns false, it is marked for removal
+                    m_periodicRunnablesToRemove.add(r);
+                }
             }
+
+            // Remove periodic runnables that were marked for removal
+            m_periodicRunnables.removeAll(m_periodicRunnablesToRemove);
+            m_periodicRunnablesToRemove.clear();
+        } finally {
+            m_runMutex.unlock();
         }
-
-        // Remove periodic runnables that were marked for removal
-        m_periodicRunnables.removeAll(m_periodicRunnablesToRemove);
-        m_periodicRunnablesToRemove.clear();
-
-        m_runMutex.unlock();
     }
 
     /**
@@ -150,15 +154,21 @@ public class TestRobot {
             }
         };
         m_runMutex.lock();
-        m_commandFinishListeners.add(listener);
-        m_runMutex.unlock();
+        try {
+            m_commandFinishListeners.add(listener);
+        } finally {
+            m_runMutex.unlock();
+        }
 
         return () -> {
             boolean stop = shouldStop[0];
             if (stop) {
                 m_runMutex.lock();
-                m_commandFinishListeners.remove(listener);
-                m_runMutex.unlock();
+                try {
+                    m_commandFinishListeners.remove(listener);
+                } finally {
+                    m_runMutex.unlock();
+                }
             }
             return stop;
         };
@@ -177,15 +187,21 @@ public class TestRobot {
             }
         };
         m_runMutex.lock();
-        m_commandInitializedListeners.add(listener);
-        m_runMutex.unlock();
+        try {
+            m_commandInitializedListeners.add(listener);
+        } finally {
+            m_runMutex.unlock();
+        }
 
         return () -> {
             boolean stop = shouldStop[0];
             if (stop) {
                 m_runMutex.lock();
-                m_commandInitializedListeners.remove(listener);
-                m_runMutex.unlock();
+                try {
+                    m_commandInitializedListeners.remove(listener);
+                } finally {
+                    m_runMutex.unlock();
+                }
             }
             return stop;
         };
@@ -206,15 +222,21 @@ public class TestRobot {
             }
         };
         m_runMutex.lock();
-        m_commandInterruptedListeners.add(listener);
-        m_runMutex.unlock();
+        try {
+            m_commandInterruptedListeners.add(listener);
+        } finally {
+            m_runMutex.unlock();
+        }
 
         return () -> {
             boolean stop = shouldStop[0];
             if (stop) {
                 m_runMutex.lock();
-                m_commandInterruptedListeners.remove(listener);
-                m_runMutex.unlock();
+                try {
+                    m_commandInterruptedListeners.remove(listener);
+                } finally {
+                    m_runMutex.unlock();
+                }
             }
             return stop;
         };
@@ -238,9 +260,10 @@ public class TestRobot {
         return () -> {
             boolean stop = stopCondition.getAsBoolean();
             if (stop) {
+                int count = periodicCount.get();
                 if (currentCount[0] == -1) {
-                    currentCount[0] = periodicCount;
-                } else if (periodicCount >= currentCount[0] + cycles) {
+                    currentCount[0] = count;
+                } else if (count >= currentCount[0] + cycles) {
                     return true; // Stop condition met after the specified cycles
                 }
             } else {
@@ -289,34 +312,43 @@ public class TestRobot {
 
         if (testRobot == null) {
             m_runMutex.lock();
-            testRobot = new Robot();
+            try {
+                testRobot = new Robot();
 
-            RobotController.setTimeSource(TestRobot::getTimestamp);
-            testRobot.setPeriodicRunnable(TestRobot::periodicRunnable);
-            CommandScheduler.getInstance().onCommandInitialize(TestRobot::onCommandInitialize);
-            CommandScheduler.getInstance().onCommandInterrupt(TestRobot::onCommandInterrupt);
-            CommandScheduler.getInstance().onCommandFinish(TestRobot::onCommandFinish);
+                RobotController.setTimeSource(TestRobot::getTimestamp);
+                testRobot.setPeriodicRunnable(TestRobot::periodicRunnable);
+                CommandScheduler.getInstance().onCommandInitialize(TestRobot::onCommandInitialize);
+                CommandScheduler.getInstance().onCommandInterrupt(TestRobot::onCommandInterrupt);
+                CommandScheduler.getInstance().onCommandFinish(TestRobot::onCommandFinish);
 
-            robotThread = new Thread(() -> {
-                Constants.RobotState.setRunningAsUnitTest();
-                RobotBase.startRobot(() -> testRobot);
-            });
-            robotThread.setDaemon(true);
-            robotThread.setName("TestRobot Daemon");
-            robotThread.start();
+                robotThread = new Thread(() -> {
+                    Constants.RobotState.setRunningAsUnitTest();
+                    RobotBase.startRobot(() -> testRobot);
+                });
+                robotThread.setDaemon(true);
+                robotThread.setName("TestRobot Daemon");
+                robotThread.start();
+            } finally {
+                m_runMutex.unlock();
+            }
+        }
+
+        m_runMutex.lock();
+        try {
+            TestRobot.waitForInit();
+        } finally {
             m_runMutex.unlock();
         }
-
-        m_runMutex.lock();
-        TestRobot.waitForInit();
-        m_runMutex.unlock();
         waitPeriodicCycles(1);
         m_runMutex.lock();
-        robotConfig.accept(testRobot);
-        if (periodic != null) {
-            m_periodicRunnables.add(periodic);
+        try {
+            robotConfig.accept(testRobot);
+            if (periodic != null) {
+                m_periodicRunnables.add(periodic);
+            }
+        } finally {
+            m_runMutex.unlock();
         }
-        m_runMutex.unlock();
 
         long startTime = getTimestamp();
         if (timeout.gt(Seconds.zero())) {
@@ -334,8 +366,11 @@ public class TestRobot {
         } finally {
             if (periodic != null) {
                 m_runMutex.lock();
-                m_periodicRunnables.remove(periodic);
-                m_runMutex.unlock();
+                try {
+                    m_periodicRunnables.remove(periodic);
+                } finally {
+                    m_runMutex.unlock();
+                }
             }
         }
 
@@ -353,16 +388,19 @@ public class TestRobot {
         if (cycles <= 0) throw new IllegalArgumentException("cycles must be greater than 0");
 
         m_runMutex.lock();
-        int currentPeriodicCount = periodicCount;
-        m_periodicRunnables.add(() -> {
-            if (currentPeriodicCount + cycles == periodicCount) {
-                runnable.run();
-                return false;
-            }
+        try {
+            int currentPeriodicCount = periodicCount.get();
+            m_periodicRunnables.add(() -> {
+                if (currentPeriodicCount + cycles == periodicCount.get()) {
+                    runnable.run();
+                    return false;
+                }
 
-            return true;
-        });
-        m_runMutex.unlock();
+                return true;
+            });
+        } finally {
+            m_runMutex.unlock();
+        }
     }
 
     /**
@@ -376,16 +414,19 @@ public class TestRobot {
         if (cycles <= 0) throw new IllegalArgumentException("cycles must be greater than 0");
 
         m_runMutex.lock();
-        int currentPeriodicCount = periodicCount;
-        m_periodicRunnables.add(() -> {
-            if (periodicCount <= currentPeriodicCount + cycles) {
-                runnable.run();
-                return true;
-            }
+        try {
+            int currentPeriodicCount = periodicCount.get();
+            m_periodicRunnables.add(() -> {
+                if (periodicCount.get() <= currentPeriodicCount + cycles) {
+                    runnable.run();
+                    return true;
+                }
 
-            return false;
-        });
-        m_runMutex.unlock();
+                return false;
+            });
+        } finally {
+            m_runMutex.unlock();
+        }
     }
 
     /**
@@ -422,7 +463,7 @@ public class TestRobot {
             ConsoleLogger.logError(e);
         }
 
-        testRobot.getRobotContainer().resetEncoders();
+        RobotContainer.resetEncoders();
         CommandScheduler.getInstance().cancelAll();
         RobotContainer.elevator.set(Constants.Elevator.STARTING_HEIGHT);
         RobotContainer.elevatorArm.set(ElevatorHeight.BOTTOM.getArmAngle());
@@ -439,10 +480,10 @@ public class TestRobot {
     public static void waitPeriodicCycles(int cycles) {
         if (cycles <= 0) throw new IllegalArgumentException("cycles must be greater than 0");
 
-        int startCount = periodicCount;
+        int startCount = periodicCount.get();
 
         while (true) {
-            int currentCount = periodicCount;
+            int currentCount = periodicCount.get();
 
             if (currentCount >= startCount + cycles) {
                 break;

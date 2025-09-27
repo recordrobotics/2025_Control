@@ -14,7 +14,7 @@ public final class ControlModifierService {
             implements Comparable<ControlModifier> {
         @Override
         public int compareTo(ControlModifier o) {
-            int comp = Integer.compare(this.priority.ordinal(), o.priority.ordinal());
+            int comp = Integer.compare(this.priority.getValue(), o.priority.getValue());
             if (comp == 0) {
                 // If priorities are the same, compare by instance hashcode to avoid equality issues
                 return Integer.compare(System.identityHashCode(this.modifier), System.identityHashCode(o.modifier));

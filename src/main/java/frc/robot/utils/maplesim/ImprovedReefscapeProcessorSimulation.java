@@ -86,6 +86,6 @@ public class ImprovedReefscapeProcessorSimulation extends Goal {
 
     @Override
     public void draw(List<Pose3d> drawList) {
-        return;
+        /* nothing to do */
     }
 }

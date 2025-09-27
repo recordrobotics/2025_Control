@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.google.common.collect.ImmutableSet;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -297,20 +298,21 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         ELEVATOR(LEFT, CENTER),
         ALL(LEFT, CENTER, L1, SOURCE);
 
-        private Set<IVisionCamera> cameras;
+        @SuppressWarnings("ImmutableEnumChecker") // we want IVisionCamera to be mutable
+        private final ImmutableSet<IVisionCamera> cameras;
 
         CameraTarget(IVisionCamera... cameras) {
-            this.cameras = Set.of(cameras);
+            this.cameras = ImmutableSet.copyOf(cameras);
         }
 
         CameraTarget(CameraTarget... targets) {
-            List<IVisionCamera> cameraList = new ArrayList<>();
+            ImmutableSet.Builder<IVisionCamera> cameraList = ImmutableSet.builder();
             for (CameraTarget target : targets) {
                 for (IVisionCamera camera : target.cameras) {
                     cameraList.add(camera);
                 }
             }
-            this.cameras = Set.of(cameraList.toArray(new IVisionCamera[0]));
+            this.cameras = cameraList.build();
         }
 
         boolean contains(IVisionCamera camera) {
@@ -414,7 +416,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         }
 
         private boolean hasRequiredTags() {
-            ArrayList<Integer> visionTags = collectVisionTags();
+            List<Integer> visionTags = collectVisionTags();
             for (int tagId : tagIds) {
                 if (!visionTags.contains(tagId)) {
                     return false;
@@ -423,7 +425,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
             return true;
         }
 
-        private ArrayList<Integer> collectVisionTags() {
+        private List<Integer> collectVisionTags() {
             ArrayList<Integer> visionTags = new ArrayList<>();
             for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
                 if (camera.contains(vis)) {

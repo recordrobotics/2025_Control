@@ -42,10 +42,10 @@ public final class SimpleMath {
      * value is between a minimum threshold and 1 (Function returns 0 if input < threshold) Then
      * multiplies by sensitivity and returns
      *
-     * @param input
-     * @param threshold
-     * @param sensitivity
-     * @return
+     * @param input Value between -1 and 1
+     * @param threshold Minimum absolute value for input to have an effect (between 0 and 1)
+     * @param sensitivity Maximum absolute value of output (between 0 and 1)
+     * @return Scaled value between -sensitivity and sensitivity (0 if input
      */
     public static double applyThresholdAndSensitivity(double input, double threshold, double sensitivity) {
         // How much the input is above the threshold (absolute value)

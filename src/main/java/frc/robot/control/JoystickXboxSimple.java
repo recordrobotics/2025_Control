@@ -136,18 +136,21 @@ public class JoystickXboxSimple implements AbstractControl {
         return false;
     }
 
+    @Override
     public boolean isElevatorRelativeDriveTriggered() {
         return joystick.getRawButton(8)
                 || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() != ReefLevelSwitchValue.L1); // elevator relative when auto score
     }
 
+    @Override
     public boolean isCoralIntakeRelativeDriveTriggered() {
         return joystick.getRawButton(10)
                 || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() == ReefLevelSwitchValue.L1); // coral relative when auto score
     }
 
+    @Override
     public boolean isClimbRelativeDriveTriggered() {
         return joystick.getRawButton(12);
     }

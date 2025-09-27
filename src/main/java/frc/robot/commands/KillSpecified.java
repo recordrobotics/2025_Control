@@ -11,7 +11,7 @@ public class KillSpecified extends Command {
     /**
      * Kills all subsystems inputted
      *
-     * @param subsystems
+     * @param subsystems the subsystems to kill
      */
     public KillSpecified(KillableSubsystem... subsystems) {
         this(false, subsystems);
@@ -20,8 +20,8 @@ public class KillSpecified extends Command {
     /**
      * Kills all subsystems inputted
      *
-     * @param execute whether or not the command should run continuously
-     * @param subsystems
+     * @param shouldContinuouslyExecute whether or not the command should run continuously
+     * @param subsystems                the subsystems to kill
      */
     public KillSpecified(Boolean shouldContinuouslyExecute, KillableSubsystem... subsystems) {
         addRequirements(subsystems);

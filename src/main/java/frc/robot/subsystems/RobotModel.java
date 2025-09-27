@@ -455,7 +455,7 @@ public final class RobotModel extends ManagedSubsystemBase {
     }
 
     @AutoLogLevel(level = Level.SIM)
-    private Pose3d[] getCoralPositions() {
+    public Pose3d[] getCoralPositions() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             List<Pose3d> coralPoses = SimulatedArena.getInstance().getGamePiecesPosesByType("Coral");
             Pose3d robotCoralPose = robotCoral.poseSupplier.get();
@@ -470,7 +470,7 @@ public final class RobotModel extends ManagedSubsystemBase {
 
     @AutoLogLevel(level = Level.SIM)
     @SuppressWarnings("java:S2325") // rest of the getters are non-static
-    private Pose3d[] getAlgaePositions() {
+    public Pose3d[] getAlgaePositions() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             return SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
         } else {

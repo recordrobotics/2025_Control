@@ -18,6 +18,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -203,11 +204,11 @@ public final class AutoLogLevelManager {
         return methods;
     }
 
-    private static class MethodAndDeclaringClass {
-        public final Method method;
-        public final Class<?> declaringClass;
+    private static final class MethodAndDeclaringClass {
+        private final Method method;
+        private final Class<?> declaringClass;
 
-        public MethodAndDeclaringClass(Method method, Class<?> declaringClass) {
+        private MethodAndDeclaringClass(Method method, Class<?> declaringClass) {
             this.method = method;
             this.declaringClass = declaringClass;
         }
@@ -225,11 +226,11 @@ public final class AutoLogLevelManager {
         return fields;
     }
 
-    private static class FieldAndDeclaringClass {
-        public final Field field;
-        public final Class<?> declaringClass;
+    private static final class FieldAndDeclaringClass {
+        private final Field field;
+        private final Class<?> declaringClass;
 
-        public FieldAndDeclaringClass(Field field, Class<?> declaringClass) {
+        private FieldAndDeclaringClass(Field field, Class<?> declaringClass) {
             this.field = field;
             this.declaringClass = declaringClass;
         }
@@ -252,6 +253,7 @@ public final class AutoLogLevelManager {
                         return field;
                     }
                 } catch (NoSuchFieldException | SecurityException e1) {
+                    ConsoleLogger.logInfo(e1);
                 }
                 type = type.getSuperclass();
             }
@@ -276,7 +278,7 @@ public final class AutoLogLevelManager {
             if (valueName.startsWith("get") && valueName.length() > 3) {
                 valueName = valueName.substring(3);
             }
-            key += valueName.substring(0, 1).toUpperCase() + valueName.substring(1);
+            key += valueName.substring(0, 1).toUpperCase(Locale.ROOT) + valueName.substring(1);
             return key;
         } else {
             // Fill in field values

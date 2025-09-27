@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
@@ -35,6 +36,7 @@ import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import frc.robot.utils.modifiers.ControlModifierService;
 import frc.robot.utils.modifiers.ControlModifierService.ControlModifier;
 import frc.robot.utils.modifiers.DrivetrainControl;
@@ -255,8 +257,8 @@ public final class Drivetrain extends KillableSubsystem implements PoweredSubsys
         SwerveModuleState[] swerveModuleStates = previousSetpoint.moduleStates();
 
         // Sets state for each module
-        if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DRIVETRAIN_SPIN
-                && SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.DRIVETRAIN_FORWARD) {
+        if (!(SysIdManager.getProvider() instanceof SysIdSpin)
+                && !(SysIdManager.getProvider() instanceof SysIdForward)) {
             frontLeft.setDesiredState(swerveModuleStates[FL]);
             frontRight.setDesiredState(swerveModuleStates[FR]);
             backLeft.setDesiredState(swerveModuleStates[BL]);
@@ -498,5 +500,56 @@ public final class Drivetrain extends KillableSubsystem implements PoweredSubsys
                 + frontRight.getCurrentDrawAmps()
                 + backLeft.getCurrentDrawAmps()
                 + backRight.getCurrentDrawAmps();
+    }
+
+    public static class SysIdTurn implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdQuasistaticTurnMotors(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdDynamicTurnMotors(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+
+    public static class SysIdSpin implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdQuasistaticDriveMotorsSpin(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdDynamicDriveMotorsSpin(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+
+    public static class SysIdForward implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdQuasistaticDriveMotorsForward(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.drivetrain.sysIdDynamicDriveMotorsForward(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

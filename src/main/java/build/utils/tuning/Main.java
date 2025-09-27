@@ -1,5 +1,7 @@
 package build.utils.tuning;
 
+import java.util.Locale;
+
 public final class Main {
 
     private Main() {}
@@ -10,7 +12,7 @@ public final class Main {
             throw new IllegalArgumentException("Please provide a tuning module to run (e.g., swerveEncoders)");
         }
 
-        switch (args[0].toLowerCase()) {
+        switch (args[0].toLowerCase(Locale.ENGLISH)) {
             case "swerveencoders" -> build.utils.tuning.swerveencoders.Main.main(trimFirstArg(args));
             default -> throw new IllegalArgumentException("Unknown tuning module: " + args[0]);
         }

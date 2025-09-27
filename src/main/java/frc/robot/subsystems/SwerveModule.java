@@ -22,7 +22,6 @@ import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
-import frc.robot.utils.SysIdManager.SysIdRoutine;
 import org.littletonrobotics.junction.Logger;
 
 public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
@@ -175,7 +174,7 @@ public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
     }
 
     /**
-     *
+     * Returns the current rotation of the swerve wheel as a Rotation2d object.
      * @return The raw rotations of the turning motor (rotation 2d object).
      */
     public Rotation2d getTurnWheelRotation2d() {
@@ -276,7 +275,7 @@ public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
 
         SmartDashboard.putNumber("Encoder " + encoderChannel, io.getAbsoluteEncoder());
 
-        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.DRIVETRAIN_TURN) {
+        if (!(SysIdManager.getProvider() instanceof Drivetrain.SysIdTurn)) {
             io.setTurnMotorMotionMagic(turnRequest.withPosition(targetTurnPosition));
         }
     }
@@ -308,6 +307,7 @@ public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
     }
 
     /** frees up all hardware allocations */
+    @Override
     public void close() throws Exception {
         io.close();
     }

@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import com.google.common.primitives.ImmutableDoubleArray;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -14,7 +15,6 @@ import frc.robot.commands.RuckigAlign.RuckigAlignState;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.recordrobotics.ruckig.Trajectory3.KinematicState;
@@ -37,8 +37,8 @@ public class WaypointAlign {
             Pose2d previousWaypoint,
             Pose2d currentWaypoint,
             Pose2d nextWaypoint,
-            double[] maxVelocity,
-            double[] maxAcceleration,
+            ImmutableDoubleArray maxVelocity,
+            ImmutableDoubleArray maxAcceleration,
             boolean useAcceleration) {
 
         double px = previousWaypoint.getX();
@@ -78,15 +78,22 @@ public class WaypointAlign {
     }
 
     private static double[] calculateVelocity(
-            double dpx, double dpy, double dpr, double dnx, double dny, double dnr, double t, double[] maxVelocity) {
+            double dpx,
+            double dpy,
+            double dpr,
+            double dnx,
+            double dny,
+            double dnr,
+            double t,
+            ImmutableDoubleArray maxVelocity) {
         double dx = dnx * t + dpx * (1 - t);
         double dy = dny * t + dpy * (1 - t);
         double dr = dnr * t + dpr * (1 - t);
-        dr = MathUtil.clamp(dr, -maxVelocity[2], maxVelocity[2]);
+        dr = MathUtil.clamp(dr, -maxVelocity.get(2), maxVelocity.get(2));
 
         double dist = Math.hypot(dx, dy);
         if (dist > 1e-6) {
-            double maxV = Math.hypot(maxVelocity[0], maxVelocity[1]);
+            double maxV = Math.hypot(maxVelocity.get(0), maxVelocity.get(1));
             if (Math.abs(dr) > 1e-6) {
                 maxV /= Math.abs(dr);
             }
@@ -102,12 +109,13 @@ public class WaypointAlign {
         return new double[] {dx, dy, dr};
     }
 
-    private static double[] calculateAcceleration(double dnx, double dny, double dnr, double[] maxAcceleration) {
-        dnr = MathUtil.clamp(dnr, -maxAcceleration[2], maxAcceleration[2]);
+    private static double[] calculateAcceleration(
+            double dnx, double dny, double dnr, ImmutableDoubleArray maxAcceleration) {
+        dnr = MathUtil.clamp(dnr, -maxAcceleration.get(2), maxAcceleration.get(2));
         double distA = Math.hypot(dnx, dny);
 
         if (distA > 1e-6) {
-            double maxA = Math.hypot(maxAcceleration[0], maxAcceleration[1]);
+            double maxA = Math.hypot(maxAcceleration.get(0), maxAcceleration.get(1));
             if (Math.abs(dnr) > 1e-6) {
                 maxA /= Math.abs(dnr);
             }
@@ -165,65 +173,35 @@ public class WaypointAlign {
     }
 
     public record KinematicConstraints(
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxDeceleration,
-            double[] maxJerk,
-            double[] maxDejerk) {
+            ImmutableDoubleArray maxVelocity,
+            ImmutableDoubleArray maxAcceleration,
+            ImmutableDoubleArray maxDeceleration,
+            ImmutableDoubleArray maxJerk,
+            ImmutableDoubleArray maxDejerk) {
         public static final KinematicConstraints DEFAULT = new KinematicConstraints(
-                new double[] {
-                    Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
-                    Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
-                    Constants.Align.MAX_ANGULAR_VELOCITY
-                }, // max velocity
-                new double[] {
-                    Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
-                    Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
-                    moduleToRobotRadians(Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2)
-                }, // max acceleration
-                new double[] {
-                    Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
-                    Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
-                    moduleToRobotRadians(
-                            Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2) /* rotation can use accel */
-                }, // max deceleration
-                new double[] {
-                    Constants.Align.MAX_JERK / SimpleMath.SQRT2,
-                    Constants.Align.MAX_JERK / SimpleMath.SQRT2,
-                    moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2)
-                }, // max jerk
-                new double[] {
-                    Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
-                    Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
-                    moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2) /* rotation can use jerk */
-                } // max dejerk
+                ImmutableDoubleArray.of(
+                        Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
+                        Constants.Align.MAX_VELOCITY / SimpleMath.SQRT2,
+                        Constants.Align.MAX_ANGULAR_VELOCITY), // max velocity
+                ImmutableDoubleArray.of(
+                        Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
+                        Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2,
+                        moduleToRobotRadians(Constants.Align.MAX_ACCELERATION / SimpleMath.SQRT2)), // max acceleration
+                ImmutableDoubleArray.of(
+                        Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
+                        Constants.Align.MAX_DECELERATION / SimpleMath.SQRT2,
+                        moduleToRobotRadians(Constants.Align.MAX_ACCELERATION
+                                / SimpleMath.SQRT2) /* rotation can use accel */), // max deceleration
+                ImmutableDoubleArray.of(
+                        Constants.Align.MAX_JERK / SimpleMath.SQRT2,
+                        Constants.Align.MAX_JERK / SimpleMath.SQRT2,
+                        moduleToRobotRadians(Constants.Align.MAX_JERK / SimpleMath.SQRT2)), // max jerk
+                ImmutableDoubleArray.of(
+                        Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
+                        Constants.Align.MAX_DEJERK / SimpleMath.SQRT2,
+                        moduleToRobotRadians(
+                                Constants.Align.MAX_JERK / SimpleMath.SQRT2) /* rotation can use jerk */) // max dejerk
                 );
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            KinematicConstraints that = (KinematicConstraints) obj;
-            return Arrays.equals(maxVelocity, that.maxVelocity)
-                    && Arrays.equals(maxAcceleration, that.maxAcceleration)
-                    && Arrays.equals(maxJerk, that.maxJerk);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = Arrays.hashCode(maxVelocity);
-            result = 31 * result + Arrays.hashCode(maxAcceleration);
-            result = 31 * result + Arrays.hashCode(maxJerk);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "KinematicConstraints{" + "maxVelocity="
-                    + Arrays.toString(maxVelocity) + ", maxAcceleration="
-                    + Arrays.toString(maxAcceleration) + ", maxJerk="
-                    + Arrays.toString(maxJerk) + '}';
-        }
     }
 
     /**
@@ -416,7 +394,7 @@ public class WaypointAlign {
      *     between first and second waypoint)
      * @param performCommand The command to run when at the right waypoint
      * @param controlModifier The control modifier to use for the alignment
-     * @return
+     * @return A command that aligns the robot with the waypoints and runs the command at the specified waypoint
      */
     public static Command alignWithCommand(
             List<Pose2d> waypoints,
@@ -450,7 +428,7 @@ public class WaypointAlign {
      * @param performCommand The command to run when at the right waypoint
      * @param constraints The maximum kinematic constraints to use
      * @param controlModifier The control modifier to use for the alignment
-     * @return
+     * @return A command that aligns the robot with the waypoints and runs the command at the specified waypoint
      */
     public static Command alignWithCommand(
             List<Pose2d> waypoints,

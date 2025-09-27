@@ -14,13 +14,11 @@ import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -43,7 +41,9 @@ import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.ModuleConstants.MotorLocation;
 import frc.robot.utils.ModuleConstants.TurnMotorType;
 import frc.robot.utils.SysIdManager;
-import frc.robot.utils.SysIdManager.SysIdRoutine;
+import frc.robot.utils.wrappers.ImmutableCurrent;
+import frc.robot.utils.wrappers.Pose2d;
+import frc.robot.utils.wrappers.Translation2d;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +70,7 @@ public final class Constants {
         public interface IGamePosition {
             Pose2d getPose();
 
-            static <E extends IGamePosition> E closestTo(Pose2d pose, E[] values) {
+            static <E extends IGamePosition> E closestTo(edu.wpi.first.math.geometry.Pose2d pose, E[] values) {
                 E closest = null;
                 double closestDistance = Double.MAX_VALUE;
                 for (E pos : values) {
@@ -98,7 +98,7 @@ public final class Constants {
             LOW(ElevatorHeight.LOW_REEF_ALGAE),
             HIGH(ElevatorHeight.HIGH_REEF_ALGAE);
 
-            private ElevatorHeight height;
+            private final ElevatorHeight height;
 
             private AlgaeLevel(ElevatorHeight height) {
                 this.height = height;
@@ -127,8 +127,8 @@ public final class Constants {
             RED_IJ(AlgaeLevel.HIGH, 11),
             RED_KL(AlgaeLevel.LOW, 6);
 
-            private AlgaeLevel level;
-            private Pose2d pose;
+            private final AlgaeLevel level;
+            private final Pose2d pose;
 
             private AlgaePosition(AlgaeLevel level, int apriltagId) {
                 this.level = level;
@@ -141,37 +141,44 @@ public final class Constants {
                     throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
                 }
 
-                return tagPose.get()
+                return Pose2d.toImmutable(tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2 + ALGAE_REEF_DISTANCE.in(Meters),
                                 ALGAE_OFFSET.in(Meters),
-                                Rotation2d.k180deg));
+                                Rotation2d.k180deg)));
             }
 
             public AlgaeLevel getLevel() {
                 return level;
             }
 
+            @Override
             public Pose2d getPose() {
                 return pose;
             }
         }
 
         public enum CoralLevel {
-            L1(ElevatorHeight.L1),
-            L2(ElevatorHeight.L2),
-            L3(ElevatorHeight.L3),
-            L4(ElevatorHeight.L4);
+            L1(ElevatorHeight.L1, 1),
+            L2(ElevatorHeight.L2, 2),
+            L3(ElevatorHeight.L3, 3),
+            L4(ElevatorHeight.L4, 4);
 
-            private ElevatorHeight height;
+            private final ElevatorHeight height;
+            private final int level;
 
-            private CoralLevel(ElevatorHeight height) {
+            private CoralLevel(ElevatorHeight height, int level) {
                 this.height = height;
+                this.level = level;
             }
 
             public ElevatorHeight getHeight() {
                 return height;
+            }
+
+            public int getLevel() {
+                return level;
             }
         }
 
@@ -211,7 +218,7 @@ public final class Constants {
             public static final double L4_REEF_OFFSET = 0.05;
 
             public final int apriltagId;
-            private Pose2d pose;
+            private final Pose2d pose;
 
             private CoralPosition(int apriltagId, int side) {
                 this.pose = calculatePoseFromAprilTag(apriltagId, side);
@@ -224,12 +231,12 @@ public final class Constants {
                     throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
                 }
 
-                return tagPose.get()
+                return Pose2d.toImmutable(tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
                                 (side == 0 ? -REEF_SEGMENT_OFFSET.in(Meters) : REEF_SEGMENT_OFFSET.in(Meters)),
-                                Rotation2d.k180deg));
+                                Rotation2d.k180deg)));
             }
 
             public Pose2d getFirstStagePose() {
@@ -237,6 +244,7 @@ public final class Constants {
                         new Transform2d(-FIRST_WAYPOINT_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
             }
 
+            @Override
             public Pose2d getPose() {
                 return getFirstStagePose();
             }
@@ -261,16 +269,17 @@ public final class Constants {
             RED_CORAL_LEFT(BLUE_CORAL_LEFT),
             RED_CORAL_RIGHT(BLUE_CORAL_RIGHT);
 
-            private Pose2d pose;
+            private final Pose2d pose;
 
             private SourceCoralSpawnPosition(Pose2d pose) {
                 this.pose = pose;
             }
 
             private SourceCoralSpawnPosition(SourceCoralSpawnPosition blueSide) {
-                this.pose = FlippingUtil.flipFieldPose(blueSide.getPose());
+                this.pose = Pose2d.toImmutable(FlippingUtil.flipFieldPose(blueSide.getPose()));
             }
 
+            @Override
             public Pose2d getPose() {
                 return pose;
             }
@@ -290,8 +299,8 @@ public final class Constants {
             RED_INNER_LEFT(1, 0, SOURCE_LEFT_REGION),
             RED_INNER_RIGHT(2, 0, SOURCE_RIGHT_REGION);
 
-            private Pose2d pose;
-            private String region;
+            private final Pose2d pose;
+            private final String region;
 
             private SourcePosition(Pose2d pose, String region) {
                 this.pose = pose;
@@ -308,16 +317,17 @@ public final class Constants {
                     throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
                 }
 
-                return tagPose.get()
+                return Pose2d.toImmutable(tagPose.get()
                         .toPose2d()
                         .transformBy(new Transform2d(
                                 Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2,
                                 (side == 0
                                         ? -Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2
                                         : Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2),
-                                Rotation2d.kCCW_90deg));
+                                Rotation2d.kCCW_90deg)));
             }
 
+            @Override
             public Pose2d getPose() {
                 return pose;
             }
@@ -331,7 +341,7 @@ public final class Constants {
             BLUE_PROCESSOR(16),
             RED_PROCESSOR(3);
 
-            private Pose2d pose;
+            private final Pose2d pose;
 
             private ProcessorPosition(int apriltagId) {
                 this.pose = calculatePoseFromAprilTag(apriltagId);
@@ -343,12 +353,13 @@ public final class Constants {
                     throw new IllegalArgumentException("Invalid AprilTag ID: " + apriltagId);
                 }
 
-                return tagPose.get()
+                return Pose2d.toImmutable(tagPose.get()
                         .toPose2d()
                         .transformBy(
-                                new Transform2d(Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2, 0, Rotation2d.k180deg));
+                                new Transform2d(Constants.Frame.FRAME_WITH_BUMPER_WIDTH / 2, 0, Rotation2d.k180deg)));
             }
 
+            @Override
             public Pose2d getPose() {
                 return pose;
             }
@@ -368,7 +379,7 @@ public final class Constants {
         private final Pose2d transformBlue;
 
         private FieldStartingLocation(Pose2d poseBlue) {
-            transformRed = FlippingUtil.flipFieldPose(poseBlue);
+            transformRed = Pose2d.toImmutable(FlippingUtil.flipFieldPose(poseBlue));
             transformBlue = poseBlue;
         }
 
@@ -377,7 +388,7 @@ public final class Constants {
         }
     }
 
-    public final class Align {
+    public static final class Align {
 
         public static final double MAX_VELOCITY = Constants.Swerve.ROBOT_MAX_SPEED; // m/s
         public static final double MAX_ANGULAR_VELOCITY = 1.8; // rad/s
@@ -405,7 +416,7 @@ public final class Constants {
         private Align() {}
     }
 
-    public final class PhotonVision {
+    public static final class PhotonVision {
 
         public static final String PHOTON_L1_NAME = "photon-l1";
         public static final String PHOTON_SOURCE_NAME = "photon-source";
@@ -431,7 +442,7 @@ public final class Constants {
         private PhotonVision() {}
     }
 
-    public final class Limelight {
+    public static final class Limelight {
 
         public static final String LIMELIGHT_LEFT_NAME = "limelight-left";
         public static final String LIMELIGHT_CENTER_NAME = "limelight-center";
@@ -446,7 +457,7 @@ public final class Constants {
         private Limelight() {}
     }
 
-    public final class Assists {
+    public static final class Assists {
 
         public static final Distance GROUND_ASSIST_MAX_CORAL_DISTANCE = Meters.of(4);
         public static final Angle GROUND_ASSIST_MAX_ANGLE_ERROR = Degrees.of(60);
@@ -456,7 +467,7 @@ public final class Constants {
         private Assists() {}
     }
 
-    public final class Climber {
+    public static final class Climber {
 
         public static final Current SUPPLY_CURRENT_LIMIT = Amps.of(40);
         public static final Current STATOR_CURRENT_LIMIT = Amps.of(100);
@@ -498,7 +509,7 @@ public final class Constants {
         private Climber() {}
     }
 
-    public final class ElevatorArm {
+    public static final class ElevatorArm {
 
         public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(15);
         public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -551,8 +562,8 @@ public final class Constants {
         private static final double HEIGHT_DIFFERENCE_TOLERANCE = 0.1; // meters
         private static final double ANGLE_DIFFERENCE_TOLERANCE = Units.degreesToRadians(4); // radians
 
-        private double height;
-        private double armAngleRadians;
+        private final double height;
+        private final double armAngleRadians;
 
         private ElevatorHeight(double heightMeters, double armAngleRadians) {
             this.height = heightMeters;
@@ -573,7 +584,7 @@ public final class Constants {
         }
     }
 
-    public final class Elevator {
+    public static final class Elevator {
 
         public static final double MAX_VELOCITY = 2.3;
         public static final double MAX_ACCELERATION = 10;
@@ -614,7 +625,7 @@ public final class Constants {
         private Elevator() {}
     }
 
-    public final class ElevatorHead {
+    public static final class ElevatorHead {
 
         public static final double KP = 0.047421;
         public static final double KD = 0.0;
@@ -667,7 +678,7 @@ public final class Constants {
         private ElevatorHead() {}
     }
 
-    public final class CoralIntake {
+    public static final class CoralIntake {
 
         public static final Current ARM_SUPPLY_CURRENT_LIMIT = Amps.of(10);
         public static final Current ARM_STATOR_CURRENT_LIMIT = Amps.of(60);
@@ -705,9 +716,10 @@ public final class Constants {
         public static final double ARM_INTAKE = Units.degreesToRadians(77.08);
         public static final double ARM_SCORE_L1 = Units.degreesToRadians(22.35);
         public static final double ARM_DOWN = Units.degreesToRadians(-52);
-        public static final double ARM_START_POS = SysIdManager.getSysIdRoutine() == SysIdRoutine.CORAL_INTAKE_ARM
-                ? ARM_DOWN
-                : Units.degreesToRadians(89.3);
+        public static final double ARM_START_POS =
+                SysIdManager.getProvider() instanceof frc.robot.subsystems.CoralIntake.SysIdArm
+                        ? ARM_DOWN
+                        : Units.degreesToRadians(89.3);
 
         public static final double ARM_GEAR_RATIO = 56.8889; // 16:1 * 64/18
 
@@ -724,7 +736,7 @@ public final class Constants {
         private CoralIntake() {}
     }
 
-    public final class Lights {
+    public static final class Lights {
 
         public static final int LENGTH = 150;
 
@@ -866,7 +878,7 @@ public final class Constants {
         }
     }
 
-    public final class Control {
+    public static final class Control {
 
         // Sensitivity for speed meter
         public static final double DIRECTIONAL_SPEED_METER_LOW = 0.25;
@@ -893,7 +905,7 @@ public final class Constants {
         private Control() {}
     }
 
-    public final class Frame {
+    public static final class Frame {
 
         /**
          * Distance between wheels (width aka between left and right and length aka between front and
@@ -914,7 +926,7 @@ public final class Constants {
         private Frame() {}
     }
 
-    public final class Swerve {
+    public static final class Swerve {
 
         public static final double PERIODIC = 0.02;
 
@@ -940,15 +952,15 @@ public final class Constants {
         public static final double KRAKEN_TURN_GEAR_RATIO = 13.3714;
         public static final double KRAKEN_DRIVE_GEAR_RATIO = 6.75; // X1 12 pinion
 
-        public static final Current FALCON_TURN_STATOR_CURRENT_LIMIT = Amps.of(100);
-        public static final Current FALCON_TURN_SUPPLY_CURRENT_LIMIT = Amps.of(25);
-        public static final Current FALCON_DRIVE_STATOR_CURRENT_LIMIT = Amps.of(120);
-        public static final Current FALCON_DRIVE_SUPPLY_CURRENT_LIMIT = Amps.of(32);
+        public static final ImmutableCurrent FALCON_TURN_STATOR_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(100));
+        public static final ImmutableCurrent FALCON_TURN_SUPPLY_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(25));
+        public static final ImmutableCurrent FALCON_DRIVE_STATOR_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(120));
+        public static final ImmutableCurrent FALCON_DRIVE_SUPPLY_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(32));
 
-        public static final Current KRAKEN_TURN_STATOR_CURRENT_LIMIT = Amps.of(100);
-        public static final Current KRAKEN_TURN_SUPPLY_CURRENT_LIMIT = Amps.of(25);
-        public static final Current KRAKEN_DRIVE_STATOR_CURRENT_LIMIT = Amps.of(120);
-        public static final Current KRAKEN_DRIVE_SUPPLY_CURRENT_LIMIT = Amps.of(52);
+        public static final ImmutableCurrent KRAKEN_TURN_STATOR_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(100));
+        public static final ImmutableCurrent KRAKEN_TURN_SUPPLY_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(25));
+        public static final ImmutableCurrent KRAKEN_DRIVE_STATOR_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(120));
+        public static final ImmutableCurrent KRAKEN_DRIVE_SUPPLY_CURRENT_LIMIT = ImmutableCurrent.of(Amps.of(52));
 
         public static final double FALCON_DRIVE_KS = 0.12373;
         public static final double FALCON_DRIVE_KV = 2.5609;
@@ -1033,7 +1045,7 @@ public final class Constants {
         }
     }
 
-    public final class Auto {
+    public static final class Auto {
 
         public static final Time SOURCE_TIMEOUT = Seconds.of(0.8);
 
@@ -1083,9 +1095,7 @@ public final class Constants {
 
         private static AutoLogLevel.Level getAutoLogLevel() {
             if (RobotBase.isReal()) {
-                return SysIdManager.getSysIdRoutine() != SysIdRoutine.NONE
-                        ? AutoLogLevel.Level.SYSID
-                        : AutoLogLevel.Level.REAL;
+                return SysIdManager.getProvider().isEnabled() ? AutoLogLevel.Level.SYSID : AutoLogLevel.Level.REAL;
             } else {
                 return AutoLogLevel.Level.SIM;
             }
@@ -1103,7 +1113,7 @@ public final class Constants {
             REPLAY(false),
             TEST(false);
 
-            boolean realtime;
+            final boolean realtime;
 
             Mode(boolean realtime) {
                 this.realtime = realtime;

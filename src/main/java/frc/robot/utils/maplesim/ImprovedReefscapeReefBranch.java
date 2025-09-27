@@ -45,7 +45,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
 
     public static final Translation2d origin =
             new Translation2d(FieldMirroringUtils.FIELD_WIDTH / 2, FieldMirroringUtils.FIELD_HEIGHT / 2);
-    public static final Translation2d[] branchesCenterPositionBlue = new Translation2d[] {
+    private static final Translation2d[] branchesCenterPositionBlue = new Translation2d[] {
         new Translation2d(-4.810, 0.164).plus(origin), // A
         new Translation2d(-4.810, -0.164).plus(origin), // B
         new Translation2d(-4.690, -0.373).plus(origin), // C
@@ -60,7 +60,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
         new Translation2d(-4.690, 0.374).plus(origin) // L
     };
 
-    public static final Translation3d[] heights = new Translation3d[] {
+    private static final Translation3d[] heights = new Translation3d[] {
         new Translation3d(0, 0, 0.45),
         new Translation3d(0, 0, 0.79),
         new Translation3d(0, 0, 1.19),
@@ -73,7 +73,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
             .map(FieldMirroringUtils::flip)
             .toArray(Translation2d[]::new);
 
-    public static final Rotation2d[] branchesFacingOutwardsBlue = new Rotation2d[] {
+    private static final Rotation2d[] branchesFacingOutwardsBlue = new Rotation2d[] {
         Rotation2d.fromDegrees(180), Rotation2d.fromDegrees(180), // A and B
         Rotation2d.fromDegrees(-120), Rotation2d.fromDegrees(-120), // C and D
         Rotation2d.fromDegrees(-60), Rotation2d.fromDegrees(-60), // E and F
@@ -121,7 +121,7 @@ public class ImprovedReefscapeReefBranch extends Goal {
     public ImprovedReefscapeReefBranch(ImprovedArena2025Reefscape arena, boolean isBlue, int level, int column) {
         super(
                 arena,
-                level == 0 ? Centimeters.of(30) : Centimeters.of(30),
+                Centimeters.of(30),
                 level == 0 ? Centimeters.of(40) : Centimeters.of(30),
                 level == 0 ? Centimeters.of(20) : Centimeters.of(30),
                 "Coral",
@@ -183,41 +183,25 @@ public class ImprovedReefscapeReefBranch extends Goal {
 
         if (DriverStation.isAutonomous()) {
             switch (level) {
-                case 3:
-                    arena.addToScore(isBlue, 7);
-                    break;
-                case 2:
-                    arena.addToScore(isBlue, 6);
-                    break;
-                case 1:
-                    arena.addToScore(isBlue, 4);
-                    break;
-                case 0:
-                    arena.addToScore(isBlue, 3);
-                    break;
-                default:
-                    throw new Error("Something has gone horribly wrong in the maplesim internal reef, level was: "
-                            + level
-                            + " out of a supported range 0-3");
+                case 3 -> arena.addToScore(isBlue, 7);
+                case 2 -> arena.addToScore(isBlue, 6);
+                case 1 -> arena.addToScore(isBlue, 4);
+                case 0 -> arena.addToScore(isBlue, 3);
+                default -> throw new Error(
+                        "Something has gone horribly wrong in the maplesim internal reef, level was: "
+                                + level
+                                + " out of a supported range 0-3");
             }
         } else {
             switch (level) {
-                case 3:
-                    arena.addToScore(isBlue, 5);
-                    break;
-                case 2:
-                    arena.addToScore(isBlue, 4);
-                    break;
-                case 1:
-                    arena.addToScore(isBlue, 3);
-                    break;
-                case 0:
-                    arena.addToScore(isBlue, 2);
-                    break;
-                default:
-                    throw new Error("Something has gone horribly wrong in the maplesim internal reef, level was: "
-                            + level
-                            + " out of a supported range 0-3");
+                case 3 -> arena.addToScore(isBlue, 5);
+                case 2 -> arena.addToScore(isBlue, 4);
+                case 1 -> arena.addToScore(isBlue, 3);
+                case 0 -> arena.addToScore(isBlue, 2);
+                default -> throw new Error(
+                        "Something has gone horribly wrong in the maplesim internal reef, level was: "
+                                + level
+                                + " out of a supported range 0-3");
             }
         }
     }
@@ -230,9 +214,5 @@ public class ImprovedReefscapeReefBranch extends Goal {
         if (this.gamePieceCount > 1) {
             drawList.add(getPose().transformBy(new Transform3d(0, 0.12, 0, new Rotation3d())));
         }
-    }
-
-    public int getGamePieceCount() {
-        return gamePieceCount;
     }
 }

@@ -1,5 +1,6 @@
 package frc.robot.utils.camera;
 
+import com.google.common.collect.ImmutableList;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,8 +15,6 @@ import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.PoseSensorFusion;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
@@ -29,9 +28,10 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class PhotonVisionCamera implements IVisionCamera {
 
-    private static final RawVisionFiducial[] ALL_SIM_TAGS = Constants.Game.APRILTAG_LAYOUT.getTags().stream()
-            .map(v -> new RawVisionFiducial(v.ID, 0.1, 6, 7, 0))
-            .toArray(RawVisionFiducial[]::new);
+    private static final ImmutableList<RawVisionFiducial> ALL_SIM_TAGS =
+            ImmutableList.copyOf(Constants.Game.APRILTAG_LAYOUT.getTags().stream()
+                    .map(v -> new RawVisionFiducial(v.ID, 0.1, 6, 7, 0))
+                    .toList());
 
     private static final double DEFAULT_CONFIDENCE_CLOSE = 0.65;
     private static final double DEFAULT_CONFIDENCE_FAR = 0.7;
@@ -99,42 +99,52 @@ public class PhotonVisionCamera implements IVisionCamera {
         }
     }
 
+    @Override
     public boolean isConnected() {
         return connected;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public CameraType getCameraType() {
         return type;
     }
 
+    @Override
     public boolean hasVision() {
         return hasVision;
     }
 
+    @Override
     public int getNumTags() {
         return numTags;
     }
 
+    @Override
     public VisionCameraEstimate getCurrentEstimate() {
         return currentEstimate;
     }
 
+    @Override
     public VisionCameraEstimate getUnsafeEstimate() {
         return unsafeEstimate;
     }
 
+    @Override
     public double getMeasurementStdDevs() {
         return currentMeasurementStdDevs;
     }
 
+    @Override
     public void setPipeline(int pipeline) {
         camera.setPipelineIndex(pipeline);
     }
 
+    @Override
     public void updateEstimation(boolean trust, boolean ignore) {
         updateConnectionStatus();
         if (!connected) return;
@@ -195,7 +205,7 @@ public class PhotonVisionCamera implements IVisionCamera {
                 maplePose,
                 Timer.getTimestamp(),
                 Units.millisecondsToSeconds(type.latencyMs),
-                ALL_SIM_TAGS.length,
+                ALL_SIM_TAGS.size(),
                 MAPLE_SIM_TAG_DIST,
                 MAPLE_SIM_TAG_AREA,
                 ALL_SIM_TAGS,
@@ -204,7 +214,7 @@ public class PhotonVisionCamera implements IVisionCamera {
                 maplePose,
                 Timer.getTimestamp(),
                 Units.millisecondsToSeconds(type.latencyMs),
-                ALL_SIM_TAGS.length,
+                ALL_SIM_TAGS.size(),
                 MAPLE_SIM_TAG_DIST,
                 MAPLE_SIM_TAG_AREA,
                 ALL_SIM_TAGS,
@@ -287,28 +297,29 @@ public class PhotonVisionCamera implements IVisionCamera {
                                 : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
     }
 
-    private static class MeasurementPair {
+    private static final class MeasurementPair {
         private final VisionCameraEstimate closeOpt;
         private final VisionCameraEstimate farOpt;
 
-        public MeasurementPair(VisionCameraEstimate close, VisionCameraEstimate far) {
+        private MeasurementPair(VisionCameraEstimate close, VisionCameraEstimate far) {
             this.closeOpt = close;
             this.farOpt = far;
         }
 
-        public boolean isEmpty() {
+        private boolean isEmpty() {
             return closeOpt == null && farOpt == null;
         }
 
-        public VisionCameraEstimate getCloseMeasurement() {
+        private VisionCameraEstimate getCloseMeasurement() {
             return closeOpt == null ? farOpt : closeOpt;
         }
 
-        public VisionCameraEstimate getFarMeasurement() {
+        private VisionCameraEstimate getFarMeasurement() {
             return farOpt == null ? closeOpt : farOpt;
         }
     }
 
+    @Override
     public void logValues(String id) {
         String prefix = "PhotonCamera/" + id + "/";
         Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose());
@@ -321,9 +332,6 @@ public class PhotonVisionCamera implements IVisionCamera {
     /**
      * The latest estimated robot pose on the field from vision data. This may be empty. This should
      * only be called once per loop.
-     *
-     * <p>Also includes updates for the standard deviations, which can (optionally) be retrieved with
-     * {@link getEstimationStdDevs}
      *
      * @return An {@link EstimatedRobotPose} with an estimated pose, estimate timestamp, and targets
      *     used for estimation.
@@ -340,7 +348,8 @@ public class PhotonVisionCamera implements IVisionCamera {
                 double avgTagDist = 0;
                 double avgTagArea = 0;
 
-                List<RawVisionFiducial> rawFiducials = new ArrayList<>(targetNum);
+                ImmutableList.Builder<RawVisionFiducial> rawFiducials =
+                        ImmutableList.builderWithExpectedSize(targetNum);
                 for (PhotonTrackedTarget target : est.targetsUsed) {
                     double dist =
                             target.getBestCameraToTarget().getTranslation().getNorm();
@@ -365,7 +374,7 @@ public class PhotonVisionCamera implements IVisionCamera {
                         targetNum,
                         avgTagDist,
                         avgTagArea,
-                        rawFiducials.toArray(new RawVisionFiducial[0]),
+                        rawFiducials.build(),
                         isConstrained);
 
                 visionEst = Optional.of(estimation);

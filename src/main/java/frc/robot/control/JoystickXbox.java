@@ -129,14 +129,17 @@ public class JoystickXbox implements AbstractControl {
         return joystick.getRawButton(7);
     }
 
+    @Override
     public boolean isElevatorRelativeDriveTriggered() {
         return joystick.getRawButton(8) || joystick.getRawButton(2);
     }
 
+    @Override
     public boolean isCoralIntakeRelativeDriveTriggered() {
         return joystick.getRawButton(10);
     }
 
+    @Override
     public boolean isClimbRelativeDriveTriggered() {
         return joystick.getRawButton(12);
     }

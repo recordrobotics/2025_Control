@@ -67,13 +67,12 @@ public class TestControlBridge implements AbstractControl {
     @Override
     public void update() {
         for (Map.Entry<Button, Integer> entry : buttonStates.entrySet()) {
-            Button btn = entry.getKey();
             int state = entry.getValue();
 
             if (state > 0) {
-                buttonStates.put(btn, state - 1); // Decrement the button state
+                entry.setValue(state - 1); // Decrement the button state
             } else if (state < 0) {
-                buttonStates.put(btn, -1); // Button is held down
+                entry.setValue(-1); // Button is held down
             }
         }
 
@@ -146,18 +145,21 @@ public class TestControlBridge implements AbstractControl {
         return getButton(Button.AUTO_ALIGN);
     }
 
+    @Override
     public boolean isElevatorRelativeDriveTriggered() {
         return getButton(Button.ELEVATOR_RELATIVE_DRIVE)
                 || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() != ReefLevelSwitchValue.L1); // elevator relative when auto score
     }
 
+    @Override
     public boolean isCoralIntakeRelativeDriveTriggered() {
         return getButton(Button.CORAL_INTAKE_RELATIVE_DRIVE)
                 || (isAutoScoreTriggered()
                         && getReefLevelSwitchValue() == ReefLevelSwitchValue.L1); // coral relative when auto score
     }
 
+    @Override
     public boolean isClimbRelativeDriveTriggered() {
         return getButton(Button.CLIMB_RELATIVE_DRIVE);
     }

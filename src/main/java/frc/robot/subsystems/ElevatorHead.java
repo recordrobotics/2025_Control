@@ -15,7 +15,9 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.io.ElevatorHeadIO;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.utils.AutoLogLevel;
@@ -24,6 +26,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import org.littletonrobotics.junction.Logger;
 
 public final class ElevatorHead extends KillableSubsystem implements PoweredSubsystem {
@@ -87,7 +90,7 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
                         null,
                         null,
                         null,
-                        (state -> Logger.recordOutput("ElevatorHead/SysIdTestState", state.toString()))),
+                        state -> Logger.recordOutput("ElevatorHead/SysIdTestState", state.toString())),
                 new SysIdRoutine.Mechanism(v -> io.setVoltage(v.in(Volts)), null, this));
     }
 
@@ -125,8 +128,8 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
         CORAL_CERTAIN(1, GP_NAME_CORAL),
         CORAL_POSITIONED(2, GP_NAME_CORAL);
 
-        private int tier;
-        private String gpName;
+        private final int tier;
+        private final String gpName;
 
         private GamePiece(int tier, String gpName) {
             this.tier = tier;
@@ -312,7 +315,7 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
             double feedforwardOutput =
                     feedForward.calculateWithVelocities(lastSpeed, positionPid.getSetpoint().velocity);
 
-            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR_HEAD) {
+            if (!(SysIdManager.getProvider() instanceof SysId)) {
                 io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
             }
 
@@ -321,7 +324,7 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
             double pidOutput = pid.calculate(getVelocity());
             double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
 
-            if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.ELEVATOR_HEAD) {
+            if (!(SysIdManager.getProvider() instanceof SysId)) {
                 io.setVoltage(pidOutput + feedforwardOutput); // Feed forward runs on voltage control
             }
 
@@ -371,5 +374,22 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
     @Override
     public double getCurrentDrawAmps() {
         return io.getCurrentDrawAmps();
+    }
+
+    public static class SysId implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.elevatorHead.sysIdQuasistatic(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.elevatorHead.sysIdDynamic(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

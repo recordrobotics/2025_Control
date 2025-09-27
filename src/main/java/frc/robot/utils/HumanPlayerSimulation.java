@@ -193,20 +193,13 @@ public class HumanPlayerSimulation extends SubsystemBase {
 
         public void periodic() {
             switch (strategy) {
-                case NONE:
-                    break;
-                case ONLY_GROUND_NEAR:
-                    runOnlyGroundNear();
-                    break;
-                case ONLY_GROUND_FAR:
-                    runOnlyGroundFar();
-                    break;
-                case ONLY_SOURCE:
-                    runOnlySource();
-                    break;
-                case GROUND_WHEN_OCCUPIED:
-                    runGroundWhenOccupied();
-                    break;
+                case NONE -> {
+                    /* disable human player sim */
+                }
+                case ONLY_GROUND_NEAR -> runOnlyGroundNear();
+                case ONLY_GROUND_FAR -> runOnlyGroundFar();
+                case ONLY_SOURCE -> runOnlySource();
+                case GROUND_WHEN_OCCUPIED -> runGroundWhenOccupied();
             }
         }
     }

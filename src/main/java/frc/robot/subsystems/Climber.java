@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.io.ClimberIO;
@@ -30,6 +31,7 @@ import frc.robot.utils.KillableSubsystem;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.SysIdManager.SysIdProvider;
 import org.littletonrobotics.junction.Logger;
 
 public final class Climber extends KillableSubsystem implements PoweredSubsystem, EncoderResettableSubsystem {
@@ -149,26 +151,27 @@ public final class Climber extends KillableSubsystem implements PoweredSubsystem
         }
     }
 
+    @SuppressWarnings("java:S1151") // switch statement is small
     public void set(ClimberState state) {
         currentState = state;
         switch (state) {
-            case PARK:
+            case PARK -> {
                 io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
-                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CLIMBER) {
+                if (!(SysIdManager.getProvider() instanceof SysId)) {
                     io.setMotionMagic(armRequest.withPosition(Constants.Climber.PARK_ROTATIONS.in(Rotations)));
                 }
-                break;
-            case EXTEND:
+            }
+            case EXTEND -> {
                 io.setRatchet(Constants.Climber.RATCHET_DISENGAGED);
-                if (SysIdManager.getSysIdRoutine() != SysIdManager.SysIdRoutine.CLIMBER) {
+                if (!(SysIdManager.getProvider() instanceof SysId)) {
                     io.setMotionMagic(armRequest.withPosition(Constants.Climber.EXTENDED_ROTATIONS.in(Rotations)));
                 }
-                break;
-            case CLIMB:
+            }
+            case CLIMB -> {
                 io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
                 lastClimbVoltage = 0.0;
                 lastExpectedKVTime = Timer.getTimestamp();
-                break;
+            }
         }
     }
 
@@ -239,5 +242,22 @@ public final class Climber extends KillableSubsystem implements PoweredSubsystem
     public void resetEncoders() {
         io.setPosition(Constants.Climber.START_ROTATIONS.in(Rotations));
         positionCached = Constants.Climber.START_ROTATIONS.in(Rotations);
+    }
+
+    public static class SysId implements SysIdProvider {
+        @Override
+        public Command sysIdQuasistatic(Direction direction) {
+            return RobotContainer.climber.sysIdQuasistatic(direction);
+        }
+
+        @Override
+        public Command sysIdDynamic(Direction direction) {
+            return RobotContainer.climber.sysIdDynamic(direction);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

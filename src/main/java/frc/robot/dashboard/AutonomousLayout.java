@@ -40,7 +40,7 @@ public final class AutonomousLayout extends AbstractLayout {
 
     /**
      * Sets up the auto chooser with the given routines in addition to pathplanner autos loaded by default.
-     * @param routines
+     * @param routines the auto routines to add to the chooser
      */
     @SafeVarargs
     public final void setupAutoChooser(final Supplier<IAutoRoutine>... routines) {

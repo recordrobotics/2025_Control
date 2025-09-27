@@ -27,8 +27,8 @@ public @interface AutoLogLevel {
          * Checks if this level is at or higher than the other level.
          * Example: {@code myLogLevel.isAtOrHigherThan(Level.SIM)} will return {@code true} if
          * {@code myLogLevel} is {@link #SIM}, {@link #SYSID}, or {@link #REAL}.
-         * @param other
-         * @return
+         * @param other The other level to compare against.
+         * @return true if this level is at or higher than the other level.
          */
         public boolean isAtOrHigherThan(Level other) {
             return this.compareTo(other) >= 0;
@@ -38,8 +38,8 @@ public @interface AutoLogLevel {
          * Checks if this level is at or lower than the other level.
          * Example: {@code CURRENT_LOG_LEVEL.isAtOrLowerThan(Level.SIM)} will return {@code true} if
          * {@code CURRENT_LOG_LEVEL} is {@link #SIM}, {@link #DEBUG_REAL}, or {@link #DEBUG_SIM}.
-         * @param other
-         * @return
+         * @param other The other level to compare against.
+         * @return true if this level is at or lower than the other level.
          */
         public boolean isAtOrLowerThan(Level other) {
             return this.compareTo(other) <= 0;

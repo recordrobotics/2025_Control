@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import com.google.common.primitives.ImmutableDoubleArray;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -60,11 +61,11 @@ public class RuckigAlign extends Command {
     }
 
     private final Supplier<RuckigAlignState> targetStateSupplier;
-    private final double[] maxVelocity;
-    private final double[] maxAcceleration;
-    private final double[] maxDeceleration;
-    private final double[] maxJerk;
-    private final double[] maxDejerk;
+    private final ImmutableDoubleArray maxVelocity;
+    private final ImmutableDoubleArray maxAcceleration;
+    private final ImmutableDoubleArray maxDeceleration;
+    private final ImmutableDoubleArray maxJerk;
+    private final ImmutableDoubleArray maxDejerk;
     private final boolean resetTrajectory;
     private final RuckigAlignGroup<?> group;
 
@@ -82,11 +83,11 @@ public class RuckigAlign extends Command {
     public RuckigAlign(
             AutoControlModifier controlModifier,
             Supplier<RuckigAlignState> targetStateSupplier,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxDeceleration,
-            double[] maxJerk,
-            double[] maxDejerk) {
+            ImmutableDoubleArray maxVelocity,
+            ImmutableDoubleArray maxAcceleration,
+            ImmutableDoubleArray maxDeceleration,
+            ImmutableDoubleArray maxJerk,
+            ImmutableDoubleArray maxDejerk) {
         this(
                 controlModifier,
                 targetStateSupplier,
@@ -102,11 +103,11 @@ public class RuckigAlign extends Command {
     private RuckigAlign(
             AutoControlModifier controlModifier,
             Supplier<RuckigAlignState> targetStateSupplier,
-            double[] maxVelocity,
-            double[] maxAcceleration,
-            double[] maxDeceleration,
-            double[] maxJerk,
-            double[] maxDejerk,
+            ImmutableDoubleArray maxVelocity,
+            ImmutableDoubleArray maxAcceleration,
+            ImmutableDoubleArray maxDeceleration,
+            ImmutableDoubleArray maxJerk,
+            ImmutableDoubleArray maxDejerk,
             boolean resetTrajectory,
             RuckigAlignGroup<?> group) {
         this.controlModifier = controlModifier;
@@ -119,7 +120,7 @@ public class RuckigAlign extends Command {
         this.resetTrajectory = resetTrajectory;
         this.group = group;
 
-        isDecelerating = new DeceleratingState[maxVelocity.length];
+        isDecelerating = new DeceleratingState[maxVelocity.length()];
         Arrays.fill(isDecelerating, DeceleratingState.NOT_DECELERATING);
 
         addRequirements(RobotContainer.drivetrain);
@@ -163,47 +164,48 @@ public class RuckigAlign extends Command {
         }
     }
 
-    private double[] getProcessedMaxAcceleration() {
-        double[] processedMaxAcceleration = maxAcceleration.clone();
+    private ImmutableDoubleArray getProcessedMaxAcceleration() {
+        ImmutableDoubleArray.Builder processedMaxAcceleration = ImmutableDoubleArray.builder(maxAcceleration.length());
 
-        for (int i = 0; i < maxAcceleration.length; i++) {
-            if (isDecelerating[i] == DeceleratingState.DECELERATING) {
-                processedMaxAcceleration[i] = maxDeceleration[i];
-            }
+        for (int i = 0; i < maxAcceleration.length(); i++) {
+            processedMaxAcceleration.add(
+                    isDecelerating[i] == DeceleratingState.DECELERATING
+                            ? maxDeceleration.get(i)
+                            : maxAcceleration.get(i));
         }
 
-        return processedMaxAcceleration;
+        return processedMaxAcceleration.build();
     }
 
     private double[] getProcessedMaxJerk() {
-        double[] processedMaxJerk = maxJerk.clone();
+        double[] processedMaxJerk = maxJerk.toArray();
 
-        for (int i = 0; i < maxJerk.length; i++) {
+        for (int i = 0; i < maxJerk.length(); i++) {
             if (isDecelerating[i] == DeceleratingState.DECELERATING) {
-                processedMaxJerk[i] = maxDejerk[i];
+                processedMaxJerk[i] = maxDejerk.get(i);
             }
         }
 
         return processedMaxJerk;
     }
 
-    private static void maximizeConstraints(double[] maxVelocity, double[] maxAcceleration) {
-        if (maxVelocity.length != maxAcceleration.length) {
+    private static void maximizeConstraints(ImmutableDoubleArray maxVelocity, ImmutableDoubleArray maxAcceleration) {
+        if (maxVelocity.length() != maxAcceleration.length()) {
             throw new IllegalArgumentException("maxVelocity and maxAcceleration must have same length");
         }
 
-        double[] maxVelocityOutput = maxVelocity.clone();
-        double[] maxAccelerationOutput = maxAcceleration.clone();
+        double[] maxVelocityOutput = maxVelocity.toArray();
+        double[] maxAccelerationOutput = maxAcceleration.toArray();
 
         double[] currentVel = input.getCurrentVelocity();
         double[] currentAcc = input.getCurrentAcceleration();
 
-        for (int i = 0; i < maxVelocity.length; i++) {
-            if (Math.abs(currentVel[i]) > Math.abs(maxVelocity[i])) {
+        for (int i = 0; i < maxVelocity.length(); i++) {
+            if (Math.abs(currentVel[i]) > Math.abs(maxVelocity.get(i))) {
                 maxVelocityOutput[i] = Math.abs(currentVel[i]);
             }
 
-            if (Math.abs(currentAcc[i]) > Math.abs(maxAcceleration[i])) {
+            if (Math.abs(currentAcc[i]) > Math.abs(maxAcceleration.get(i))) {
                 maxAccelerationOutput[i] = Math.abs(currentAcc[i]);
             }
         }
@@ -253,9 +255,9 @@ public class RuckigAlign extends Command {
         // assume already decelerated unless resetTrajectory which already resets it
         if (!resetTrajectory) Arrays.fill(isDecelerating, DeceleratingState.DONE_DECELERATING);
 
-        input.setMaxVelocity(maxVelocity);
-        input.setMaxAcceleration(maxAcceleration);
-        input.setMaxJerk(maxJerk);
+        input.setMaxVelocity(maxVelocity.toArray());
+        input.setMaxAcceleration(maxAcceleration.toArray());
+        input.setMaxJerk(maxJerk.toArray());
 
         if (resetTrajectory) {
             reset();
@@ -404,11 +406,11 @@ public class RuckigAlign extends Command {
 
         private final List<AlignEntry<T>> states = new ArrayList<>();
         private final List<Group> groups = new ArrayList<>();
-        private final double[] maxVelocity;
-        private final double[] maxAcceleration;
-        private final double[] maxDeceleration;
-        private final double[] maxJerk;
-        private final double[] maxDejerk;
+        private final ImmutableDoubleArray maxVelocity;
+        private final ImmutableDoubleArray maxAcceleration;
+        private final ImmutableDoubleArray maxDeceleration;
+        private final ImmutableDoubleArray maxJerk;
+        private final ImmutableDoubleArray maxDejerk;
 
         private final AutoControlModifier defaultControlModifier;
 
@@ -420,11 +422,11 @@ public class RuckigAlign extends Command {
          */
         public RuckigAlignGroup(
                 AutoControlModifier defaultControlModifier,
-                double[] maxVelocity,
-                double[] maxAcceleration,
-                double[] maxDeceleration,
-                double[] maxJerk,
-                double[] maxDejerk) {
+                ImmutableDoubleArray maxVelocity,
+                ImmutableDoubleArray maxAcceleration,
+                ImmutableDoubleArray maxDeceleration,
+                ImmutableDoubleArray maxJerk,
+                ImmutableDoubleArray maxDejerk) {
             this.defaultControlModifier = defaultControlModifier;
             this.maxVelocity = maxVelocity;
             this.maxAcceleration = maxAcceleration;
@@ -464,15 +466,15 @@ public class RuckigAlign extends Command {
             return this;
         }
 
-        public double[] getMaxVelocity() {
+        public ImmutableDoubleArray getMaxVelocity() {
             return maxVelocity;
         }
 
-        public double[] getMaxAcceleration() {
+        public ImmutableDoubleArray getMaxAcceleration() {
             return maxAcceleration;
         }
 
-        public double[] getMaxJerk() {
+        public ImmutableDoubleArray getMaxJerk() {
             return maxJerk;
         }
 

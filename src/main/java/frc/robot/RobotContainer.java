@@ -72,7 +72,6 @@ import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.RepeatConditionallyCommand;
 import frc.robot.utils.SysIdManager;
-import frc.robot.utils.SysIdManager.SysIdRoutine;
 import frc.robot.utils.libraries.Elastic;
 import frc.robot.utils.libraries.Elastic.Notification;
 import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
@@ -125,12 +124,16 @@ public final class RobotContainer {
     public static VisionSystemSim visionSim;
     public static HumanPlayerSimulation humanPlayerSimulation;
 
-    private Command autoCommand;
+    private static Command autoCommand;
 
-    private Alert noEncoderResetAlert = new Alert("Encoders not reset!", AlertType.kError);
+    private static Alert noEncoderResetAlert;
+
+    private RobotContainer() {}
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
-    public RobotContainer() {
+    public static void initialize() {
+        noEncoderResetAlert = new Alert("Encoders not reset!", AlertType.kError);
+
         try {
             drivetrain = new Drivetrain();
         } catch (InvalidConfigException e) {
@@ -193,15 +196,15 @@ public final class RobotContainer {
         }
     }
 
-    public void teleopInit() {
+    public static void teleopInit() {
         DriverStationUtils.teleopInit();
     }
 
-    public void disabledInit() {
+    public static void disabledInit() {
         /* nothing to do */
     }
 
-    public void autonomousInit() {
+    public static void autonomousInit() {
         // FMS only reset encoders when enabling autonomous for the first time if not already reset (safety measure)
         // Time limit is so that if the robot restarts during the auto we don't want to reset encoders
         // Don't want to autoreset in teleop because motors keep their positions if you don't power cycle
@@ -212,7 +215,7 @@ public final class RobotContainer {
         }
     }
 
-    public void disabledExit() {
+    public static void disabledExit() {
         // For the generic any enable only reset if not connected to FMS
         // because we don't want to reset encoders if robot restarts in the middle of the match
         // since the motors keep their positions if you don't power cycle
@@ -228,12 +231,9 @@ public final class RobotContainer {
      */
     @Deprecated(forRemoval = true)
     private static void configureLegacyTriggers() {
-        BooleanSupplier elevatorLock = createElevatorLockSupplier();
-        BooleanSupplier algaeLock = createAlgaeLockSupplier();
-
-        configureElevatorTriggers(elevatorLock);
+        configureElevatorTriggers(RobotContainer::checkElevatorLock);
         configureCoralTriggers();
-        configureAlgaeTriggers(algaeLock);
+        configureAlgaeTriggers(RobotContainer::checkAlgaeLock);
         configureAutoAlignTrigger();
     }
 
@@ -241,23 +241,21 @@ public final class RobotContainer {
      * @deprecated This contains the old control scheme triggers
      */
     @Deprecated(forRemoval = true)
-    private static BooleanSupplier createElevatorLockSupplier() {
-        return () -> {
-            boolean atBottom = elevator.getNearestHeight() == ElevatorHeight.INTAKE
-                    || elevator.getNearestHeight() == ElevatorHeight.BOTTOM;
-            boolean atL4 = elevator.getNearestHeight() == ElevatorHeight.L4
-                    || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALGAE;
+    private static boolean checkElevatorLock() {
+        boolean atBottom = elevator.getNearestHeight() == ElevatorHeight.INTAKE
+                || elevator.getNearestHeight() == ElevatorHeight.BOTTOM;
+        boolean atL4 = elevator.getNearestHeight() == ElevatorHeight.L4
+                || elevator.getNearestHeight() == ElevatorHeight.BARGE_ALGAE;
 
-            Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
-            CoralPosition closestReef = IGamePosition.closestTo(robot, CoralPosition.values());
+        Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
+        CoralPosition closestReef = IGamePosition.closestTo(robot, CoralPosition.values());
 
-            boolean nearReef = isNearReef(robot, closestReef);
+        boolean nearReef = isNearReef(robot, closestReef);
 
-            return DashboardUI.Overview.getControl().isManualOverrideTriggered()
-                    || (atBottom && elevatorHead.coralReady())
-                    || (atL4 && !nearReef)
-                    || (!atBottom && !atL4);
-        };
+        return DashboardUI.Overview.getControl().isManualOverrideTriggered()
+                || (atBottom && elevatorHead.coralReady())
+                || (atL4 && !nearReef)
+                || (!atBottom && !atL4);
     }
 
     /**
@@ -279,8 +277,8 @@ public final class RobotContainer {
      * @deprecated This contains the old control scheme triggers
      */
     @Deprecated(forRemoval = true)
-    private static BooleanSupplier createAlgaeLockSupplier() {
-        return () -> DashboardUI.Overview.getControl().isManualOverrideTriggered()
+    private static boolean checkAlgaeLock() {
+        return DashboardUI.Overview.getControl().isManualOverrideTriggered()
                 || !elevatorHead.getGamePiece().atLeast(GamePiece.CORAL);
     }
 
@@ -385,7 +383,7 @@ public final class RobotContainer {
                         Set.of(drivetrain)));
     }
 
-    private void configureTriggers() {
+    private static void configureTriggers() {
 
         // Command to kill robot
         new Trigger(() -> DashboardUI.Overview.getControl().isKillTriggered())
@@ -413,7 +411,7 @@ public final class RobotContainer {
         new Trigger(DashboardUI.Autonomous::isLimelightRotationPressed)
                 .onTrue(new InstantCommand(poseSensorFusion::resetToVision).ignoringDisable(true));
         new Trigger(DashboardUI.Autonomous::isEncoderResetPressed)
-                .onTrue(new InstantCommand(this::resetEncoders).ignoringDisable(true));
+                .onTrue(new InstantCommand(RobotContainer::resetEncoders).ignoringDisable(true));
 
         new Trigger(() -> DashboardUI.Overview.getControl().isCoralGroundIntakeSimpleTriggered()
                         && !elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN))
@@ -490,10 +488,9 @@ public final class RobotContainer {
      *
      * @return the command to run in autonomous
      */
-    public Command getAutonomousCommand() {
-
-        if (SysIdManager.getSysIdRoutine() != SysIdRoutine.NONE) {
-            return SysIdManager.getSysIdRoutine().createCommand();
+    public static Command getAutonomousCommand() {
+        if (SysIdManager.getProvider().isEnabled()) {
+            return SysIdManager.getProvider().createCommand();
         }
 
         if (autoCommand == null) {
@@ -502,22 +499,21 @@ public final class RobotContainer {
         return autoCommand;
     }
 
-    public void simulationPeriodic() {
+    public static void simulationPeriodic() {
         updateSimulationBattery(drivetrain, elevator, elevatorHead, coralIntake);
         if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
             visionSim.update(model.getRobot());
         }
     }
 
-    @SuppressWarnings("java:S2325")
-    public void updateSimulationBattery(PoweredSubsystem... subsystems) {
+    public static void updateSimulationBattery(PoweredSubsystem... subsystems) {
         double[] currents = new double[subsystems.length];
         for (int i = 0; i < subsystems.length; i++) {
             currents[i] = subsystems[i].getCurrentDrawAmps();
         }
     }
 
-    public void resetEncoders() {
+    public static void resetEncoders() {
         climber.resetEncoders();
         elevator.resetEncoders();
         elevatorArm.resetEncoders();
