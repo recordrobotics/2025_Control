@@ -24,7 +24,7 @@ import org.ironmaple.utils.FieldMirroringUtils;
  * <h2>Simulates a Reefscape branch on the field.</h2>
  *
  * <p>This class simulates a Reefscape branch where corals can be scored. This class should not be
- * used directly and instead should be used via a {@link ReefscapeReefSimulation} which will handle
+ * used directly and instead should be used via a {@link ImprovedReefscapeReefSimulation} which will handle
  * an entire reef.
  */
 // This is a MapleSim library class modified to support custom features, so ignore the warnings

@@ -176,6 +176,11 @@ deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
 wpi.java.configureTestTasks(test)
 
+tasks.withType(Javadoc) {
+    // Allows Javadoc to continue even with warnings
+    options.addBooleanOption('Xdoclint:none', true)
+}
+
 tasks.withType(Test).configureEach {
     // Disable default Gradle test output
     testLogging {
