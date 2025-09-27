@@ -10,7 +10,6 @@ package frc.robot.utils;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.util.WPISerializable;
 import edu.wpi.first.util.struct.StructSerializable;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -142,7 +141,7 @@ public final class AutoLogLevelManager {
                     try {
                         return method.invoke(root);
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        e.printStackTrace();
+                        ConsoleLogger.logError(e);
                         return null;
                     }
                 });
@@ -172,7 +171,7 @@ public final class AutoLogLevelManager {
                     try {
                         return field.get(root);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        e.printStackTrace();
+                        ConsoleLogger.logError(e);
                         return null;
                     }
                 });
@@ -400,10 +399,8 @@ public final class AutoLogLevelManager {
                         try {
                             Logger.recordOutput(key, (WPISerializable) value);
                         } catch (ClassCastException e) {
-                            DriverStation.reportError(
-                                    "[AdvantageKit] Auto serialization is not supported for type "
-                                            + type.getSimpleName(),
-                                    false);
+                            ConsoleLogger.logError("[AdvantageKit] Auto serialization is not supported for type "
+                                    + type.getSimpleName());
                         }
                 });
             }
@@ -470,10 +467,8 @@ public final class AutoLogLevelManager {
                         try {
                             Logger.recordOutput(key, (StructSerializable[]) value);
                         } catch (ClassCastException e) {
-                            DriverStation.reportError(
-                                    "[AdvantageKit] Auto serialization is not supported for array type "
-                                            + componentType.getSimpleName(),
-                                    false);
+                            ConsoleLogger.logError("[AdvantageKit] Auto serialization is not supported for array type "
+                                    + componentType.getSimpleName());
                         }
                     }
                 });
@@ -545,10 +540,9 @@ public final class AutoLogLevelManager {
                         try {
                             Logger.recordOutput(key, (StructSerializable[][]) value);
                         } catch (ClassCastException e) {
-                            DriverStation.reportError(
+                            ConsoleLogger.logError(
                                     "[AdvantageKit] Auto serialization is not supported for 2D array type "
-                                            + componentType.getSimpleName(),
-                                    false);
+                                            + componentType.getSimpleName());
                         }
                     }
                 });

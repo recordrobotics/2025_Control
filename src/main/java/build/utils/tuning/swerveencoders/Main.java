@@ -5,6 +5,7 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.WPIUtilJNI;
+import frc.robot.utils.ConsoleLogger;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public final class Main {
             encoderChannels = ConfigHelper.getAllEncoderChannels(config);
             System.out.println("Configured encoder channels: " + encoderChannels);
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleLogger.logError(e);
             return;
         }
 
@@ -51,7 +52,7 @@ public final class Main {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    ConsoleLogger.logError(e);
                     Thread.currentThread().interrupt();
                 }
             }
@@ -78,7 +79,7 @@ public final class Main {
                 ConfigHelper.setEncoderOffsets(config, values, args[0]);
                 System.out.println("Updated config file: " + config.getAbsolutePath());
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
             }
 
             System.out.println("NetworkTables closed");

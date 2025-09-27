@@ -51,7 +51,7 @@ public final class RepeatConditionallyCommand extends Command {
             try {
                 command.initialize();
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("command.initialize()", e);
             }
         } else {
             ended = true;
@@ -65,7 +65,7 @@ public final class RepeatConditionallyCommand extends Command {
             try {
                 command.initialize();
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("command.initialize()", e);
                 return;
             }
         }
@@ -74,7 +74,7 @@ public final class RepeatConditionallyCommand extends Command {
             try {
                 command.execute();
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("command.execute()", e);
                 return;
             }
             try {
@@ -84,7 +84,7 @@ public final class RepeatConditionallyCommand extends Command {
                     ended = true;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("command.isFinished/end()", e);
             }
         }
     }
@@ -102,7 +102,7 @@ public final class RepeatConditionallyCommand extends Command {
             try {
                 command.end(interrupted);
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("command.end()", e);
             }
             ended = true;
         }

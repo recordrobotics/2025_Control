@@ -16,6 +16,7 @@ import frc.robot.Constants.Game.*;
 import frc.robot.RobotContainer;
 import frc.robot.commands.AutoScore;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
+import frc.robot.utils.ConsoleLogger;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
@@ -60,14 +61,14 @@ class ReefAutoScoreTests {
                                 try {
                                     RobotContainer.elevatorHead.getSimIO().setPreload();
                                 } catch (Exception e) {
-                                    e.printStackTrace();
+                                    ConsoleLogger.logError("Failed to give robot preload", e);
                                 }
                             } else {
                                 // Give robot preload
                                 try {
                                     RobotContainer.coralIntake.getSimIO().addCoral();
                                 } catch (Exception e) {
-                                    e.printStackTrace();
+                                    ConsoleLogger.logError("Failed to give robot preload (coral intake)", e);
                                 }
                             }
 

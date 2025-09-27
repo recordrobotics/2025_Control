@@ -233,7 +233,7 @@ public record ModuleConstants(
             obj = (JSONObject) parser.parse(reader);
             reader.close();
         } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            ConsoleLogger.logError("Failed to read config file", e);
             throw new InvalidConfigException("Failed to read config file");
         }
 

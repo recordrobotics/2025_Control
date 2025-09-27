@@ -1,6 +1,5 @@
 package frc.robot.utils;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Watchdog;
@@ -53,9 +52,9 @@ public class SubsystemManager extends SubsystemBase {
     public void registerSubsystem(ManagedSubsystemBase... subsystems) {
         for (ManagedSubsystemBase subsystem : subsystems) {
             if (subsystem == null) {
-                DriverStation.reportWarning("Tried to register a null subsystem", true);
+                ConsoleLogger.logWarning("Tried to register a null subsystem");
             } else if (this.subsystems.containsKey(subsystem)) {
-                DriverStation.reportWarning("Tried to register an already-registered subsystem", true);
+                ConsoleLogger.logWarning("Tried to register an already-registered subsystem");
             } else {
                 this.subsystems.put(subsystem, null);
             }
@@ -79,16 +78,16 @@ public class SubsystemManager extends SubsystemBase {
             try {
                 future.get();
             } catch (CancellationException | ExecutionException e) {
-                DriverStation.reportError("SubsystemManager periodic error: " + e.getMessage(), false);
+                ConsoleLogger.logError("SubsystemManager periodic error", e);
             } catch (InterruptedException e) {
-                DriverStation.reportError("SubsystemManager periodic interrupted: " + e.getMessage(), false);
+                ConsoleLogger.logError("SubsystemManager periodic interrupted", e);
                 Thread.currentThread().interrupt();
             }
         }
 
         watchdog.disable();
         if (watchdog.isExpired()) {
-            System.out.println("SubsystemManager loop overrun: " + watchdog.getTime());
+            ConsoleLogger.logInfo("SubsystemManager loop overrun: " + watchdog.getTime());
         }
     }
 }

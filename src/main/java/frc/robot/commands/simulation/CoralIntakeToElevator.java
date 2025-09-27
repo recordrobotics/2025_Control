@@ -11,6 +11,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.RobotModel.RobotCoral;
+import frc.robot.utils.ConsoleLogger;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
@@ -112,7 +113,7 @@ public class CoralIntakeToElevator extends SequentialCommandGroup implements Sim
         try {
             RobotContainer.elevatorHead.getSimIO().setCoralDetectorSim(false);
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleLogger.logError(e);
         }
     }
 

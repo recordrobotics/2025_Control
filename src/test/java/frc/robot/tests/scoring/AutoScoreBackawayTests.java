@@ -17,6 +17,7 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.AutoScore;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.tests.TestControlBridge.Axis;
+import frc.robot.utils.ConsoleLogger;
 import org.ironmaple.simulation.SimulatedArena;
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +60,7 @@ class AutoScoreBackawayTests {
                     try {
                         RobotContainer.elevatorHead.getSimIO().setPreload();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        ConsoleLogger.logError("Failed to give robot preload", e);
                     }
 
                     // Because of debouncer on coral sensor - have to wait two periodic cycles before autoscore

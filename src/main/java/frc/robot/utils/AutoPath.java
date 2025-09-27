@@ -40,7 +40,7 @@ public final class AutoPath {
         try {
             config = RobotConfig.fromGUISettings();
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleLogger.logError("AutoPath failed to load config", e);
             Notifications.send(NotificationLevel.ERROR, "AutoPath failed to load config", "Error message in console");
         }
 

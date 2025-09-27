@@ -65,6 +65,7 @@ import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.ModuleConstants.InvalidConfigException;
@@ -133,8 +134,7 @@ public final class RobotContainer {
         try {
             drivetrain = new Drivetrain();
         } catch (InvalidConfigException e) {
-            e.printStackTrace();
-            DriverStation.reportError("Could not load drivetrain config!: " + e.getMessage(), false);
+            ConsoleLogger.logError("Could not load drivetrain config!", e);
             return;
         }
 

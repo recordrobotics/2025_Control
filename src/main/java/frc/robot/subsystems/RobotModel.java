@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Constants;
@@ -16,6 +15,7 @@ import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.field.FieldIntersection;
 import java.util.List;
@@ -445,7 +445,7 @@ public final class RobotModel extends ManagedSubsystemBase {
         int i = 0;
         for (RobotMechanism mechanism : mechanisms) {
             if (i >= mechanismPoses.length) {
-                DriverStation.reportError("RobotModel.updatePoses: too many mechanisms", false);
+                ConsoleLogger.logError("RobotModel.updatePoses: too many mechanisms");
                 break;
             }
 

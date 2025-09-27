@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.KillSpecified;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.utils.AutoLogLevelManager;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdRoutine;
@@ -123,10 +124,9 @@ public final class Robot extends LoggedRobot {
     private static void configureMotorLogging() {
         if (Constants.RobotState.MOTOR_LOGGING_ENABLED) {
             for (int i = 0; i < 10; i++) { // NOSONAR
-                DriverStation.reportWarning(
-                        "[WARNING] Motor logging enabled, DON'T FORGET to delete old logs to make space on disk.\n"
-                                + "[WARNING] During competition, set MOTOR_LOGGING_ENABLED to false since logging is enabled automatically.",
-                        false);
+                ConsoleLogger.logWarning(
+                        "Motor logging enabled, DON'T FORGET to delete old logs to make space on disk.\n"
+                                + "During competition, set MOTOR_LOGGING_ENABLED to false since logging is enabled automatically.");
             }
             if (Constants.RobotState.getMode() != Constants.RobotState.Mode.TEST) {
                 SignalLogger.start();
@@ -211,8 +211,7 @@ public final class Robot extends LoggedRobot {
         try {
             CommandScheduler.getInstance().run();
         } catch (Exception e) {
-            e.printStackTrace();
-            DriverStation.reportError("CommandScheduler exception: " + e.getMessage(), false);
+            ConsoleLogger.logError("CommandScheduler exception", e);
         }
 
         SmartDashboard.putString(
@@ -222,15 +221,13 @@ public final class Robot extends LoggedRobot {
         try {
             DashboardUI.update();
         } catch (Exception e) {
-            e.printStackTrace();
-            DriverStation.reportError("DashboardUI exception: " + e.getMessage(), false);
+            ConsoleLogger.logError("DashboardUI exception", e);
         }
 
         try {
             AutoLogLevelManager.periodic();
         } catch (Exception e) {
-            e.printStackTrace();
-            DriverStation.reportError("AutoLogLevelManager exception: " + e.getMessage(), false);
+            ConsoleLogger.logError("AutoLogLevelManager exception", e);
         }
     }
 
@@ -272,7 +269,7 @@ public final class Robot extends LoggedRobot {
             try {
                 RobotContainer.elevatorHead.getSimIO().setPreload();
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("Failed to give robot preload", e);
             }
         }
 

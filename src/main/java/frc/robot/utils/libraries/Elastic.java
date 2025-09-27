@@ -12,6 +12,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StringTopic;
+import frc.robot.utils.ConsoleLogger;
 
 // This is a Elastic library file, so ignore the warnings
 @SuppressWarnings({"java:S1118", "java:S109"})
@@ -36,7 +37,7 @@ public final class Elastic {
         try {
             notificationPublisher.set(objectMapper.writeValueAsString(notification));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            ConsoleLogger.logError(e);
         }
     }
 

@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,6 +21,7 @@ import frc.robot.subsystems.io.real.NavSensorReal;
 import frc.robot.subsystems.io.sim.NavSensorSim;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
 import frc.robot.utils.ManagedSubsystemBase;
@@ -160,9 +160,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
             try {
                 calculationFuture.get();
             } catch (ExecutionException e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
                 Thread.currentThread().interrupt();
             }
         }
@@ -276,7 +276,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                 .findFirst()
                 .ifPresentOrElse(
                         camera -> setToPose(camera.getCurrentEstimate().pose()),
-                        () -> DriverStation.reportWarning("No camera has vision!", false));
+                        () -> ConsoleLogger.logWarning("No camera has vision!"));
     }
 
     /**
@@ -442,13 +442,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
             double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
             if (!persistent && timeSinceLastAccessed > 1.0) {
-                DriverStation.reportWarning(
-                        "Detected abandoned "
-                                + toString()
-                                + " last accessed "
-                                + (int) Math.floor(timeSinceLastAccessed)
-                                + " seconds ago.",
-                        false);
+                ConsoleLogger.logWarning("Detected abandoned "
+                        + toString()
+                        + " last accessed "
+                        + (int) Math.floor(timeSinceLastAccessed)
+                        + " seconds ago.");
             }
         }
 

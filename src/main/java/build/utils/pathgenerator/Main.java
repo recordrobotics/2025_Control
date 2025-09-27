@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.Constants.Game.AlgaePosition;
 import frc.robot.Constants.Game.CoralPosition;
+import frc.robot.utils.ConsoleLogger;
 import java.util.stream.Stream;
 
 public final class Main {
@@ -25,7 +26,7 @@ public final class Main {
                         coral.getFirstStagePose()
                                 .transformBy(new Transform2d(FIRST_STAGE_OFFSET, Meters.of(0), Rotation2d.kZero)));
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
             }
         }
 
@@ -35,7 +36,7 @@ public final class Main {
             try {
                 PathHelper.editLinkedWaypoint("Reef" + algae.name().substring("Blue".length()), algae.getPose());
             } catch (Exception e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
             }
         }
 

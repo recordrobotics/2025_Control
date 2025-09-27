@@ -8,13 +8,13 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.utils.AutoLogLevel;
 import frc.robot.utils.AutoLogLevel.Level;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.ManagedSubsystemBase;
 import frc.robot.utils.SimpleMath;
 import java.util.ArrayList;
@@ -113,9 +113,8 @@ public class CoralDetection extends ManagedSubsystemBase {
 
     private void checkCameraConnection() {
         if (Constants.RobotState.getMode() == Mode.SIM && !camera.isConnected()) {
-            DriverStation.reportError(
-                    "Coral Detection camera not connected! Did you forget to setSimulationMode(CoralDetectionSimulationMode.MAPLE_SIM)?",
-                    false);
+            ConsoleLogger.logError(
+                    "Coral Detection camera not connected! Did you forget to setSimulationMode(CoralDetectionSimulationMode.MAPLE_SIM)?");
         }
     }
 

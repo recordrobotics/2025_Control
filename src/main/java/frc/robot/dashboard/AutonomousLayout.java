@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldStartingLocation;
 import frc.robot.commands.auto.CreateAutoRoutineException;
 import frc.robot.commands.auto.IAutoRoutine;
+import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.libraries.Elastic;
 import java.util.EnumSet;
 import java.util.function.Supplier;
@@ -52,7 +53,7 @@ public final class AutonomousLayout extends AbstractLayout {
             try {
                 routine = routineSupplier.get();
             } catch (CreateAutoRoutineException e) {
-                e.printStackTrace();
+                ConsoleLogger.logError("Can't get auto routine", e);
                 continue;
             }
 

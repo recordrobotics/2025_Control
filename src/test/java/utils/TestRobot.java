@@ -18,6 +18,7 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.CoralIntake.CoralIntakeState;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.tests.TestControlBridge;
+import frc.robot.utils.ConsoleLogger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -129,7 +130,7 @@ public class TestRobot {
             try {
                 robotThread.join(5000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                ConsoleLogger.logError(e);
             }
 
             testRobot = null;
@@ -327,7 +328,7 @@ public class TestRobot {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    ConsoleLogger.logError(e);
                 }
             }
         } finally {
@@ -412,13 +413,13 @@ public class TestRobot {
         try {
             RobotContainer.elevatorHead.getSimIO().clearPreload();
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleLogger.logError(e);
         }
 
         try {
             RobotContainer.coralIntake.getSimIO().removeCoral();
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleLogger.logError(e);
         }
 
         testRobot.getRobotContainer().resetEncoders();
