@@ -270,7 +270,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     public void resetToVision() {
         cameras.stream()
-                .filter(IVisionCamera::hasVision)
+                .filter(cam -> cam.getNumTags() > 0)
                 .sorted((a, b) -> Double.compare(
                         a.getCurrentEstimate().avgTagDist(),
                         b.getCurrentEstimate().avgTagDist()))
