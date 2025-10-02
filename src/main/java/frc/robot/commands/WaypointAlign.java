@@ -3,6 +3,7 @@ package frc.robot.commands;
 import com.google.common.primitives.ImmutableDoubleArray;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,6 +18,7 @@ import frc.robot.utils.modifiers.AutoControlModifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 
 public class WaypointAlign {
@@ -134,11 +136,9 @@ public class WaypointAlign {
         return new double[] {dnx, dny, dnr};
     }
 
-    private static int getCurrentWaypoint(List<Pose2d> waypoints) {
-        Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-
-        double px = currentPose.getX();
-        double py = currentPose.getY();
+    private static int getCurrentWaypoint(List<Pose2d> waypoints, KinematicState currentState) {
+        double px = currentState.position()[0];
+        double py = currentState.position()[1];
 
         double minDist = Double.MAX_VALUE;
         int closestWaypoint = -1;
@@ -214,8 +214,12 @@ public class WaypointAlign {
      * @param controlModifier The control modifier to use for the alignment
      * @return A command that aligns the robot to the target
      */
-    public static Command align(Pose2d target, double timeout, AutoControlModifier controlModifier) {
-        return align(List.of(target), 0, 0, true, new Double[] {timeout}, controlModifier);
+    public static Command align(
+            Pose2d target,
+            double timeout,
+            AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier) {
+        return align(List.of(target), 0, 0, true, new Double[] {timeout}, controlModifier, currentStateSupplier);
     }
 
     /**
@@ -236,7 +240,8 @@ public class WaypointAlign {
             int endWaypoint,
             boolean stopAtEndWaypoint,
             Double[] waypointTimeouts,
-            AutoControlModifier controlModifier) {
+            AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier) {
         return align(
                 waypoints,
                 startWaypoint,
@@ -244,7 +249,8 @@ public class WaypointAlign {
                 stopAtEndWaypoint,
                 waypointTimeouts,
                 KinematicConstraints.DEFAULT,
-                controlModifier);
+                controlModifier,
+                currentStateSupplier);
     }
 
     private record WaypointData(KinematicState fullStopState, KinematicState velocityState) {}
@@ -269,15 +275,24 @@ public class WaypointAlign {
             boolean stopAtEndWaypoint,
             Double[] waypointTimeouts,
             KinematicConstraints constraints,
-            AutoControlModifier controlModifier) {
+            AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier) {
         RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<>(
                 controlModifier,
+                currentStateSupplier,
                 constraints.maxVelocity,
                 constraints.maxAcceleration,
                 constraints.maxDeceleration,
                 constraints.maxJerk,
                 constraints.maxDejerk);
-        return align(waypoints, startWaypoint, endWaypoint, stopAtEndWaypoint, waypointTimeouts, waypointGroup)
+        return align(
+                        waypoints,
+                        startWaypoint,
+                        endWaypoint,
+                        stopAtEndWaypoint,
+                        waypointTimeouts,
+                        waypointGroup,
+                        currentStateSupplier)
                 .build();
     }
 
@@ -299,12 +314,20 @@ public class WaypointAlign {
             int endWaypoint,
             boolean stopAtEndWaypoint,
             Double[] waypointTimeouts,
-            RuckigAlignGroup<WaypointData> waypointGroup) {
+            RuckigAlignGroup<WaypointData> waypointGroup,
+            Supplier<KinematicState> currentStateSupplier) {
 
         validateAlignParameters(waypoints, startWaypoint, endWaypoint, waypointTimeouts);
 
         for (int i = startWaypoint; i <= endWaypoint; i++) {
-            addWaypointToGroup(waypoints, i, endWaypoint, stopAtEndWaypoint, waypointTimeouts, waypointGroup);
+            addWaypointToGroup(
+                    waypoints,
+                    i,
+                    endWaypoint,
+                    stopAtEndWaypoint,
+                    waypointTimeouts,
+                    waypointGroup,
+                    currentStateSupplier);
         }
 
         return waypointGroup;
@@ -331,18 +354,22 @@ public class WaypointAlign {
             int endWaypoint,
             boolean stopAtEndWaypoint,
             Double[] waypointTimeouts,
-            RuckigAlignGroup<WaypointData> waypointGroup) {
+            RuckigAlignGroup<WaypointData> waypointGroup,
+            Supplier<KinematicState> currentStateSupplier) {
 
         waypointGroup.addAlign(
-                () -> createWaypointData(waypoints, index, waypointGroup),
+                () -> createWaypointData(waypoints, index, waypointGroup, currentStateSupplier.get()),
                 data -> createRuckigAlignState(data, index, endWaypoint, stopAtEndWaypoint, waypoints.size()),
                 waypointTimeouts[index]);
     }
 
     private static WaypointData createWaypointData(
-            List<Pose2d> waypoints, int index, RuckigAlignGroup<WaypointData> waypointGroup) {
+            List<Pose2d> waypoints,
+            int index,
+            RuckigAlignGroup<WaypointData> waypointGroup,
+            KinematicState currentState) {
         final KinematicState fullStopState = createFullStopState(waypoints.get(index));
-        final KinematicState velocityState = createVelocityState(waypoints, index, waypointGroup);
+        final KinematicState velocityState = createVelocityState(waypoints, index, waypointGroup, currentState);
         return new WaypointData(fullStopState, velocityState);
     }
 
@@ -356,13 +383,20 @@ public class WaypointAlign {
     }
 
     private static KinematicState createVelocityState(
-            List<Pose2d> waypoints, int index, RuckigAlignGroup<WaypointData> waypointGroup) {
+            List<Pose2d> waypoints,
+            int index,
+            RuckigAlignGroup<WaypointData> waypointGroup,
+            KinematicState currentState) {
         if (index == waypoints.size() - 1) {
             return null;
         }
 
-        Pose2d previousWaypoint =
-                index == 0 ? RobotContainer.poseSensorFusion.getEstimatedPosition() : waypoints.get(index - 1);
+        Pose2d previousWaypoint = index == 0
+                ? new Pose2d(
+                        currentState.position()[0],
+                        currentState.position()[1],
+                        Rotation2d.fromRadians(currentState.position()[2]))
+                : waypoints.get(index - 1);
 
         return getKinematicStateForWaypoint(
                 previousWaypoint,
@@ -405,7 +439,8 @@ public class WaypointAlign {
             int commandStartWaypoint,
             int commandEndWaypoint,
             Command performCommand,
-            AutoControlModifier controlModifier) {
+            AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier) {
         return alignWithCommand(
                 waypoints,
                 waypointTimeouts,
@@ -413,7 +448,8 @@ public class WaypointAlign {
                 commandEndWaypoint,
                 performCommand,
                 KinematicConstraints.DEFAULT,
-                controlModifier);
+                controlModifier,
+                currentStateSupplier);
     }
 
     /**
@@ -440,7 +476,8 @@ public class WaypointAlign {
             int commandEndWaypoint,
             Command performCommand,
             KinematicConstraints constraints,
-            AutoControlModifier controlModifier) {
+            AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier) {
 
         if (waypoints.size() > waypointTimeouts.length) {
             throw new IllegalArgumentException("Waypoints and waypoint timeouts must have the same length");
@@ -450,6 +487,7 @@ public class WaypointAlign {
                 () -> {
                     RuckigAlignGroup<WaypointData> waypointGroup = new RuckigAlignGroup<>(
                             controlModifier,
+                            currentStateSupplier,
                             constraints.maxVelocity,
                             constraints.maxAcceleration,
                             constraints.maxDeceleration,
@@ -458,18 +496,20 @@ public class WaypointAlign {
 
                     align(
                             waypoints,
-                            Math.min(commandEndWaypoint, getCurrentWaypoint(waypoints) + 1),
+                            Math.min(commandEndWaypoint, getCurrentWaypoint(waypoints, currentStateSupplier.get()) + 1),
                             commandEndWaypoint,
                             false,
                             waypointTimeouts,
-                            waypointGroup.newGroup());
+                            waypointGroup.newGroup(),
+                            currentStateSupplier);
                     align(
                             waypoints,
                             commandEndWaypoint + 1,
                             waypoints.size() - 1,
                             true,
                             waypointTimeouts,
-                            waypointGroup.newGroup());
+                            waypointGroup.newGroup(),
+                            currentStateSupplier);
 
                     Boolean[] firstAlignFinished = new Boolean[] {false};
 
@@ -477,9 +517,11 @@ public class WaypointAlign {
                             .build(0)
                             .andThen(() -> firstAlignFinished[0] = true)
                             /* if waypoint align finished we can assume we are at the end */
-                            .alongWith(new WaitUntilCommand(() -> getCurrentWaypoint(waypoints) == commandStartWaypoint
-                                            || firstAlignFinished[0])
-                                    .andThen(performCommand))
+                            .alongWith(
+                                    new WaitUntilCommand(() -> getCurrentWaypoint(waypoints, currentStateSupplier.get())
+                                                            == commandStartWaypoint
+                                                    || firstAlignFinished[0])
+                                            .andThen(performCommand))
                             .andThen(waypointGroup.build(1));
                 },
                 Set.of(RobotContainer.drivetrain));

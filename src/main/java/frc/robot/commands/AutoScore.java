@@ -15,6 +15,7 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.utils.AutoUtils;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import frc.robot.utils.modifiers.ControlModifierService;
@@ -58,7 +59,8 @@ public class AutoScore extends SequentialCommandGroup {
                                                     ? new ElevatorMove(level.getHeight())
                                                     : new CoralIntakeMoveL1())
                                             .asProxy(),
-                                    AutoControlModifier.getDefault());
+                                    AutoControlModifier.getDefault(),
+                                    AutoUtils::getCurrentDrivetrainKinematicState);
                         },
                         Set.of(RobotContainer.drivetrain)),
                 // if ruckig timed out, wait until autoscore is pressed again
@@ -78,7 +80,11 @@ public class AutoScore extends SequentialCommandGroup {
     private static Command createBackawayCommand() {
         Pose2d startingPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
         Pose2d targetPose = startingPose.transformBy(new Transform2d(-BACKAWAY_DISTANCE, 0, Rotation2d.kZero));
-        return WaypointAlign.align(targetPose, BACKAWAY_TIMEOUT, BackawayAutoControlModifier.getDefault())
+        return WaypointAlign.align(
+                        targetPose,
+                        BACKAWAY_TIMEOUT,
+                        BackawayAutoControlModifier.getDefault(),
+                        AutoUtils::getCurrentDrivetrainKinematicState)
                 .onlyWhile(() -> RobotContainer.poseSensorFusion
                                 .getEstimatedPosition()
                                 .getTranslation()

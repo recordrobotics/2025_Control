@@ -58,7 +58,8 @@ public final class AutoPath {
                                 1,
                                 true,
                                 new Double[] {2.0, 1.0},
-                                AutoControlModifier.getDefault())),
+                                AutoControlModifier.getDefault(),
+                                AutoUtils::getCurrentDrivetrainKinematicState)),
                         Set.of(RobotContainer.drivetrain)));
         NamedCommands.registerCommand("ElevatorL4", new ElevatorMove(ElevatorHeight.L4));
         NamedCommands.registerCommand("ElevatorL3", new ElevatorMove(ElevatorHeight.L3));

@@ -12,6 +12,7 @@ import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.RobotContainer;
 import frc.robot.commands.ReefAlign;
+import frc.robot.commands.RuckigAlign;
 import frc.robot.commands.WaypointAlign;
 import frc.robot.commands.legacy.CoralIntakeFromSource;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
@@ -19,6 +20,7 @@ import frc.robot.utils.modifiers.AutoControlModifier;
 import java.io.IOException;
 import java.util.Set;
 import org.json.simple.parser.ParseException;
+import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 
 public final class AutoUtils {
 
@@ -47,7 +49,8 @@ public final class AutoUtils {
                             1,
                             true,
                             new Double[] {2.0, 1.0},
-                            AutoControlModifier.getDefault());
+                            AutoControlModifier.getDefault(),
+                            AutoUtils::getCurrentDrivetrainKinematicState);
                 },
                 Set.of(RobotContainer.drivetrain));
     }
@@ -79,5 +82,12 @@ public final class AutoUtils {
                         .repeatedly()
                         .onlyWhile(() ->
                                 !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)));
+    }
+
+    public static KinematicState getCurrentDrivetrainKinematicState() {
+        return RuckigAlign.toKinematicState(
+                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                RobotContainer.drivetrain.getChassisSpeeds(),
+                RobotContainer.drivetrain.getChassisAcceleration());
     }
 }

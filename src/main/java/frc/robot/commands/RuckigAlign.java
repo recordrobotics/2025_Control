@@ -60,6 +60,7 @@ public class RuckigAlign extends Command {
         rPid.enableContinuousInput(-Math.PI, Math.PI);
     }
 
+    private final Supplier<KinematicState> currentStateSupplier;
     private final Supplier<RuckigAlignState> targetStateSupplier;
     private final ImmutableDoubleArray maxVelocity;
     private final ImmutableDoubleArray maxAcceleration;
@@ -82,6 +83,7 @@ public class RuckigAlign extends Command {
 
     public RuckigAlign(
             AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier,
             Supplier<RuckigAlignState> targetStateSupplier,
             ImmutableDoubleArray maxVelocity,
             ImmutableDoubleArray maxAcceleration,
@@ -90,6 +92,7 @@ public class RuckigAlign extends Command {
             ImmutableDoubleArray maxDejerk) {
         this(
                 controlModifier,
+                currentStateSupplier,
                 targetStateSupplier,
                 maxVelocity,
                 maxAcceleration,
@@ -102,6 +105,7 @@ public class RuckigAlign extends Command {
 
     private RuckigAlign(
             AutoControlModifier controlModifier,
+            Supplier<KinematicState> currentStateSupplier,
             Supplier<RuckigAlignState> targetStateSupplier,
             ImmutableDoubleArray maxVelocity,
             ImmutableDoubleArray maxAcceleration,
@@ -111,6 +115,7 @@ public class RuckigAlign extends Command {
             boolean resetTrajectory,
             RuckigAlignGroup<?> group) {
         this.controlModifier = controlModifier;
+        this.currentStateSupplier = currentStateSupplier;
         this.targetStateSupplier = targetStateSupplier;
         this.maxVelocity = maxVelocity;
         this.maxAcceleration = maxAcceleration;
@@ -124,6 +129,18 @@ public class RuckigAlign extends Command {
         Arrays.fill(isDecelerating, DeceleratingState.NOT_DECELERATING);
 
         addRequirements(RobotContainer.drivetrain);
+    }
+
+    /**
+     * Helper to create a FIELD RELATIVE KinematicState from a Pose2d and ROBOT RELATIVE ChassisSpeeds
+     * @param pose the state pose
+     * @param speeds the state speeds
+     * @param accel the state accelerations
+     * @return the KinematicState
+     */
+    public static KinematicState toKinematicState(Pose2d pose, ChassisSpeeds speeds, ChassisSpeeds accel) {
+        return new KinematicState(
+                processPoseForRuckig(pose), processChassisSpeeds(speeds, pose), processChassisSpeeds(accel, pose));
     }
 
     private static double[] processPoseForRuckig(Pose2d pose) {
@@ -215,10 +232,10 @@ public class RuckigAlign extends Command {
     }
 
     private void reset() {
-        Pose2d pose = RobotContainer.poseSensorFusion.getEstimatedPosition();
-        input.setCurrentPosition(processPoseForRuckig(pose));
-        input.setCurrentVelocity(processChassisSpeeds(RobotContainer.drivetrain.getChassisSpeeds(), pose));
-        input.setCurrentAcceleration(processChassisSpeeds(RobotContainer.drivetrain.getChassisAcceleration(), pose));
+        KinematicState state = currentStateSupplier.get();
+        input.setCurrentPosition(state.position());
+        input.setCurrentVelocity(state.velocity());
+        input.setCurrentAcceleration(state.acceleration());
         xPid.reset();
         yPid.reset();
         rPid.reset();
@@ -248,6 +265,10 @@ public class RuckigAlign extends Command {
         rPid.setTolerance(
                 Constants.Align.ROTATIONAL_TOLERANCE * VELOCITY_TOLERANCE_MULTIPLIER, Double.POSITIVE_INFINITY);
         currentMode = AlignMode.VELOCITY;
+    }
+
+    public static double[] getCurrentNewPosition() {
+        return output.getNewPosition();
     }
 
     @Override
@@ -287,16 +308,10 @@ public class RuckigAlign extends Command {
 
         result = ruckig.update(input, output);
 
-        Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+        KinematicState currentState = currentStateSupplier.get();
 
         ruckig.updateTelemetry(
-                new double[] {
-                    currentPose.getX(),
-                    currentPose.getY(),
-                    currentPose.getRotation().getRadians()
-                },
-                processChassisSpeeds(RobotContainer.drivetrain.getChassisSpeeds(), currentPose),
-                Constants.Frame.FRAME_WITH_BUMPER_WIDTH);
+                currentState.position(), currentState.velocity(), Constants.Frame.FRAME_WITH_BUMPER_WIDTH);
 
         double[] newPosition = output.getNewPosition();
         double[] newVelocity = output.getNewVelocity();
@@ -327,23 +342,23 @@ public class RuckigAlign extends Command {
                 "Ruckig/Setpoint", new Pose2d(newPosition[0], newPosition[1], new Rotation2d(newPosition[2])));
 
         // Calculate the new velocities using PID and velocity feedforward
-        double vx = xPid.calculate(currentPose.getX(), newPosition[0])
+        double vx = xPid.calculate(currentState.position()[0], newPosition[0])
                 + feedforward(newVelocity[0], newAcceleration[0], newJerk[0]);
-        double vy = yPid.calculate(currentPose.getY(), newPosition[1])
+        double vy = yPid.calculate(currentState.position()[1], newPosition[1])
                 + feedforward(newVelocity[1], newAcceleration[1], newJerk[1]);
-        double vr = rPid.calculate(currentPose.getRotation().getRadians(), newPosition[2])
+        double vr = rPid.calculate(currentState.position()[2], newPosition[2])
                 + feedforward(newVelocity[2], newAcceleration[2], newJerk[2]);
 
-        controlModifier.drive(
-                ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(vx, vy, vr), currentPose.getRotation()));
+        controlModifier.drive(ChassisSpeeds.fromFieldRelativeSpeeds(
+                new ChassisSpeeds(vx, vy, vr),
+                Rotation2d.fromRadians(currentState.position()[2])));
 
         output.passToInput(input);
 
-        double ex = Math.abs(currentPose.getX() - newPosition[0]);
-        double ey = Math.abs(currentPose.getY() - newPosition[1]);
+        double ex = Math.abs(currentState.position()[0] - newPosition[0]);
+        double ey = Math.abs(currentState.position()[1] - newPosition[1]);
         double er = Math.abs(SimpleMath.closestTarget(
-                        newPosition[2],
-                        SimpleMath.normalizeAngle(currentPose.getRotation().getRadians()))
+                        newPosition[2], SimpleMath.normalizeAngle(currentState.position()[2]))
                 - newPosition[2]);
 
         Logger.recordOutput("Ruckig/Errors", new double[] {ex, ey, er});
@@ -361,10 +376,10 @@ public class RuckigAlign extends Command {
         if (currentMode == AlignMode.POSITION) {
             finished = result != Result.Working && xPid.atSetpoint() && yPid.atSetpoint() && rPid.atSetpoint();
         } else if (currentMode == AlignMode.VELOCITY) {
-            Pose2d currentPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
+            KinematicState currentState = currentStateSupplier.get();
             double distanceToTarget = Math.hypot(
-                    currentPose.getX() - input.getTargetPosition()[0],
-                    currentPose.getY() - input.getTargetPosition()[1]);
+                    currentState.position()[0] - input.getTargetPosition()[0],
+                    currentState.position()[1] - input.getTargetPosition()[1]);
 
             double velocityError = Math.hypot(
                     input.getCurrentVelocity()[0] - input.getTargetVelocity()[0],
@@ -414,6 +429,8 @@ public class RuckigAlign extends Command {
 
         private final AutoControlModifier defaultControlModifier;
 
+        private final Supplier<KinematicState> currentStateSupplier;
+
         /**
          * Create a RuckigAlignGroup with the given constraints
          * @param maxVelocity the max velocity for each of the 3 dimensions (x, y, rotation)
@@ -422,12 +439,14 @@ public class RuckigAlign extends Command {
          */
         public RuckigAlignGroup(
                 AutoControlModifier defaultControlModifier,
+                Supplier<KinematicState> currentStateSupplier,
                 ImmutableDoubleArray maxVelocity,
                 ImmutableDoubleArray maxAcceleration,
                 ImmutableDoubleArray maxDeceleration,
                 ImmutableDoubleArray maxJerk,
                 ImmutableDoubleArray maxDejerk) {
             this.defaultControlModifier = defaultControlModifier;
+            this.currentStateSupplier = currentStateSupplier;
             this.maxVelocity = maxVelocity;
             this.maxAcceleration = maxAcceleration;
             this.maxDeceleration = maxDeceleration;
@@ -476,6 +495,18 @@ public class RuckigAlign extends Command {
 
         public ImmutableDoubleArray getMaxJerk() {
             return maxJerk;
+        }
+
+        public ImmutableDoubleArray getMaxDeceleration() {
+            return maxDeceleration;
+        }
+
+        public ImmutableDoubleArray getMaxDejerk() {
+            return maxDejerk;
+        }
+
+        public Supplier<KinematicState> getCurrentStateSupplier() {
+            return currentStateSupplier;
         }
 
         /**
@@ -554,6 +585,7 @@ public class RuckigAlign extends Command {
                                     final T param = entry.initializer().get();
                                     return new RuckigAlign(
                                             controlModifier,
+                                            currentStateSupplier,
                                             () -> entry.state().apply(param),
                                             maxVelocity,
                                             maxAcceleration,

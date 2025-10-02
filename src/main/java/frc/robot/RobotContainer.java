@@ -65,12 +65,14 @@ import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.utils.AutoPath;
+import frc.robot.utils.AutoUtils;
 import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.HumanPlayerSimulation;
 import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.RepeatConditionallyCommand;
+import frc.robot.utils.RuckigWarmup;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.libraries.Elastic;
 import frc.robot.utils.libraries.Elastic.Notification;
@@ -184,6 +186,8 @@ public final class RobotContainer {
 
         // Sets up auto path
         AutoPath.initialize();
+        // Warmup Ruckig
+        RuckigWarmup.warmupCommand().schedule();
 
         DashboardUI.Autonomous.setupAutoChooser(BargeLeftAuto::new, BargeRightAuto::new);
 
@@ -390,7 +394,8 @@ public final class RobotContainer {
                                 1,
                                 true,
                                 new Double[] {AUTO_ALIGN_FIRST_WAYPOINT_TIMEOUT, AUTO_ALIGN_SECOND_WAYPOINT_TIMEOUT},
-                                AutoControlModifier.getDefault()),
+                                AutoControlModifier.getDefault(),
+                                AutoUtils::getCurrentDrivetrainKinematicState),
                         Set.of(drivetrain)));
     }
 
