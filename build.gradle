@@ -202,6 +202,14 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.addAll(["-Xlint:-removal"])
 }
 
+task simulateWithVerbose(type: JavaExec) {
+    mainClass = 'frc.robot.Main' // Replace with your main class
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-verbose:class']
+    systemProperty 'java.library.path', "${project.buildDir}/jni/release"
+    environment 'HALSIM_EXTENSIONS', "${project.buildDir}/jni/release/halsim_ds_socket.dll;"
+}
+
 checkstyle {
     toolVersion = "11.0.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
