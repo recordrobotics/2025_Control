@@ -110,7 +110,7 @@ public final class RobotContainer {
     /**
      * The time remaining in the match after which the endgame starts and it is time to climb
      */
-    public static final double ENDGAME_CLIMB_TIME = 20.0; // seconds
+    public static final double ENDGAME_CLIMB_TIME = 30.0; // seconds
 
     public static Drivetrain drivetrain;
     public static PoseSensorFusion poseSensorFusion;
