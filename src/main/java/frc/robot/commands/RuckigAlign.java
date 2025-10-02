@@ -37,6 +37,9 @@ public class RuckigAlign extends Command {
 
     private static final double DECELERATION_ACCEL_THRESHOLD = 0.9; // meters/s^2
 
+    private static final double CURRENT_STATE_MULTIPLIER =
+            0.5; // scales down the Ruckig current velocity/accel initialization for faster deceleration
+
     private static final Ruckig3 ruckig = new Ruckig3("RuckigAlign", RobotContainer.ROBOT_PERIODIC);
     private static final InputParameter3 input = new InputParameter3();
     private static final OutputParameter3 output = new OutputParameter3();
@@ -231,11 +234,19 @@ public class RuckigAlign extends Command {
         input.setMaxAcceleration(maxAccelerationOutput);
     }
 
+    private static double[] scaleDoubleArray(double[] array, double scale) {
+        double[] scaled = new double[array.length];
+        for (int i = 0; i < array.length; i++) {
+            scaled[i] = array[i] * scale;
+        }
+        return scaled;
+    }
+
     private void reset() {
         KinematicState state = currentStateSupplier.get();
         input.setCurrentPosition(state.position());
-        input.setCurrentVelocity(state.velocity());
-        input.setCurrentAcceleration(state.acceleration());
+        input.setCurrentVelocity(scaleDoubleArray(state.velocity(), CURRENT_STATE_MULTIPLIER));
+        input.setCurrentAcceleration(scaleDoubleArray(state.acceleration(), CURRENT_STATE_MULTIPLIER));
         xPid.reset();
         yPid.reset();
         rPid.reset();
