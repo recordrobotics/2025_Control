@@ -128,10 +128,21 @@ public final class RobotContainer {
 
     private static Alert noEncoderResetAlert;
 
-    private RobotContainer() {}
+    private static RobotContainer instance;
+
+    private RobotContainer() {
+        initialize();
+    }
+
+    public static RobotContainer createAndInitialize() {
+        if (instance == null) {
+            instance = new RobotContainer();
+        }
+        return instance;
+    }
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
-    public static void initialize() {
+    private static void initialize() {
         noEncoderResetAlert = new Alert("Encoders not reset!", AlertType.kError);
 
         try {

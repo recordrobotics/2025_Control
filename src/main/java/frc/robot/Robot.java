@@ -155,10 +155,9 @@ public final class Robot extends LoggedRobot {
     @Override
     public void robotInit() {
         Pathfinding.setPathfinder(new LocalADStarAK());
-        // Initialize our RobotContainer. This will perform all our button bindings,
-        // and put our
-        // autonomous chooser on the dashboard.
-        RobotContainer.initialize();
+
+        // RobotContainer initialization
+        AutoLogLevelManager.addObject(RobotContainer.createAndInitialize());
 
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.TEST) {
             // Elastic layout webserver
