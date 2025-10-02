@@ -106,6 +106,9 @@ public class WaypointAlign {
             dy = 0.0;
         }
 
+        dx *= 1.05;
+        dy *= 1.05;
+
         return new double[] {dx, dy, dr};
     }
 

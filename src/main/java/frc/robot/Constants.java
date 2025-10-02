@@ -492,7 +492,7 @@ public final class Constants {
 
         public static final Angle START_ROTATIONS = Rotations.of(0);
         public static final Angle PARK_ROTATIONS = START_ROTATIONS;
-        public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.03);
+        public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.23);
         public static final Angle CLIMBED_ROTATIONS = Rotations.of(0.019999);
 
         public static final double RATCHET_ENGAGED = 0.15;
@@ -715,7 +715,7 @@ public final class Constants {
         public static final double ARM_PUSH = Units.degreesToRadians(84.19);
         public static final double ARM_INTAKE = Units.degreesToRadians(77.08);
         public static final double ARM_SCORE_L1 = Units.degreesToRadians(22.35);
-        public static final double ARM_DOWN = Units.degreesToRadians(-52);
+        public static final double ARM_DOWN = Units.degreesToRadians(-48);
         public static final double ARM_START_POS =
                 SysIdManager.getProvider() instanceof frc.robot.subsystems.CoralIntake.SysIdArm
                         ? ARM_DOWN
