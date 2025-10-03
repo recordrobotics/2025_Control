@@ -174,4 +174,18 @@ public final class SimpleMath {
         }
         return range;
     }
+
+    /**
+     * Interpolates between two Rotation2d with just the radians, allowing for more-than-one-rotation interpolation
+     * @param a Starting Rotation2d
+     * @param b Ending Rotation2d
+     * @param t Interpolation factor [0, 1]
+     * @return Interpolated Rotation2d
+     */
+    public static Rotation2d interpolateRotation2dUnbounded(Rotation2d a, Rotation2d b, double t) {
+        double angleA = a.getRadians();
+        double angleB = b.getRadians();
+        double interpolatedAngle = angleA + (angleB - angleA) * Math.max(0, Math.min(1, t));
+        return new Rotation2d(interpolatedAngle);
+    }
 }

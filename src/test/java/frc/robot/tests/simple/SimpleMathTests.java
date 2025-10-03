@@ -414,4 +414,44 @@ class SimpleMathTests {
     void testRangeInvalid() {
         assertThrows(IllegalArgumentException.class, () -> SimpleMath.range(7, 3));
     }
+
+    @Test
+    void testInterpolateRotation2dUnboundedZeroFraction() {
+        Rotation2d start = new Rotation2d(Math.PI / 4);
+        Rotation2d end = new Rotation2d(Math.PI / 2);
+        Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 0.0);
+        assertEquals(start.getRadians(), result.getRadians(), DELTA);
+    }
+
+    @Test
+    void testInterpolateRotation2dUnboundedOneFraction() {
+        Rotation2d start = new Rotation2d(Math.PI / 4);
+        Rotation2d end = new Rotation2d(Math.PI / 2);
+        Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 1.0);
+        assertEquals(end.getRadians(), result.getRadians(), DELTA);
+    }
+
+    @Test
+    void testInterpolateRotation2dUnboundedHalfFraction() {
+        Rotation2d start = new Rotation2d(0.0);
+        Rotation2d end = new Rotation2d(Math.PI);
+        Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 0.5);
+        assertEquals(Math.PI / 2, result.getRadians(), DELTA);
+    }
+
+    @Test
+    void testInterpolateRotation2dUnboundedGreaterThanPi() {
+        Rotation2d start = new Rotation2d(0.0);
+        Rotation2d end = new Rotation2d(Math.PI * 6);
+        Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 0.5);
+        assertEquals(Math.PI * 3, result.getRadians(), DELTA);
+    }
+
+    @Test
+    void testInterpolateRotation2dUnboundedLessThanPi() {
+        Rotation2d start = new Rotation2d(Math.PI * 2);
+        Rotation2d end = new Rotation2d(-Math.PI * 6);
+        Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 0.5);
+        assertEquals(-Math.PI * 2, result.getRadians(), DELTA);
+    }
 }

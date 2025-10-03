@@ -4,6 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.utils.SimpleMath;
+import org.littletonrobotics.junction.Logger;
 
 public final class DrivetrainControl {
 
@@ -94,6 +96,15 @@ public final class DrivetrainControl {
     public void applyWeightedVelocity(Transform2d velocity, double weight) {
         targetVelocity = new Transform2d(
                 targetVelocity.getTranslation().interpolate(velocity.getTranslation(), weight),
-                targetVelocity.getRotation().interpolate(velocity.getRotation(), weight));
+                SimpleMath.interpolateRotation2dUnbounded(
+                        targetVelocity.getRotation(), velocity.getRotation(), weight));
+    }
+
+    /**
+     * Debug method that logs state to path
+     * @param path the path to log to HAS TO END WITH / (e.g. "DrivetrainControl/Before/")
+     */
+    public void logState(String path) {
+        Logger.recordOutput(path + "targetVelocity", targetVelocity);
     }
 }

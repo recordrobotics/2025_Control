@@ -56,6 +56,8 @@ public final class Drivetrain extends KillableSubsystem implements PoweredSubsys
     private static final int BL = 2;
     private static final int BR = 3;
 
+    private static final boolean DEBUG_LOG_MODIFIERS = false;
+
     private static final double ENCODER_STABILIZATION_TIME = 2.3;
 
     private static final Velocity<VoltageUnit> SYSID_DRIVE_RAMP_RATE =
@@ -237,7 +239,9 @@ public final class Drivetrain extends KillableSubsystem implements PoweredSubsys
         for (ControlModifier prioritizedModifier :
                 ControlModifierService.getInstance().getModifiers()) {
             if (prioritizedModifier.modifier().isEnabled()
-                    && prioritizedModifier.modifier().apply(drivetrainControl)) {
+                    && (DEBUG_LOG_MODIFIERS
+                            ? prioritizedModifier.modifier().logApply(drivetrainControl)
+                            : prioritizedModifier.modifier().apply(drivetrainControl))) {
                 applyCount++;
             }
         }

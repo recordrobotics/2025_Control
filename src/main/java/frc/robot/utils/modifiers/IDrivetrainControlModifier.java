@@ -41,4 +41,16 @@ public interface IDrivetrainControlModifier {
     boolean isEnabled();
 
     void setEnabled(boolean enabled);
+
+    /**
+     * Debug method that logs state before and after applying the modifier.
+     * @param control the DrivetrainControl object representing the current control input to be modified
+     * @return true if the modifier was applied, false otherwise
+     */
+    default boolean logApply(DrivetrainControl control) {
+        control.logState("IDrivetrainControlModifier/" + getClass().getSimpleName() + "/Before/");
+        boolean applied = apply(control);
+        control.logState("IDrivetrainControlModifier/" + getClass().getSimpleName() + "/After/");
+        return applied;
+    }
 }
