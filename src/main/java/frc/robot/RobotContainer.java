@@ -126,8 +126,6 @@ public final class RobotContainer {
     public static VisionSystemSim visionSim;
     public static HumanPlayerSimulation humanPlayerSimulation;
 
-    private static Command autoCommand;
-
     private static Alert noEncoderResetAlert;
 
     private static RobotContainer instance;
@@ -190,6 +188,7 @@ public final class RobotContainer {
         RuckigWarmup.warmupCommand().schedule();
 
         DashboardUI.Autonomous.setupAutoChooser(BargeLeftAuto::new, BargeRightAuto::new);
+        PlannedAuto.setAutoSupplier(DashboardUI.Autonomous::getAutoChooser);
 
         // Sets up Control scheme chooser
         DashboardUI.Overview.addControls(
@@ -509,10 +508,7 @@ public final class RobotContainer {
             return SysIdManager.getProvider().createCommand();
         }
 
-        if (autoCommand == null) {
-            autoCommand = new PlannedAuto();
-        }
-        return autoCommand;
+        return PlannedAuto.getAutoCommand();
     }
 
     public static void simulationPeriodic() {
