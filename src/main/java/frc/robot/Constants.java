@@ -213,7 +213,7 @@ public final class Constants {
             RED_L(6, 1);
 
             public static final double FIRST_WAYPOINT_OFFSET = 0.2;
-            public static final double L1_REEF_OFFSET = 0.4;
+            public static final double L1_REEF_OFFSET = 0.4; // TODO: check during comp - might need to be 0.3
             public static final double L2L3_REEF_OFFSET = 0.02;
             public static final double L4_REEF_OFFSET = 0.05;
 
