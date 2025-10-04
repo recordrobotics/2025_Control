@@ -87,7 +87,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     private boolean trustLimelightLeft;
     private boolean trustLimelightCenter;
+    private boolean useOPI;
     private boolean useISPE;
+    private boolean useVision;
 
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private Future<?> calculationFuture = null;
@@ -130,7 +132,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", true);
         SmartDashboard.putBoolean("Autonomous/TrustLimelightCenter", true);
+        SmartDashboard.putBoolean("Autonomous/UseOPI", true);
         SmartDashboard.putBoolean("Autonomous/UseISPE", true);
+        SmartDashboard.putBoolean("Autonomous/UseVision", true);
     }
 
     public record DeferredPoseEstimation(
@@ -147,7 +151,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
         trustLimelightCenter = SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
+        useOPI = SmartDashboard.getBoolean("Autonomous/UseOPI", false);
         useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
+        useVision = SmartDashboard.getBoolean("Autonomous/UseVision", true);
 
         calculationFuture = executor.submit(this::calculationLoop);
     }
@@ -170,8 +176,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         while (!deferredPoseEstimations.isEmpty()) {
             DeferredPoseEstimation estimation = deferredPoseEstimations.pollFirst();
-            poseFilter.addVisionMeasurement(
-                    estimation.visionRobotPoseMeters, estimation.timestampSeconds, estimation.visionMeasurementStdDevs);
+            if (useVision) {
+                poseFilter.addVisionMeasurement(
+                        estimation.visionRobotPoseMeters,
+                        estimation.timestampSeconds,
+                        estimation.visionMeasurementStdDevs);
+            }
         }
 
         updateDashboard();
@@ -218,10 +228,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         leftCamera.updateEstimation(trustLimelightLeft, false);
         centerCamera.updateEstimation(trustLimelightCenter, false);
-        l1Camera.updateEstimation(true, false);
+        l1Camera.updateEstimation(true, !useOPI);
         sourceCamera.updateEstimation(
                 true,
-                l1Camera.hasVision() && l1Camera.getUnsafeEstimate().avgTagDist() < MAX_L1_DISTANCE_TO_IGNORE_SOURCE);
+                !useOPI
+                        || (l1Camera.hasVision()
+                                && l1Camera.getUnsafeEstimate().avgTagDist() < MAX_L1_DISTANCE_TO_IGNORE_SOURCE));
     }
 
     private void updateDashboard() {

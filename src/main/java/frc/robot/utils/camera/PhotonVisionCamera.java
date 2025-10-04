@@ -151,7 +151,7 @@ public class PhotonVisionCamera implements IVisionCamera {
 
         MeasurementPair measurements = getMeasurements();
 
-        if (measurements.isEmpty()) {
+        if (measurements.isEmpty() || ignore) {
             resetVisionState();
             return;
         }
@@ -229,6 +229,7 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private void resetVisionState() {
         hasVision = false;
+        numTags = 0;
         currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
     }
 
@@ -269,6 +270,7 @@ public class PhotonVisionCamera implements IVisionCamera {
             applyVisionMeasurement(measurement, trust);
         } else {
             hasVision = false;
+            numTags = 0;
             currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
         }
     }

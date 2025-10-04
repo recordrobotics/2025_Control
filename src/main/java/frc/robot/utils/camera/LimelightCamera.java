@@ -151,6 +151,7 @@ public class LimelightCamera implements IVisionCamera {
         }
 
         selectBestMeasurement(measurements.mt1(), measurements.mt2());
+        validateMeasurementTagCount();
         validatePoseDistance();
         processFinalEstimate(trust, ignore);
     }
@@ -359,12 +360,19 @@ public class LimelightCamera implements IVisionCamera {
 
     private void validatePoseDistance() {
         if (unsafeEstimate
-                        .pose()
-                        .getTranslation()
-                        .getDistance(RobotContainer.poseSensorFusion
-                                .getEstimatedPosition()
-                                .getTranslation())
-                > maxPoseError) {
+                                .pose()
+                                .getTranslation()
+                                .getDistance(RobotContainer.poseSensorFusion
+                                        .getEstimatedPosition()
+                                        .getTranslation())
+                        > maxPoseError
+                || !SimpleMath.isInField(unsafeEstimate.pose())) {
+            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
+        }
+    }
+
+    private void validateMeasurementTagCount() {
+        if (unsafeEstimate.tagCount() == 0) {
             currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
         }
     }

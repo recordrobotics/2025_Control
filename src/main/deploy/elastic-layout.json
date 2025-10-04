@@ -204,11 +204,11 @@
             }
           },
           {
-            "title": "Nav Sensor",
-            "x": 1408.0,
-            "y": 576.0,
-            "width": 128.0,
-            "height": 128.0,
+            "title": "NAV",
+            "x": 1216.0,
+            "y": 544.0,
+            "width": 64.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/SmartDashboard/Overview/Nav Sensor",
@@ -266,11 +266,11 @@
             }
           },
           {
-            "title": "B",
+            "title": "BTM",
             "x": 1216.0,
-            "y": 384.0,
+            "y": 352.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Elevator/BottomEndStopPressed",
@@ -283,11 +283,11 @@
             }
           },
           {
-            "title": "T",
+            "title": "TOP",
             "x": 1216.0,
             "y": 256.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Elevator/TopEndStopPressed",
@@ -339,11 +339,11 @@
             }
           },
           {
-            "title": "HasAlgae",
-            "x": 1280.0,
-            "y": 576.0,
-            "width": 128.0,
-            "height": 128.0,
+            "title": "ALG",
+            "x": 1216.0,
+            "y": 448.0,
+            "width": 64.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/ElevatorHead/HasAlgae",
@@ -356,20 +356,17 @@
             }
           },
           {
-            "title": "C",
-            "x": 1216.0,
-            "y": 512.0,
-            "width": 64.0,
+            "title": "GamePiece",
+            "x": 1280.0,
+            "y": 576.0,
+            "width": 256.0,
             "height": 128.0,
-            "type": "Boolean Box",
+            "type": "Text Display",
             "properties": {
-              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/HasCoral",
+              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/GamePiece",
               "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
+              "data_type": "string",
+              "show_submit_button": false
             }
           },
           {
@@ -601,23 +598,6 @@
             }
           },
           {
-            "title": "Nav Sensor",
-            "x": 1408.0,
-            "y": 416.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Overview/Nav Sensor",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
             "title": "Coral Shooter Front",
             "x": 0.0,
             "y": 0.0,
@@ -633,28 +613,24 @@
             }
           },
           {
-            "title": "B",
-            "x": 1344.0,
-            "y": 128.0,
-            "width": 64.0,
-            "height": 128.0,
-            "type": "Boolean Box",
+            "title": "Level Switch",
+            "x": 1152.0,
+            "y": 384.0,
+            "width": 256.0,
+            "height": 256.0,
+            "type": "Large Text Display",
             "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Elevator/BottomEndStopPressed",
+              "topic": "/SmartDashboard/Overview/LevelSwitch",
               "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
+              "data_type": "string"
             }
           },
           {
-            "title": "T",
+            "title": "TOP",
             "x": 1344.0,
             "y": 0.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Elevator/TopEndStopPressed",
@@ -667,14 +643,14 @@
             }
           },
           {
-            "title": "C",
+            "title": "BTM",
             "x": 1344.0,
-            "y": 256.0,
+            "y": 96.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
-              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/HasCoral",
+              "topic": "/AdvantageKit/RealOutputs/Elevator/BottomEndStopPressed",
               "period": 0.06,
               "data_type": "boolean",
               "true_color": 4283215696,
@@ -684,10 +660,10 @@
             }
           },
           {
-            "title": "HasAlgae",
-            "x": 1408.0,
-            "y": 320.0,
-            "width": 128.0,
+            "title": "ALG",
+            "x": 1344.0,
+            "y": 192.0,
+            "width": 64.0,
             "height": 96.0,
             "type": "Boolean Box",
             "properties": {
@@ -701,16 +677,34 @@
             }
           },
           {
-            "title": "Level Switch",
-            "x": 1152.0,
-            "y": 384.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "Large Text Display",
+            "title": "NAV",
+            "x": 1344.0,
+            "y": 288.0,
+            "width": 64.0,
+            "height": 96.0,
+            "type": "Boolean Box",
             "properties": {
-              "topic": "/SmartDashboard/Overview/LevelSwitch",
+              "topic": "/SmartDashboard/Overview/Nav Sensor",
               "period": 0.06,
-              "data_type": "string"
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "GamePiece",
+            "x": 1408.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 96.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/GamePiece",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
             }
           }
         ]
@@ -782,28 +776,11 @@
             }
           },
           {
-            "title": "Nav Sensor",
-            "x": 1024.0,
-            "y": 384.0,
-            "width": 96.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Overview/Nav Sensor",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "T",
+            "title": "TOP",
             "x": 704.0,
             "y": 384.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Elevator/TopEndStopPressed",
@@ -816,11 +793,11 @@
             }
           },
           {
-            "title": "B",
+            "title": "BTM",
             "x": 768.0,
             "y": 384.0,
             "width": 64.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Elevator/BottomEndStopPressed",
@@ -833,28 +810,11 @@
             }
           },
           {
-            "title": "C",
+            "title": "ALG",
             "x": 832.0,
             "y": 384.0,
             "width": 64.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/HasCoral",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "HasAlgae",
-            "x": 896.0,
-            "y": 384.0,
-            "width": 128.0,
-            "height": 128.0,
+            "height": 96.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/ElevatorHead/HasAlgae",
@@ -864,6 +824,37 @@
               "false_color": 4294198070,
               "true_icon": "None",
               "false_icon": "None"
+            }
+          },
+          {
+            "title": "NAV",
+            "x": 896.0,
+            "y": 384.0,
+            "width": 64.0,
+            "height": 96.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Overview/Nav Sensor",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "GamePiece",
+            "x": 960.0,
+            "y": 384.0,
+            "width": 160.0,
+            "height": 96.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/ElevatorHead/GamePiece",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
             }
           }
         ]
@@ -1324,6 +1315,40 @@
               "topic": "/CameraPublisher/limelight-left-processed",
               "period": 0.06,
               "rotation_turns": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tab 6",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "UseOPI",
+            "x": 416.0,
+            "y": 160.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous/UseOPI",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "UseVision",
+            "x": 544.0,
+            "y": 160.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous/UseVision",
+              "period": 0.06,
+              "data_type": "boolean"
             }
           }
         ]
