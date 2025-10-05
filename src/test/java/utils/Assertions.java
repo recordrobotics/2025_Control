@@ -2,13 +2,13 @@ package utils;
 
 import static org.junit.jupiter.api.AssertionFailureBuilder.*;
 
-import frc.robot.utils.maplesim.ImprovedArena2025Reefscape;
-import frc.robot.utils.maplesim.ImprovedReefscapeReefBranch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeReefBranch;
 
 public class Assertions {
 
@@ -57,15 +57,15 @@ public class Assertions {
 
         // also assert rest of the branches are empty
         if (assertRestAreEmpty) {
-            for (Map.Entry<String, ImprovedReefscapeReefBranch> entry :
-                    ((ImprovedArena2025Reefscape) SimulatedArena.getInstance()).blueReefSimulation.getBranches()) {
+            for (Map.Entry<String, ReefscapeReefBranch> entry :
+                    ((Arena2025Reefscape) SimulatedArena.getInstance()).blueReefSimulation.getBranchesSet()) {
                 if (!coralIds.contains("B" + entry.getKey())) {
                     corals.add("B" + entry.getKey() + "0");
                 }
             }
 
-            for (Map.Entry<String, ImprovedReefscapeReefBranch> entry :
-                    ((ImprovedArena2025Reefscape) SimulatedArena.getInstance()).redReefSimulation.getBranches()) {
+            for (Map.Entry<String, ReefscapeReefBranch> entry :
+                    ((Arena2025Reefscape) SimulatedArena.getInstance()).redReefSimulation.getBranchesSet()) {
                 if (!coralIds.contains("R" + entry.getKey())) {
                     corals.add("R" + entry.getKey() + "0");
                 }
@@ -78,13 +78,13 @@ public class Assertions {
         for (String coral : corals) {
             coral = coral.trim();
 
-            ImprovedReefscapeReefBranch branch;
+            ReefscapeReefBranch branch;
 
             if (coral.charAt(0) == 'B') {
-                branch = ((ImprovedArena2025Reefscape) SimulatedArena.getInstance())
+                branch = ((Arena2025Reefscape) SimulatedArena.getInstance())
                         .blueReefSimulation.getBranch(coral.substring(1, 3));
             } else if (coral.charAt(0) == 'R') {
-                branch = ((ImprovedArena2025Reefscape) SimulatedArena.getInstance())
+                branch = ((Arena2025Reefscape) SimulatedArena.getInstance())
                         .redReefSimulation.getBranch(coral.substring(1, 3));
             } else {
                 throw new IllegalArgumentException("Invalid reef alliance: " + coral);
