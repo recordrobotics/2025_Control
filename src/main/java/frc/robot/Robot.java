@@ -151,8 +151,7 @@ public final class Robot extends LoggedRobot {
 
     private static void configureReefForMultiplayer(boolean isBlue, ReefscapeReefSimulation reef) {
         reef.getBranchesSet().forEach(entry -> entry.getValue()
-                .setOnGamePieceCountChanged(() -> mapleSimClient.sendReefBranchUpdate(
-                        isBlue, entry.getKey(), entry.getValue().getGamePieceCount())));
+                .setOnGamePieceCountChanged(() -> mapleSimClient.accumulateReefBranchUpdate(isBlue, entry.getKey())));
     }
 
     public void setPeriodicRunnable(Runnable periodicRunnable) {
@@ -345,6 +344,7 @@ public final class Robot extends LoggedRobot {
                 RobotContainer.model.getRobot(),
                 RobotContainer.model.mechanismPoses,
                 RobotContainer.model.getRobotCoral().getPose());
+        mapleSimClient.sendAccumulatedReefBranchUpdates();
         Logger.recordOutput("MapleSim/Multiplayer/RobotCorals", mapleSimClient.getRobotCorals());
     }
 

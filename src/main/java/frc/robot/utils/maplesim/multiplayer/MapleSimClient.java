@@ -7,12 +7,15 @@ import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.maplesim.multiplayer.messages.ReefBranchUpdateMessage;
 import frc.robot.utils.maplesim.multiplayer.messages.RobotStateUpdateMessage;
 import frc.robot.utils.maplesim.multiplayer.messages.context.MapleSimContext;
+import java.util.Set;
 
 public class MapleSimClient {
 
     private final Client client;
+    private final Set<ReefBranchUpdateSetItem> reefBranchUpdateSet;
 
     public MapleSimClient(String host) {
+        reefBranchUpdateSet = new java.util.concurrent.ConcurrentSkipListSet<>();
         MapleSimContext context = MapleSimContext.createClientContext();
         client = new Client(Constants.createGeneralConfig(context).setHost(host).setPort(Constants.SERVER_PORT));
         client.start();
@@ -30,9 +33,14 @@ public class MapleSimClient {
         }
     }
 
-    public void sendReefBranchUpdate(boolean isBlue, String id, int gamePieceCount) {
+    public void accumulateReefBranchUpdate(boolean isBlue, String id) {
+        reefBranchUpdateSet.add(new ReefBranchUpdateSetItem(isBlue, id));
+    }
+
+    public void sendAccumulatedReefBranchUpdates() {
         if (client.isConnected()) {
-            client.send(new ReefBranchUpdateMessage(isBlue, id, gamePieceCount));
+            client.send(new ReefBranchUpdateMessage(reefBranchUpdateSet.toArray(ReefBranchUpdateSetItem[]::new)));
+            reefBranchUpdateSet.clear();
         }
     }
 
@@ -43,5 +51,17 @@ public class MapleSimClient {
             return new Pose3d[] {};
         }
         return context.getRobotCorals();
+    }
+
+    public record ReefBranchUpdateSetItem(boolean isBlue, String id) implements Comparable<ReefBranchUpdateSetItem> {
+
+        @Override
+        public int compareTo(ReefBranchUpdateSetItem o) {
+            int blueComparison = Boolean.compare(this.isBlue, o.isBlue);
+            if (blueComparison != 0) {
+                return blueComparison;
+            }
+            return this.id.compareTo(o.id);
+        }
     }
 }

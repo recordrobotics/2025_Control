@@ -62,6 +62,8 @@ public final class Constants {
 
         kryo.register(RobotStateUpdateMessage.class, index++);
         kryo.register(ReefBranchUpdateMessage.class, index++);
+        kryo.register(ReefBranchUpdateMessage.ReefBranchUpdate.class, index++);
+        kryo.register(ReefBranchUpdateMessage.ReefBranchUpdate[].class, index++);
 
         return kryo;
     }
