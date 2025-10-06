@@ -21,6 +21,8 @@ import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.maplesim.multiplayer.MapleSimClient;
 import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeReefSimulation;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -138,8 +140,19 @@ public final class Robot extends LoggedRobot {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
             mapleSimClient = new MapleSimClient("localhost");
             mapleSimClient.waitForConnection();
+
+            Arena2025Reefscape arena = (Arena2025Reefscape) SimulatedArena.getInstance();
+            configureReefForMultiplayer(true, arena.blueReefSimulation);
+            configureReefForMultiplayer(false, arena.redReefSimulation);
+
             // TODO: finish maple-sim/wip-increase-branch-tolerance and configure it here
         }
+    }
+
+    private static void configureReefForMultiplayer(boolean isBlue, ReefscapeReefSimulation reef) {
+        reef.getBranchesSet().forEach(entry -> entry.getValue()
+                .setOnGamePieceCountChanged(() -> mapleSimClient.sendReefBranchUpdate(
+                        isBlue, entry.getKey(), entry.getValue().getGamePieceCount())));
     }
 
     public void setPeriodicRunnable(Runnable periodicRunnable) {

@@ -132,7 +132,18 @@ dependencies {
 
     errorprone "com.google.errorprone:error_prone_core:2.42.0"
 
-    implementation 'com.jfastnet:jfastnet:0.3.8'
+    implementation 'org.recordrobotics:jfastnet:0.3.10'
+    // Core Netty modules required for UDP
+    implementation 'io.netty:netty-common:4.2.6.Final'
+    implementation 'io.netty:netty-buffer:4.2.6.Final'
+    implementation 'io.netty:netty-transport:4.2.6.Final'
+    implementation 'io.netty:netty-handler:4.2.6.Final'
+    implementation 'io.netty:netty-resolver:4.2.6.Final'
+    implementation 'io.netty:netty-transport-native-epoll:4.2.6.Final:linux-x86_64'
+    implementation 'io.netty:netty-transport-native-epoll:4.2.6.Final:linux-aarch_64'
+    implementation 'io.netty:netty-transport-native-kqueue:4.2.6.Final:osx-x86_64'
+    implementation 'io.netty:netty-transport-native-kqueue:4.2.6.Final:osx-aarch_64'
+    implementation 'org.javassist:javassist:3.30.2-GA'
 }
 
 test {

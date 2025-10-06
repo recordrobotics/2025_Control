@@ -1,27 +1,16 @@
 package frc.robot.utils.maplesim.multiplayer;
 
-import com.jfastnet.Config;
-import com.jfastnet.IMessageReceiver;
 import com.jfastnet.IServerHooks;
 import com.jfastnet.Server;
-import com.jfastnet.messages.Message;
 import frc.robot.utils.maplesim.multiplayer.messages.context.MapleSimContext;
 
 public class MapleSimServer {
 
     private final Server server;
 
-    @SuppressWarnings("java:S1604") // not generic
     public MapleSimServer() {
         MapleSimContext context = MapleSimContext.createServerContext();
-        server = new Server(new Config()
-                .setContext(context)
-                .setExternalReceiver(new IMessageReceiver<MapleSimContext>() {
-                    @Override
-                    public void receive(Message<MapleSimContext> message) {
-                        message.process(context);
-                    }
-                })
+        server = new Server(Constants.createGeneralConfig(context)
                 .setHost("0.0.0.0")
                 .setBindPort(Constants.SERVER_PORT)
                 .setServerHooks(new IServerHooks() {

@@ -95,7 +95,7 @@ public class RobotStateUpdateMessage extends Message<MapleSimContext> {
             String root = "MapleSim/Multiplayer/" + getSenderId() + "/";
             Logger.recordOutput(root + "Pose", getPose());
             Logger.recordOutput(root + "MechanismPoses", getMechanismPoses());
-            context.addRobotCoral(getReceiverId(), getRobotCoral());
+            context.addRobotCoral(getSenderId(), getRobotCoral());
         }
     }
 
