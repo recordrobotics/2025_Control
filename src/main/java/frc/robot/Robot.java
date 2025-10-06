@@ -19,6 +19,7 @@ import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.maplesim.multiplayer.MapleSimClient;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -41,6 +42,8 @@ public final class Robot extends LoggedRobot {
     private static final String DEFAULT_PATH_SIM = "logs";
 
     private static final int ELASTIC_WEBSERVER_PORT = 5800;
+
+    private static MapleSimClient mapleSimClient;
 
     private Command autonomousCommand;
 
@@ -133,6 +136,8 @@ public final class Robot extends LoggedRobot {
 
     private static void configureSimulation() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            mapleSimClient = new MapleSimClient("localhost");
+            mapleSimClient.waitForConnection();
             // TODO: finish maple-sim/wip-increase-branch-tolerance and configure it here
         }
     }
@@ -322,6 +327,8 @@ public final class Robot extends LoggedRobot {
     public void simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic();
         RobotContainer.simulationPeriodic();
+
+        mapleSimClient.sendRobotStateUpdate(RobotContainer.model.getRobot());
     }
 
     @Override
