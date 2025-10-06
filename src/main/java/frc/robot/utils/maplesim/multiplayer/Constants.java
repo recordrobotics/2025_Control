@@ -21,7 +21,7 @@ import com.jfastnet.messages.SequenceKeepAlive;
 import com.jfastnet.messages.StackAckMessage;
 import com.jfastnet.messages.StackedMessage;
 import com.jfastnet.messages.TimerSyncMessage;
-import com.jfastnet.peers.netty.KryoNettyPeer;
+import com.jfastnet.peers.javanet.JavaNetPeer;
 import com.jfastnet.serialiser.KryoSerialiser;
 import frc.robot.utils.maplesim.multiplayer.messages.ReefBranchUpdateMessage;
 import frc.robot.utils.maplesim.multiplayer.messages.RobotStateUpdateMessage;
@@ -77,7 +77,7 @@ public final class Constants {
                     }
                 })
                 .setIdProviderClass(ReliableModeIdProvider.class)
-                .setUdpPeerClass(KryoNettyPeer.class)
+                .setUdpPeerClass(JavaNetPeer.class)
                 .setSerialiser(
                         new KryoSerialiser(new SerialiserConfig(), ThreadLocal.withInitial(Constants::createKryo)));
     }

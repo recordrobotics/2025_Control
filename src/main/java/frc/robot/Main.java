@@ -21,6 +21,7 @@ public final class Main {
    */
   public static void main(String... args) {
     org.apache.log4j.BasicConfigurator.configure();
+    org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.WARN);
     RobotBase.startRobot(Robot::new);
   }
 }
