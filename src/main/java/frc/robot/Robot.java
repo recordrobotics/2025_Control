@@ -141,10 +141,6 @@ public final class Robot extends LoggedRobot {
             mapleSimClient = new MapleSimClient("localhost");
             mapleSimClient.waitForConnection();
 
-            Arena2025Reefscape arena = (Arena2025Reefscape) SimulatedArena.getInstance();
-            configureReefForMultiplayer(true, arena.blueReefSimulation);
-            configureReefForMultiplayer(false, arena.redReefSimulation);
-
             // TODO: finish maple-sim/wip-increase-branch-tolerance and configure it here
         }
     }
@@ -191,6 +187,10 @@ public final class Robot extends LoggedRobot {
         AutoLogLevelManager.addObject(this);
 
         initialized = true;
+
+        Arena2025Reefscape arena = (Arena2025Reefscape) SimulatedArena.getInstance();
+        configureReefForMultiplayer(true, arena.blueReefSimulation);
+        configureReefForMultiplayer(false, arena.redReefSimulation);
     }
 
     /**
