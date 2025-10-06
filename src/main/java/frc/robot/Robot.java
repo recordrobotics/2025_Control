@@ -328,7 +328,11 @@ public final class Robot extends LoggedRobot {
         SimulatedArena.getInstance().simulationPeriodic();
         RobotContainer.simulationPeriodic();
 
-        mapleSimClient.sendRobotStateUpdate(RobotContainer.model.getRobot(), RobotContainer.model.mechanismPoses);
+        mapleSimClient.sendRobotStateUpdate(
+                RobotContainer.model.getRobot(),
+                RobotContainer.model.mechanismPoses,
+                RobotContainer.model.getRobotCoral().getPose());
+        Logger.recordOutput("MapleSim/Multiplayer/RobotCorals", mapleSimClient.getRobotCorals());
     }
 
     @Override
