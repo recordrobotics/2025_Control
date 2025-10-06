@@ -32,7 +32,7 @@ public class ReefBranchUpdateMessage extends Message<MapleSimContext> {
 
     @Override
     public boolean stackable() {
-        return true;
+        return false;
     }
 
     @Override
