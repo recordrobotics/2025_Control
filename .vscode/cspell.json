@@ -58,6 +58,7 @@
         "teleop",
         "teleoperated",
         "txnc",
+        "txty",
         "tync",
         "wpi",
         "wpilib",

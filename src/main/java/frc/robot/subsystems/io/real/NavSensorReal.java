@@ -24,6 +24,11 @@ public class NavSensorReal implements NavSensorIO {
     }
 
     @Override
+    public double getYawRate() {
+        return -nav.getRate();
+    }
+
+    @Override
     public double getWorldLinearAccelX() {
         return nav.getWorldLinearAccelX();
     }

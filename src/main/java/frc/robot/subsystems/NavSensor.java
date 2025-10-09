@@ -49,6 +49,11 @@ public class NavSensor extends ManagedSubsystemBase {
         return Rotation2d.fromDegrees((io.getAngle() - referenceAngle));
     }
 
+    // Gets the angular velocity in degrees per second
+    public double getYawRate() {
+        return io.getYawRate();
+    }
+
     public double getJerkMagnitude() {
         return Math.sqrt(jerkX * jerkX + jerkY * jerkY);
     }
