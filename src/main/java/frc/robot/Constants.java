@@ -448,9 +448,9 @@ public final class Constants {
         public static final String LIMELIGHT_CENTER_NAME = "limelight-center";
 
         public static final Transform3d ROBOT_TO_CAMERA_LEFT = new Transform3d(
-                new Translation3d(0.311558, -0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
+                new Translation3d(0.311558, 0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
         public static final Transform3d ROBOT_TO_CAMERA_CENTER = new Transform3d(
-                new Translation3d(0.219412, 0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
+                new Translation3d(0.219412, -0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
 
         public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
 
@@ -1058,7 +1058,7 @@ public final class Constants {
 
         public static final AutoLogLevel.Level AUTO_LOG_LEVEL = getAutoLogLevel();
 
-        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.MAPLE_CLEAN;
+        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM;
 
         // change to use an external photonvision client for coral detection simulation
         public static final CoralDetection.CoralDetectionSimulationMode CORAL_DETECTION_SIMULATION_MODE =

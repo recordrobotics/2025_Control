@@ -127,7 +127,9 @@ public class CoralDetection extends ManagedSubsystemBase {
     }
 
     private static Pose3d calculateProjectedFieldPose(PhotonTrackedTargetTimestamped target, Transform3d projection) {
-        Pose3d robot3d = new Pose3d(RobotContainer.poseSensorFusion.getEstimatedPositionAt(target.timestamp));
+        Pose3d robot3d = new Pose3d(RobotContainer.poseSensorFusion
+                .getEstimatedPositionAt(target.timestamp)
+                .orElseGet(() -> RobotContainer.poseSensorFusion.getEstimatedPosition()));
         Pose3d camera3d = robot3d.transformBy(Constants.PhotonVision.ROBOT_TO_CAMERA_GROUND_INTAKE);
         return camera3d.transformBy(projection);
     }

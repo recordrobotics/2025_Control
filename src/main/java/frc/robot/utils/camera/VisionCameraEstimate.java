@@ -43,6 +43,20 @@ public record VisionCameraEstimate(
                 limelightEstimate.isMegaTag2);
     }
 
+    public record TXTYMeasurement(Pose2d pose, double timestamp, double distToCamera) {}
+
+    public VisionCameraEstimate(TXTYMeasurement txTyMeasurement) {
+        this(
+                txTyMeasurement.pose(),
+                txTyMeasurement.timestamp(),
+                0,
+                1,
+                txTyMeasurement.distToCamera(),
+                0,
+                ImmutableList.of(),
+                false);
+    }
+
     private static ImmutableList<RawVisionFiducial> convertRawFiducials(RawFiducial[] rawFiducials) {
         ImmutableList.Builder<RawVisionFiducial> converted = ImmutableList.builderWithExpectedSize(rawFiducials.length);
         for (int i = 0; i < rawFiducials.length; i++) {

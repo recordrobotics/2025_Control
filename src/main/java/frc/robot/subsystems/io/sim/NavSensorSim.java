@@ -1,5 +1,7 @@
 package frc.robot.subsystems.io.sim;
 
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.subsystems.io.NavSensorIO;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
@@ -25,6 +27,11 @@ public class NavSensorSim implements NavSensorIO {
     @Override
     public double getAngle() {
         return gyroSimulation.getGyroReading().getDegrees();
+    }
+
+    @Override
+    public double getYawRate() {
+        return gyroSimulation.getMeasuredAngularVelocity().in(DegreesPerSecond);
     }
 
     @Override

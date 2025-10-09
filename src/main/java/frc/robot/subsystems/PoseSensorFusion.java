@@ -257,10 +257,8 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         return poseFilter.getEstimatedPosition();
     }
 
-    public Pose2d getEstimatedPositionAt(double timestamp) {
-        Optional<Pose2d> sample = poseFilter.sampleAt(timestamp);
-        if (sample.isEmpty()) return getEstimatedPosition();
-        else return sample.get();
+    public Optional<Pose2d> getEstimatedPositionAt(double timestamp) {
+        return poseFilter.sampleAt(timestamp);
     }
 
     /** Similar to resetPose but adds an argument for the initial pose */
