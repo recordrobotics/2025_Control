@@ -45,7 +45,7 @@ public class LimelightCamera implements IVisionCamera {
     private static final double DEFAULT_CLOSE_MT1_DISTANCE =
             Units.feetToMeters(7); // 7 feet is where the MT1 (yellow) gets bad wiggles
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
-    private static final double DEFAULT_TXTY_MAX_DISTANCE = 1.0; // have to be 1 meter or closer to use txty
+    private static final double DEFAULT_TXTY_MAX_DISTANCE = 0.5; // have to be 1 meter or closer to use txty
 
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_SPAN = 0.1;

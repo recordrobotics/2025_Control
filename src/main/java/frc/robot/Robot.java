@@ -199,6 +199,8 @@ public final class Robot extends LoggedRobot {
         RobotContainer.poseSensorFusion.endCalculation();
         RobotContainer.poseSensorFusion.startCalculation();
 
+        RobotContainer.robotPeriodic();
+
         try {
             CommandScheduler.getInstance().run();
         } catch (Exception e) {
