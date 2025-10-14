@@ -217,10 +217,21 @@ public final class Constants {
             public static final double L2L3_REEF_OFFSET = 0.02;
             public static final double L4_REEF_OFFSET = 0.05;
 
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0.01061;
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0.01720;
+
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0;
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
+
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
+
             public final int apriltagId;
+            private final int side;
             private final Pose2d pose;
 
             private CoralPosition(int apriltagId, int side) {
+                this.side = side;
                 this.pose = calculatePoseFromAprilTag(apriltagId, side);
                 this.apriltagId = apriltagId;
             }
@@ -250,12 +261,16 @@ public final class Constants {
             }
 
             public Pose2d getPose(CoralLevel level) {
+                Pose2d newPose = pose.transformBy(new Transform2d(
+                        0,
+                        (side == 0 ? -ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT : ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT),
+                        Rotation2d.kZero));
                 return switch (level) {
-                    case L1 -> pose.transformBy(new Transform2d(
+                    case L1 -> newPose.transformBy(new Transform2d(
                             -L1_REEF_OFFSET, CoralIntake.INTAKE_X_OFFSET.in(Meters), Rotation2d.kCW_90deg));
-                    case L2, L3 -> pose.transformBy(
+                    case L2, L3 -> newPose.transformBy(
                             new Transform2d(-L2L3_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
-                    case L4 -> pose.transformBy(
+                    case L4 -> newPose.transformBy(
                             new Transform2d(-L4_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
                     default -> throw new IllegalArgumentException("Invalid Coral Level: " + level);
                 };

@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 // WPILib imports
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -208,6 +209,11 @@ public final class RobotContainer {
             // No point in manually resetting encoders in simulation since starting config is always in the right spot
             resetEncoders();
         }
+
+        SmartDashboard.putNumber(
+                "Additional Reef Offset Left", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT);
+        SmartDashboard.putNumber(
+                "Additional Reef Offset Right", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT);
     }
 
     public static void teleopInit() {
@@ -509,6 +515,13 @@ public final class RobotContainer {
         }
 
         return PlannedAuto.getAutoCommand();
+    }
+
+    public static void robotPeriodic() {
+        Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SmartDashboard.getNumber(
+                "Additional Reef Offset Left", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT);
+        Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SmartDashboard.getNumber(
+                "Additional Reef Offset Right", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT);
     }
 
     public static void simulationPeriodic() {
