@@ -45,7 +45,7 @@ public class LimelightCamera implements IVisionCamera {
     private static final double DEFAULT_CLOSE_MT1_DISTANCE =
             Units.feetToMeters(7); // 7 feet is where the MT1 (yellow) gets bad wiggles
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
-    private static final double DEFAULT_TXTY_MAX_DISTANCE = 0.5; // have to be 1 meter or closer to use txty
+    private static final double DEFAULT_TXTY_MAX_DISTANCE = 0.5; // have to be 0.5 meters or closer to use txty
 
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_SPAN = 0.1;
@@ -447,18 +447,21 @@ public class LimelightCamera implements IVisionCamera {
                 && SimpleMath.isInField(measurement.pose)) {
             currentMeasurementStdDevs = mt1Confidence;
             unsafeEstimate = new VisionCameraEstimate(measurement);
-        } else if (measurement.tagCount > 0 && SimpleMath.isInField(measurement.pose)) {
-            if (txty.isPresent() && txty.get().distToCamera() <= txtyMaxDistance) {
+        } else if (measurement.tagCount > 0) {
+            if (txty.isPresent()
+                    && SimpleMath.isInField(txty.get().pose())
+                    && txty.get().distToCamera() <= txtyMaxDistance) {
                 currentMeasurementStdDevs = mt1Confidence;
                 unsafeEstimate = new VisionCameraEstimate(txty.get());
-                return;
-            }
-            if (measurement.avgTagDist < mt1MaxDistance) {
+            } else if (measurement.avgTagDist < mt1MaxDistance && SimpleMath.isInField(measurement.pose)) {
                 currentMeasurementStdDevs = mt1Confidence;
                 unsafeEstimate = new VisionCameraEstimate(measurement);
-            } else {
+            } else if (SimpleMath.isInField(measurementM2.pose)) {
                 currentMeasurementStdDevs = mt2Confidence;
                 unsafeEstimate = new VisionCameraEstimate(measurementM2);
+            } else {
+                currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
+                unsafeEstimate = new VisionCameraEstimate(measurement);
             }
         } else {
             currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
