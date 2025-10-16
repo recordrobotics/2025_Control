@@ -408,10 +408,12 @@ public class PhotonVisionCamera implements IVisionCamera {
             farOpt = photonEstimatorFar.update(change);
             txtyOpt = photonEstimatorTXTY.update(change);
 
-            bestTargetDist = change.getBestTarget()
-                    .getBestCameraToTarget()
-                    .getTranslation()
-                    .getNorm();
+            if (change.hasTargets()) {
+                bestTargetDist = change.getBestTarget()
+                        .getBestCameraToTarget()
+                        .getTranslation()
+                        .getNorm();
+            }
         }
 
         final double bestTargetDistFinal = bestTargetDist;
