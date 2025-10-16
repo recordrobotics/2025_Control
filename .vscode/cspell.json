@@ -22,6 +22,7 @@
         "ispe",
         "jacoco",
         "jni",
+        "kalman",
         "lljson",
         "LLOS",
         "llpython",
