@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.VisionSimulationMode;
@@ -70,6 +71,8 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private Pose2d txtyPose = new Pose2d();
 
+    private final Alert disconnectedAlert;
+
     public PhotonVisionCamera(String name, CameraType type, Transform3d robotToCamera, double stdMultiplier) {
         this.name = name;
         this.type = type;
@@ -91,6 +94,9 @@ public class PhotonVisionCamera implements IVisionCamera {
 
         photonEstimatorTXTY = new PhotonPoseEstimator(
                 Constants.Game.APRILTAG_LAYOUT, PoseStrategy.PNP_DISTANCE_TRIG_SOLVE, robotToCamera);
+
+        this.disconnectedAlert = new Alert("PhotonCamera " + name + " disconnected!", Alert.AlertType.kError);
+        disconnectedAlert.set(true);
 
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL
                 && Constants.RobotState.VISION_SIMULATION_MODE
@@ -347,6 +353,8 @@ public class PhotonVisionCamera implements IVisionCamera {
         Logger.recordOutput(prefix + "HasVision", hasVision);
         Logger.recordOutput(prefix + "Connected", connected);
         Logger.recordOutput(prefix + "TXTY", txtyPose);
+
+        disconnectedAlert.set(!connected);
     }
 
     private VisionCameraEstimate getVisionCameraEstimateFromPhotonEstimate(
