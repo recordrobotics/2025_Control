@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.VisionSimulationMode;
@@ -80,6 +81,8 @@ public class LimelightCamera implements IVisionCamera {
 
     private Pose2d txtyPose = new Pose2d();
 
+    private final Alert disconnectedAlert;
+
     public LimelightCamera(String name, CameraType type, Transform3d robotToCamera) {
         this.name = name;
         this.type = type;
@@ -90,6 +93,9 @@ public class LimelightCamera implements IVisionCamera {
         this.mt1MaxDistance = DEFAULT_CLOSE_MT1_DISTANCE;
         this.txtyMaxDistance = DEFAULT_TXTY_MAX_DISTANCE;
         this.maxPoseError = DEFAULT_MAX_POSE_ERROR;
+
+        this.disconnectedAlert = new Alert("Limelight " + name + " disconnected!", Alert.AlertType.kError);
+        disconnectedAlert.set(true);
 
         if (isPhotonSimMode()) {
             fakeCamera = new PhotonCamera(name);
@@ -536,5 +542,7 @@ public class LimelightCamera implements IVisionCamera {
         Logger.recordOutput(prefix + "HasVision", hasVision);
         Logger.recordOutput(prefix + "LimelightConnected", limelightConnected);
         Logger.recordOutput(prefix + "TXTY", txtyPose);
+
+        disconnectedAlert.set(!limelightConnected);
     }
 }
