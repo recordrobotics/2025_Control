@@ -452,8 +452,6 @@ public final class Constants {
 
         public static final int CORAL_ID = 1;
 
-        public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
-
         private PhotonVision() {}
     }
 
@@ -466,8 +464,6 @@ public final class Constants {
                 new Translation3d(0.311558, 0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
         public static final Transform3d ROBOT_TO_CAMERA_CENTER = new Transform3d(
                 new Translation3d(0.219412, -0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
-
-        public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
 
         private Limelight() {}
     }
