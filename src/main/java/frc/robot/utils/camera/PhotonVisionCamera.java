@@ -35,8 +35,6 @@ public class PhotonVisionCamera implements IVisionCamera {
                     .map(v -> new RawVisionFiducial(v.ID, 0.1, 6, 7, 0))
                     .toList());
 
-    private static final double DEFAULT_CONFIDENCE_CLOSE = 0.65;
-    private static final double DEFAULT_CONFIDENCE_FAR = 0.7;
     private static final double DEFAULT_CLOSE_MAX_DISTANCE = Units.feetToMeters(7);
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
     private static final double DEFAULT_TXTY_MAX_DISTANCE = 0.5; // have to be 0.5 meters or closer to use txty
@@ -56,14 +54,13 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private String name;
 
-    private final double confidenceClose;
-    private final double confidenceFar;
+    private final double stdMultiplier;
     private final double closeMaxDistance;
     private final double txtyMaxDistance;
 
     private final double maxPoseError;
 
-    private CameraType type;
+    private CameraType physicalCamera;
     private final PhotonCamera camera;
     private final PhotonPoseEstimator photonEstimatorClose;
     private final PhotonPoseEstimator photonEstimatorFar;
@@ -73,11 +70,10 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private final Alert disconnectedAlert;
 
-    public PhotonVisionCamera(String name, CameraType type, Transform3d robotToCamera, double stdMultiplier) {
+    public PhotonVisionCamera(String name, CameraType physicalCamera, Transform3d robotToCamera, double stdMultiplier) {
         this.name = name;
-        this.type = type;
-        this.confidenceClose = DEFAULT_CONFIDENCE_CLOSE * stdMultiplier;
-        this.confidenceFar = DEFAULT_CONFIDENCE_FAR * stdMultiplier;
+        this.physicalCamera = physicalCamera;
+        this.stdMultiplier = stdMultiplier;
         this.closeMaxDistance = DEFAULT_CLOSE_MAX_DISTANCE;
         this.txtyMaxDistance = DEFAULT_TXTY_MAX_DISTANCE;
         this.maxPoseError = DEFAULT_MAX_POSE_ERROR;
@@ -103,11 +99,13 @@ public class PhotonVisionCamera implements IVisionCamera {
                         == Constants.RobotState.VisionSimulationMode.PHOTON_SIM) {
             SimCameraProperties cameraProp = new SimCameraProperties();
             cameraProp.setCalibration(
-                    type.getDetectorWidth(), type.getDetectorHeight(), Rotation2d.fromDegrees(type.fov));
-            cameraProp.setCalibError(type.pxError, type.pxErrorStdDev);
-            cameraProp.setFPS(type.fps);
-            cameraProp.setAvgLatencyMs(type.latencyMs);
-            cameraProp.setLatencyStdDevMs(type.latencyStdDevMs);
+                    physicalCamera.getDetectorWidth(),
+                    physicalCamera.getDetectorHeight(),
+                    Rotation2d.fromDegrees(physicalCamera.fov));
+            cameraProp.setCalibError(physicalCamera.pxError, physicalCamera.pxErrorStdDev);
+            cameraProp.setFPS(physicalCamera.fps);
+            cameraProp.setAvgLatencyMs(physicalCamera.latencyMs);
+            cameraProp.setLatencyStdDevMs(physicalCamera.latencyStdDevMs);
 
             PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp);
             cameraSim.enableDrawWireframe(true);
@@ -127,7 +125,7 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     @Override
     public CameraType getCameraType() {
-        return type;
+        return physicalCamera;
     }
 
     @Override
@@ -161,13 +159,16 @@ public class PhotonVisionCamera implements IVisionCamera {
     }
 
     @Override
-    public void updateEstimation(boolean trust, boolean ignore) {
+    public void updateEstimation() {
         updateConnectionStatus();
-        if (!connected) return;
+        if (!connected) {
+            resetVisionState();
+            return;
+        }
 
         Measurements measurements = getMeasurements();
 
-        if (measurements.isEmpty() || ignore) {
+        if (measurements.isEmpty()) {
             resetVisionState();
             return;
         }
@@ -179,7 +180,8 @@ public class PhotonVisionCamera implements IVisionCamera {
         }
 
         VisionCameraEstimate selectedMeasurement = selectBestMeasurement(measurements);
-        updateVisionEstimate(selectedMeasurement, trust);
+        validateVisionMeasurement(selectedMeasurement);
+        hasVision = false; // will be set true if not ignored when adding to fusion
     }
 
     private Measurements getMeasurements() {
@@ -223,26 +225,30 @@ public class PhotonVisionCamera implements IVisionCamera {
         VisionCameraEstimate closeEstimate = new VisionCameraEstimate(
                 maplePose,
                 Timer.getTimestamp(),
-                Units.millisecondsToSeconds(type.latencyMs),
+                Units.millisecondsToSeconds(physicalCamera.latencyMs),
                 ALL_SIM_TAGS.size(),
                 MAPLE_SIM_TAG_DIST,
                 MAPLE_SIM_TAG_AREA,
                 ALL_SIM_TAGS,
-                false);
+                false,
+                false,
+                -1);
         VisionCameraEstimate farEstimate = new VisionCameraEstimate(
                 maplePose,
                 Timer.getTimestamp(),
-                Units.millisecondsToSeconds(type.latencyMs),
+                Units.millisecondsToSeconds(physicalCamera.latencyMs),
                 ALL_SIM_TAGS.size(),
                 MAPLE_SIM_TAG_DIST,
                 MAPLE_SIM_TAG_AREA,
                 ALL_SIM_TAGS,
-                true);
+                true,
+                false,
+                -1);
 
         return new Measurements(
                 closeEstimate,
                 farEstimate,
-                Optional.of(new TXTYMeasurement(maplePose, Timer.getTimestamp(), MAPLE_SIM_TAG_DIST)));
+                Optional.of(new TXTYMeasurement(maplePose, Timer.getTimestamp(), MAPLE_SIM_TAG_DIST, -1)));
     }
 
     private void updateConnectionStatus() {
@@ -267,7 +273,7 @@ public class PhotonVisionCamera implements IVisionCamera {
         VisionCameraEstimate closeEst = measurements.getCloseMeasurement();
 
         if (DashboardUI.Autonomous.isForceMT1Pressed()) {
-            currentMeasurementStdDevs = confidenceClose;
+            currentMeasurementStdDevs = physicalCamera.calculateStdDevs(closeEst.avgTagDist()) * stdMultiplier;
             return closeEst;
         }
 
@@ -275,17 +281,17 @@ public class PhotonVisionCamera implements IVisionCamera {
             if (measurements.txty().isPresent()
                     && SimpleMath.isInField(measurements.txty().get().pose())
                     && measurements.txty().get().distToCamera() <= txtyMaxDistance) {
-                currentMeasurementStdDevs = confidenceClose;
+                currentMeasurementStdDevs = physicalCamera.txtyStdDevs * stdMultiplier;
                 return new VisionCameraEstimate(measurements.txty().get());
             }
 
             VisionCameraEstimate farEst = measurements.getFarMeasurement();
 
             if (SimpleMath.isInField(closeEst.pose()) && closeEst.avgTagDist() < closeMaxDistance) {
-                currentMeasurementStdDevs = confidenceClose;
+                currentMeasurementStdDevs = physicalCamera.calculateStdDevs(closeEst.avgTagDist()) * stdMultiplier;
                 return closeEst;
             } else if (SimpleMath.isInField(farEst.pose())) {
-                currentMeasurementStdDevs = confidenceFar;
+                currentMeasurementStdDevs = physicalCamera.calculateStdDevs(farEst.avgTagDist()) * stdMultiplier;
                 return farEst;
             }
         }
@@ -294,16 +300,13 @@ public class PhotonVisionCamera implements IVisionCamera {
         return closeEst;
     }
 
-    private void updateVisionEstimate(VisionCameraEstimate measurement, boolean trust) {
+    private void validateVisionMeasurement(VisionCameraEstimate measurement) {
         if (currentMeasurementStdDevs >= PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS
                 || isPoseErrorTooLarge(measurement)) {
             hasVision = false;
             numTags = 0;
             currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
-            return;
         }
-
-        applyVisionMeasurement(measurement, trust);
     }
 
     private boolean isPoseErrorTooLarge(VisionCameraEstimate measurement) {
@@ -316,18 +319,26 @@ public class PhotonVisionCamera implements IVisionCamera {
                 > maxPoseError;
     }
 
-    private void applyVisionMeasurement(VisionCameraEstimate measurement, boolean trust) {
-        hasVision = true;
-        currentEstimate = measurement;
-        RobotContainer.poseSensorFusion.addVisionMeasurement(
-                currentEstimate.pose(),
-                currentEstimate.timestampSeconds(),
-                VecBuilder.fill(
-                        currentMeasurementStdDevs,
-                        currentMeasurementStdDevs,
-                        trust
-                                ? Constants.PhotonVision.ROT_STD_DEV_WHEN_TRUSTING
-                                : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+    @Override
+    public void addVisionMeasurement(boolean trust, Pose2d closestPose) {
+        if (currentMeasurementStdDevs < PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS) {
+            hasVision = true;
+            currentEstimate = unsafeEstimate;
+
+            if (closestPose != null) {
+                double distanceToClosest =
+                        currentEstimate.pose().getTranslation().getDistance(closestPose.getTranslation());
+                currentMeasurementStdDevs += distanceToClosest / 2.0;
+            }
+
+            RobotContainer.poseSensorFusion.addVisionMeasurement(
+                    currentEstimate.pose(),
+                    currentEstimate.timestampSeconds(),
+                    VecBuilder.fill(
+                            currentMeasurementStdDevs,
+                            currentMeasurementStdDevs,
+                            trust ? currentMeasurementStdDevs * 5.0 : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+        }
     }
 
     private record Measurements(VisionCameraEstimate close, VisionCameraEstimate far, Optional<TXTYMeasurement> txty) {
@@ -348,6 +359,7 @@ public class PhotonVisionCamera implements IVisionCamera {
     public void logValues(String id) {
         String prefix = "PhotonCamera/" + id + "/";
         Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose());
+        Logger.recordOutput(prefix + "AvgDist", unsafeEstimate.avgTagDist());
         Logger.recordOutput(prefix + "NumTags", numTags);
         Logger.recordOutput(prefix + "Confidence", currentMeasurementStdDevs);
         Logger.recordOutput(prefix + "HasVision", hasVision);
@@ -386,12 +398,14 @@ public class PhotonVisionCamera implements IVisionCamera {
             return new VisionCameraEstimate(
                     est.estimatedPose.toPose2d(),
                     est.timestampSeconds,
-                    type.latencyMs,
+                    physicalCamera.latencyMs,
                     targetNum,
                     avgTagDist,
                     avgTagArea,
                     rawFiducials.build(),
-                    isConstrained);
+                    isConstrained,
+                    false,
+                    -1);
         }
 
         return null;
@@ -429,7 +443,10 @@ public class PhotonVisionCamera implements IVisionCamera {
         return new Measurements(
                 getVisionCameraEstimateFromPhotonEstimate(closeOpt, photonEstimatorClose, false),
                 getVisionCameraEstimateFromPhotonEstimate(farOpt, photonEstimatorFar, true),
-                txtyOpt.map(
-                        v -> new TXTYMeasurement(v.estimatedPose.toPose2d(), v.timestampSeconds, bestTargetDistFinal)));
+                txtyOpt.map(v -> new TXTYMeasurement(
+                        v.estimatedPose.toPose2d(),
+                        v.timestampSeconds,
+                        bestTargetDistFinal,
+                        v.targetsUsed.get(0).fiducialId)));
     }
 }

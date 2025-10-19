@@ -13,7 +13,9 @@ public record VisionCameraEstimate(
         double avgTagDist,
         double avgTagArea,
         ImmutableList<RawVisionFiducial> rawFiducials,
-        boolean isConstrained) {
+        boolean isConstrained,
+        boolean isTXTY,
+        int txtyId) {
 
     public record RawVisionFiducial(int id, double area, double distToCamera, double distToRobot, double ambiguity) {
         public RawVisionFiducial(RawFiducial limelightFiducial) {
@@ -28,7 +30,7 @@ public record VisionCameraEstimate(
 
     @SuppressWarnings("java:S4738")
     public VisionCameraEstimate() {
-        this(new Pose2d(), 0, 0, 0, 0, 0, ImmutableList.of(), false);
+        this(new Pose2d(), 0, 0, 0, 0, 0, ImmutableList.of(), false, false, -1);
     }
 
     public VisionCameraEstimate(PoseEstimate limelightEstimate) {
@@ -40,10 +42,12 @@ public record VisionCameraEstimate(
                 limelightEstimate.avgTagDist,
                 limelightEstimate.avgTagArea,
                 convertRawFiducials(limelightEstimate.rawFiducials),
-                limelightEstimate.isMegaTag2);
+                limelightEstimate.isMegaTag2,
+                false,
+                -1);
     }
 
-    public record TXTYMeasurement(Pose2d pose, double timestamp, double distToCamera) {}
+    public record TXTYMeasurement(Pose2d pose, double timestamp, double distToCamera, int tagId) {}
 
     public VisionCameraEstimate(TXTYMeasurement txTyMeasurement) {
         this(
@@ -54,7 +58,9 @@ public record VisionCameraEstimate(
                 txTyMeasurement.distToCamera(),
                 0,
                 ImmutableList.of(),
-                false);
+                false,
+                true,
+                txTyMeasurement.tagId);
     }
 
     private static ImmutableList<RawVisionFiducial> convertRawFiducials(RawFiducial[] rawFiducials) {

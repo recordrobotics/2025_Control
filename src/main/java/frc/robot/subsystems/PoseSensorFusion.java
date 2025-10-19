@@ -32,8 +32,10 @@ import frc.robot.utils.camera.LimelightCamera;
 import frc.robot.utils.camera.PhotonVisionCamera;
 import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -47,13 +49,16 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     public static final double MAX_MEASUREMENT_STD_DEVS = 9_999_999;
 
-    private static final double L1_STD_MULTIPLIER = 2.0;
-    private static final double SOURCE_STD_MULTIPLIER = 8.0;
+    private static final double L1_STD_MULTIPLIER = 1.0;
+    private static final double SOURCE_STD_MULTIPLIER = 1.0;
 
     private static final double ISPE_STD_DEV = 0.7;
     private static final double MAX_L1_DISTANCE_TO_IGNORE_SOURCE = 2.5;
 
     private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
+
+    private static final double MIN_TXTY_FPS = 8.0;
+    private static final double MAX_TXTY_TIME = 1.0 / MIN_TXTY_FPS;
 
     public final NavSensor nav;
 
@@ -99,6 +104,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private SwerveModulePosition[] updatePositions;
 
     private int nextVisionId = 1;
+
+    private double lastMostCommonTxtyTime = 0;
+    private int lastMostCommonTxtyId = -1;
 
     public PoseSensorFusion() {
         nav = new NavSensor(
@@ -198,6 +206,8 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         Logger.recordOutput("SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
         Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
         Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
+
+        Logger.recordOutput("MostCommonTXTYId", lastMostCommonTxtyId);
     }
 
     @Override
@@ -210,6 +220,54 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         updateNav = nav.getAdjustedAngle();
         updatePositions = getModulePositions();
 
+        cameras.stream().forEach(IVisionCamera::updateEstimation);
+
+        updateMostCommonTXTYId();
+
+        addCameraVisionMeasurement(trustLimelightLeft, lastMostCommonTxtyId, leftCamera);
+        addCameraVisionMeasurement(trustLimelightCenter, lastMostCommonTxtyId, centerCamera);
+
+        if (useOPI) {
+            addCameraVisionMeasurement(true, lastMostCommonTxtyId, l1Camera);
+            if (!l1Camera.hasVision() || l1Camera.getUnsafeEstimate().avgTagDist() >= MAX_L1_DISTANCE_TO_IGNORE_SOURCE)
+                addCameraVisionMeasurement(true, lastMostCommonTxtyId, sourceCamera);
+        }
+
+        updateIndependentPoseEstimator();
+    }
+
+    /**
+     * Finds the most common TXTY tag ID among all cameras with valid TXTY estimates or -1 if none are found.
+     */
+    private void updateMostCommonTXTYId() {
+        Map<Integer, Integer> txtyTagsCount = new HashMap<>();
+        for (IVisionCamera camera : cameras) {
+            if (camera.getNumTags() > 0
+                    && camera.getMeasurementStdDevs() < MAX_MEASUREMENT_STD_DEVS
+                    && camera.getUnsafeEstimate().isTXTY()) {
+                int id = camera.getCurrentEstimate().txtyId();
+                txtyTagsCount.put(id, txtyTagsCount.getOrDefault(id, 0) + 1);
+            }
+        }
+
+        int mostCommonTxtyId = -1;
+        int mostCommonTxtyCount = 0;
+        for (Map.Entry<Integer, Integer> entry : txtyTagsCount.entrySet()) {
+            if (entry.getValue() > mostCommonTxtyCount) {
+                mostCommonTxtyId = entry.getKey();
+                mostCommonTxtyCount = entry.getValue();
+            }
+        }
+
+        if (lastMostCommonTxtyId == -1
+                || lastMostCommonTxtyTime + MAX_TXTY_TIME < Timer.getTimestamp()
+                || mostCommonTxtyId == lastMostCommonTxtyId) {
+            lastMostCommonTxtyId = mostCommonTxtyId;
+            lastMostCommonTxtyTime = Timer.getTimestamp();
+        }
+    }
+
+    private void updateIndependentPoseEstimator() {
         if (cameras.stream().anyMatch(v -> v.hasVision())) {
             // when vision is correcting the pose, have that override the independent pose estimator
             independentPoseEstimator.reset(getEstimatedPosition());
@@ -225,15 +283,17 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                         VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
             }
         }
+    }
 
-        leftCamera.updateEstimation(trustLimelightLeft, false);
-        centerCamera.updateEstimation(trustLimelightCenter, false);
-        l1Camera.updateEstimation(true, !useOPI);
-        sourceCamera.updateEstimation(
-                true,
-                !useOPI
-                        || (l1Camera.hasVision()
-                                && l1Camera.getUnsafeEstimate().avgTagDist() < MAX_L1_DISTANCE_TO_IGNORE_SOURCE));
+    private void addCameraVisionMeasurement(boolean trust, int mostCommonTxtyId, IVisionCamera camera) {
+        if (mostCommonTxtyId == -1
+                || (camera.getUnsafeEstimate().isTXTY()
+                        && camera.getUnsafeEstimate().txtyId() == mostCommonTxtyId)) {
+            camera.addVisionMeasurement(
+                    trust,
+                    getEstimatedPositionAt(camera.getUnsafeEstimate().timestampSeconds())
+                            .orElse(null));
+        }
     }
 
     private void updateDashboard() {
