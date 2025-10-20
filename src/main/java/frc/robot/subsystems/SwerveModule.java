@@ -22,7 +22,6 @@ import frc.robot.utils.ModuleConstants;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
-import org.littletonrobotics.junction.Logger;
 
 public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
 
@@ -268,10 +267,6 @@ public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
                         - getTurnWheelRotation2d().getRadians());
 
         io.setDriveMotorMotionMagic(driveRequest.withVelocity(actualTargetDriveVelocity));
-
-        // TODO: remove after drivetrain tuning
-        Logger.recordOutput("Swerve/" + encoderChannel + "/Current", getDriveWheelVelocity());
-        Logger.recordOutput("Swerve/" + encoderChannel + "/Target", actualTargetDriveVelocity);
 
         SmartDashboard.putNumber("Encoder " + encoderChannel, io.getAbsoluteEncoder());
 

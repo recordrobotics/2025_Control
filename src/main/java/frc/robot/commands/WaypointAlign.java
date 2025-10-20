@@ -23,6 +23,11 @@ import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 
 public class WaypointAlign {
 
+    /**
+     * Slight multiplier to increase velocity at waypoints and make path smoother
+     */
+    public static final double WAYPOINT_VELOCITY_MULTIPLIER = 1.05;
+
     public static List<Pose2d> createWaypointsToTarget(Pose2d target, Transform2d[] targetTransforms) {
 
         List<Pose2d> waypoints = new ArrayList<>(targetTransforms.length + 1);
@@ -108,8 +113,8 @@ public class WaypointAlign {
             dy = 0.0;
         }
 
-        dx *= 1.05;
-        dy *= 1.05;
+        dx *= WAYPOINT_VELOCITY_MULTIPLIER;
+        dy *= WAYPOINT_VELOCITY_MULTIPLIER;
 
         return new double[] {dx, dy, dr};
     }
