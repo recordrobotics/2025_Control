@@ -245,6 +245,8 @@ public final class RobotContainer {
                 "Additional Reef Offset Left", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT);
         SmartDashboard.putNumber(
                 "Additional Reef Offset Right", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT);
+        SmartDashboard.putNumber(
+                "Additional Reef Offset Back", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_BACK);
     }
 
     public static void teleopInit() {
@@ -553,6 +555,8 @@ public final class RobotContainer {
                 "Additional Reef Offset Left", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT);
         Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SmartDashboard.getNumber(
                 "Additional Reef Offset Right", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT);
+        Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = SmartDashboard.getNumber(
+                "Additional Reef Offset Back", Constants.Game.CoralPosition.ADDITIONAL_REEF_SEGMENT_OFFSET_BACK);
     }
 
     public static void simulationPeriodic() {

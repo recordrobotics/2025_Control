@@ -217,14 +217,19 @@ public final class Constants {
             public static final double L2L3_REEF_OFFSET = 0.02;
             public static final double L4_REEF_OFFSET = 0.05;
 
-            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0.01061;
-            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0.01720;
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT =
+                    0.01061; // positive is closer to middle
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT =
+                    0.01720; // positive is closer to middle
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0; // positive is closer to reef
 
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0;
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0;
 
             public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
             public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
 
             public final int apriltagId;
             private final int side;
@@ -262,7 +267,7 @@ public final class Constants {
 
             public Pose2d getPose(CoralLevel level) {
                 Pose2d newPose = pose.transformBy(new Transform2d(
-                        0,
+                        ADDITIONAL_REEF_SEGMENT_OFFSET_BACK,
                         (side == 0 ? -ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT : ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT),
                         Rotation2d.kZero));
                 return switch (level) {
