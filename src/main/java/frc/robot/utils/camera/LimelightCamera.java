@@ -46,6 +46,8 @@ public class LimelightCamera implements IVisionCamera {
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
     private static final double DEFAULT_TXTY_MAX_DISTANCE = 1.0; // have to be 1.0 meters or closer to use txty
 
+    private static final double ROTATION_STDDEV_MULTIPLIER = 5.0;
+
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_SPAN = 0.1;
     private static final double MAPLE_SIM_TAG_DIST = 6;
@@ -170,13 +172,15 @@ public class LimelightCamera implements IVisionCamera {
             return;
         }
 
-        if (measurements.txty().isEmpty()) {
+        Optional<TXTYMeasurement> txtyMeasurement = measurements.txty();
+
+        if (txtyMeasurement.isEmpty()) {
             txtyPose = new Pose2d();
         } else {
-            txtyPose = measurements.txty().get().pose();
+            txtyPose = txtyMeasurement.get().pose();
         }
 
-        selectBestMeasurement(measurements.mt1(), measurements.mt2(), measurements.txty());
+        selectBestMeasurement(measurements.mt1(), measurements.mt2(), txtyMeasurement);
         validateMeasurementTagCount();
         validatePoseDistance();
         hasVision = false; // will be set true if not ignored when adding to fusion
@@ -225,6 +229,13 @@ public class LimelightCamera implements IVisionCamera {
         return new Measurements(measurement, measurementM2, txtyMeasurement);
     }
 
+    /**
+     * From PhotonVision
+     * @param timestamp the timestamp of the measurement
+     * @param tagCount number of tags seen
+     * @return the TXTYMeasurement
+     */
+    @SuppressWarnings("java:S1941") // library code
     private Optional<TXTYMeasurement> pnpDistanceTrigSolveStrategy(double timestamp, int tagCount) {
         if (tagCount == 0) {
             return Optional.empty();
@@ -313,6 +324,7 @@ public class LimelightCamera implements IVisionCamera {
         return Optional.empty();
     }
 
+    @SuppressWarnings("java:S3553") // record stores an optional
     private Measurements createPoseEstimatesFromPhoton(EstimatedRobotPose est, Optional<TXTYMeasurement> txty) {
         PhotonMeasurementData data = processPhotonTargets(est);
 
@@ -447,6 +459,7 @@ public class LimelightCamera implements IVisionCamera {
         return true;
     }
 
+    @SuppressWarnings("java:S3553") // record stores an optional
     private void selectBestMeasurement(
             PoseEstimate measurement, PoseEstimate measurementM2, Optional<TXTYMeasurement> txty) {
         if (DashboardUI.Autonomous.isForceMT1Pressed()
@@ -513,7 +526,9 @@ public class LimelightCamera implements IVisionCamera {
                     VecBuilder.fill(
                             currentMeasurementStdDevs,
                             currentMeasurementStdDevs,
-                            trust ? currentMeasurementStdDevs * 5.0 : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+                            trust
+                                    ? currentMeasurementStdDevs * ROTATION_STDDEV_MULTIPLIER
+                                    : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
         }
     }
 

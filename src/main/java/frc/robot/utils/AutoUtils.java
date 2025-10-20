@@ -34,16 +34,14 @@ public final class AutoUtils {
 
     public static Command alignToReefL4() {
         return Commands.defer(
-                () -> {
-                    return WaypointAlign.align(
-                            ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
-                            0,
-                            1,
-                            true,
-                            new Double[] {2.0, 1.0},
-                            AutoControlModifier.getDefault(),
-                            AutoUtils::getCurrentDrivetrainKinematicState);
-                },
+                () -> WaypointAlign.align(
+                        ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
+                        0,
+                        1,
+                        true,
+                        new Double[] {2.0, 1.0},
+                        AutoControlModifier.getDefault(),
+                        AutoUtils::getCurrentDrivetrainKinematicState),
                 Set.of(RobotContainer.drivetrain));
     }
 

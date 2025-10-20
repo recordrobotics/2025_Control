@@ -39,6 +39,8 @@ public class PhotonVisionCamera implements IVisionCamera {
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
     private static final double DEFAULT_TXTY_MAX_DISTANCE = 1.0; // have to be 1.0 meters or closer to use txty
 
+    private static final double ROTATION_STDDEV_MULTIPLIER = 5.0;
+
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_DIST = 6;
     private static final double MAPLE_SIM_TAG_AREA = 0.1;
@@ -172,10 +174,12 @@ public class PhotonVisionCamera implements IVisionCamera {
             return;
         }
 
-        if (measurements.txty().isEmpty()) {
+        Optional<TXTYMeasurement> txtyMeasurement = measurements.txty();
+
+        if (txtyMeasurement.isEmpty()) {
             txtyPose = new Pose2d();
         } else {
-            txtyPose = measurements.txty().get().pose();
+            txtyPose = txtyMeasurement.get().pose();
         }
 
         VisionCameraEstimate selectedMeasurement = selectBestMeasurement(measurements);
@@ -277,11 +281,13 @@ public class PhotonVisionCamera implements IVisionCamera {
         }
 
         if (closeEst.tagCount() > 0) {
-            if (measurements.txty().isPresent()
-                    && SimpleMath.isInField(measurements.txty().get().pose())
-                    && measurements.txty().get().distToCamera() <= txtyMaxDistance) {
+            Optional<TXTYMeasurement> txtyMeasurement = measurements.txty();
+
+            if (txtyMeasurement.isPresent()
+                    && SimpleMath.isInField(txtyMeasurement.get().pose())
+                    && txtyMeasurement.get().distToCamera() <= txtyMaxDistance) {
                 currentMeasurementStdDevs = physicalCamera.txtyStdDevs * stdMultiplier;
-                return new VisionCameraEstimate(measurements.txty().get());
+                return new VisionCameraEstimate(txtyMeasurement.get());
             }
 
             VisionCameraEstimate farEst = measurements.getFarMeasurement();
@@ -336,7 +342,9 @@ public class PhotonVisionCamera implements IVisionCamera {
                     VecBuilder.fill(
                             currentMeasurementStdDevs,
                             currentMeasurementStdDevs,
-                            trust ? currentMeasurementStdDevs * 5.0 : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+                            trust
+                                    ? currentMeasurementStdDevs * ROTATION_STDDEV_MULTIPLIER
+                                    : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
         }
     }
 
@@ -368,6 +376,7 @@ public class PhotonVisionCamera implements IVisionCamera {
         disconnectedAlert.set(!connected);
     }
 
+    @SuppressWarnings("java:S3553") // input is from output of another function
     private VisionCameraEstimate getVisionCameraEstimateFromPhotonEstimate(
             Optional<EstimatedRobotPose> estOpt, PhotonPoseEstimator estimator, boolean isConstrained) {
         if (estOpt.isPresent()) {

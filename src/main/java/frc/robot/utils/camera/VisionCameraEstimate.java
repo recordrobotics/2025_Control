@@ -49,6 +49,7 @@ public record VisionCameraEstimate(
 
     public record TXTYMeasurement(Pose2d pose, double timestamp, double distToCamera, int tagId) {}
 
+    @SuppressWarnings("java:S4738") // we want specifically ImmutableList.of() here
     public VisionCameraEstimate(TXTYMeasurement txTyMeasurement) {
         this(
                 txTyMeasurement.pose(),
