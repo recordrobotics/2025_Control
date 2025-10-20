@@ -25,7 +25,7 @@ public interface IVisionCamera {
     void updateEstimation();
 
     /***
-     * Add a vision measurement to the filter
+     * Add a vision measurement to the filter with weight scaled by distance to the closest pose.
      * @param trust whether to trust the rotation
      * @param closestPose the closest pose detected by the cameras, can be null
      */
