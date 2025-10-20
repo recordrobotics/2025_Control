@@ -204,6 +204,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                         getEstimatedPosition(),
                         RobotContainer.drivetrain.getChassisSpeeds(),
                         Constants.Control.SCORE_TARGET_LOOKAHEAD));
+
+        Logger.recordOutput("NAV/Pitch", nav.getPitch());
+        Logger.recordOutput("NAV/Roll", nav.getRoll());
     }
 
     @Override

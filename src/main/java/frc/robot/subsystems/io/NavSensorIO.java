@@ -10,6 +10,10 @@ public interface NavSensorIO extends AutoCloseable {
 
     double getYawRate();
 
+    double getPitch();
+
+    double getRoll();
+
     double getWorldLinearAccelX();
 
     double getWorldLinearAccelY();
