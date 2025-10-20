@@ -511,6 +511,8 @@ public final class Constants {
         public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.32);
         public static final Angle CLIMBED_ROTATIONS = Rotations.of(0.15);
 
+        public static final Angle CLIMB_BURST_ROTATIONS = Rotations.of(0.02);
+
         public static final double RATCHET_ENGAGED = 0.15;
         public static final double RATCHET_DISENGAGED = 0.025;
 

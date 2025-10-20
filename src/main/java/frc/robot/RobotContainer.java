@@ -24,6 +24,7 @@ import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.commands.AutoAlgae;
 import frc.robot.commands.AutoScore;
+import frc.robot.commands.ClimbBurst;
 import frc.robot.commands.ClimbMove;
 import frc.robot.commands.CoralIntakeFromGround;
 import frc.robot.commands.CoralIntakeFromGroundUpL1;
@@ -451,6 +452,9 @@ public final class RobotContainer {
                                 new ClimbMove(ClimberState.EXTEND),
                                 () -> climber.getCurrentState() == ClimberState.EXTEND)
                         .alongWith(new InstantCommand(() -> Elastic.selectTab("Climb"))));
+
+        new Trigger(() -> DashboardUI.Overview.getControl().isClimbBurstTriggered())
+                .onTrue(new ClimbBurst().onlyIf(() -> climber.getCurrentState() == ClimberState.CLIMB));
 
         new Trigger(() -> DriverStationUtils.getTeleopMatchTime().orElse(Double.MAX_VALUE) <= ENDGAME_CLIMB_TIME)
                 .onTrue(new VibrateXbox(RumbleType.kBothRumble, 1.0).withTimeout(2.0));
