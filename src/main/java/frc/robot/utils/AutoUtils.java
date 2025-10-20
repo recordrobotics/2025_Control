@@ -32,17 +32,9 @@ public final class AutoUtils {
 
     private AutoUtils() {}
 
-    public static Command alignWithVision() {
+    public static Command alignToReefL4() {
         return Commands.defer(
                 () -> {
-                    int[] visionTagTarget = {
-                        IGamePosition.closestTo(
-                                        RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values())
-                                .apriltagId
-                    };
-
-                    // TODO: Add 2d april tag alignment after waypoint finishes
-
                     return WaypointAlign.align(
                             ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
                             0,

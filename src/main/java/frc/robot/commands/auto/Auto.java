@@ -95,7 +95,7 @@ public class Auto {
 
     private static Command createScoringSequence() {
         return Commands.sequence(
-                CommandUtils.finishOnInterrupt(AutoUtils.alignWithVision().withTimeout(ALIGN_TIMEOUT)),
+                CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
                 new InstantCommand(() -> RobotContainer.drivetrain.kill()),
                 CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)));
     }

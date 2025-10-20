@@ -1,10 +1,8 @@
 package frc.robot.subsystems;
 
-import com.google.common.collect.ImmutableSet;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -32,11 +30,7 @@ import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
 import frc.robot.utils.camera.PhotonVisionCamera;
-import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -55,8 +49,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private static final double SOURCE_STD_MULTIPLIER = 1.0;
 
     private static final double ISPE_STD_DEV = 0.7;
-
-    private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
 
     private static final double MIN_TXTY_FPS = 8.0;
     private static final double MAX_TXTY_TIME = 1.0 / MIN_TXTY_FPS;
@@ -89,8 +81,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     private final Set<IVisionCamera> cameras = Set.of(leftCamera, centerCamera, l1Camera, sourceCamera);
 
-    private final HashSet<VisionDebouncer> visionDebouncers = new HashSet<>();
-
     private ConcurrentSkipListSet<DeferredPoseEstimation> deferredPoseEstimations =
             new ConcurrentSkipListSet<>((a, b) -> Double.compare(a.timestampSeconds, b.timestampSeconds));
 
@@ -106,8 +96,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private double updateTimestamp;
     private Rotation2d updateNav;
     private SwerveModulePosition[] updatePositions;
-
-    private int nextVisionId = 1;
 
     private double lastMostCommonTxtyTime = 0;
     private int lastMostCommonTxtyId = -1;
@@ -203,10 +191,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         centerCamera.logValues("Center");
         l1Camera.logValues("L1");
         sourceCamera.logValues("Source");
-
-        for (VisionDebouncer debouncer : visionDebouncers) {
-            debouncer.update();
-        }
 
         Logger.recordOutput("SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
         Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
@@ -469,270 +453,8 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                 DriverStationUtils.getCurrentAlliance() == Alliance.Red ? new Rotation2d(Math.PI) : new Rotation2d(0)));
     }
 
-    public enum CameraTarget {
-        LEFT(RobotContainer.poseSensorFusion.getLeftCamera()),
-        CENTER(RobotContainer.poseSensorFusion.getCenterCamera()),
-        L1(RobotContainer.poseSensorFusion.getL1Camera()),
-        SOURCE(RobotContainer.poseSensorFusion.getSourceCamera()),
-        ELEVATOR(LEFT, CENTER),
-        ALL(LEFT, CENTER, L1, SOURCE);
-
-        @SuppressWarnings("ImmutableEnumChecker") // we want IVisionCamera to be mutable
-        private final ImmutableSet<IVisionCamera> cameras;
-
-        CameraTarget(IVisionCamera... cameras) {
-            this.cameras = ImmutableSet.copyOf(cameras);
-        }
-
-        CameraTarget(CameraTarget... targets) {
-            ImmutableSet.Builder<IVisionCamera> cameraList = ImmutableSet.builder();
-            for (CameraTarget target : targets) {
-                for (IVisionCamera camera : target.cameras) {
-                    cameraList.add(camera);
-                }
-            }
-            this.cameras = cameraList.build();
-        }
-
-        boolean contains(IVisionCamera camera) {
-            return cameras.contains(camera);
-        }
-
-        boolean contains(IVisionCamera... cameras) {
-            return this.cameras.containsAll(Set.of(cameras));
-        }
-    }
-
-    public VisionDebouncer registerVisionCheck(CameraTarget camera) {
-        return registerVisionCheck(camera, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
-    }
-
-    public VisionDebouncer registerVisionCheck(
-            CameraTarget camera, double debounceTime, Debouncer.DebounceType debounceType) {
-        return registerVisionCheck(camera, null, debounceTime, debounceType);
-    }
-
-    public VisionDebouncer registerVisionCheck(CameraTarget camera, int... tagIds) {
-        return registerVisionCheck(camera, tagIds, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
-    }
-
-    public VisionDebouncer registerVisionCheck(
-            CameraTarget camera, int[] tagIds, double debounceTime, Debouncer.DebounceType debounceType) {
-        VisionDebouncer vision = new VisionDebouncer(nextVisionId, debounceTime, debounceType, camera, tagIds);
-        visionDebouncers.add(vision);
-        return vision;
-    }
-
-    public void releaseVisionCheck(VisionDebouncer visionDebouncer) {
-        visionDebouncers.remove(visionDebouncer);
-    }
-
     @Override
     public void close() throws Exception {
         nav.close();
-    }
-
-    public LimelightCamera getLeftCamera() {
-        return leftCamera;
-    }
-
-    public LimelightCamera getCenterCamera() {
-        return centerCamera;
-    }
-
-    public PhotonVisionCamera getL1Camera() {
-        return l1Camera;
-    }
-
-    public PhotonVisionCamera getSourceCamera() {
-        return sourceCamera;
-    }
-
-    public Set<IVisionCamera> getCameras() {
-        return cameras;
-    }
-
-    public static final class VisionDebouncer {
-        private final Debouncer debouncer;
-        private CameraTarget camera;
-        private int[] tagIds;
-
-        private final int id;
-
-        private boolean result = false;
-        private double lastAccessTime;
-
-        private boolean persistent = false;
-
-        private VisionDebouncer(
-                int id, double debounceTime, Debouncer.DebounceType debounceType, CameraTarget camera, int[] tagIds) {
-            this.id = id;
-            this.camera = camera;
-            this.tagIds = tagIds;
-
-            debouncer = new Debouncer(0, debounceType);
-            debouncer.calculate(hasVisionRaw());
-            debouncer.setDebounceTime(debounceTime);
-
-            lastAccessTime = Timer.getTimestamp();
-        }
-
-        private boolean hasVisionRaw() {
-            boolean rawInput = hasAnyVision();
-            if (rawInput && tagIds != null) {
-                rawInput = hasRequiredTags();
-            }
-            return rawInput;
-        }
-
-        private boolean hasAnyVision() {
-            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
-                if (camera.contains(vis) && vis.hasVision()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private boolean hasRequiredTags() {
-            List<Integer> visionTags = collectVisionTags();
-            for (int tagId : tagIds) {
-                if (!visionTags.contains(tagId)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private List<Integer> collectVisionTags() {
-            ArrayList<Integer> visionTags = new ArrayList<>();
-            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
-                if (camera.contains(vis)) {
-                    for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials()) {
-                        visionTags.add(tag.id());
-                    }
-                }
-            }
-            return visionTags;
-        }
-
-        private void update() {
-            boolean rawInput = hasVisionRaw();
-
-            result = debouncer.calculate(rawInput);
-
-            double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
-            if (!persistent && timeSinceLastAccessed > 1.0) {
-                ConsoleLogger.logWarning("Detected abandoned "
-                        + toString()
-                        + " last accessed "
-                        + (int) Math.floor(timeSinceLastAccessed)
-                        + " seconds ago.");
-            }
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("VisionDebouncer{");
-            sb.append("id=").append(id);
-            sb.append(", camera=").append(camera);
-            sb.append(", tagIds=");
-            if (tagIds != null) {
-                for (int tagId : tagIds) {
-                    sb.append(tagId).append(" ");
-                }
-            }
-            sb.append(", value=").append(result);
-            sb.append('}');
-            return sb.toString();
-        }
-
-        public boolean hasVision() {
-            lastAccessTime = Timer.getTimestamp();
-            return result;
-        }
-
-        public void setCamera(CameraTarget camera) {
-            this.camera = camera;
-        }
-
-        public VisionDebouncer withCamera(CameraTarget camera) {
-            setCamera(camera);
-            return this;
-        }
-
-        public void setTagIds(int[] tagIds) {
-            this.tagIds = tagIds;
-        }
-
-        public VisionDebouncer withTagIds(int[] tagIds) {
-            setTagIds(tagIds);
-            return this;
-        }
-
-        public CameraTarget getCamera() {
-            return camera;
-        }
-
-        public int[] getTagIds() {
-            return tagIds;
-        }
-
-        public void setDebounceTime(double time) {
-            debouncer.setDebounceTime(time);
-        }
-
-        public void setDebounceType(Debouncer.DebounceType debounceType) {
-            debouncer.setDebounceType(debounceType);
-        }
-
-        public VisionDebouncer withDebounceTime(double time) {
-            setDebounceTime(time);
-            return this;
-        }
-
-        public VisionDebouncer withDebounceType(Debouncer.DebounceType debounceType) {
-            setDebounceType(debounceType);
-            return this;
-        }
-
-        public double getDebounceTime() {
-            return debouncer.getDebounceTime();
-        }
-
-        public Debouncer.DebounceType getDebounceType() {
-            return debouncer.getDebounceType();
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public void release() {
-            RobotContainer.poseSensorFusion.releaseVisionCheck(this);
-        }
-
-        public boolean isPersistent() {
-            return persistent;
-        }
-
-        public void setPersistent(boolean persistent) {
-            this.persistent = persistent;
-        }
-
-        public void setPersistent() {
-            setPersistent(true);
-        }
-
-        public VisionDebouncer withPersistent() {
-            setPersistent();
-            return this;
-        }
-
-        public VisionDebouncer withPersistent(boolean persistent) {
-            setPersistent(persistent);
-            return this;
-        }
     }
 }
