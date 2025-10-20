@@ -1,12 +1,23 @@
 package frc.robot.utils;
 
 import com.pathplanner.lib.util.FlippingUtil;
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathSharedStore;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N3;
+import java.util.ArrayList;
+import java.util.Map;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public final class SimpleMath {
 
@@ -113,6 +124,55 @@ public final class SimpleMath {
         double rot = pose.getRotation().getRadians() + rand.nextGaussian(0, stdDevRot);
 
         return new Pose2d(new Translation2d(x, y), new Rotation2d(rot));
+    }
+
+    public static Rotation3d gaussianRotation3d(double stdDevX, double stdDevY, double stdDevZ) {
+        Vector<N3> noise = VecBuilder.fill(
+                rand.nextGaussian(0, stdDevX), rand.nextGaussian(0, stdDevY), rand.nextGaussian(0, stdDevZ));
+        return new Rotation3d(noise);
+    }
+
+    public static Pose3d poseNoise(
+            Pose3d pose,
+            double stdDevX,
+            double stdDevY,
+            double stdDevZ,
+            double stdDevRotX,
+            double stdDevRotY,
+            double stdDevRotZ) {
+        double x = rand.nextGaussian(0, stdDevX);
+        double y = rand.nextGaussian(0, stdDevY);
+        double z = rand.nextGaussian(0, stdDevZ);
+
+        return new Pose3d(
+                pose.getTranslation().plus(new Translation3d(x, y, z)),
+                pose.getRotation().rotateBy(gaussianRotation3d(stdDevRotX, stdDevRotY, stdDevRotZ)));
+    }
+
+    public static AprilTagFieldLayout addNoiseToAprilTagFieldLayout(
+            AprilTagFieldLayout layout,
+            int[] ids,
+            double stdDevX,
+            double stdDevY,
+            double stdDevZ,
+            double stdDevRotX,
+            double stdDevRotY,
+            double stdDevRotZ) {
+        Map<Integer, AprilTag> tagMap = layout.getTags().stream().collect(Collectors.toMap(tag -> tag.ID, tag -> tag));
+
+        for (int id : ids) {
+            AprilTag tag = tagMap.get(id);
+            if (tag == null) {
+                throw new IllegalArgumentException("Tag ID " + id + " not found in layout");
+            }
+
+            Pose3d noisyPose = poseNoise(tag.pose, stdDevX, stdDevY, stdDevZ, stdDevRotX, stdDevRotY, stdDevRotZ);
+
+            tagMap.put(id, new AprilTag(id, noisyPose));
+        }
+
+        return new AprilTagFieldLayout(
+                new ArrayList<>(tagMap.values()), layout.getFieldLength(), layout.getFieldWidth());
     }
 
     /**

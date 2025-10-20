@@ -1072,7 +1072,7 @@ public final class Constants {
 
         public static final AutoLogLevel.Level AUTO_LOG_LEVEL = getAutoLogLevel();
 
-        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM;
+        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM_INACCURATE;
 
         // change to use an external photonvision client for coral detection simulation
         public static final CoralDetection.CoralDetectionSimulationMode CORAL_DETECTION_SIMULATION_MODE =
@@ -1116,9 +1116,32 @@ public final class Constants {
         }
 
         public enum VisionSimulationMode {
-            PHOTON_SIM,
-            MAPLE_CLEAN,
-            MAPLE_NOISE;
+            /**
+             * Uses PhotonVision simulation with accurate april tag placement on the field
+             */
+            PHOTON_SIM_ACCURATE(true),
+            /**
+             * Uses PhotonVision simulation with simulated inaccurate april tag placement on the field
+             */
+            PHOTON_SIM_INACCURATE(true),
+            /**
+             * Uses the maplesim actual robot pose as a vision measurement
+             */
+            MAPLE_CLEAN(false),
+            /**
+             * Uses the maplesim actual robot pose with noise added as a vision measurement
+             */
+            MAPLE_NOISE(false);
+
+            final boolean isPhotonSim;
+
+            VisionSimulationMode(boolean isPhotonSim) {
+                this.isPhotonSim = isPhotonSim;
+            }
+
+            public boolean isPhotonSim() {
+                return isPhotonSim;
+            }
         }
 
         public enum Mode {

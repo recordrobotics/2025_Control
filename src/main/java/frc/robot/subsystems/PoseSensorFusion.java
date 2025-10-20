@@ -6,6 +6,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -54,12 +55,14 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private static final double SOURCE_STD_MULTIPLIER = 1.0;
 
     private static final double ISPE_STD_DEV = 0.7;
-    private static final double MAX_L1_DISTANCE_TO_IGNORE_SOURCE = 2.5;
 
     private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
 
     private static final double MIN_TXTY_FPS = 8.0;
     private static final double MAX_TXTY_TIME = 1.0 / MIN_TXTY_FPS;
+
+    private static final double MAX_TXTY_DISTANCE_TO_LAST_POSE = 0.3;
+    private static final double MAX_TXTY_DISTANCE_TO_LAST_TAG = 0.8;
 
     public final NavSensor nav;
 
@@ -108,6 +111,7 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     private double lastMostCommonTxtyTime = 0;
     private int lastMostCommonTxtyId = -1;
+    private Pose2d lastMostCommonTxtyRobotPose = new Pose2d();
 
     public PoseSensorFusion() {
         nav = new NavSensor(
@@ -237,23 +241,102 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         if (useOPI) {
             addCameraVisionMeasurement(true, lastMostCommonTxtyId, l1Camera);
-            if (!l1Camera.hasVision() || l1Camera.getUnsafeEstimate().avgTagDist() >= MAX_L1_DISTANCE_TO_IGNORE_SOURCE)
-                addCameraVisionMeasurement(true, lastMostCommonTxtyId, sourceCamera);
+            addCameraVisionMeasurement(true, lastMostCommonTxtyId, sourceCamera);
         }
 
         updateIndependentPoseEstimator();
     }
 
     /**
-     * Finds the most common TXTY tag ID among all cameras with valid TXTY estimates or -1 if none are found.
+     * Updates the last known most common TXTY ID and time based on the current most common TXTY ID
      */
     private void updateMostCommonTXTYId() {
+        int mostCommonTxtyId = getMostCommonTXTYId();
+
+        if (shouldUpdateTXTYId(mostCommonTxtyId)) {
+            lastMostCommonTxtyId = mostCommonTxtyId;
+            lastMostCommonTxtyTime = Timer.getTimestamp();
+            if (mostCommonTxtyId != -1) {
+                lastMostCommonTxtyRobotPose = getEstimatedPosition();
+            }
+        }
+    }
+
+    /**
+     * Determines whether the last known most common TXTY ID should still be considered visible based on
+     * <ul>
+     *  <li>Distance to where the tag was last seen
+     *  <li>Distance to the tag's known position
+     * </ul>
+     * @return true if the last known most common TXTY ID should be considered visible, false otherwise
+     */
+    private boolean shouldLastMostCommonTXTYIdBeVisible() {
+        // we are close to where we last saw the tag but don't see it anymore, likely lost tracking
+        // don't use potentially unreliable vision from PNP solver far away from tag
+
+        Pose2d currentPose = getEstimatedPosition();
+        double distanceToWhereTagLastSeen =
+                currentPose.getTranslation().getDistance(lastMostCommonTxtyRobotPose.getTranslation());
+
+        if (distanceToWhereTagLastSeen > MAX_TXTY_DISTANCE_TO_LAST_POSE) {
+            return false;
+        }
+
+        Optional<Pose3d> tagPose = Constants.Game.APRILTAG_LAYOUT.getTagPose(lastMostCommonTxtyId);
+        if (tagPose.isPresent()) {
+            // we are close to the tag but don't see it anymore, likely lost tracking
+            // don't use potentially unreliable vision from PNP solver far away from tag
+
+            double distanceToTag = currentPose
+                    .getTranslation()
+                    .getDistance(tagPose.get().toPose2d().getTranslation());
+
+            if (distanceToTag > MAX_TXTY_DISTANCE_TO_LAST_TAG) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines whether to update the last known most common TXTY ID and time based on:
+     * <ul>
+     *  <li>If there is no last known ID (the delay is only on falling edge)
+     *  <li>If the most common ID is the same as the last known (update the last seen time)
+     *  <li>If the tracked tag is lost but should still be visible (odometry is likely more accurate than far away PNP pose)
+     *  <li>If the last known ID is stale (exceeded max time without being seen)
+     * </ul>
+     * @param mostCommonTxtyId the currently most common TXTY ID or -1 if none are detected
+     * @return true if the last known most common TXTY ID should be updated, false otherwise
+     */
+    @SuppressWarnings("java:S1126") // last return is necessary for clarity
+    private boolean shouldUpdateTXTYId(int mostCommonTxtyId) {
+        if (lastMostCommonTxtyId == -1) return true; // always update if we don't have a last known ID
+
+        if (mostCommonTxtyId == lastMostCommonTxtyId)
+            return true; // always update if the most common ID is the same as last known
+
+        if (mostCommonTxtyId == -1 && shouldLastMostCommonTXTYIdBeVisible())
+            return false; // don't update if we lost tracking of the last known ID and it should be visible
+
+        if (lastMostCommonTxtyTime + MAX_TXTY_TIME < Timer.getTimestamp())
+            return true; // update if the last known ID is stale
+
+        return false;
+    }
+
+    /**
+     * Finds the most common TXTY ID among all cameras with valid estimates
+     * @return the most common TXTY ID or -1 if none are detected
+     */
+    private int getMostCommonTXTYId() {
         Map<Integer, Integer> txtyTagsCount = new HashMap<>();
         for (IVisionCamera camera : cameras) {
             if (camera.getNumTags() > 0
                     && camera.getMeasurementStdDevs() < MAX_MEASUREMENT_STD_DEVS
                     && camera.getUnsafeEstimate().isTXTY()) {
-                int id = camera.getCurrentEstimate().txtyId();
+                int id = camera.getUnsafeEstimate().txtyId();
                 txtyTagsCount.put(id, txtyTagsCount.getOrDefault(id, 0) + 1);
             }
         }
@@ -267,14 +350,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
             }
         }
 
-        if (lastMostCommonTxtyId == -1
-                || lastMostCommonTxtyTime + MAX_TXTY_TIME < Timer.getTimestamp()
-                || mostCommonTxtyId == lastMostCommonTxtyId) {
-            lastMostCommonTxtyId = mostCommonTxtyId;
-            lastMostCommonTxtyTime = Timer.getTimestamp();
-        }
+        return mostCommonTxtyId;
     }
 
+    /**
+     * Updates the independent pose estimator and uses it to correct the main pose estimator when no vision is available
+     */
     private void updateIndependentPoseEstimator() {
         if (cameras.stream().anyMatch(v -> v.hasVision())) {
             // when vision is correcting the pose, have that override the independent pose estimator
@@ -293,6 +374,17 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         }
     }
 
+    /**
+     * Adds a vision measurement from a camera to the pose filter with measurement rejection if necessary
+     * <ul>
+     *  <li>If there is no targeted TXTY tag, always add the measurement
+     *  <li>If the camera's estimate is TXTY and matches the most common TXTY ID, add the measurement
+     *  <li>Otherwise, do not add the measurement
+     * </ul>
+     * @param trust whether to trust the camera's rotation
+     * @param mostCommonTxtyId the currently detected TXTY tag or -1 if none are detected
+     * @param camera the camera to add the measurement from
+     */
     private void addCameraVisionMeasurement(boolean trust, int mostCommonTxtyId, IVisionCamera camera) {
         if (mostCommonTxtyId == -1
                 || (camera.getUnsafeEstimate().isTXTY()
@@ -320,11 +412,20 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         return RobotContainer.drivetrain.getModulePositions();
     }
 
+    /**
+     * Gets the estimated position of the robot on the field at the current time
+     * @return the estimated position of the robot on the field
+     */
     @AutoLogLevel(key = "Odometry/Robot", level = Level.REAL)
     public Pose2d getEstimatedPosition() {
         return poseFilter.getEstimatedPosition();
     }
 
+    /**
+     * Gets the estimated position at a specific timestamp or an empty optional if the timestamp is out of range
+     * @param timestamp the timestamp to get the estimated position at (see {@link Timer#getTimestamp()})
+     * @return an optional containing the estimated position at the specified timestamp, or empty if out of range
+     */
     public Optional<Pose2d> getEstimatedPositionAt(double timestamp) {
         return poseFilter.sampleAt(timestamp);
     }
@@ -350,11 +451,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         cameras.stream()
                 .filter(cam -> cam.getNumTags() > 0)
                 .sorted((a, b) -> Double.compare(
-                        a.getCurrentEstimate().avgTagDist(),
-                        b.getCurrentEstimate().avgTagDist()))
+                        a.getUnsafeEstimate().avgTagDist(),
+                        b.getUnsafeEstimate().avgTagDist()))
                 .findFirst()
                 .ifPresentOrElse(
-                        camera -> setToPose(camera.getCurrentEstimate().pose()),
+                        camera -> setToPose(camera.getUnsafeEstimate().pose()),
                         () -> ConsoleLogger.logWarning("No camera has vision!"));
     }
 

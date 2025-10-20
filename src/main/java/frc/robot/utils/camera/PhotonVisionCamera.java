@@ -37,7 +37,7 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private static final double DEFAULT_CLOSE_MAX_DISTANCE = Units.feetToMeters(7);
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
-    private static final double DEFAULT_TXTY_MAX_DISTANCE = 0.5; // have to be 0.5 meters or closer to use txty
+    private static final double DEFAULT_TXTY_MAX_DISTANCE = 1.0; // have to be 1.0 meters or closer to use txty
 
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_DIST = 6;
@@ -95,8 +95,7 @@ public class PhotonVisionCamera implements IVisionCamera {
         disconnectedAlert.set(true);
 
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL
-                && Constants.RobotState.VISION_SIMULATION_MODE
-                        == Constants.RobotState.VisionSimulationMode.PHOTON_SIM) {
+                && Constants.RobotState.VISION_SIMULATION_MODE.isPhotonSim()) {
             SimCameraProperties cameraProp = new SimCameraProperties();
             cameraProp.setCalibration(
                     physicalCamera.getDetectorWidth(),
@@ -193,7 +192,7 @@ public class PhotonVisionCamera implements IVisionCamera {
 
     private static boolean isRealOrPhotonSim() {
         return Constants.RobotState.getMode() == Constants.RobotState.Mode.REAL
-                || Constants.RobotState.VISION_SIMULATION_MODE == Constants.RobotState.VisionSimulationMode.PHOTON_SIM;
+                || Constants.RobotState.VISION_SIMULATION_MODE.isPhotonSim();
     }
 
     private Measurements getPhotonMeasurements() {

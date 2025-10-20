@@ -1,7 +1,9 @@
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -20,7 +22,6 @@ import frc.robot.Constants.Game.AlgaePosition;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.Constants.Game.IGamePosition;
 import frc.robot.Constants.RobotState.Mode;
-import frc.robot.Constants.RobotState.VisionSimulationMode;
 import frc.robot.commands.AutoAlgae;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.ClimbMove;
@@ -82,6 +83,7 @@ import frc.robot.utils.libraries.Elastic.Notification.NotificationLevel;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.simulation.VisionSystemSim;
 
 /**
@@ -113,6 +115,10 @@ public final class RobotContainer {
      * The time remaining in the match after which the endgame starts and it is time to climb
      */
     public static final double ENDGAME_CLIMB_TIME = 30.0; // seconds
+
+    public static final int[] NON_REEF_TAG_IDS = new int[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
+    public static final double PHOTON_SIM_NOISY_STDDEV_POS = 0.2;
+    public static final double PHOTON_SIM_NOISY_STDDEV_ROT = 0.1;
 
     public static Drivetrain drivetrain;
     public static PoseSensorFusion poseSensorFusion;
@@ -165,9 +171,33 @@ public final class RobotContainer {
             pdp = new PowerDistributionPanel();
             coralDetection = new CoralDetection();
         } else {
-            if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
+            if (Constants.RobotState.VISION_SIMULATION_MODE.isPhotonSim()) {
                 visionSim = new VisionSystemSim("main");
-                visionSim.addAprilTags(Constants.Game.APRILTAG_LAYOUT);
+
+                if (Constants.RobotState.VISION_SIMULATION_MODE
+                        == Constants.RobotState.VisionSimulationMode.PHOTON_SIM_INACCURATE) {
+                    AprilTagFieldLayout noisyTagLayout = SimpleMath.addNoiseToAprilTagFieldLayout(
+                            Constants.Game.APRILTAG_LAYOUT,
+                            NON_REEF_TAG_IDS,
+                            PHOTON_SIM_NOISY_STDDEV_POS,
+                            PHOTON_SIM_NOISY_STDDEV_POS,
+                            0,
+                            0,
+                            0,
+                            PHOTON_SIM_NOISY_STDDEV_ROT);
+                    Logger.recordOutput(
+                            "PhotonSimTagLayout/Poses",
+                            noisyTagLayout.getTags().stream().map(t -> t.pose).toArray(Pose3d[]::new));
+                    Logger.recordOutput(
+                            "PhotonSimTagLayout/IDs",
+                            noisyTagLayout.getTags().stream()
+                                    .mapToInt(t -> t.ID)
+                                    .toArray());
+
+                    visionSim.addAprilTags(noisyTagLayout);
+                } else {
+                    visionSim.addAprilTags(Constants.Game.APRILTAG_LAYOUT);
+                }
             }
 
             poseSensorFusion = new PoseSensorFusion();
@@ -535,7 +565,7 @@ public final class RobotContainer {
 
     public static void simulationPeriodic() {
         updateSimulationBattery(drivetrain, elevator, elevatorHead, coralIntake);
-        if (Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM) {
+        if (Constants.RobotState.VISION_SIMULATION_MODE.isPhotonSim()) {
             visionSim.update(model.getRobot());
         }
     }
