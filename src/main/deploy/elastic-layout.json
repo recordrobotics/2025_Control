@@ -1350,6 +1350,40 @@
               "period": 0.06,
               "data_type": "boolean"
             }
+          },
+          {
+            "title": "Additional Reef Offset Left",
+            "x": 864.0,
+            "y": 160.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "Number Slider",
+            "properties": {
+              "topic": "/SmartDashboard/Additional Reef Offset Left",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": -0.04,
+              "max_value": 0.04,
+              "divisions": 10,
+              "update_continuously": false
+            }
+          },
+          {
+            "title": "Additional Reef Offset Right",
+            "x": 864.0,
+            "y": 288.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "Number Slider",
+            "properties": {
+              "topic": "/SmartDashboard/Additional Reef Offset Right",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": -0.04,
+              "max_value": 0.04,
+              "divisions": 10,
+              "update_continuously": false
+            }
           }
         ]
       }
