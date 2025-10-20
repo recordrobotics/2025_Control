@@ -196,6 +196,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
 
         Logger.recordOutput("MostCommonTXTYId", lastMostCommonTxtyId);
+
+        Logger.recordOutput("NAV/Pitch", nav.getPitch());
+        Logger.recordOutput("NAV/Roll", nav.getRoll());
     }
 
     @Override

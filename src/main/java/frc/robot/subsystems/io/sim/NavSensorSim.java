@@ -30,6 +30,16 @@ public class NavSensorSim implements NavSensorIO {
     }
 
     @Override
+    public double getPitch() {
+        return 0;
+    }
+
+    @Override
+    public double getRoll() {
+        return 0;
+    }
+
+    @Override
     public double getYawRate() {
         return gyroSimulation.getMeasuredAngularVelocity().in(DegreesPerSecond);
     }

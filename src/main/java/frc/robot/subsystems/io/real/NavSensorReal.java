@@ -24,6 +24,16 @@ public class NavSensorReal implements NavSensorIO {
     }
 
     @Override
+    public double getPitch() {
+        return nav.getPitch();
+    }
+
+    @Override
+    public double getRoll() {
+        return nav.getRoll();
+    }
+
+    @Override
     public double getYawRate() {
         return -nav.getRate();
     }
