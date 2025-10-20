@@ -197,6 +197,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
         Logger.recordOutput("MostCommonTXTYId", lastMostCommonTxtyId);
 
+        Logger.recordOutput("NAV/Pitch", nav.getPitch());
+        Logger.recordOutput("NAV/Roll", nav.getRoll());
+
         Logger.recordOutput(
                 "IntegratedPose",
                 SimpleMath.integrateChassisSpeeds(
