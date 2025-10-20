@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -48,6 +49,7 @@ public final class Climber extends KillableSubsystem implements PoweredSubsystem
     private final MotionMagicVoltage armRequest;
 
     private ClimberState currentState = ClimberState.PARK;
+    private double climbTarget = 0;
 
     private double positionCached = 0;
     private double velocityCached = 0;
@@ -142,7 +144,7 @@ public final class Climber extends KillableSubsystem implements PoweredSubsystem
     @AutoLogLevel(level = Level.DEBUG_REAL)
     public boolean atGoal() {
         if (currentState == ClimberState.CLIMB) {
-            return getRotations() >= Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
+            return getRotations() >= climbTarget;
         } else if (currentState == ClimberState.EXTEND) {
             return Math.abs(getRotations() - Constants.Climber.EXTENDED_ROTATIONS.in(Rotations))
                     < GOAL_POSITION_TOLERANCE;
@@ -168,11 +170,20 @@ public final class Climber extends KillableSubsystem implements PoweredSubsystem
                 }
             }
             case CLIMB -> {
+                climbTarget = Constants.Climber.CLIMBED_ROTATIONS.in(Rotations);
                 io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
                 lastClimbVoltage = 0.0;
                 lastExpectedKVTime = Timer.getTimestamp();
             }
         }
+    }
+
+    public void setBurst(Angle additionalAngle) {
+        currentState = ClimberState.CLIMB;
+        io.setRatchet(Constants.Climber.RATCHET_ENGAGED);
+        lastClimbVoltage = 0.0;
+        lastExpectedKVTime = Timer.getTimestamp();
+        climbTarget += additionalAngle.in(Rotations);
     }
 
     @AutoLogLevel(level = Level.REAL)

@@ -322,6 +322,11 @@ public class XboxSimpleBackup implements AbstractControl {
     }
 
     @Override
+    public boolean isClimbBurstTriggered() {
+        return false;
+    }
+
+    @Override
     public boolean isCoralSourceIntakeAutoTriggered() {
         Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
         SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());

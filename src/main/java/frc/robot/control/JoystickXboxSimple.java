@@ -335,6 +335,11 @@ public class JoystickXboxSimple implements AbstractControl {
     }
 
     @Override
+    public boolean isClimbBurstTriggered() {
+        return joystick.getRawButton(9);
+    }
+
+    @Override
     public boolean isCoralSourceIntakeAutoTriggered() {
         Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
         SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());

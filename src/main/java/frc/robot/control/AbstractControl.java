@@ -133,6 +133,8 @@ public interface AbstractControl {
     // Climb
     boolean isClimbTriggered();
 
+    boolean isClimbBurstTriggered();
+
     void vibrate(RumbleType type, double value);
 
     // Orient XY
