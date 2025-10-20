@@ -50,6 +50,8 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     private static final double ISPE_STD_DEV = 0.7;
 
+    private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
+
     private static final double MIN_TXTY_FPS = 8.0;
     private static final double MAX_TXTY_TIME = 1.0 / MIN_TXTY_FPS;
 
