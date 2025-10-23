@@ -61,6 +61,7 @@
         "txnc",
         "txty",
         "tync",
+        "Unstuckify",
         "wpi",
         "wpilib",
         "wpilibj",
