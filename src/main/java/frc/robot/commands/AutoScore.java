@@ -102,7 +102,7 @@ public class AutoScore extends SequentialCommandGroup {
     }
 
     @SuppressWarnings("java:S6548") // Singleton for default instance
-    private static final class BackawayAutoControlModifier extends AutoControlModifier {
+    public static final class BackawayAutoControlModifier extends AutoControlModifier {
         private static BackawayAutoControlModifier defaultInstance;
 
         private BackawayAutoControlModifier() {}
