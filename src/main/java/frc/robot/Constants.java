@@ -109,7 +109,7 @@ public final class Constants {
             }
         }
 
-        public static final Distance ALGAE_OFFSET = Meters.of(-0.1055532306);
+        public static final Distance ALGAE_OFFSET = Meters.of(-0.06);
         public static final Distance ALGAE_REEF_DISTANCE = Centimeters.of(6);
 
         public enum AlgaePosition implements IGamePosition {
