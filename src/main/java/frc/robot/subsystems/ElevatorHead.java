@@ -13,6 +13,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -38,6 +39,8 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
     private static final double CORAL_READY_MAX_VELOCITY = 0.1; // m/s
     private static final double WAITING_FOR_ALGAE_MIN_VELOCITY = 1.0; // TODO: tune
     private static final double ALGAE_ACQUIRED_MAX_VELOCITY = 0.5; // TODO: tune
+
+    private static final double UNSTUCKIFY_CORAL_VELOCITY = -1.5;
 
     private final ElevatorHeadIO io;
 
@@ -72,6 +75,9 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
 
     private final SysIdRoutine sysIdRoutine;
 
+    private boolean lastUnstuckifyCoral = false;
+    private double lastUnstuckifyCoralPidSetpoint = 0;
+
     public ElevatorHead(ElevatorHeadIO io) {
         this.io = io;
 
@@ -92,6 +98,8 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
                         null,
                         state -> Logger.recordOutput("ElevatorHead/SysIdTestState", state.toString())),
                 new SysIdRoutine.Mechanism(v -> io.setVoltage(v.in(Volts)), null, this));
+
+        SmartDashboard.putBoolean("ElevatorHead/UnstuckifyCoral", false);
     }
 
     public ElevatorHeadSim getSimIO() throws IllegalStateException {
@@ -307,7 +315,9 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
             voltageCached = io.getVoltage();
         }
 
-        if (currentState == CoralShooterStates.POSITION) {
+        boolean unstuckifyCoral = SmartDashboard.getBoolean("ElevatorHead/UnstuckifyCoral", false);
+
+        if (!unstuckifyCoral && currentState == CoralShooterStates.POSITION) {
             double pidOutput = positionPid.calculate(getPosition());
 
             Logger.recordOutput("ElevatorHead/PositionSetpoint", positionPid.getSetpoint().position);
@@ -321,6 +331,16 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
 
             lastSpeed = positionPid.getSetpoint().velocity;
         } else {
+
+            if (unstuckifyCoral && !lastUnstuckifyCoral) {
+                lastUnstuckifyCoral = true;
+                lastUnstuckifyCoralPidSetpoint = pid.getSetpoint();
+                pid.setSetpoint(UNSTUCKIFY_CORAL_VELOCITY);
+            } else if (!unstuckifyCoral && lastUnstuckifyCoral) {
+                lastUnstuckifyCoral = false;
+                pid.setSetpoint(lastUnstuckifyCoralPidSetpoint);
+            }
+
             double pidOutput = pid.calculate(getVelocity());
             double feedforwardOutput = feedForward.calculateWithVelocities(lastSpeed, pid.getSetpoint());
 
