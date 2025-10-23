@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.RobotModel.RobotCoral;
+import frc.robot.subsystems.RobotModel.RobotGamePiece;
 import frc.robot.utils.ConsoleLogger;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -21,7 +21,7 @@ public class CoralIntakeToElevator extends SequentialCommandGroup implements Sim
 
     private static final double SOURCE_INTAKE_MAX_CORAL_DISTANCE = 0.3;
 
-    private RobotCoral coral;
+    private RobotGamePiece coral;
 
     public CoralIntakeToElevator() {
         if (Constants.RobotState.getMode() == Mode.REAL) return;
