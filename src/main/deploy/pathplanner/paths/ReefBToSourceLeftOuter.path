@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 1.2227459016393443,
-        "y": 7.38155737704918
+        "x": 1.8250024795532216,
+        "y": 6.789120990611889
       },
       "prevControl": {
-        "x": 1.3413604060761188,
-        "y": 6.872904579442688
+        "x": 1.9436169839899962,
+        "y": 6.2804681930053965
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": "Source and Reef",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -1.4033418597069752E-14
+    "rotation": -1.4033418597069752e-14
   },
   "useDefaultConstraints": true
 }
