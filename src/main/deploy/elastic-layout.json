@@ -1384,6 +1384,23 @@
               "divisions": 10,
               "update_continuously": false
             }
+          },
+          {
+            "title": "Additional Reef Offset Back",
+            "x": 864.0,
+            "y": 416.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "Number Slider",
+            "properties": {
+              "topic": "/SmartDashboard/Additional Reef Offset Back",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": -0.04,
+              "max_value": 0.04,
+              "divisions": 10,
+              "update_continuously": true
+            }
           }
         ]
       }
