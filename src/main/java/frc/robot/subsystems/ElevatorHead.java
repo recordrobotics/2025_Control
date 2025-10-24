@@ -40,7 +40,7 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
     private static final double WAITING_FOR_ALGAE_MIN_VELOCITY = 1.0; // TODO: tune
     private static final double ALGAE_ACQUIRED_MAX_VELOCITY = 0.5; // TODO: tune
 
-    private static final double UNSTUCKIFY_CORAL_VELOCITY = -1.5;
+    private static final double UNSTUCKIFY_CORAL_VELOCITY = -3.0;
 
     private final ElevatorHeadIO io;
 
