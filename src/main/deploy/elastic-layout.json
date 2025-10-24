@@ -1401,6 +1401,19 @@
               "divisions": 10,
               "update_continuously": true
             }
+          },
+          {
+            "title": "UnstuckifyCoral",
+            "x": 640.0,
+            "y": 320.0,
+            "width": 192.0,
+            "height": 128.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/ElevatorHead/UnstuckifyCoral",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
           }
         ]
       }
