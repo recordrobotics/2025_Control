@@ -39,7 +39,7 @@ public final class AutoUtils {
                         0,
                         1,
                         true,
-                        new Double[] {2.0, 1.0},
+                        new Double[] {2.0, 2.0},
                         AutoControlModifier.getDefault(),
                         AutoUtils::getCurrentDrivetrainKinematicState),
                 Set.of(RobotContainer.drivetrain));
