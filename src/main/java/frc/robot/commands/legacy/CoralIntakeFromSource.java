@@ -1,5 +1,6 @@
 package frc.robot.commands.legacy;
 
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -41,24 +42,38 @@ public class CoralIntakeFromSource extends SequentialCommandGroup {
                         .stateVisualizer
                         .runPattern(Constants.Lights.PULSATING_ORANGE)
                         .onlyWhile(this::isScheduled)),
-                new InstantCommand(
-                        () -> RobotContainer.coralIntake.set(CoralIntakeState.SOURCE), RobotContainer.coralIntake),
-                // start moving elevator to intake position
-                CommandUtils.maybeProxy(useProxy, new ElevatorMove(ElevatorHeight.INTAKE)),
-                new InstantCommand(
-                        () -> RobotContainer.elevatorHead.set(CoralShooterStates.INTAKE), RobotContainer.elevatorHead),
-                new WaitUntilCommand(() -> RobotContainer.elevator.atGoal()),
-                new CoralIntakeToElevator()
-                        .simulateFor(new WaitUntilCommand(
-                                () -> RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL))),
-                new InstantCommand(
-                        () -> RobotContainer.coralIntake.set(CoralIntakeState.UP), RobotContainer.coralIntake),
-                // move coral a set distance
-                new InstantCommand(
-                        () -> RobotContainer.elevatorHead.moveBy(Constants.ElevatorHead.CORAL_INTAKE_DISTANCE),
-                        RobotContainer.elevatorHead),
-                new WaitUntilCommand(
-                        () -> RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_POSITIONED)),
+                Commands.sequence(
+                                new InstantCommand(
+                                        () -> RobotContainer.coralIntake.set(CoralIntakeState.SOURCE),
+                                        RobotContainer.coralIntake),
+                                // start moving elevator to intake position
+                                CommandUtils.maybeProxy(useProxy, new ElevatorMove(ElevatorHeight.INTAKE)),
+                                new InstantCommand(
+                                        () -> RobotContainer.elevatorHead.set(CoralShooterStates.INTAKE),
+                                        RobotContainer.elevatorHead),
+                                new WaitUntilCommand(() -> RobotContainer.elevator.atGoal()),
+                                new CoralIntakeToElevator()
+                                        .simulateFor(new WaitUntilCommand(() -> RobotContainer.elevatorHead
+                                                .getGamePiece()
+                                                .atLeast(GamePiece.CORAL))),
+                                Commands.sequence(
+                                                new InstantCommand(
+                                                        () -> RobotContainer.coralIntake.set(CoralIntakeState.UP),
+                                                        RobotContainer.coralIntake),
+                                                // move coral a set distance
+                                                new InstantCommand(
+                                                        () -> RobotContainer.elevatorHead.moveBy(
+                                                                Constants.ElevatorHead.CORAL_INTAKE_DISTANCE),
+                                                        RobotContainer.elevatorHead),
+                                                new WaitUntilCommand(() -> RobotContainer.elevatorHead
+                                                        .getGamePiece()
+                                                        .atLeast(GamePiece.CORAL_POSITIONED)))
+                                        .onlyWhile(() -> RobotContainer.elevatorHead
+                                                .getGamePiece()
+                                                .atLeast(GamePiece.CORAL)))
+                        .repeatedly()
+                        .onlyWhile(() ->
+                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_POSITIONED)),
                 new InstantCommand(
                         () -> RobotContainer.elevatorHead.set(CoralShooterStates.OFF), RobotContainer.elevatorHead),
                 new ScheduleCommand(RobotContainer.lights
