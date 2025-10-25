@@ -227,9 +227,9 @@ public final class Constants {
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0;
 
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
 
             public final int apriltagId;
             private final int side;
