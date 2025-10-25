@@ -71,7 +71,7 @@ public final class AutoUtils {
                                         < REEF_DISTANCE_THRESHOLD)
                         .repeatedly()
                         .onlyWhile(() ->
-                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)));
+                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN)));
     }
 
     public static KinematicState getCurrentDrivetrainKinematicState() {
