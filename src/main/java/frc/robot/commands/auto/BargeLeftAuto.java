@@ -14,7 +14,7 @@ import org.json.simple.parser.ParseException;
 
 public class BargeLeftAuto extends SequentialCommandGroup implements IAutoRoutine {
 
-    private static final double ALIGN_TIMEOUT = 2.0;
+    private static final double ALIGN_TIMEOUT = 3.0;
     private static final double SHOOT_TIMEOUT = 1.0;
 
     public BargeLeftAuto() {
