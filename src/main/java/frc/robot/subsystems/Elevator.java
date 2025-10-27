@@ -183,8 +183,12 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     }
 
     public boolean atGoal() {
-        return Math.abs(setpoint - getCurrentHeight()) < Constants.Elevator.AT_GOAL_POSITION_TOLERANCE
-                && Math.abs(getCurrentVelocity()) < Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE;
+        return atGoal(Constants.Elevator.AT_GOAL_POSITION_TOLERANCE, Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE);
+    }
+
+    public boolean atGoal(double positionThresholdMeters, double velocityThresholdMetersPerSecond) {
+        return Math.abs(setpoint - getCurrentHeight()) < positionThresholdMeters
+                && Math.abs(getCurrentVelocity()) < velocityThresholdMetersPerSecond;
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

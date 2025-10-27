@@ -30,9 +30,9 @@ import org.recordrobotics.ruckig.wpi.RuckigTelemetry;
 public class RuckigAlign extends Command {
 
     private static final double VELOCITY_TOLERANCE_MULTIPLIER = 5.0;
-    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.05; // meters
+    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD = 0.1; // meters
     // slightly larger threshold to avoid deceleration oscillation
-    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD_BYPASS = 0.08; // meters
+    private static final double VELOCITY_MODE_DISTANCE_TO_TARGET_THRESHOLD_BYPASS = 0.18; // meters
     private static final double VELOCITY_MODE_BYPASS_VELOCITY_ERROR_THRESHOLD = 1.0; // m/s
 
     private static final double DECELERATION_ACCEL_THRESHOLD = 0.9; // meters/s^2

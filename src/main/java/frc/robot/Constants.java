@@ -673,7 +673,6 @@ public final class Constants {
         public static final double AT_GOAL_POSITION_TOLERANCE = 0.05;
         public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.07;
 
-        public static final Time SHOOT_TIME = Seconds.of(0.1);
         public static final Time SHOOT_STALL_TIME = Seconds.of(0.3);
 
         public static final double DEBOUNCE_TIME = 0.02;
