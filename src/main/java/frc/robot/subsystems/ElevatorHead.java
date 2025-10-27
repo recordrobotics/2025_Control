@@ -71,6 +71,8 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
     private boolean waitingForAlgae = false;
     private boolean waitingForIntakeSpeed = false;
 
+    private boolean gamePieceExpectedToLeave = false;
+
     private double lastSpeed = 0;
 
     private final SysIdRoutine sysIdRoutine;
@@ -272,9 +274,23 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
         }
     }
 
+    public void setGamePieceExpectedToLeave(boolean expectedToLeave) {
+        this.gamePieceExpectedToLeave = expectedToLeave;
+    }
+
+    @AutoLogLevel(level = Level.REAL)
+    public boolean isGamePieceExpectedToLeave() {
+        return gamePieceExpectedToLeave;
+    }
+
     @AutoLogLevel(level = Level.REAL)
     public GamePiece getGamePiece() {
-        if (debouncedCertainValue && positionAtGoal()) {
+        if (gamePieceExpectedToLeave && !debouncedValue) {
+            // if we expect the game piece to leave and the sensor shows no coral, assume none
+            // helps prevent the certain debouncer from delaying coral shot detection
+            gamePieceExpectedToLeave = false;
+            return GamePiece.NONE;
+        } else if (debouncedCertainValue && positionAtGoal()) {
             return GamePiece.CORAL_POSITIONED;
         } else if (debouncedCertainValue) {
             return GamePiece.CORAL_CERTAIN;
