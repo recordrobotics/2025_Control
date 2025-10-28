@@ -90,7 +90,12 @@ public class AutoAlgae extends SequentialCommandGroup {
     }
 
     public static Command algaeGrabCommand(ElevatorHeight targetHeight) {
-        return new ElevatorMove(targetHeight)
+        return new ElevatorMove(
+                        targetHeight,
+                        AutoScore.ELEVATOR_MOVE_HEIGHT_THRESHOLD,
+                        AutoScore.ELEVATOR_MOVE_VELOCITY_THRESHOLD,
+                        AutoScore.ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD,
+                        AutoScore.ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD)
                 .andThen(new InstantCommand(
                         () -> {
                             if (RobotContainer.elevator.getNearestHeight() == ElevatorHeight.GROUND_ALGAE)
