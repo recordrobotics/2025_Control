@@ -530,7 +530,11 @@ public final class RobotContainer {
                 .onTrue(Commands.either(
                         Commands.deferredProxy(() -> new AutoScore(
                                 IGamePosition.closestTo(
-                                        RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values()),
+                                        SimpleMath.integrateChassisSpeeds(
+                                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                                RobotContainer.drivetrain.getChassisSpeeds(),
+                                                0.25), // where the robot will be in 0.25 seconds
+                                        CoralPosition.values()),
                                 DashboardUI.Overview.getControl()
                                         .getReefLevelSwitchValue()
                                         .toCoralLevel())),
