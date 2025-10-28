@@ -902,6 +902,9 @@ public final class Constants {
         public static final double XBOX_SPIN_ROT_THRESHOLD = 0.1;
         public static final double XBOX_SPIN_ROT_SENSITIVITY = 1.0;
 
+        // How many seconds ahead of robot position does autoscore/autoalgae use to find target
+        public static final double AUTO_SCORE_ALGAE_LOOKAHEAD = 0.35;
+
         private Control() {}
     }
 
