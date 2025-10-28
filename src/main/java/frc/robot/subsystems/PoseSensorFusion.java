@@ -26,6 +26,7 @@ import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.DriverStationUtils;
 import frc.robot.utils.IndependentSwervePoseEstimator;
 import frc.robot.utils.ManagedSubsystemBase;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
@@ -198,6 +199,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         Logger.recordOutput("SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
         Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
         Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
+
+        Logger.recordOutput(
+                "IntegratedPose",
+                SimpleMath.integrateChassisSpeeds(
+                        getEstimatedPosition(), RobotContainer.drivetrain.getChassisSpeeds(), 0.35));
     }
 
     @Override
