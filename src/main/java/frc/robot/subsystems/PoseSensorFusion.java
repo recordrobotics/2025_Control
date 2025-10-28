@@ -204,7 +204,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         Logger.recordOutput(
                 "IntegratedPose",
                 SimpleMath.integrateChassisSpeeds(
-                        getEstimatedPosition(), RobotContainer.drivetrain.getChassisSpeeds(), 0.35));
+                        getEstimatedPosition(),
+                        RobotContainer.drivetrain.getChassisSpeeds(),
+                        Constants.Control.AUTO_SCORE_ALGAE_LOOKAHEAD));
     }
 
     @Override

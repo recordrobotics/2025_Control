@@ -533,7 +533,9 @@ public final class RobotContainer {
                                         SimpleMath.integrateChassisSpeeds(
                                                 RobotContainer.poseSensorFusion.getEstimatedPosition(),
                                                 RobotContainer.drivetrain.getChassisSpeeds(),
-                                                0.35), // where the robot will be in 0.25 seconds
+                                                Constants.Control
+                                                        .AUTO_SCORE_ALGAE_LOOKAHEAD), // where the robot will be in
+                                        // LOOKAHEAD seconds
                                         CoralPosition.values()),
                                 DashboardUI.Overview.getControl()
                                         .getReefLevelSwitchValue()
