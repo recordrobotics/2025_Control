@@ -12,7 +12,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
@@ -262,9 +261,9 @@ public final class SwerveModule implements AutoCloseable, PoweredSubsystem {
             io.setTurnMechanismPosition(turnPositionCached);
         }
 
-        double actualTargetDriveVelocity = targetDriveVelocity
-                * Math.cos(Units.rotationsToRadians(targetTurnPosition)
-                        - getTurnWheelRotation2d().getRadians());
+        double actualTargetDriveVelocity = targetDriveVelocity;
+        // * Math.cos(Units.rotationsToRadians(targetTurnPosition)
+        //         - getTurnWheelRotation2d().getRadians());
 
         io.setDriveMotorMotionMagic(driveRequest.withVelocity(actualTargetDriveVelocity));
 
