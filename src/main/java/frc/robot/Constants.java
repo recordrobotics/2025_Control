@@ -221,15 +221,16 @@ public final class Constants {
                     0.01061; // positive is closer to middle
             public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT =
                     0.01720; // positive is closer to middle
-            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0; // positive is closer to reef
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK =
+                    -0.009712; // positive is closer to reef
 
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0;
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0;
 
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
-            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
 
             public final int apriltagId;
             private final int side;
@@ -1018,7 +1019,7 @@ public final class Constants {
 
         public static final double TURN_MAX_JERK = 1600;
         public static final double TURN_MMEXPO_KV = 1.5;
-        public static final double TURN_MMEXPO_KA = 0.4;
+        public static final double TURN_MMEXPO_KA = 0.02;
 
         /** The max speed the robot can travel safely */
         public static final double ROBOT_MAX_SPEED = 4.35;
