@@ -191,21 +191,18 @@ public final class SimpleMath {
     }
 
     public static Pose2d integrateChassisSpeeds(Pose2d currentPose, ChassisSpeeds speeds, double dt) {
-        // Robot-frame displacement
+        // Rotate into field frame
+        speeds = ChassisSpeeds.fromRobotRelativeSpeeds(speeds, currentPose.getRotation());
+
+        // Field-frame displacement
         double dx = speeds.vxMetersPerSecond * dt;
         double dy = speeds.vyMetersPerSecond * dt;
         double deltatheta = speeds.omegaRadiansPerSecond * dt;
 
-        // Rotate into field frame
-        double fieldDx = dx * Math.cos(currentPose.getRotation().getRadians())
-                - dy * Math.sin(currentPose.getRotation().getRadians());
-        double fieldDy = dx * Math.sin(currentPose.getRotation().getRadians())
-                + dy * Math.cos(currentPose.getRotation().getRadians());
-
         // New pose
         return new Pose2d(
-                currentPose.getX() + fieldDx,
-                currentPose.getY() + fieldDy,
+                currentPose.getX() + dx,
+                currentPose.getY() + dy,
                 currentPose.getRotation().plus(new Rotation2d(deltatheta)));
     }
 }
