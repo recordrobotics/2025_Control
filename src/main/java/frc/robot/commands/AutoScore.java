@@ -35,10 +35,10 @@ public class AutoScore extends SequentialCommandGroup {
 
     private static final double L4_MIN_DISTANCE_FROM_REEF_TO_LOWER = 0.3;
 
-    private static final double ELEVATOR_MOVE_HEIGHT_THRESHOLD = Constants.Elevator.AT_GOAL_POSITION_TOLERANCE + 1.17;
-    private static final double ELEVATOR_MOVE_VELOCITY_THRESHOLD = Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE + 999;
-    private static final double ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD = ElevatorArm.POSITION_TOLERANCE + 1.94;
-    private static final double ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD = ElevatorArm.VELOCITY_TOLERANCE + 999;
+    public static final double ELEVATOR_MOVE_HEIGHT_THRESHOLD = Constants.Elevator.AT_GOAL_POSITION_TOLERANCE + 1.17;
+    public static final double ELEVATOR_MOVE_VELOCITY_THRESHOLD = Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE + 999;
+    public static final double ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD = ElevatorArm.POSITION_TOLERANCE + 1.94;
+    public static final double ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD = ElevatorArm.VELOCITY_TOLERANCE + 999;
 
     @SuppressWarnings("java:S3358") // there is enough clarity for nested ternary operators
     public AutoScore(CoralPosition reefPole, CoralLevel level) {
