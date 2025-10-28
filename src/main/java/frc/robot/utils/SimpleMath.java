@@ -5,6 +5,7 @@ import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.Random;
 
 public final class SimpleMath {
@@ -187,5 +188,24 @@ public final class SimpleMath {
         double angleB = b.getRadians();
         double interpolatedAngle = angleA + (angleB - angleA) * Math.max(0, Math.min(1, t));
         return new Rotation2d(interpolatedAngle);
+    }
+
+    public static Pose2d integrateChassisSpeeds(Pose2d currentPose, ChassisSpeeds speeds, double dt) {
+        // Robot-frame displacement
+        double dx = speeds.vxMetersPerSecond * dt;
+        double dy = speeds.vyMetersPerSecond * dt;
+        double deltatheta = speeds.omegaRadiansPerSecond * dt;
+
+        // Rotate into field frame
+        double fieldDx = dx * Math.cos(currentPose.getRotation().getRadians())
+                - dy * Math.sin(currentPose.getRotation().getRadians());
+        double fieldDy = dx * Math.sin(currentPose.getRotation().getRadians())
+                + dy * Math.cos(currentPose.getRotation().getRadians());
+
+        // New pose
+        return new Pose2d(
+                currentPose.getX() + fieldDx,
+                currentPose.getY() + fieldDy,
+                currentPose.getRotation().plus(new Rotation2d(deltatheta)));
     }
 }
