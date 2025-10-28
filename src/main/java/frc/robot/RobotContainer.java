@@ -73,6 +73,7 @@ import frc.robot.utils.ModuleConstants.InvalidConfigException;
 import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.RepeatConditionallyCommand;
 import frc.robot.utils.RuckigWarmup;
+import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.libraries.Elastic;
 import frc.robot.utils.libraries.Elastic.Notification;
@@ -487,7 +488,11 @@ public final class RobotContainer {
                 .onTrue(Commands.either(
                         Commands.deferredProxy(() -> new AutoScore(
                                 IGamePosition.closestTo(
-                                        RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values()),
+                                        SimpleMath.integrateChassisSpeeds(
+                                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                                RobotContainer.drivetrain.getChassisSpeeds(),
+                                                0.25), // where the robot will be in 0.25 seconds
+                                        CoralPosition.values()),
                                 DashboardUI.Overview.getControl()
                                         .getReefLevelSwitchValue()
                                         .toCoralLevel())),
