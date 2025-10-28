@@ -46,9 +46,9 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
 
     private boolean debouncedValue = false;
     private boolean debouncedCertainValue = false;
-    private Debouncer debouncer = new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
+    private Debouncer debouncer = new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME, Debouncer.DebounceType.kFalling);
     private Debouncer debouncerCertain =
-            new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME_CERTAIN, Debouncer.DebounceType.kBoth);
+            new Debouncer(Constants.ElevatorHead.DEBOUNCE_TIME_CERTAIN, Debouncer.DebounceType.kFalling);
 
     private final PIDController pid = new PIDController(Constants.ElevatorHead.KP, 0, Constants.ElevatorHead.KD);
     private final ProfiledPIDController positionPid = new ProfiledPIDController(
@@ -70,8 +70,6 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
     private boolean hasAlgae = false;
     private boolean waitingForAlgae = false;
     private boolean waitingForIntakeSpeed = false;
-
-    private boolean gamePieceExpectedToLeave = false;
 
     private double lastSpeed = 0;
 
@@ -274,23 +272,9 @@ public final class ElevatorHead extends KillableSubsystem implements PoweredSubs
         }
     }
 
-    public void setGamePieceExpectedToLeave(boolean expectedToLeave) {
-        this.gamePieceExpectedToLeave = expectedToLeave;
-    }
-
-    @AutoLogLevel(level = Level.REAL)
-    public boolean isGamePieceExpectedToLeave() {
-        return gamePieceExpectedToLeave;
-    }
-
     @AutoLogLevel(level = Level.REAL)
     public GamePiece getGamePiece() {
-        if (gamePieceExpectedToLeave && !debouncedValue) {
-            // if we expect the game piece to leave and the sensor shows no coral, assume none
-            // helps prevent the certain debouncer from delaying coral shot detection
-            gamePieceExpectedToLeave = false;
-            return GamePiece.NONE;
-        } else if (debouncedCertainValue && positionAtGoal()) {
+        if (debouncedCertainValue && positionAtGoal()) {
             return GamePiece.CORAL_POSITIONED;
         } else if (debouncedCertainValue) {
             return GamePiece.CORAL_CERTAIN;

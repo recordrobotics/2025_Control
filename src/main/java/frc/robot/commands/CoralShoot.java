@@ -21,7 +21,6 @@ public class CoralShoot extends SequentialCommandGroup {
                 new InstantCommand(
                         () -> {
                             setFailedToShoot(false);
-                            RobotContainer.elevatorHead.setGamePieceExpectedToLeave(true);
                             if (RobotContainer.elevator.getNearestHeight() == ElevatorHeight.L4
                                     || RobotContainer.elevator.getNearestHeight() == ElevatorHeight.BARGE_ALGAE)
                                 RobotContainer.elevatorHead.set(CoralShooterStates.OUT_BACKWARD);
@@ -39,7 +38,6 @@ public class CoralShoot extends SequentialCommandGroup {
                                             < Constants.ElevatorHead.SHOOT_STALL_THRESHOLD;
 
                                     if (stalled) {
-                                        RobotContainer.elevatorHead.setGamePieceExpectedToLeave(false);
                                         setFailedToShoot(true);
                                     }
 
