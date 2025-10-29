@@ -518,7 +518,10 @@ public final class RobotContainer {
                 .onTrue(Commands.either(
                         Commands.defer(
                                 () -> new ScheduleCommand(new AutoAlgae(IGamePosition.closestTo(
-                                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                                SimpleMath.integrateChassisSpeeds(
+                                                        RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                                        RobotContainer.drivetrain.getChassisSpeeds(),
+                                                        Constants.Control.SCORE_TARGET_LOOKAHEAD),
                                                 AlgaePosition.values()))
                                         .finallyDo(AutoAlgae::stopRunning)
                                         .asProxy()),
@@ -533,8 +536,7 @@ public final class RobotContainer {
                                         SimpleMath.integrateChassisSpeeds(
                                                 RobotContainer.poseSensorFusion.getEstimatedPosition(),
                                                 RobotContainer.drivetrain.getChassisSpeeds(),
-                                                Constants.Control
-                                                        .AUTO_SCORE_ALGAE_LOOKAHEAD), // where the robot will be in
+                                                Constants.Control.SCORE_TARGET_LOOKAHEAD), // where the robot will be in
                                         // LOOKAHEAD seconds
                                         CoralPosition.values()),
                                 DashboardUI.Overview.getControl()
