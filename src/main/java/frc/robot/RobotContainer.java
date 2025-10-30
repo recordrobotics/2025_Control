@@ -489,8 +489,7 @@ public final class RobotContainer {
                         .onlyWhile(() -> elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)
                                 || !DashboardUI.Overview.getControl().isCoralGroundIntakeSimpleTriggered()));
 
-        new Trigger(() -> DashboardUI.Overview.getControl().isCoralSourceIntakeAutoTriggered()
-                        && !DriverStation.isAutonomous())
+        new Trigger(() -> DashboardUI.Overview.getControl().isCoralSourceIntakeAutoTriggered())
                 .debounce(1.0, DebounceType.kFalling)
                 .whileTrue(new RepeatConditionallyCommand(
                                 new CoralIntakeSimple(true)
@@ -541,7 +540,8 @@ public final class RobotContainer {
                                         CoralPosition.values()),
                                 DashboardUI.Overview.getControl()
                                         .getReefLevelSwitchValue()
-                                        .toCoralLevel())),
+                                        .toCoralLevel(),
+                                true /* use arm proxies to allow manual elevator and arm adjustment while scoring */)),
                         new ProcessorScore(false).asProxy(),
                         () -> elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)
                                 || (DashboardUI.Overview.getControl().getReefLevelSwitchValue()

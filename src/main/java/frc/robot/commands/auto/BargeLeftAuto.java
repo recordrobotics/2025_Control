@@ -3,39 +3,47 @@ package frc.robot.commands.auto;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Constants.Game.CoralLevel;
+import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
-import frc.robot.commands.CoralShoot;
+import frc.robot.commands.AutoScore;
 import frc.robot.utils.AutoUtils;
-import frc.robot.utils.CommandUtils;
+import frc.robot.utils.DriverStationUtils;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 
 public class BargeLeftAuto extends SequentialCommandGroup implements IAutoRoutine {
 
-    private static final double ALIGN_TIMEOUT = 3.0;
-    private static final double SHOOT_TIMEOUT = 1.0;
-
     public BargeLeftAuto() {
         try {
             addCommands(
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("BargeLeftToReefJ")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
-                    new InstantCommand(() -> RobotContainer.drivetrain.kill()),
-                    CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
+                    Commands.deferredProxy(() -> new AutoScore(
+                            DriverStationUtils.getCurrentAlliance() == Alliance.Blue
+                                    ? CoralPosition.BLUE_J
+                                    : CoralPosition.RED_J,
+                            CoralLevel.L4,
+                            false)),
                     AutoUtils.createSource("J", "Left"),
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefK")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
-                    new InstantCommand(() -> RobotContainer.drivetrain.kill()),
-                    CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
+                    Commands.deferredProxy(() -> new AutoScore(
+                            DriverStationUtils.getCurrentAlliance() == Alliance.Blue
+                                    ? CoralPosition.BLUE_K
+                                    : CoralPosition.RED_K,
+                            CoralLevel.L4,
+                            false)),
                     AutoUtils.createSource("K", "Left"),
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefL")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
-                    new InstantCommand(() -> RobotContainer.drivetrain.kill()),
-                    CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
-                    AutoBuilder.followPath(PathPlannerPath.fromPathFile("ReefLToPark")),
-                    new InstantCommand(() -> RobotContainer.drivetrain.kill()));
+                    Commands.deferredProxy(() -> new AutoScore(
+                            DriverStationUtils.getCurrentAlliance() == Alliance.Blue
+                                    ? CoralPosition.BLUE_L
+                                    : CoralPosition.RED_L,
+                            CoralLevel.L4,
+                            false)),
+                    AutoBuilder.followPath(PathPlannerPath.fromPathFile("ReefLToPark")));
             addRequirements(RobotContainer.drivetrain);
         } catch (FileVersionException | IOException | ParseException e) {
             throw new CreateAutoRoutineException("Failed to create BargeLeftAuto: " + e.getMessage(), e);

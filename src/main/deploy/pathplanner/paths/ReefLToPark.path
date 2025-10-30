@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.133481711154735,
-        "y": 5.656469648951827
+        "x": 3.1984063014277693,
+        "y": 5.4256052455195665
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.8816867731101903,
-        "y": 5.9568990034578775
+        "x": 2.9466113633832247,
+        "y": 5.726034600025617
       },
       "isLocked": false,
       "linkedName": "ReefL"
@@ -31,19 +31,7 @@
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "ElevatorDown",
-      "waypointRelativePos": 0.7870967741935485,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "ElevatorDown"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.8,
     "maxAcceleration": 3.1,

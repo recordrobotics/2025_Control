@@ -14,7 +14,6 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.ReefAlign;
 import frc.robot.commands.RuckigAlign;
 import frc.robot.commands.WaypointAlign;
-import frc.robot.commands.legacy.CoralIntakeFromSource;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import java.io.IOException;
@@ -24,14 +23,18 @@ import org.recordrobotics.ruckig.Trajectory3.KinematicState;
 
 public final class AutoUtils {
 
-    // How long to wait after starting drive to source before deploying intake
-    public static final double SOURCE_INTAKE_DEPLOY_DELAY = 0.3;
     // If the robot is within this distance of the closest reef, it will drive to source from there, otherwise go from
     // ElevatorStart waypoint
     public static final double REEF_DISTANCE_THRESHOLD = 0.7;
 
     private AutoUtils() {}
 
+    /**
+     * Aligns the robot to the closest reef branch at level 4
+     * @deprecated Use AutoScore instead
+     * @return the align command
+     */
+    @Deprecated(forRemoval = true)
     public static Command alignToReefL4() {
         return Commands.defer(
                 () -> WaypointAlign.align(
@@ -47,31 +50,28 @@ public final class AutoUtils {
 
     public static Command createSource(String reefLetter, String sourceSide)
             throws FileVersionException, IOException, ParseException {
-        return new CoralIntakeFromSource(false)
-                .beforeStarting(new WaitCommand(SOURCE_INTAKE_DEPLOY_DELAY))
-                .alongWith(Commands.either(
-                                AutoBuilder.followPath(PathPlannerPath.fromPathFile(
-                                                "Reef" + reefLetter + "ToSource" + sourceSide + "OuterNoElevator"))
-                                        .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
-                                        .andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile(
-                                                "Source" + sourceSide + "OuterToElevatorStart"))),
-                                AutoBuilder.followPath(PathPlannerPath.fromPathFile(
-                                                "ElevatorStartToSource" + sourceSide + "Outer"))
-                                        .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
-                                        .andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile(
-                                                "Source" + sourceSide + "OuterToElevatorStart"))),
-                                () -> IGamePosition.closestTo(
-                                                        RobotContainer.poseSensorFusion.getEstimatedPosition(),
-                                                        CoralPosition.values())
-                                                .getFirstStagePose()
-                                                .getTranslation()
-                                                .getDistance(RobotContainer.poseSensorFusion
-                                                        .getEstimatedPosition()
-                                                        .getTranslation())
-                                        < REEF_DISTANCE_THRESHOLD)
-                        .repeatedly()
-                        .onlyWhile(() ->
-                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN)));
+        return Commands.either(
+                        AutoBuilder.followPath(PathPlannerPath.fromPathFile(
+                                        "Reef" + reefLetter + "ToSource" + sourceSide + "OuterNoElevator"))
+                                .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
+                                .andThen(AutoBuilder.followPath(
+                                        PathPlannerPath.fromPathFile("Source" + sourceSide + "OuterToElevatorStart"))),
+                        AutoBuilder.followPath(
+                                        PathPlannerPath.fromPathFile("ElevatorStartToSource" + sourceSide + "Outer"))
+                                .andThen(new WaitCommand(Auto.SOURCE_TIMEOUT))
+                                .andThen(AutoBuilder.followPath(
+                                        PathPlannerPath.fromPathFile("Source" + sourceSide + "OuterToElevatorStart"))),
+                        () -> IGamePosition.closestTo(
+                                                RobotContainer.poseSensorFusion.getEstimatedPosition(),
+                                                CoralPosition.values())
+                                        .getFirstStagePose()
+                                        .getTranslation()
+                                        .getDistance(RobotContainer.poseSensorFusion
+                                                .getEstimatedPosition()
+                                                .getTranslation())
+                                < REEF_DISTANCE_THRESHOLD)
+                .repeatedly()
+                .onlyWhile(() -> !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN));
     }
 
     public static KinematicState getCurrentDrivetrainKinematicState() {

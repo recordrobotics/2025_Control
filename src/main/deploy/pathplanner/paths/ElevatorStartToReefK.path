@@ -8,20 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.3234532308214892,
-        "y": 5.830085682658129
+        "x": 2.852990513892038,
+        "y": 5.6969127580809324
       },
       "isLocked": false,
       "linkedName": "ElevatorStartLeft"
     },
     {
       "anchor": {
-        "x": 3.435394621396662,
-        "y": 5.830779148951827
+        "x": 3.5964151537859874,
+        "y": 5.657806495383934
       },
       "prevControl": {
-        "x": 2.821601771745897,
-        "y": 6.7054269278367
+        "x": 3.2457295386444938,
+        "y": 5.926389451472792
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,19 +42,7 @@
       "name": "Point Towards Zone"
     }
   ],
-  "eventMarkers": [
-    {
-      "name": "ElevatorL4",
-      "waypointRelativePos": 0.0,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "ElevatorL4"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 1.7,
     "maxAcceleration": 3.3,
@@ -64,7 +52,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 1.0,
     "rotation": -60.00000000000002
   },
   "reversed": false,

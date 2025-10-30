@@ -17,6 +17,7 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.ElevatorArm;
 import frc.robot.utils.AutoUtils;
+import frc.robot.utils.CommandUtils;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
 import frc.robot.utils.modifiers.ControlModifierService;
@@ -38,10 +39,10 @@ public class AutoScore extends SequentialCommandGroup {
     private static final double BACKAWAY_DISTANCE = 0.6;
     private static final double BACKAWAY_TIMEOUT = 2.0;
 
-    private static final double L4_MIN_DISTANCE_FROM_REEF_TO_LOWER = 0.3;
+    private static final double L4_MIN_DISTANCE_FROM_REEF_TO_LOWER = 0.10;
 
     @SuppressWarnings("java:S3358") // there is enough clarity for nested ternary operators
-    public AutoScore(CoralPosition reefPole, CoralLevel level) {
+    public AutoScore(CoralPosition reefPole, CoralLevel level, boolean useArmProxies) {
         addCommands(
                 Commands.defer(
                         () -> {
@@ -61,15 +62,16 @@ public class AutoScore extends SequentialCommandGroup {
                                     insideElevatorMoveRegion ? -1 : 0,
                                     // elevator has to be fully extended before moving to second/third waypoint
                                     insideElevatorMoveRegion ? 0 : 1,
-                                    (level != CoralLevel.L1
+                                    CommandUtils.maybeProxy(
+                                            useArmProxies,
+                                            (level != CoralLevel.L1
                                                     ? new ElevatorMove(
                                                             level.getHeight(),
                                                             ELEVATOR_MOVE_HEIGHT_THRESHOLD,
                                                             ELEVATOR_MOVE_VELOCITY_THRESHOLD,
                                                             ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD,
                                                             ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD)
-                                                    : new CoralIntakeMoveL1())
-                                            .asProxy(),
+                                                    : new CoralIntakeMoveL1())),
                                     AutoControlModifier.getDefault(),
                                     AutoUtils::getCurrentDrivetrainKinematicState);
                         },
@@ -86,12 +88,17 @@ public class AutoScore extends SequentialCommandGroup {
                                 level != CoralLevel.L1
                                         ? new CoralShoot()
                                                 .andThen(Commands.defer(
-                                                        AutoScore::createBackawayCommand,
-                                                        Set.of(RobotContainer.drivetrain)))
-                                        : new CoralIntakeShootL1().asProxy()));
+                                                        () -> createBackawayCommand(useArmProxies),
+                                                        useArmProxies
+                                                                ? Set.of(RobotContainer.drivetrain)
+                                                                : Set.of(
+                                                                        RobotContainer.drivetrain,
+                                                                        RobotContainer.elevator,
+                                                                        RobotContainer.elevatorArm)))
+                                        : CommandUtils.maybeProxy(useArmProxies, new CoralIntakeShootL1())));
     }
 
-    private static Command createBackawayCommand() {
+    private static Command createBackawayCommand(boolean useArmProxies) {
         Pose2d startingPose = RobotContainer.poseSensorFusion.getEstimatedPosition();
         Pose2d targetPose = startingPose.transformBy(new Transform2d(-BACKAWAY_DISTANCE, 0, Rotation2d.kZero));
         return WaypointAlign.align(
@@ -111,7 +118,7 @@ public class AutoScore extends SequentialCommandGroup {
                                 >= (RobotContainer.elevator.getNearestHeight() == ElevatorHeight.L4
                                         ? L4_MIN_DISTANCE_FROM_REEF_TO_LOWER
                                         : 0))
-                        .andThen(new ElevatorMove(ElevatorHeight.BOTTOM).asProxy())
+                        .andThen(CommandUtils.maybeProxy(useArmProxies, new ElevatorMove(ElevatorHeight.BOTTOM)))
                         .onlyIf(() -> !CoralShoot.failedToShoot()));
     }
 

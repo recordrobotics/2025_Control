@@ -3,32 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.2278657111547355,
-        "y": 6.012867148951827
+        "x": 5.432765446415654,
+        "y": 5.6457733860722294
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.12954443066952,
-        "y": 6.242721289231587
+        "x": 4.791995583428686,
+        "y": 6.128655570352922
       },
       "isLocked": false,
       "linkedName": "ReefJ"
-    },
-    {
-      "anchor": {
-        "x": 4.747131147540983,
-        "y": 5.967008196721312
-      },
-      "prevControl": {
-        "x": 4.951717627894234,
-        "y": 5.657435965567527
-      },
-      "nextControl": {
-        "x": 3.9632544161274317,
-        "y": 7.153139696096183
-      },
-      "isLocked": false,
-      "linkedName": null
     },
     {
       "anchor": {
@@ -36,8 +20,8 @@
         "y": 7.38155737704918
       },
       "prevControl": {
-        "x": 2.6485789630860084,
-        "y": 6.805445032869453
+        "x": 2.421776535427305,
+        "y": 6.878371074108951
       },
       "nextControl": null,
       "isLocked": false,
@@ -47,19 +31,7 @@
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "ElevatorDown",
-      "waypointRelativePos": 0.931017369727048,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "ElevatorDown"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.8,
     "maxAcceleration": 3.1,
