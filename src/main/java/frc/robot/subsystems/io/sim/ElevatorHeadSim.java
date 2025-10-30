@@ -132,9 +132,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
     public void setPreload() {
         setCoralDetectorSim(false);
-        RobotContainer.model
-                .getRobotCoral()
-                .setPoseSupplier(RobotContainer.model.elevatorArm::getCoralShooterTargetPose);
+        RobotContainer.model.getRobotCoral().setPoseSupplier(RobotContainer.model.elevator::getCoralShooterTargetPose);
     }
 
     public void clearPreload() {
@@ -156,7 +154,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
         double voltage = motorSim.getAppliedOutput() * motorSim.getBusVoltage();
 
         Pose3d algaeTargetPose = RobotContainer.model
-                .elevatorArm
+                .elevator
                 .getAlgaeGrabberTargetPoseTop()
                 .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
 
@@ -168,7 +166,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
             if (!hadAlgae) {
                 RobotContainer.model
                         .getRobotAlgae()
-                        .setPoseSupplier(RobotContainer.model.elevatorArm::getAlgaeGrabberTargetPoseTop);
+                        .setPoseSupplier(RobotContainer.model.elevator::getAlgaeGrabberTargetPoseTop);
                 hadAlgae = true;
             }
         } else {
@@ -200,7 +198,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
             setCoralDetectorSim(true); // NC
 
             Pose3d ejectPose = RobotContainer.model
-                    .elevatorArm
+                    .elevator
                     .getCoralShooterTargetPose()
                     .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
 

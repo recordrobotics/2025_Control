@@ -3,6 +3,7 @@ package frc.robot.commands.manual;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -15,6 +16,7 @@ public class ManualElevator extends Command {
     private static final double DEADBAND = 0.001;
 
     private double height = 0;
+    private double angle = 0;
 
     public ManualElevator() {
         addRequirements(RobotContainer.elevator);
@@ -23,6 +25,7 @@ public class ManualElevator extends Command {
     @Override
     public void initialize() {
         height = RobotContainer.elevator.getCurrentHeight();
+        angle = RobotContainer.elevator.getArmAngle();
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -37,8 +40,15 @@ public class ManualElevator extends Command {
         height += delta;
         height = MathUtil.clamp(height, Constants.Elevator.STARTING_HEIGHT, Constants.Elevator.MAX_HEIGHT);
 
-        if (Math.abs(delta) > DEADBAND) {
-            RobotContainer.elevator.set(height);
+        AngularVelocity manualElevatorArmVelocity = controls.getManualElevatorArmVelocity();
+        double armDelta = manualElevatorArmVelocity
+                .times(Seconds.of(RobotContainer.ROBOT_PERIODIC))
+                .in(Radians);
+        angle += armDelta;
+        angle = MathUtil.clamp(angle, Constants.ElevatorArm.MIN_POS, Constants.ElevatorArm.MAX_POS);
+
+        if (Math.abs(delta) > DEADBAND || Math.abs(armDelta) > DEADBAND) {
+            RobotContainer.elevator.set(height, angle);
         }
     }
 

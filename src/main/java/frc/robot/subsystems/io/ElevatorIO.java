@@ -8,21 +8,31 @@ public interface ElevatorIO extends AutoCloseable {
 
     void applyTalonFXConfig(TalonFXConfiguration configuration);
 
+    void applyArmTalonFXConfig(TalonFXConfiguration configuration);
+
     Follower createFollower();
 
     void setLeadMotorVoltage(double outputVolts);
+
+    void setArmVoltage(double outputVolts);
 
     double getLeadMotorVoltage();
 
     double getFollowerMotorVoltage();
 
+    double getArmVoltage();
+
     void setLeadMotorPosition(double newValue);
 
     void setFollowerMotorPosition(double newValue);
 
+    void setArmPosition(double newValue);
+
     void setLeadMotionMagic(MotionMagicExpoVoltage request);
 
     void setFollowerMotionMagic(Follower request);
+
+    void setArmMotionMagic(MotionMagicExpoVoltage request);
 
     double getLeadMotorPosition();
 
@@ -32,9 +42,17 @@ public interface ElevatorIO extends AutoCloseable {
 
     double getFollowerMotorVelocity();
 
+    double getArmPosition();
+
+    double getArmVelocity();
+
     void setLeadMotorPercent(double newValue);
 
+    void setArmPercent(double newValue);
+
     double getLeadMotorPercent();
+
+    double getArmPercent();
 
     boolean isTopEndStopPressed();
 
@@ -43,6 +61,8 @@ public interface ElevatorIO extends AutoCloseable {
     double getLeadMotorCurrentDraw();
 
     double getFollowerMotorCurrentDraw();
+
+    double getArmCurrentDrawAmps();
 
     void simulationPeriodic();
 }

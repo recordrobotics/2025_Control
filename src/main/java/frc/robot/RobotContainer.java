@@ -48,7 +48,6 @@ import frc.robot.commands.legacy.ElevatorAlgaeToggled;
 import frc.robot.commands.legacy.ElevatorReefToggled;
 import frc.robot.commands.legacy.GroundAlgaeToggled;
 import frc.robot.commands.manual.ManualElevator;
-import frc.robot.commands.manual.ManualElevatorArm;
 import frc.robot.control.*;
 import frc.robot.control.AbstractControl.ReefLevelSwitchValue;
 import frc.robot.dashboard.DashboardUI;
@@ -59,12 +58,10 @@ import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.ElevatorHead.GamePiece;
 import frc.robot.subsystems.io.real.ClimberReal;
 import frc.robot.subsystems.io.real.CoralIntakeReal;
-import frc.robot.subsystems.io.real.ElevatorArmReal;
 import frc.robot.subsystems.io.real.ElevatorHeadReal;
 import frc.robot.subsystems.io.real.ElevatorReal;
 import frc.robot.subsystems.io.sim.ClimberSim;
 import frc.robot.subsystems.io.sim.CoralIntakeSim;
-import frc.robot.subsystems.io.sim.ElevatorArmSim;
 import frc.robot.subsystems.io.sim.ElevatorHeadSim;
 import frc.robot.subsystems.io.sim.ElevatorSim;
 import frc.robot.utils.AutoPath;
@@ -124,7 +121,6 @@ public final class RobotContainer {
     public static Drivetrain drivetrain;
     public static PoseSensorFusion poseSensorFusion;
     public static Elevator elevator;
-    public static ElevatorArm elevatorArm;
     public static ElevatorHead elevatorHead;
     public static Climber climber;
     public static Lights lights;
@@ -164,7 +160,6 @@ public final class RobotContainer {
         if (Constants.RobotState.getMode() == Mode.REAL) {
             poseSensorFusion = new PoseSensorFusion();
             elevator = new Elevator(new ElevatorReal(ROBOT_PERIODIC));
-            elevatorArm = new ElevatorArm(new ElevatorArmReal(ROBOT_PERIODIC));
             elevatorHead = new ElevatorHead(new ElevatorHeadReal(ROBOT_PERIODIC));
             coralIntake = new CoralIntake(new CoralIntakeReal(ROBOT_PERIODIC));
             climber = new Climber(new ClimberReal(ROBOT_PERIODIC));
@@ -203,7 +198,6 @@ public final class RobotContainer {
 
             poseSensorFusion = new PoseSensorFusion();
             elevator = new Elevator(new ElevatorSim(ROBOT_PERIODIC));
-            elevatorArm = new ElevatorArm(new ElevatorArmSim(ROBOT_PERIODIC));
             elevatorHead = new ElevatorHead(new ElevatorHeadSim(ROBOT_PERIODIC, drivetrain.getSwerveDriveSimulation()));
             coralIntake = new CoralIntake(new CoralIntakeSim(ROBOT_PERIODIC, drivetrain.getSwerveDriveSimulation()));
             climber = new Climber(new ClimberSim(ROBOT_PERIODIC));
@@ -233,7 +227,6 @@ public final class RobotContainer {
         configureTriggers();
 
         elevator.setDefaultCommand(new ManualElevator());
-        elevatorArm.setDefaultCommand(new ManualElevatorArm());
 
         noEncoderResetAlert.set(true);
 
@@ -588,7 +581,6 @@ public final class RobotContainer {
     public static void resetEncoders() {
         climber.resetEncoders();
         elevator.resetEncoders();
-        elevatorArm.resetEncoders();
         coralIntake.resetEncoders();
 
         noEncoderResetAlert.set(false);
@@ -601,7 +593,6 @@ public final class RobotContainer {
         drivetrain.close();
         poseSensorFusion.close();
         elevator.close();
-        elevatorArm.close();
         elevatorHead.close();
         coralIntake.close();
         pdp.close();

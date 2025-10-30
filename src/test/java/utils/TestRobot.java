@@ -468,8 +468,7 @@ public class TestRobot {
 
         RobotContainer.resetEncoders();
         CommandScheduler.getInstance().cancelAll();
-        RobotContainer.elevator.set(Constants.Elevator.STARTING_HEIGHT);
-        RobotContainer.elevatorArm.set(ElevatorHeight.BOTTOM.getArmAngle());
+        RobotContainer.elevator.set(Constants.Elevator.STARTING_HEIGHT, ElevatorHeight.BOTTOM.getArmAngle());
         RobotContainer.elevatorHead.set(CoralShooterStates.OFF);
         RobotContainer.coralIntake.set(CoralIntakeState.UP);
     }

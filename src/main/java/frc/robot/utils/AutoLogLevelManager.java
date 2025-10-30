@@ -66,7 +66,11 @@ public final class AutoLogLevelManager {
     /** Records values from all registered fields. */
     public static void periodic() {
         for (Runnable callback : callbacks) {
-            callback.run();
+            try {
+                callback.run();
+            } catch (Exception e) {
+                ConsoleLogger.logError(e);
+            }
         }
     }
 

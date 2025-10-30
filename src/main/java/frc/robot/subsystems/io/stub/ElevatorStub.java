@@ -24,13 +24,22 @@ public class ElevatorStub implements ElevatorIO {
     public void applyTalonFXConfig(TalonFXConfiguration configuration) {}
 
     @Override
+    public void applyArmTalonFXConfig(TalonFXConfiguration configuration) {}
+
+    @Override
     public void setLeadMotorVoltage(double outputVolts) {}
+
+    @Override
+    public void setArmVoltage(double outputVolts) {}
 
     @Override
     public void setLeadMotionMagic(MotionMagicExpoVoltage request) {}
 
     @Override
     public void setFollowerMotionMagic(Follower request) {}
+
+    @Override
+    public void setArmMotionMagic(MotionMagicExpoVoltage request) {}
 
     @Override
     public double getLeadMotorVoltage() {
@@ -43,10 +52,18 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
+    public double getArmVoltage() {
+        return 0;
+    }
+
+    @Override
     public void setLeadMotorPosition(double newValue) {}
 
     @Override
     public void setFollowerMotorPosition(double newValue) {}
+
+    @Override
+    public void setArmPosition(double newValue) {}
 
     @Override
     public double getLeadMotorPosition() {
@@ -69,10 +86,28 @@ public class ElevatorStub implements ElevatorIO {
     }
 
     @Override
+    public double getArmPosition() {
+        return 0;
+    }
+
+    @Override
+    public double getArmVelocity() {
+        return 0;
+    }
+
+    @Override
     public void setLeadMotorPercent(double newValue) {}
 
     @Override
+    public void setArmPercent(double newValue) {}
+
+    @Override
     public double getLeadMotorPercent() {
+        return 0;
+    }
+
+    @Override
+    public double getArmPercent() {
         return 0;
     }
 
@@ -93,6 +128,11 @@ public class ElevatorStub implements ElevatorIO {
 
     @Override
     public double getFollowerMotorCurrentDraw() {
+        return 0;
+    }
+
+    @Override
+    public double getArmCurrentDrawAmps() {
         return 0;
     }
 

@@ -635,6 +635,9 @@ public final class Constants {
         public static final double AT_GOAL_POSITION_TOLERANCE = 0.03;
         public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.63514;
 
+        public static final double AT_GOAL_ARM_ANGLE_TOLERANCE = 0.15;
+        public static final double AT_GOAL_ARM_VELOCITY_TOLERANCE = 1.05;
+
         public static final Pose2d ROOT_MECHANISM_POSE = new Pose2d(0.15, 0, Rotation2d.fromDegrees(0));
         public static final double MIN_LENGTH = 0.65;
         public static final double MAX_HEIGHT = 1.339;

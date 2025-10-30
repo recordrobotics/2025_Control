@@ -15,6 +15,7 @@ public class ElevatorReal implements ElevatorIO {
 
     private final TalonFX motorLead;
     private final TalonFX motorFollower;
+    private final TalonFX arm;
     private final DigitalInput bottomEndStop;
     private final DigitalInput topEndStop;
 
@@ -23,6 +24,7 @@ public class ElevatorReal implements ElevatorIO {
 
         motorLead = new TalonFX(RobotMap.Elevator.MOTOR_LEAD_ID);
         motorFollower = new TalonFX(RobotMap.Elevator.MOTOR_FOLLOWER_ID);
+        arm = new TalonFX(RobotMap.ElevatorArm.ARM_ID);
         bottomEndStop = new DigitalInput(RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
         topEndStop = new DigitalInput(RobotMap.Elevator.TOP_ENDSTOP_ID);
     }
@@ -31,6 +33,11 @@ public class ElevatorReal implements ElevatorIO {
     public void applyTalonFXConfig(TalonFXConfiguration configuration) {
         motorLead.getConfigurator().apply(configuration);
         motorFollower.getConfigurator().apply(configuration);
+    }
+
+    @Override
+    public void applyArmTalonFXConfig(TalonFXConfiguration configuration) {
+        arm.getConfigurator().apply(configuration);
     }
 
     @Override
@@ -44,6 +51,11 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
+    public void setArmVoltage(double outputVolts) {
+        arm.setVoltage(outputVolts);
+    }
+
+    @Override
     public void setLeadMotionMagic(MotionMagicExpoVoltage request) {
         motorLead.setControl(request);
     }
@@ -51,6 +63,11 @@ public class ElevatorReal implements ElevatorIO {
     @Override
     public void setFollowerMotionMagic(Follower request) {
         motorFollower.setControl(request);
+    }
+
+    @Override
+    public void setArmMotionMagic(MotionMagicExpoVoltage request) {
+        arm.setControl(request);
     }
 
     @Override
@@ -64,6 +81,11 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
+    public double getArmVoltage() {
+        return arm.getMotorVoltage().getValueAsDouble();
+    }
+
+    @Override
     public void setLeadMotorPosition(double newValue) {
         motorLead.setPosition(newValue);
     }
@@ -71,6 +93,11 @@ public class ElevatorReal implements ElevatorIO {
     @Override
     public void setFollowerMotorPosition(double newValue) {
         motorFollower.setPosition(newValue);
+    }
+
+    @Override
+    public void setArmPosition(double newValue) {
+        arm.setPosition(newValue);
     }
 
     @Override
@@ -94,13 +121,33 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
+    public double getArmPosition() {
+        return arm.getPosition().getValueAsDouble();
+    }
+
+    @Override
+    public double getArmVelocity() {
+        return arm.getVelocity().getValueAsDouble();
+    }
+
+    @Override
     public void setLeadMotorPercent(double newValue) {
         motorLead.set(newValue);
     }
 
     @Override
+    public void setArmPercent(double newValue) {
+        arm.set(newValue);
+    }
+
+    @Override
     public double getLeadMotorPercent() {
         return motorLead.get();
+    }
+
+    @Override
+    public double getArmPercent() {
+        return arm.get();
     }
 
     @Override
@@ -124,9 +171,15 @@ public class ElevatorReal implements ElevatorIO {
     }
 
     @Override
+    public double getArmCurrentDrawAmps() {
+        return arm.getSupplyCurrent().getValueAsDouble();
+    }
+
+    @Override
     public void close() throws Exception {
         motorLead.close();
         motorFollower.close();
+        arm.close();
         bottomEndStop.close();
         topEndStop.close();
     }

@@ -96,7 +96,7 @@ public class CoralIntakeToElevator extends SequentialCommandGroup implements Sim
                         .getCoralIntakeChannelPose()
                         .relativeTo(new Pose3d(RobotContainer.model.getRobot())),
                 () -> RobotContainer.model
-                        .elevatorArm
+                        .elevator
                         .getCoralShooterTargetPose()
                         .relativeTo(new Pose3d(RobotContainer.model.getRobot())),
                 this::updateCoralPose,
@@ -109,7 +109,7 @@ public class CoralIntakeToElevator extends SequentialCommandGroup implements Sim
     }
 
     private void setFinalCoralState() {
-        coral.setPoseSupplier(RobotContainer.model.elevatorArm::getCoralShooterTargetPose);
+        coral.setPoseSupplier(RobotContainer.model.elevator::getCoralShooterTargetPose);
         try {
             RobotContainer.elevatorHead.getSimIO().setCoralDetectorSim(false);
         } catch (Exception e) {

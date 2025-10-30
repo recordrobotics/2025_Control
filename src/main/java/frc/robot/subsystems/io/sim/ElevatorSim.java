@@ -10,11 +10,15 @@ import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.io.ElevatorIO;
+import frc.robot.utils.DCMotors;
 
 public class ElevatorSim implements ElevatorIO {
 
@@ -22,9 +26,11 @@ public class ElevatorSim implements ElevatorIO {
 
     private final TalonFX motorLead;
     private final TalonFX motorFollower;
+    private final TalonFX arm;
 
     private final TalonFXSimState motorLeadSim;
     private final TalonFXSimState motorFollowerSim;
+    private final TalonFXSimState armSim;
 
     private final edu.wpi.first.wpilibj.simulation.ElevatorSim physicsSim =
             new edu.wpi.first.wpilibj.simulation.ElevatorSim(
@@ -39,6 +45,20 @@ public class ElevatorSim implements ElevatorIO {
                     0.0003,
                     0.0003);
 
+    private final DCMotor armMotor = DCMotors.getKrakenX44(1);
+
+    private final SingleJointedArmSim armSimModel = new SingleJointedArmSim(
+            LinearSystemId.createSingleJointedArmSystem(armMotor, 0.2, Constants.ElevatorArm.ARM_GEAR_RATIO),
+            armMotor,
+            Constants.ElevatorArm.ARM_GEAR_RATIO,
+            Units.inchesToMeters(18.4966),
+            Units.degreesToRadians(-105),
+            Units.degreesToRadians(115),
+            true,
+            Constants.ElevatorArm.START_POS,
+            0.001,
+            0.001);
+
     private final DigitalInput bottomEndStop = new DigitalInput(RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
     private final DigitalInput topEndStop = new DigitalInput(RobotMap.Elevator.TOP_ENDSTOP_ID);
     private final SimDevice bottomEndStopSim = SimDevice.create("DigitalInput", RobotMap.Elevator.BOTTOM_ENDSTOP_ID);
@@ -51,12 +71,15 @@ public class ElevatorSim implements ElevatorIO {
 
         motorLead = new TalonFX(RobotMap.Elevator.MOTOR_LEAD_ID);
         motorFollower = new TalonFX(RobotMap.Elevator.MOTOR_FOLLOWER_ID);
+        arm = new TalonFX(RobotMap.ElevatorArm.ARM_ID);
 
         motorLeadSim = motorLead.getSimState();
         motorFollowerSim = motorFollower.getSimState();
+        armSim = arm.getSimState();
 
         motorLeadSim.Orientation = ChassisReference.Clockwise_Positive;
         motorFollowerSim.Orientation = ChassisReference.Clockwise_Positive;
+        armSim.Orientation = ChassisReference.Clockwise_Positive;
 
         if (bottomEndStopSim != null)
             bottomEndStopSimValue = bottomEndStopSim.createBoolean("Value", Direction.kOutput, false);
@@ -79,6 +102,11 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
+    public void applyArmTalonFXConfig(TalonFXConfiguration configuration) {
+        arm.getConfigurator().apply(configuration);
+    }
+
+    @Override
     public Follower createFollower() {
         return new Follower(RobotMap.Elevator.MOTOR_LEAD_ID, false);
     }
@@ -86,6 +114,11 @@ public class ElevatorSim implements ElevatorIO {
     @Override
     public void setLeadMotorVoltage(double outputVolts) {
         motorLead.setVoltage(outputVolts);
+    }
+
+    @Override
+    public void setArmVoltage(double outputVolts) {
+        arm.setVoltage(outputVolts);
     }
 
     @Override
@@ -99,6 +132,11 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
+    public void setArmMotionMagic(MotionMagicExpoVoltage request) {
+        arm.setControl(request);
+    }
+
+    @Override
     public double getLeadMotorVoltage() {
         return motorLead.getMotorVoltage().getValueAsDouble();
     }
@@ -106,6 +144,11 @@ public class ElevatorSim implements ElevatorIO {
     @Override
     public double getFollowerMotorVoltage() {
         return motorFollower.getMotorVoltage().getValueAsDouble();
+    }
+
+    @Override
+    public double getArmVoltage() {
+        return arm.getMotorVoltage().getValueAsDouble();
     }
 
     @Override
@@ -132,6 +175,22 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
+    public void setArmPosition(double newValue) {
+        // Reset internal sim state
+        armSimModel.setState(Units.rotationsToRadians(newValue), 0);
+
+        // Update raw rotor position to match internal sim state (has to be called before setPosition to
+        // have correct offset)
+        armSim.setRawRotorPosition(Constants.ElevatorArm.ARM_GEAR_RATIO
+                * Units.radiansToRotations(armSimModel.getAngleRads() - Constants.ElevatorArm.START_POS));
+        armSim.setRotorVelocity(
+                Constants.ElevatorArm.ARM_GEAR_RATIO * Units.radiansToRotations(armSimModel.getVelocityRadPerSec()));
+
+        // Update internal raw position offset
+        arm.setPosition(newValue);
+    }
+
+    @Override
     public double getLeadMotorPosition() {
         return motorLead.getPosition().getValueAsDouble();
     }
@@ -152,13 +211,33 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
+    public double getArmPosition() {
+        return arm.getPosition().getValueAsDouble();
+    }
+
+    @Override
+    public double getArmVelocity() {
+        return arm.getVelocity().getValueAsDouble();
+    }
+
+    @Override
     public void setLeadMotorPercent(double newValue) {
         motorLead.set(newValue);
     }
 
     @Override
+    public void setArmPercent(double newValue) {
+        arm.set(newValue);
+    }
+
+    @Override
     public double getLeadMotorPercent() {
         return motorLead.get();
+    }
+
+    @Override
+    public double getArmPercent() {
+        return arm.get();
     }
 
     @Override
@@ -192,9 +271,15 @@ public class ElevatorSim implements ElevatorIO {
     }
 
     @Override
+    public double getArmCurrentDrawAmps() {
+        return arm.getSupplyCurrent().getValueAsDouble();
+    }
+
+    @Override
     public void close() throws Exception {
         motorLead.close();
         motorFollower.close();
+        arm.close();
 
         if (bottomEndStopSim != null) {
             bottomEndStopSim.close();
@@ -222,5 +307,17 @@ public class ElevatorSim implements ElevatorIO {
         motorFollowerSim.setRawRotorPosition(physicsSim.getPositionMeters() / Constants.Elevator.METERS_PER_ROTATION);
         motorFollowerSim.setRotorVelocity(
                 physicsSim.getVelocityMetersPerSecond() / Constants.Elevator.METERS_PER_ROTATION);
+
+        armSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+
+        double armVoltage = armSim.getMotorVoltage();
+
+        armSimModel.setInputVoltage(armVoltage);
+        armSimModel.update(periodicDt);
+
+        armSim.setRawRotorPosition(Constants.ElevatorArm.ARM_GEAR_RATIO
+                * Units.radiansToRotations(armSimModel.getAngleRads() - Constants.ElevatorArm.START_POS));
+        armSim.setRotorVelocity(
+                Constants.ElevatorArm.ARM_GEAR_RATIO * Units.radiansToRotations(armSimModel.getVelocityRadPerSec()));
     }
 }

@@ -15,7 +15,6 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
-import frc.robot.subsystems.ElevatorArm;
 import frc.robot.utils.AutoUtils;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
@@ -27,8 +26,10 @@ public class AutoScore extends SequentialCommandGroup {
 
     public static final double ELEVATOR_MOVE_HEIGHT_THRESHOLD = Constants.Elevator.AT_GOAL_POSITION_TOLERANCE + 1.17;
     public static final double ELEVATOR_MOVE_VELOCITY_THRESHOLD = Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE + 999;
-    public static final double ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD = ElevatorArm.POSITION_TOLERANCE + 1.94;
-    public static final double ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD = ElevatorArm.VELOCITY_TOLERANCE + 999;
+    public static final double ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD =
+            Constants.Elevator.AT_GOAL_ARM_ANGLE_TOLERANCE + 1.94;
+    public static final double ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD =
+            Constants.Elevator.AT_GOAL_ARM_VELOCITY_TOLERANCE + 999;
 
     // 8s timeout for first waypoint
     private static final double FIRST_WAYPOINT_TIMEOUT = 8.0;
@@ -80,8 +81,7 @@ public class AutoScore extends SequentialCommandGroup {
                 // wait until trigger not pressed (only in teleop) AND elevator/arm at goal before shooting (not in L1)
                 new WaitUntilCommand(() -> (RobotState.isAutonomous()
                                         || !DashboardUI.Overview.getControl().isAutoScoreTriggered())
-                                && (level == CoralLevel.L1
-                                        || (RobotContainer.elevator.atGoal() && RobotContainer.elevatorArm.atGoal())))
+                                && (level == CoralLevel.L1 || RobotContainer.elevator.atGoal()))
                         .andThen(
                                 level != CoralLevel.L1
                                         ? new CoralShoot()

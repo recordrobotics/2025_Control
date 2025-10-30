@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.ElevatorArm;
 
 public class ElevatorMove extends Command {
 
@@ -27,8 +26,8 @@ public class ElevatorMove extends Command {
                 targetHeight,
                 Constants.Elevator.AT_GOAL_POSITION_TOLERANCE,
                 Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE,
-                ElevatorArm.POSITION_TOLERANCE,
-                ElevatorArm.VELOCITY_TOLERANCE);
+                Constants.Elevator.AT_GOAL_ARM_ANGLE_TOLERANCE,
+                Constants.Elevator.AT_GOAL_ARM_VELOCITY_TOLERANCE);
     }
 
     public ElevatorMove(
@@ -42,7 +41,7 @@ public class ElevatorMove extends Command {
         this.armAngleThreshold = armAngleThreshold;
         this.elevatorVelocityThreshold = elevatorVelocityThreshold;
         this.armVelocityThreshold = armVelocityThreshold;
-        addRequirements(RobotContainer.elevator, RobotContainer.elevatorArm);
+        addRequirements(RobotContainer.elevator);
     }
 
     // Called when the command is initially scheduled.
@@ -51,28 +50,26 @@ public class ElevatorMove extends Command {
         lastMoveTime = Timer.getTimestamp();
 
         initialElevatorHeight = RobotContainer.elevator.getCurrentHeight();
-        initialArmAngle = RobotContainer.elevatorArm.getArmAngle();
+        initialArmAngle = RobotContainer.elevator.getArmAngle();
 
         RobotContainer.elevator.moveTo(targetHeight);
-        RobotContainer.elevatorArm.set(targetHeight.getArmAngle());
     }
 
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
         RobotContainer.elevator.moveTo(targetHeight);
-        RobotContainer.elevatorArm.set(targetHeight.getArmAngle());
 
         if (Math.abs(RobotContainer.elevator.getCurrentVelocity()) >= STALL_VELOCITY_THRESHOLD
-                || RobotContainer.elevator.atGoal(elevatorHeightThreshold, elevatorVelocityThreshold)) {
+                || RobotContainer.elevator.atGoal(
+                        elevatorHeightThreshold, elevatorVelocityThreshold, armAngleThreshold, armVelocityThreshold)) {
             lastMoveTime = Timer.getTimestamp();
         } else {
             // If the elevator is not moving, check if it has been stationary for too long
             double currentTime = Timer.getTimestamp();
             if (currentTime - lastMoveTime > STALL_TIME_THRESHOLD) { // elevator stalled
                 // Reset the elevator and arm to their initial positions
-                RobotContainer.elevator.set(initialElevatorHeight);
-                RobotContainer.elevatorArm.set(initialArmAngle);
+                RobotContainer.elevator.set(initialElevatorHeight, initialArmAngle);
                 cancel();
             }
         }
@@ -87,7 +84,7 @@ public class ElevatorMove extends Command {
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        return RobotContainer.elevator.atGoal(elevatorHeightThreshold, elevatorVelocityThreshold)
-                && RobotContainer.elevatorArm.atGoal(armAngleThreshold, armVelocityThreshold);
+        return RobotContainer.elevator.atGoal(
+                elevatorHeightThreshold, elevatorVelocityThreshold, armAngleThreshold, armVelocityThreshold);
     }
 }
