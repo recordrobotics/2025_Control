@@ -62,8 +62,7 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     private double armVelocityCached = 0;
     private double armVoltageCached = 0;
 
-    private double setpoint;
-    private double armSetpoint;
+    private ElevatorSetpoint setpoint;
 
     private final SysIdRoutine sysIdRoutine;
     private final SysIdRoutine armSysIdRoutine;
@@ -240,7 +239,7 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
 
         // Update mechanism
         RobotContainer.model.elevator.update(getCurrentHeight(), getArmAngle());
-        RobotContainer.model.elevator.updateSetpoint(setpoint, armSetpoint);
+        RobotContainer.model.elevator.updateSetpoint(setpoint.heightMeters(), setpoint.armAngleRadians());
     }
 
     @Override
@@ -249,8 +248,7 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     }
 
     public void set(double heightMeters, double armAngleRadians) {
-        setpoint = heightMeters;
-        armSetpoint = armAngleRadians;
+        setpoint = new ElevatorSetpoint(heightMeters, armAngleRadians);
 
         if (!(SysIdManager.getProvider() instanceof SysId)) {
             io.setLeadMotionMagic(elevatorRequest.withPosition(heightMeters));
@@ -258,6 +256,19 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
 
         if (!(SysIdManager.getProvider() instanceof SysIdArm)) {
             io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(armAngleRadians)));
+        }
+    }
+
+    private static final double SAFE_ARM_ANGLE_TO_GO_DOWN = -0.185059;
+    private static final double ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN = 0.346436;
+
+    public ElevatorSetpoint getNextSafestSetpoint() {
+        if(getCurrentHeight() > ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN && > getArmAngleRotations() > SAFE_ARM_ANGLE_TO_GO_DOWN) {
+            return new ElevatorSetpoint(
+                    ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN,
+                    Units.rotationsToRadians(SAFE_ARM_ANGLE_TO_GO_DOWN));
+        } else {
+            return setpoint;
         }
     }
 
@@ -292,9 +303,9 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             double velocityThresholdMetersPerSecond,
             double armAngleThresholdRadians,
             double armVelocityThresholdRadiansPerSecond) {
-        return Math.abs(setpoint - getCurrentHeight()) < positionThresholdMeters
+        return Math.abs(setpoint.heightMeters() - getCurrentHeight()) < positionThresholdMeters
                 && Math.abs(getCurrentVelocity()) < velocityThresholdMetersPerSecond
-                && SimpleMath.isWithinTolerance(getArmAngle(), setpoint, armAngleThresholdRadians)
+                && SimpleMath.isWithinTolerance(getArmAngle(), setpoint.armAngleRadians(), armAngleThresholdRadians)
                 && SimpleMath.isWithinTolerance(getArmVelocity(), 0, armVelocityThresholdRadiansPerSecond);
     }
 
@@ -367,4 +378,6 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             return true;
         }
     }
+
+    public static record ElevatorSetpoint(double heightMeters, double armAngleRadians) {}
 }
