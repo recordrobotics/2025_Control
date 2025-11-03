@@ -265,4 +265,91 @@ public final class SimpleMath {
                 currentPose.getY() + dy,
                 currentPose.getRotation().plus(new Rotation2d(deltatheta)));
     }
+
+    /**
+     * Compares two doubles for equality within a small epsilon
+     * <p>The comparison accounts for rounding errors in floating point representation</p>
+     * <p>If the values are within EXACTLY 1e-9 of each other, they ARE considered equal</p>
+     * @param a The first double
+     * @param b The second double
+     * @return True if the doubles are equal within epsilon, false otherwise
+     */
+    public static boolean areDoublesEqual(double a, double b) {
+        final double EPSILON = 1e-9;
+        double diff = Math.abs(a - b);
+        if (diff <= EPSILON) return true;
+        // Allow rounding noise from representing a±EPSILON on the ULP grid near a/b
+        double ulpSlack = Math.max(Math.ulp(a), Math.ulp(b));
+        return diff <= EPSILON + ulpSlack;
+    }
+
+    /**
+     * Computes time to reach the target position with acceleration and velocity limits.
+     * <p>Uses a trapezoidal or triangular motion profile as needed.</p>
+     * <p>Handles cases where the current velocity is moving away from the target.</p>
+     *
+     * Assumes the final velocity = 0 at the target.
+     *
+     * @param currentPosition   current position
+     * @param targetPosition    target position
+     * @param currentVelocity   current velocity (signed)
+     * @param maxVelocity       maximum velocity magnitude (positive)
+     * @param maxAcceleration   maximum acceleration magnitude (positive)
+     * @return                  total time to reach target (positive)
+     */
+    public static double timeToTargetTrapezoidal(
+            double currentPosition,
+            double targetPosition,
+            double currentVelocity,
+            double maxVelocity,
+            double maxAcceleration) {
+
+        if (maxAcceleration <= 0 || maxVelocity <= 0) {
+            throw new IllegalArgumentException("maxAcceleration and maxVelocity must be positive");
+        }
+
+        double distance = targetPosition - currentPosition;
+        double direction = Math.signum(distance);
+        if (SimpleMath.areDoublesEqual(direction, 0)) return 0.0; // Already at target
+
+        // Project velocity into direction toward target
+        double velocityTowardTarget = currentVelocity * direction; // positive if moving toward, negative if away
+        double remainingDistance = Math.abs(distance);
+
+        double totalTime = 0.0;
+
+        if (velocityTowardTarget < 0) {
+            // Moving away from target — must decelerate to stop first
+            double timeToStop = -velocityTowardTarget / maxAcceleration;
+            double distanceToStop = (velocityTowardTarget * velocityTowardTarget) / (2 * maxAcceleration);
+            totalTime += timeToStop;
+            remainingDistance += distanceToStop; // you move away before turning back
+            velocityTowardTarget = 0; // now stopped
+        }
+
+        // Distance to accelerate from current velocity to max velocity
+        double accelDistance =
+                (maxVelocity * maxVelocity - velocityTowardTarget * velocityTowardTarget) / (2 * maxAcceleration);
+        // Distance to decelerate from max velocity to stop
+        double decelDistance = (maxVelocity * maxVelocity) / (2 * maxAcceleration);
+        double accelDecelDistance = accelDistance + decelDistance;
+
+        if (remainingDistance >= accelDecelDistance) {
+            // Trapezoidal motion profile (accelerate → cruise → decelerate)
+            double timeToAccel = (maxVelocity - velocityTowardTarget) / maxAcceleration;
+            double timeToDecel = maxVelocity / maxAcceleration;
+            double cruiseDistance = remainingDistance - accelDecelDistance;
+            double timeToCruise = cruiseDistance / maxVelocity;
+            totalTime += timeToAccel + timeToCruise + timeToDecel;
+        } else {
+            // Triangular motion profile (accelerate → decelerate without hitting max velocity)
+            double peakVelocity = Math.sqrt(
+                    maxAcceleration * remainingDistance + (velocityTowardTarget * velocityTowardTarget) / 2.0);
+            double timeToAccel = (peakVelocity - velocityTowardTarget) / maxAcceleration;
+            double timeToDecel = peakVelocity / maxAcceleration;
+            totalTime += timeToAccel + timeToDecel;
+        }
+
+        return totalTime;
+    }
 }

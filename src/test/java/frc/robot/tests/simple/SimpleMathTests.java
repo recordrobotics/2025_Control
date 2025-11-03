@@ -454,4 +454,171 @@ class SimpleMathTests {
         Rotation2d result = SimpleMath.interpolateRotation2dUnbounded(start, end, 0.5);
         assertEquals(-Math.PI * 2, result.getRadians(), DELTA);
     }
+
+    @Test
+    void testAreDoublesEqualExactMatch() {
+        assertTrue(SimpleMath.areDoublesEqual(5.0, 5.0));
+    }
+
+    @Test
+    void testAreDoublesEqualWithinEpsilon() {
+        assertTrue(SimpleMath.areDoublesEqual(1.0, 1.0 + 1e-10));
+        assertTrue(SimpleMath.areDoublesEqual(1.0, 1.0 - 1e-10));
+    }
+
+    @Test
+    void testAreDoublesEqualAtEpsilonBoundary() {
+        assertTrue(SimpleMath.areDoublesEqual(1.0, 1.0 + 1e-9));
+        assertTrue(SimpleMath.areDoublesEqual(1.0, 1.0 - 1e-9));
+    }
+
+    @Test
+    void testAreDoublesEqualOutsideEpsilon() {
+        assertFalse(SimpleMath.areDoublesEqual(1.0, 1.0 + 1e-8));
+        assertFalse(SimpleMath.areDoublesEqual(1.0, 1.0 - 1e-8));
+    }
+
+    @Test
+    void testAreDoublesEqualZeroValues() {
+        assertTrue(SimpleMath.areDoublesEqual(0.0, 0.0));
+        assertTrue(SimpleMath.areDoublesEqual(0.0, -0.0));
+        assertTrue(SimpleMath.areDoublesEqual(0.0, 1e-10));
+    }
+
+    @Test
+    void testAreDoublesEqualNegativeValues() {
+        assertTrue(SimpleMath.areDoublesEqual(-5.0, -5.0));
+        assertTrue(SimpleMath.areDoublesEqual(-1.0, -1.0 + 1e-10));
+        assertFalse(SimpleMath.areDoublesEqual(-1.0, -1.0 + 1e-8));
+    }
+
+    @Test
+    void testAreDoublesEqualLargeValues() {
+        assertTrue(SimpleMath.areDoublesEqual(1000000.0, 1000000.0 + 1e-10));
+        assertFalse(SimpleMath.areDoublesEqual(1000000.0, 1000000.0 + 1e-8));
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalAlreadyAtTarget() {
+        double time = SimpleMath.timeToTargetTrapezoidal(5.0, 5.0, 0.0, 3.0, 2.0);
+        assertEquals(0.0, time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalMovingAwayFromTarget() {
+        // Moving away from target - must stop first then accelerate back
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 10.0, -2.0, 3.0, 2.0);
+
+        // Time to stop: 2.0 / 2.0 = 1.0 second
+        // Distance moved away: 2.0^2 / (2 * 2.0) = 1.0 meter
+        // Total distance needed: 10.0 + 1.0 = 11.0 meters
+        // Then trapezoidal motion from rest over 11.0 meters
+        assertTrue(time > 1.0); // At minimum the stop time
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalTrapezoidalProfile() {
+        // Large distance that allows reaching max velocity
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 20.0, 0.0, 4.0, 2.0);
+
+        // Distance to accelerate to max velocity: 4^2 / (2 * 2) = 4 meters
+        // Distance to decelerate from max velocity: 4^2 / (2 * 2) = 4 meters
+        // Cruise distance: 20 - (4 + 4) = 12 meters
+        // Time to accelerate: 4 / 2 = 2 seconds
+        // Time to cruise: 12 / 4 = 3 seconds
+        // Time to decelerate: 4 / 2 = 2 seconds
+        // Total: 7 seconds
+        assertEquals(7.0, time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalTriangularProfile() {
+        // Small distance that doesn't allow reaching max velocity
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 4.0, 0.0, 10.0, 2.0);
+
+        // Peak velocity = sqrt(2 * 4 + 0) = sqrt(8) ≈ 2.828
+        // Time to accelerate: 2.828 / 2 ≈ 1.414 seconds
+        // Time to decelerate: 2.828 / 2 ≈ 1.414 seconds
+        // Total: ≈ 2.828 seconds
+        assertEquals(Math.sqrt(8), time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalWithInitialVelocity() {
+        // Starting with some velocity in correct direction
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 10.0, 1.0, 3.0, 2.0);
+
+        // Distance to accelerate from 1 to 3: (3^2 - 1^2) / (2 * 2) = 4 meters
+        // Distance to decelerate from 3 to 0: 3^2 / (2 * 2) = 4.5 meters
+        // Total accel/decel distance: 8.5 meters
+        // Cruise distance: 10 - 8.5 = 1.5 meters
+        assertTrue(time > 0);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalNegativeDirection() {
+        // Moving from positive to negative position
+        double time = SimpleMath.timeToTargetTrapezoidal(10.0, 0.0, 0.0, 3.0, 2.0);
+
+        // Same as moving 10 meters in positive direction
+        // Should be symmetric
+        assertEquals(SimpleMath.timeToTargetTrapezoidal(0.0, 10.0, 0.0, 3.0, 2.0), time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalVerySmallDistance() {
+        // Very small distance - triangular profile
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 0.1, 0.0, 5.0, 2.0);
+
+        // Peak velocity = sqrt(2 * 0.1) = sqrt(0.2) ≈ 0.447
+        // Total time = 2 * 0.447 / 2 = 0.447 seconds
+        assertEquals(Math.sqrt(0.2), time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalHighInitialVelocity() {
+        // Initial velocity higher than what's needed for triangular profile
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 2.0, 1.5, 3.0, 2.0);
+
+        // With initial velocity 1.5, check if it can reach target without exceeding max velocity
+        assertTrue(time > 0);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalMovingAwayLargeVelocity() {
+        // Large velocity moving away from target
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, 5.0, -5.0, 3.0, 2.0);
+
+        // Time to stop: 5 / 2 = 2.5 seconds
+        // Distance moved away: 5^2 / (2 * 2) = 6.25 meters
+        // Total distance: 5 + 6.25 = 11.25 meters
+        assertTrue(time > 2.5); // At minimum the stop time
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalExactlyTriangularBoundary() {
+        // Test case where distance exactly equals accel + decel distance
+        double maxVel = 2.0;
+        double maxAccel = 1.0;
+        double distance = (maxVel * maxVel) / maxAccel; // 4.0 meters for triangular/trapezoidal boundary
+
+        double time = SimpleMath.timeToTargetTrapezoidal(0.0, distance, 0.0, maxVel, maxAccel);
+
+        // Should be exactly trapezoidal: accel time + decel time = 2 + 2 = 4 seconds
+        assertEquals(4.0, time, DELTA);
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalZeroMaxAcceleration() {
+        // Edge case: zero acceleration should not cause division by zero
+        assertThrows(
+                IllegalArgumentException.class, () -> SimpleMath.timeToTargetTrapezoidal(0.0, 10.0, 0.0, 3.0, 0.0));
+    }
+
+    @Test
+    void testTimeToTargetTrapezoidalZeroMaxVelocity() {
+        // Edge case: zero max velocity
+        assertThrows(
+                IllegalArgumentException.class, () -> SimpleMath.timeToTargetTrapezoidal(0.0, 10.0, 0.0, 0.0, 2.0));
+    }
 }

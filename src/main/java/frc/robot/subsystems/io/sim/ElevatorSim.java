@@ -42,8 +42,8 @@ public class ElevatorSim implements ElevatorIO {
                     Constants.Elevator.MAX_HEIGHT,
                     true,
                     0,
-                    0.0003,
-                    0.0003);
+                    0.00003,
+                    0.00003);
 
     private final DCMotor armMotor = DCMotors.getKrakenX44(1);
 

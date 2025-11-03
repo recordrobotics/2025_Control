@@ -33,6 +33,11 @@ import frc.robot.utils.PoweredSubsystem;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.SysIdManager;
 import frc.robot.utils.SysIdManager.SysIdProvider;
+import frc.robot.utils.TrapezoidalPositionConstraint;
+import frc.robot.utils.TrapezoidalPositionConstraint.Axis;
+import frc.robot.utils.TrapezoidalPositionConstraint.AxisConstraints;
+import frc.robot.utils.TrapezoidalPositionConstraint.AxisState;
+import frc.robot.utils.TrapezoidalPositionConstraint.Constraint;
 import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 
@@ -46,6 +51,13 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             Volts.of(2.0).per(Second);
     private static final Voltage SYSID_ARM_STEP_VOLTAGE = Volts.of(1.5);
     private static final Time SYSID_ARM_TIMEOUT = Seconds.of(1.3);
+
+    private static final int ELEVATOR_ARM_AXIS_INDEX = 0;
+
+    private static final double ELEVATOR_CORAL_EXCLUSION_ZONE_ARM_ANGLE_MAX = Constants.ElevatorArm.MAX_POS;
+    private static final double ELEVATOR_CORAL_EXCLUSION_ZONE_ARM_ANGLE_MIN = Units.rotationsToRadians(-0.185059);
+    private static final double ELEVATOR_CORAL_EXCLUSION_ZONE_START_HEIGHT = 0.346436;
+    private static final double ELEVATOR_CORAL_EXCLUSION_ZONE_END_HEIGHT = 0.346436 + 0.2;
 
     private final ElevatorIO io;
 
@@ -62,7 +74,16 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     private double armVelocityCached = 0;
     private double armVoltageCached = 0;
 
-    private ElevatorSetpoint setpoint;
+    private final TrapezoidalPositionConstraint constraint = new TrapezoidalPositionConstraint(
+                    new AxisConstraints(Constants.Elevator.MAX_VELOCITY, Constants.Elevator.MAX_ACCELERATION))
+            .addOutputAxis(new AxisConstraints(
+                    Constants.ElevatorArm.MAX_ARM_VELOCITY, Constants.ElevatorArm.MAX_ARM_ACCELERATION))
+            .addConstraint(new Constraint(
+                    ELEVATOR_CORAL_EXCLUSION_ZONE_START_HEIGHT,
+                    ELEVATOR_CORAL_EXCLUSION_ZONE_END_HEIGHT,
+                    ELEVATOR_CORAL_EXCLUSION_ZONE_ARM_ANGLE_MIN,
+                    ELEVATOR_CORAL_EXCLUSION_ZONE_ARM_ANGLE_MAX,
+                    ELEVATOR_ARM_AXIS_INDEX));
 
     private final SysIdRoutine sysIdRoutine;
     private final SysIdRoutine armSysIdRoutine;
@@ -237,9 +258,14 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             armVoltageCached = io.getArmVoltage();
         }
 
+        // continuously manage elevator constraints
+        updateConstraints();
+
         // Update mechanism
         RobotContainer.model.elevator.update(getCurrentHeight(), getArmAngle());
-        RobotContainer.model.elevator.updateSetpoint(setpoint.heightMeters(), setpoint.armAngleRadians());
+        RobotContainer.model.elevator.updateSetpoint(
+                constraint.getInputAxis().getTarget(),
+                constraint.getOutputAxis(ELEVATOR_ARM_AXIS_INDEX).getTarget());
     }
 
     @Override
@@ -248,28 +274,51 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
     }
 
     public void set(double heightMeters, double armAngleRadians) {
-        setpoint = new ElevatorSetpoint(heightMeters, armAngleRadians);
-
-        if (!(SysIdManager.getProvider() instanceof SysId)) {
-            io.setLeadMotionMagic(elevatorRequest.withPosition(heightMeters));
-        }
-
-        if (!(SysIdManager.getProvider() instanceof SysIdArm)) {
-            io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(armAngleRadians)));
-        }
+        constraint.getInputAxis().setTarget(heightMeters);
+        constraint.getOutputAxis(ELEVATOR_ARM_AXIS_INDEX).setTarget(armAngleRadians);
+        updateConstraints();
     }
 
-    private static final double SAFE_ARM_ANGLE_TO_GO_DOWN = -0.185059;
-    private static final double ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN = 0.346436;
+    private void updateConstraints() {
+        // Get axes
+        Axis elevatorAxis = constraint.getInputAxis();
+        Axis armAxis = constraint.getOutputAxis(ELEVATOR_ARM_AXIS_INDEX);
 
-    public ElevatorSetpoint getNextSafestSetpoint() {
-        if(getCurrentHeight() > ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN && > getArmAngleRotations() > SAFE_ARM_ANGLE_TO_GO_DOWN) {
-            return new ElevatorSetpoint(
-                    ELEVATOR_MAX_HEIGHT_FOR_SAFE_DOWN,
-                    Units.rotationsToRadians(SAFE_ARM_ANGLE_TO_GO_DOWN));
-        } else {
-            return setpoint;
+        // Update current states
+        elevatorAxis.setCurrentState(new AxisState(
+                getCurrentHeight(),
+                Math.abs(constraint.getInputAxis().getTarget() - getCurrentHeight())
+                                < Constants.Elevator.AT_GOAL_POSITION_TOLERANCE
+                        ? 0
+                        : getCurrentVelocity()));
+        armAxis.setCurrentState(new AxisState(getArmAngle(), getArmVelocity()));
+
+        // Store previous setpoints
+        double prevElevatorSetpoint = elevatorAxis.getSetpoint();
+        double prevArmSetpoint = armAxis.getSetpoint();
+
+        // Calculate new setpoints
+        boolean isConstrained = constraint.calculate();
+
+        // Store new setpoints
+        double elevatorSetpoint = elevatorAxis.getSetpoint();
+        double armSetpoint = armAxis.getSetpoint();
+
+        // Send to motors only if setpoint changed
+        if (!SimpleMath.areDoublesEqual(elevatorSetpoint, prevElevatorSetpoint)
+                && !(SysIdManager.getProvider() instanceof SysId)) {
+            io.setLeadMotionMagic(elevatorRequest.withPosition(elevatorSetpoint));
         }
+
+        if (!SimpleMath.areDoublesEqual(armSetpoint, prevArmSetpoint)
+                && !(SysIdManager.getProvider() instanceof SysIdArm)) {
+            io.setArmMotionMagic(armRequest.withPosition(Units.radiansToRotations(armSetpoint)));
+        }
+
+        // Log whether we are constrained
+        Logger.recordOutput("Elevator/IsConstrained", isConstrained);
+        Logger.recordOutput("Elevator/Setpoint", elevatorSetpoint);
+        Logger.recordOutput("ElevatorArm/Setpoint", armSetpoint);
     }
 
     public void moveTo(ElevatorHeight height) {
@@ -303,9 +352,12 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             double velocityThresholdMetersPerSecond,
             double armAngleThresholdRadians,
             double armVelocityThresholdRadiansPerSecond) {
-        return Math.abs(setpoint.heightMeters() - getCurrentHeight()) < positionThresholdMeters
+        return Math.abs(constraint.getInputAxis().getTarget() - getCurrentHeight()) < positionThresholdMeters
                 && Math.abs(getCurrentVelocity()) < velocityThresholdMetersPerSecond
-                && SimpleMath.isWithinTolerance(getArmAngle(), setpoint.armAngleRadians(), armAngleThresholdRadians)
+                && SimpleMath.isWithinTolerance(
+                        getArmAngle(),
+                        constraint.getOutputAxis(ELEVATOR_ARM_AXIS_INDEX).getTarget(),
+                        armAngleThresholdRadians)
                 && SimpleMath.isWithinTolerance(getArmVelocity(), 0, armVelocityThresholdRadiansPerSecond);
     }
 
@@ -378,6 +430,4 @@ public final class Elevator extends ManagedSubsystemBase implements PoweredSubsy
             return true;
         }
     }
-
-    public static record ElevatorSetpoint(double heightMeters, double armAngleRadians) {}
 }
