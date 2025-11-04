@@ -12,10 +12,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 import java.util.ArrayList;
 import java.util.Map;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.Random;
 import java.util.stream.Collectors;
 
