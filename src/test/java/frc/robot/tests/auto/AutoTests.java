@@ -8,7 +8,7 @@ import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setAllianceStati
 import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setAutonomous;
 import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setEnabled;
 import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setMatchTime;
-import static utils.Assertions.assertReefEquals;
+import static utils.Assertions.*;
 import static utils.TestRobot.*;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -69,7 +69,7 @@ class AutoTests {
                         notifyNewData();
                     });
                 },
-                () -> assertReefEquals(expectedReefSequence),
+                () -> assertReefCoralExactly(expectedReefSequence),
                 Seconds.of(16));
     }
 

@@ -2,6 +2,9 @@ package utils;
 
 import static org.junit.jupiter.api.AssertionFailureBuilder.*;
 
+import frc.robot.utils.maplesim.Arena2025ReefscapeWithAlgae;
+import frc.robot.utils.maplesim.ReefscapeReefAlgaeSide;
+import frc.robot.utils.maplesim.ReefscapeReefAlgaeSimulation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +25,8 @@ public class Assertions {
      * @param reefString the expected reef string
      * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid coral IDs
      */
-    public static void assertReefHas(String reefString) {
-        assertReefEquals(reefString, false);
+    public static void assertReefCoralAtLeast(String reefString) {
+        assertReefCoral(reefString, false);
     }
 
     /**
@@ -36,8 +39,8 @@ public class Assertions {
      * @param reefString the expected reef string
      * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid coral IDs
      */
-    public static void assertReefEquals(String reefString) {
-        assertReefEquals(reefString, true);
+    public static void assertReefCoralExactly(String reefString) {
+        assertReefCoral(reefString, true);
     }
 
     /**
@@ -50,7 +53,7 @@ public class Assertions {
      * @param assertRestAreEmpty if true, also asserts that all other branches not mentioned in the reefString are empty
      * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid coral IDs
      */
-    public static void assertReefEquals(String reefString, boolean assertRestAreEmpty) {
+    public static void assertReefCoral(String reefString, boolean assertRestAreEmpty) {
         ArrayList<String> corals = new ArrayList<>(Arrays.asList(reefString.split(",")));
         ArrayList<String> coralIds = new ArrayList<>(
                 corals.stream().map(coral -> coral.trim().substring(0, 3)).toList());
@@ -109,6 +112,74 @@ public class Assertions {
                 sb.append("Expected branch " + branchId + " to have " + expectedCount + " coral, but it has "
                         + actualCount + ".\n");
             }
+        }
+
+        if (!sb.isEmpty()) {
+            assertionFailure()
+                    .message(sb.toString())
+                    .expected(reefString)
+                    .actual(String.join(",", actualReefString))
+                    .buildAndThrow();
+        }
+    }
+
+    /**
+     * Asserts that the reef matches the expected string format.
+     * The expected format is a comma-separated list of algae positions where algae should be MISSING, where each algae position is represented by alliance color [B, R] its 2 branches (e.g., "BAB", "REF")
+     * Full reefstring example: "BAB,REF,RGH" - Blue AB does NOT have algae, Red EF does NOT have algae, Red GH does NOT have algae.
+     * @implNote Only asserts that the reef does NOT contain the specified algae, but does NOT check if all other positions are full.
+     * @param reefString the expected reef string
+     * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid algae positions
+     */
+    public static void assertReefAlgaeAtLeastMissing(String reefString) {
+        assertReefAlgaeMissing(reefString, false);
+    }
+
+    /**
+     * Asserts that the reef matches the expected string format.
+     * The expected format is a comma-separated list of algae positions where algae should be MISSING, where each algae position is represented by alliance color [B, R] its 2 branches (e.g., "BAB", "REF")
+     * Full reefstring example: "BAB,REF,RGH" - Blue AB does NOT have algae, Red EF does NOT have algae, Red GH does NOT have algae.
+     * @implNote Also asserts that all other algae positions not mentioned in the reefString have algae.
+     * @param reefString the expected reef string
+     * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid coral IDs
+     */
+    public static void assertReefAlgaeExactlyMissing(String reefString) {
+        assertReefAlgaeMissing(reefString, true);
+    }
+
+    /**
+     * Asserts that the reef matches the expected string format.
+     * The expected format is a comma-separated list of algae positions where algae should be MISSING, where each algae position is represented by alliance color [B, R] its 2 branches (e.g., "BAB", "REF")
+     * Full reefstring example: "BAB,REF,RGH" - Blue AB does NOT have algae, Red EF does NOT have algae, Red GH does NOT have algae.
+     * @param reefString the expected reef string
+     * @param assertRestAreFull if true, also asserts that all other algae positions not mentioned in the reefString have algae.
+     * @throws IllegalArgumentException if the reefString is not in the expected format or contains invalid coral IDs
+     */
+    public static void assertReefAlgaeMissing(String reefString, boolean assertRestAreFull) {
+        ArrayList<String> expectedMissingAlgaePositions = new ArrayList<>(Arrays.asList(reefString.split(",")));
+
+        StringBuilder sb = new StringBuilder();
+        List<String> actualReefString = new ArrayList<>();
+
+        for (Map.Entry<String, ReefscapeReefAlgaeSimulation> allianceAlgaeSim : Arrays.asList(
+                Map.entry("B", ((Arena2025ReefscapeWithAlgae) SimulatedArena.getInstance()).blueAlgaeSimulation),
+                Map.entry("R", ((Arena2025ReefscapeWithAlgae) SimulatedArena.getInstance()).redAlgaeSimulation))) {
+            for (Map.Entry<String, ReefscapeReefAlgaeSide> side :
+                    allianceAlgaeSim.getValue().getSidesSet()) {
+                String algaePositionID = allianceAlgaeSim.getKey() + side.getKey();
+                boolean expectedToBeMissing = expectedMissingAlgaePositions.contains(algaePositionID);
+                boolean actualIsThere = side.getValue().isFull();
+                if (expectedToBeMissing && actualIsThere) {
+                    sb.append("Expected algae position " + algaePositionID + " to be missing, but it is present.\n");
+                } else if (!expectedToBeMissing && !actualIsThere && assertRestAreFull) {
+                    sb.append("Expected algae position " + algaePositionID + " to be present, but it is missing.\n");
+                }
+                expectedMissingAlgaePositions.remove(algaePositionID);
+            }
+        }
+
+        if (!expectedMissingAlgaePositions.isEmpty()) {
+            sb.append("Invalid algae positions: " + String.join(",", expectedMissingAlgaePositions) + "\n");
         }
 
         if (!sb.isEmpty()) {
