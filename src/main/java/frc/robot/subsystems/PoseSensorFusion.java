@@ -87,7 +87,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private boolean trustLimelightLeft;
     private boolean trustLimelightCenter;
     private boolean useOPI;
-    private boolean useISPE;
     private boolean useVision;
 
     private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -134,7 +133,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", true);
         SmartDashboard.putBoolean("Autonomous/TrustLimelightCenter", true);
         SmartDashboard.putBoolean("Autonomous/UseOPI", true);
-        SmartDashboard.putBoolean("Autonomous/UseISPE", true);
         SmartDashboard.putBoolean("Autonomous/UseVision", true);
     }
 
@@ -153,7 +151,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
         trustLimelightCenter = SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
         useOPI = SmartDashboard.getBoolean("Autonomous/UseOPI", false);
-        useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
         useVision = SmartDashboard.getBoolean("Autonomous/UseVision", true);
 
         calculationFuture = executor.submit(this::calculationLoop);
@@ -352,12 +349,10 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
             independentPoseEstimator.update(getEstimatedPosition().getRotation());
 
             // when no vision use independent pose estimator to correct pose
-            if (useISPE) {
-                addVisionMeasurement(
-                        independentPoseEstimator.getEstimatedRobotPose(),
-                        Timer.getTimestamp(),
-                        VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
-            }
+            addVisionMeasurement(
+                    independentPoseEstimator.getEstimatedRobotPose(),
+                    Timer.getTimestamp(),
+                    VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
         }
     }
 
