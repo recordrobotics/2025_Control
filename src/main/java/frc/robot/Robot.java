@@ -19,7 +19,10 @@ import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.maplesim.multiplayer.MapleSimClient;
 import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeReefSimulation;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -41,6 +44,8 @@ public final class Robot extends LoggedRobot {
     private static final String DEFAULT_PATH_SIM = "logs";
 
     private static final int ELASTIC_WEBSERVER_PORT = 5800;
+
+    private static MapleSimClient mapleSimClient;
 
     private Command autonomousCommand;
 
@@ -133,8 +138,16 @@ public final class Robot extends LoggedRobot {
 
     private static void configureSimulation() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            mapleSimClient = new MapleSimClient("localhost");
+            mapleSimClient.waitForConnection();
+
             // TODO: finish maple-sim/wip-increase-branch-tolerance and configure it here
         }
+    }
+
+    private static void configureReefForMultiplayer(boolean isBlue, ReefscapeReefSimulation reef) {
+        reef.getBranchesSet().forEach(entry -> entry.getValue()
+                .setOnGamePieceCountChanged(() -> mapleSimClient.accumulateReefBranchUpdate(isBlue, entry.getKey())));
     }
 
     public void setPeriodicRunnable(Runnable periodicRunnable) {
@@ -174,6 +187,10 @@ public final class Robot extends LoggedRobot {
         AutoLogLevelManager.addObject(this);
 
         initialized = true;
+
+        Arena2025Reefscape arena = (Arena2025Reefscape) SimulatedArena.getInstance();
+        configureReefForMultiplayer(true, arena.blueReefSimulation);
+        configureReefForMultiplayer(false, arena.redReefSimulation);
     }
 
     /**
@@ -322,6 +339,13 @@ public final class Robot extends LoggedRobot {
     public void simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic();
         RobotContainer.simulationPeriodic();
+
+        mapleSimClient.sendRobotStateUpdate(
+                RobotContainer.model.getRobot(),
+                RobotContainer.model.mechanismPoses,
+                RobotContainer.model.getRobotCoral().getPose());
+        mapleSimClient.sendAccumulatedReefBranchUpdates();
+        Logger.recordOutput("MapleSim/Multiplayer/RobotCorals", mapleSimClient.getRobotCorals());
     }
 
     @Override

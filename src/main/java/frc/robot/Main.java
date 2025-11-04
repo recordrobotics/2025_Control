@@ -20,6 +20,8 @@ public final class Main {
    * <p>If you change your main robot class, change the parameter type.
    */
   public static void main(String... args) {
+    org.apache.log4j.BasicConfigurator.configure();
+    org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.WARN);
     RobotBase.startRobot(Robot::new);
   }
 }
