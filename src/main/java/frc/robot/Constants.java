@@ -11,8 +11,8 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.FlippingUtil;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -45,11 +45,13 @@ import frc.robot.utils.wrappers.ImmutableCurrent;
 import frc.robot.utils.wrappers.Pose2d;
 import frc.robot.utils.wrappers.Translation2d;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Supplier;
+import org.ironmaple.utils.FieldMirroringUtils;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -64,8 +66,10 @@ public final class Constants {
 
     public final class Game {
 
-        public static final AprilTagFieldLayout APRILTAG_LAYOUT =
-                AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+        public static final AprilTagFieldLayout APRILTAG_LAYOUT = new AprilTagFieldLayout(
+                Arrays.asList(new AprilTag(1, new Pose3d())),
+                FieldMirroringUtils.FIELD_HEIGHT,
+                FieldMirroringUtils.FIELD_WIDTH);
 
         public interface IGamePosition {
             Pose2d getPose();
@@ -1079,7 +1083,7 @@ public final class Constants {
 
         public static final AutoLogLevel.Level AUTO_LOG_LEVEL = getAutoLogLevel();
 
-        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM_INACCURATE;
+        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM_ACCURATE;
 
         // change to use an external photonvision client for coral detection simulation
         public static final CoralDetection.CoralDetectionSimulationMode CORAL_DETECTION_SIMULATION_MODE =

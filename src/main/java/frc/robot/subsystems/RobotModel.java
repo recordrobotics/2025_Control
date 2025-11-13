@@ -485,6 +485,42 @@ public final class RobotModel extends ManagedSubsystemBase {
     }
 
     @AutoLogLevel(level = Level.SIM)
+    public Pose3d[] getBlueStoryPanelPositions() {
+        if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            return SimulatedArena.getInstance().getGamePiecesArrayByType("BlueStoryPanel");
+        } else {
+            return new Pose3d[0];
+        }
+    }
+
+    @AutoLogLevel(level = Level.SIM)
+    public Pose3d[] getRedStoryPanelPositions() {
+        if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            return SimulatedArena.getInstance().getGamePiecesArrayByType("RedStoryPanel");
+        } else {
+            return new Pose3d[0];
+        }
+    }
+
+    @AutoLogLevel(level = Level.SIM)
+    public Pose3d[] getBlueSpeechBubblePositions() {
+        if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            return SimulatedArena.getInstance().getGamePiecesArrayByType("BlueSpeechBubble");
+        } else {
+            return new Pose3d[0];
+        }
+    }
+
+    @AutoLogLevel(level = Level.SIM)
+    public Pose3d[] getRedSpeechBubblePositions() {
+        if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            return SimulatedArena.getInstance().getGamePiecesArrayByType("RedSpeechBubble");
+        } else {
+            return new Pose3d[0];
+        }
+    }
+
+    @AutoLogLevel(level = Level.SIM)
     @SuppressWarnings("java:S2325") // rest of the getters are non-static
     public Pose2d getRobot() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
