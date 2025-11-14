@@ -222,7 +222,7 @@ public final class Constants {
             public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT =
                     0.01720; // positive is closer to middle
             public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK =
-                    -0.009712; // positive is closer to reef
+                    -0.011455; // positive is closer to reef
 
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0;
             public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
