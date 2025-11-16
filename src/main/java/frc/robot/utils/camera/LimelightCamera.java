@@ -2,9 +2,14 @@ package frc.robot.utils.camera;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.VisionSimulationMode;
@@ -12,6 +17,7 @@ import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
 import frc.robot.subsystems.PoseSensorFusion;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.camera.VisionCameraEstimate.TXTYMeasurement;
 import frc.robot.utils.libraries.LimelightHelpers;
 import frc.robot.utils.libraries.LimelightHelpers.PoseEstimate;
 import frc.robot.utils.libraries.LimelightHelpers.RawFiducial;
@@ -35,11 +41,12 @@ public class LimelightCamera implements IVisionCamera {
             .map(v -> new RawFiducial(v.ID, 0.1, 0.1, 0.1, 6, 7, 0))
             .toArray(RawFiducial[]::new);
 
-    private static final double DEFAULT_CONFIDENCE_MT1 = 0.65;
-    private static final double DEFAULT_CONFIDENCE_MT2 = 0.7;
     private static final double DEFAULT_CLOSE_MT1_DISTANCE =
             Units.feetToMeters(7); // 7 feet is where the MT1 (yellow) gets bad wiggles
     private static final double DEFAULT_MAX_POSE_ERROR = 10; // 10 meters
+    private static final double DEFAULT_TXTY_MAX_DISTANCE = 1.0; // have to be 1.0 meters or closer to use txty
+
+    private static final double ROTATION_STDDEV_MULTIPLIER = 5.0;
 
     private static final double MAPLE_SIM_STDDEV = 0.001;
     private static final double MAPLE_SIM_TAG_SPAN = 0.1;
@@ -57,41 +64,54 @@ public class LimelightCamera implements IVisionCamera {
 
     private String name;
 
-    private final double mt1Confidence;
-    private final double mt2Confidence;
-
     private final double mt1MaxDistance;
+    private final double txtyMaxDistance;
 
     private final double maxPoseError;
 
+    private final Transform3d robotToCamera;
+
     private PhotonCamera fakeCamera;
     private PhotonPoseEstimator photonEstimator;
-    private CameraType type;
+    private PhotonPoseEstimator photonEstimatorTXTY;
+    private CameraType physicalCamera;
 
-    public LimelightCamera(String name, CameraType type, Transform3d robotToCamera) {
+    private Pose2d txtyPose = new Pose2d();
+
+    private final Alert disconnectedAlert;
+
+    public LimelightCamera(String name, CameraType physicalCamera, Transform3d robotToCamera) {
         this.name = name;
-        this.type = type;
-        this.mt1Confidence = DEFAULT_CONFIDENCE_MT1;
-        this.mt2Confidence = DEFAULT_CONFIDENCE_MT2;
+        this.physicalCamera = physicalCamera;
+        this.robotToCamera = robotToCamera;
+
         this.mt1MaxDistance = DEFAULT_CLOSE_MT1_DISTANCE;
+        this.txtyMaxDistance = DEFAULT_TXTY_MAX_DISTANCE;
         this.maxPoseError = DEFAULT_MAX_POSE_ERROR;
+
+        this.disconnectedAlert = new Alert("Limelight " + name + " disconnected!", Alert.AlertType.kError);
+        disconnectedAlert.set(true);
 
         if (isPhotonSimMode()) {
             fakeCamera = new PhotonCamera(name);
             SimCameraProperties cameraProp = new SimCameraProperties();
             cameraProp.setCalibration(
-                    type.getDetectorWidth(), type.getDetectorHeight(), Rotation2d.fromDegrees(type.fov));
-            cameraProp.setCalibError(type.pxError, type.pxErrorStdDev);
-            cameraProp.setFPS(type.fps);
-            cameraProp.setAvgLatencyMs(type.latencyMs);
-            cameraProp.setLatencyStdDevMs(type.latencyStdDevMs);
+                    physicalCamera.getDetectorWidth(),
+                    physicalCamera.getDetectorHeight(),
+                    Rotation2d.fromDegrees(physicalCamera.fov));
+            cameraProp.setCalibError(physicalCamera.pxError, physicalCamera.pxErrorStdDev);
+            cameraProp.setFPS(physicalCamera.fps);
+            cameraProp.setAvgLatencyMs(physicalCamera.latencyMs);
+            cameraProp.setLatencyStdDevMs(physicalCamera.latencyStdDevMs);
 
             PhotonCameraSim cameraSim = new PhotonCameraSim(fakeCamera, cameraProp);
             cameraSim.enableDrawWireframe(true);
             RobotContainer.visionSim.addCamera(cameraSim, robotToCamera);
 
             photonEstimator = new PhotonPoseEstimator(
-                    Constants.Game.APRILTAG_LAYOUT, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCamera);
+                    Constants.Game.APRILTAG_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCamera);
+            photonEstimatorTXTY = new PhotonPoseEstimator(
+                    Constants.Game.APRILTAG_LAYOUT, PoseStrategy.PNP_DISTANCE_TRIG_SOLVE, robotToCamera);
         }
     }
 
@@ -107,7 +127,7 @@ public class LimelightCamera implements IVisionCamera {
 
     @Override
     public CameraType getCameraType() {
-        return type;
+        return physicalCamera;
     }
 
     @Override
@@ -141,33 +161,53 @@ public class LimelightCamera implements IVisionCamera {
     }
 
     @Override
-    public void updateEstimation(boolean trust, boolean ignore) {
+    public void updateEstimation() {
         updateRobotOrientation();
 
         Measurements measurements = getMeasurements();
 
         if (!validateMeasurements(measurements.mt1(), measurements.mt2())) {
+            hasVision = false;
+            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
             return;
         }
 
-        selectBestMeasurement(measurements.mt1(), measurements.mt2());
+        Optional<TXTYMeasurement> txtyMeasurement = measurements.txty();
+
+        if (txtyMeasurement.isEmpty()) {
+            txtyPose = new Pose2d();
+        } else {
+            txtyPose = txtyMeasurement.get().pose();
+        }
+
+        selectBestMeasurement(measurements.mt1(), measurements.mt2(), txtyMeasurement);
         validateMeasurementTagCount();
         validatePoseDistance();
-        processFinalEstimate(trust, ignore);
+        hasVision = false; // will be set true if not ignored when adding to fusion
     }
 
     private void updateRobotOrientation() {
+        Rotation2d estimatedRotation =
+                RobotContainer.poseSensorFusion.getEstimatedPosition().getRotation();
+
+        double yawRate = RobotContainer.poseSensorFusion.nav.getYawRate();
+
         LimelightHelpers.SetRobotOrientation(
                 name,
-                RobotContainer.poseSensorFusion
-                        .getEstimatedPosition()
-                        .getRotation()
-                        .getDegrees(),
-                0,
+                estimatedRotation.getDegrees(),
+                0, // TODO: try out `yawRate`,
                 0,
                 0,
                 0,
                 0);
+
+        if (isPhotonSimMode()) {
+            double timestamp = Timer.getTimestamp();
+            Rotation3d heading = new Rotation3d(0, 0, estimatedRotation.getRadians());
+
+            photonEstimator.addHeadingData(timestamp, heading);
+            photonEstimatorTXTY.addHeadingData(timestamp, heading);
+        }
     }
 
     private Measurements getMeasurements() {
@@ -182,13 +222,65 @@ public class LimelightCamera implements IVisionCamera {
 
         PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
         PoseEstimate measurementM2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
+        Optional<TXTYMeasurement> txtyMeasurement = measurement == null
+                ? Optional.empty()
+                : pnpDistanceTrigSolveStrategy(measurement.timestampSeconds, measurement.tagCount);
 
-        return new Measurements(measurement, measurementM2);
+        return new Measurements(measurement, measurementM2, txtyMeasurement);
+    }
+
+    /**
+     * From PhotonVision
+     * @param timestamp the timestamp of the measurement
+     * @param tagCount number of tags seen
+     * @return the TXTYMeasurement
+     */
+    @SuppressWarnings("java:S1941") // library code
+    private Optional<TXTYMeasurement> pnpDistanceTrigSolveStrategy(double timestamp, int tagCount) {
+        if (tagCount == 0) {
+            return Optional.empty();
+        }
+
+        Optional<Pose2d> headingSampleOpt = RobotContainer.poseSensorFusion.getEstimatedPositionAt(timestamp);
+        if (headingSampleOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        Rotation2d headingSample = headingSampleOpt.get().getRotation();
+
+        Pose3d bestCameraToTarget = LimelightHelpers.toPose3D(LimelightHelpers.getTargetPose_CameraSpace(name));
+
+        Translation2d camToTagTranslation = new Translation3d(
+                        bestCameraToTarget.getTranslation().getNorm(),
+                        new Rotation3d(
+                                0,
+                                -Math.toRadians(LimelightHelpers.getTY(name)),
+                                -Math.toRadians(LimelightHelpers.getTX(name))))
+                .rotateBy(robotToCamera.getRotation())
+                .toTranslation2d()
+                .rotateBy(headingSample);
+
+        int fiducialId = (int) LimelightHelpers.getFiducialID(name);
+
+        Optional<Pose3d> tagPoseOpt = Constants.Game.APRILTAG_LAYOUT.getTagPose(fiducialId);
+        if (tagPoseOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        Pose2d tagPose2d = tagPoseOpt.get().toPose2d();
+
+        Translation2d fieldToCameraTranslation = tagPose2d.getTranslation().plus(camToTagTranslation.unaryMinus());
+
+        Translation2d camToRobotTranslation =
+                robotToCamera.getTranslation().toTranslation2d().unaryMinus().rotateBy(headingSample);
+
+        Pose2d robotPose = new Pose2d(fieldToCameraTranslation.plus(camToRobotTranslation), headingSample);
+
+        return Optional.of(new TXTYMeasurement(
+                robotPose, timestamp, bestCameraToTarget.getTranslation().getNorm(), fiducialId));
     }
 
     private static boolean isPhotonSimMode() {
         return Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL
-                && Constants.RobotState.VISION_SIMULATION_MODE == VisionSimulationMode.PHOTON_SIM;
+                && Constants.RobotState.VISION_SIMULATION_MODE.isPhotonSim();
     }
 
     private static boolean isMapleSimMode() {
@@ -201,23 +293,45 @@ public class LimelightCamera implements IVisionCamera {
             return Optional.empty();
         }
 
-        PhotonPipelineResult change = results.get(results.size() - 1);
-        Optional<EstimatedRobotPose> visionEst = photonEstimator.update(change);
+        Optional<EstimatedRobotPose> visionEst = Optional.empty();
+        Optional<EstimatedRobotPose> visionEstTXTY = Optional.empty();
+        double bestTargetDist = Double.MAX_VALUE;
+        for (PhotonPipelineResult result : results) {
+            if (!result.hasTargets()) {
+                continue;
+            }
+
+            visionEst = photonEstimator.update(result);
+            visionEstTXTY = photonEstimatorTXTY.update(result);
+            bestTargetDist = result.getBestTarget()
+                    .getBestCameraToTarget()
+                    .getTranslation()
+                    .getNorm();
+        }
+
+        final double bestTargetDistFinal = bestTargetDist;
 
         if (visionEst.isPresent()) {
-            return Optional.of(createPoseEstimatesFromPhoton(visionEst.get()));
+            return Optional.of(createPoseEstimatesFromPhoton(
+                    visionEst.get(),
+                    visionEstTXTY.map(v -> new TXTYMeasurement(
+                            v.estimatedPose.toPose2d(),
+                            v.timestampSeconds,
+                            bestTargetDistFinal,
+                            v.targetsUsed.get(0).fiducialId))));
         }
 
         return Optional.empty();
     }
 
-    private Measurements createPoseEstimatesFromPhoton(EstimatedRobotPose est) {
+    @SuppressWarnings("java:S3553") // record stores an optional
+    private Measurements createPoseEstimatesFromPhoton(EstimatedRobotPose est, Optional<TXTYMeasurement> txty) {
         PhotonMeasurementData data = processPhotonTargets(est);
 
         PoseEstimate measurement = new PoseEstimate(
                 est.estimatedPose.toPose2d(),
                 est.timestampSeconds,
-                type.latencyMs,
+                physicalCamera.latencyMs,
                 data.targetNum,
                 data.span,
                 data.avgTagDist,
@@ -228,7 +342,7 @@ public class LimelightCamera implements IVisionCamera {
         PoseEstimate measurementM2 = new PoseEstimate(
                 est.estimatedPose.toPose2d(),
                 est.timestampSeconds,
-                type.latencyMs,
+                physicalCamera.latencyMs,
                 data.targetNum,
                 data.span,
                 data.avgTagDist,
@@ -236,7 +350,7 @@ public class LimelightCamera implements IVisionCamera {
                 data.rawFiducials.toArray(new RawFiducial[0]),
                 true);
 
-        return new Measurements(measurement, measurementM2);
+        return new Measurements(measurement, measurementM2, txty);
     }
 
     private PhotonMeasurementData processPhotonTargets(EstimatedRobotPose est) {
@@ -307,7 +421,7 @@ public class LimelightCamera implements IVisionCamera {
         PoseEstimate measurement = new PoseEstimate(
                 maplePose,
                 Timer.getTimestamp(),
-                Units.millisecondsToSeconds(type.latencyMs),
+                Units.millisecondsToSeconds(physicalCamera.latencyMs),
                 ALL_SIM_TAGS.length,
                 MAPLE_SIM_TAG_SPAN,
                 MAPLE_SIM_TAG_DIST,
@@ -318,7 +432,7 @@ public class LimelightCamera implements IVisionCamera {
         PoseEstimate measurementM2 = new PoseEstimate(
                 maplePose,
                 Timer.getTimestamp(),
-                Units.millisecondsToSeconds(type.latencyMs),
+                Units.millisecondsToSeconds(physicalCamera.latencyMs),
                 ALL_SIM_TAGS.length,
                 MAPLE_SIM_TAG_SPAN,
                 MAPLE_SIM_TAG_DIST,
@@ -326,7 +440,10 @@ public class LimelightCamera implements IVisionCamera {
                 ALL_SIM_TAGS,
                 true);
 
-        return new Measurements(measurement, measurementM2);
+        return new Measurements(
+                measurement,
+                measurementM2,
+                Optional.of(new TXTYMeasurement(maplePose, Timer.getTimestamp(), MAPLE_SIM_TAG_DIST, -1)));
     }
 
     private boolean validateMeasurements(PoseEstimate measurement, PoseEstimate measurementM2) {
@@ -334,6 +451,7 @@ public class LimelightCamera implements IVisionCamera {
             if (Constants.RobotState.getMode() == Constants.RobotState.Mode.REAL) {
                 limelightConnected = false;
             }
+            numTags = 0;
             return false;
         }
         limelightConnected = true;
@@ -341,19 +459,32 @@ public class LimelightCamera implements IVisionCamera {
         return true;
     }
 
-    private void selectBestMeasurement(PoseEstimate measurement, PoseEstimate measurementM2) {
-        if (DashboardUI.Autonomous.isForceMT1Pressed()) {
-            currentMeasurementStdDevs = mt1Confidence;
+    @SuppressWarnings("java:S3553") // record stores an optional
+    private void selectBestMeasurement(
+            PoseEstimate measurement, PoseEstimate measurementM2, Optional<TXTYMeasurement> txty) {
+        if (DashboardUI.Autonomous.isForceMT1Pressed()
+                && measurement.tagCount > 0
+                && SimpleMath.isInField(measurement.pose)) {
+            currentMeasurementStdDevs = physicalCamera.calculateStdDevs(measurement.avgTagDist);
             unsafeEstimate = new VisionCameraEstimate(measurement);
-        } else if (measurement.tagCount > 0 && SimpleMath.isInField(measurement.pose)) {
-            if (measurement.avgTagDist < mt1MaxDistance) {
-                currentMeasurementStdDevs = mt1Confidence;
+        } else if (measurement.tagCount > 0) {
+            if (txty.isPresent()
+                    && SimpleMath.isInField(txty.get().pose())
+                    && txty.get().distToCamera() <= txtyMaxDistance) {
+                currentMeasurementStdDevs = physicalCamera.txtyStdDevs;
+                unsafeEstimate = new VisionCameraEstimate(txty.get());
+            } else if (measurement.avgTagDist < mt1MaxDistance && SimpleMath.isInField(measurement.pose)) {
+                currentMeasurementStdDevs = physicalCamera.calculateStdDevs(measurement.avgTagDist);
                 unsafeEstimate = new VisionCameraEstimate(measurement);
-            } else {
-                currentMeasurementStdDevs = mt2Confidence;
+            } else if (SimpleMath.isInField(measurementM2.pose)) {
+                currentMeasurementStdDevs = physicalCamera.calculateStdDevs(measurementM2.avgTagDist);
                 unsafeEstimate = new VisionCameraEstimate(measurementM2);
+            } else {
+                currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
+                unsafeEstimate = new VisionCameraEstimate(measurement);
             }
         } else {
+            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
             unsafeEstimate = new VisionCameraEstimate(measurement);
         }
     }
@@ -377,29 +508,28 @@ public class LimelightCamera implements IVisionCamera {
         }
     }
 
-    private void processFinalEstimate(boolean trust, boolean ignore) {
+    @Override
+    public void addVisionMeasurement(boolean trust, Pose2d closestPose) {
         if (currentMeasurementStdDevs < PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS) {
             hasVision = true;
             currentEstimate = unsafeEstimate;
-            if (!ignore) {
-                addVisionMeasurement(trust);
-            }
-        } else {
-            hasVision = false;
-            currentMeasurementStdDevs = PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS;
-        }
-    }
 
-    private void addVisionMeasurement(boolean trust) {
-        RobotContainer.poseSensorFusion.addVisionMeasurement(
-                currentEstimate.pose(),
-                currentEstimate.timestampSeconds(),
-                VecBuilder.fill(
-                        currentMeasurementStdDevs,
-                        currentMeasurementStdDevs,
-                        trust
-                                ? Constants.Limelight.ROT_STD_DEV_WHEN_TRUSTING
-                                : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+            if (closestPose != null && !currentEstimate.isTXTY()) {
+                double distanceToClosest =
+                        currentEstimate.pose().getTranslation().getDistance(closestPose.getTranslation());
+                currentMeasurementStdDevs += distanceToClosest / 2.0;
+            }
+
+            RobotContainer.poseSensorFusion.addVisionMeasurement(
+                    currentEstimate.pose(),
+                    currentEstimate.timestampSeconds(),
+                    VecBuilder.fill(
+                            currentMeasurementStdDevs,
+                            currentMeasurementStdDevs,
+                            trust
+                                    ? currentMeasurementStdDevs * ROTATION_STDDEV_MULTIPLIER
+                                    : PoseSensorFusion.MAX_MEASUREMENT_STD_DEVS));
+        }
     }
 
     private static class PhotonMeasurementData {
@@ -414,15 +544,19 @@ public class LimelightCamera implements IVisionCamera {
         List<RawFiducial> rawFiducials;
     }
 
-    private record Measurements(PoseEstimate mt1, PoseEstimate mt2) {}
+    private record Measurements(PoseEstimate mt1, PoseEstimate mt2, Optional<TXTYMeasurement> txty) {}
 
     @Override
     public void logValues(String id) {
         String prefix = "Limelight/" + id + "/";
         Logger.recordOutput(prefix + "Pose", unsafeEstimate.pose());
+        Logger.recordOutput(prefix + "AvgDist", unsafeEstimate.avgTagDist());
         Logger.recordOutput(prefix + "NumTags", numTags);
         Logger.recordOutput(prefix + "Confidence", currentMeasurementStdDevs);
         Logger.recordOutput(prefix + "HasVision", hasVision);
         Logger.recordOutput(prefix + "LimelightConnected", limelightConnected);
+        Logger.recordOutput(prefix + "TXTY", txtyPose);
+
+        disconnectedAlert.set(!limelightConnected);
     }
 }

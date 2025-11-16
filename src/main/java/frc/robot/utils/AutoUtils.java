@@ -32,26 +32,16 @@ public final class AutoUtils {
 
     private AutoUtils() {}
 
-    public static Command alignWithVision() {
+    public static Command alignToReefL4() {
         return Commands.defer(
-                () -> {
-                    int[] visionTagTarget = {
-                        IGamePosition.closestTo(
-                                        RobotContainer.poseSensorFusion.getEstimatedPosition(), CoralPosition.values())
-                                .apriltagId
-                    };
-
-                    // TODO: Add 2d april tag alignment after waypoint finishes
-
-                    return WaypointAlign.align(
-                            ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
-                            0,
-                            1,
-                            true,
-                            new Double[] {2.0, 1.0},
-                            AutoControlModifier.getDefault(),
-                            AutoUtils::getCurrentDrivetrainKinematicState);
-                },
+                () -> WaypointAlign.align(
+                        ReefAlign.generateWaypointsClosestWithOffset(CoralLevel.L4, false),
+                        0,
+                        1,
+                        true,
+                        new Double[] {2.0, 2.0},
+                        AutoControlModifier.getDefault(),
+                        AutoUtils::getCurrentDrivetrainKinematicState),
                 Set.of(RobotContainer.drivetrain));
     }
 
@@ -81,7 +71,7 @@ public final class AutoUtils {
                                         < REEF_DISTANCE_THRESHOLD)
                         .repeatedly()
                         .onlyWhile(() ->
-                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL)));
+                                !RobotContainer.elevatorHead.getGamePiece().atLeast(GamePiece.CORAL_CERTAIN)));
     }
 
     public static KinematicState getCurrentDrivetrainKinematicState() {

@@ -17,6 +17,21 @@ public class NavSensorStub implements NavSensorIO {
     }
 
     @Override
+    public double getPitch() {
+        return 0;
+    }
+
+    @Override
+    public double getRoll() {
+        return 0;
+    }
+
+    @Override
+    public double getYawRate() {
+        return 0;
+    }
+
+    @Override
     public double getWorldLinearAccelX() {
         return 0;
     }

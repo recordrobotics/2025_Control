@@ -38,8 +38,8 @@ import org.littletonrobotics.junction.Logger;
 
 public final class ElevatorArm extends ManagedSubsystemBase implements PoweredSubsystem, EncoderResettableSubsystem {
 
-    private static final double POSITION_TOLERANCE = 0.15;
-    private static final double VELOCITY_TOLERANCE = 1.05;
+    public static final double POSITION_TOLERANCE = 0.15;
+    public static final double VELOCITY_TOLERANCE = 1.05;
 
     private static final Velocity<VoltageUnit> SYSID_RAMP_RATE = Volts.of(2.0).per(Second);
     private static final Voltage SYSID_STEP_VOLTAGE = Volts.of(1.5);
@@ -149,8 +149,12 @@ public final class ElevatorArm extends ManagedSubsystemBase implements PoweredSu
     }
 
     public boolean atGoal() {
-        return SimpleMath.isWithinTolerance(getArmAngle(), currentSetpoint.position, POSITION_TOLERANCE)
-                && SimpleMath.isWithinTolerance(getArmVelocity(), 0, VELOCITY_TOLERANCE);
+        return atGoal(POSITION_TOLERANCE, VELOCITY_TOLERANCE);
+    }
+
+    public boolean atGoal(double angleThresholdRadians, double velocityThresholdRadiansPerSecond) {
+        return SimpleMath.isWithinTolerance(getArmAngle(), currentSetpoint.position, angleThresholdRadians)
+                && SimpleMath.isWithinTolerance(getArmVelocity(), 0, velocityThresholdRadiansPerSecond);
     }
 
     @Override

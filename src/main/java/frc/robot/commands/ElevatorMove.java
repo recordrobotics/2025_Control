@@ -2,8 +2,10 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.Constants.ElevatorHeight;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.ElevatorArm;
 
 public class ElevatorMove extends Command {
 
@@ -15,8 +17,31 @@ public class ElevatorMove extends Command {
     private double initialElevatorHeight;
     private double initialArmAngle;
 
+    private final double elevatorHeightThreshold;
+    private final double elevatorVelocityThreshold;
+    private final double armAngleThreshold;
+    private final double armVelocityThreshold;
+
     public ElevatorMove(ElevatorHeight targetHeight) {
+        this(
+                targetHeight,
+                Constants.Elevator.AT_GOAL_POSITION_TOLERANCE,
+                Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE,
+                ElevatorArm.POSITION_TOLERANCE,
+                ElevatorArm.VELOCITY_TOLERANCE);
+    }
+
+    public ElevatorMove(
+            ElevatorHeight targetHeight,
+            double elevatorHeightThreshold,
+            double elevatorVelocityThreshold,
+            double armAngleThreshold,
+            double armVelocityThreshold) {
         this.targetHeight = targetHeight;
+        this.elevatorHeightThreshold = elevatorHeightThreshold;
+        this.armAngleThreshold = armAngleThreshold;
+        this.elevatorVelocityThreshold = elevatorVelocityThreshold;
+        this.armVelocityThreshold = armVelocityThreshold;
         addRequirements(RobotContainer.elevator, RobotContainer.elevatorArm);
     }
 
@@ -39,7 +64,7 @@ public class ElevatorMove extends Command {
         RobotContainer.elevatorArm.set(targetHeight.getArmAngle());
 
         if (Math.abs(RobotContainer.elevator.getCurrentVelocity()) >= STALL_VELOCITY_THRESHOLD
-                || RobotContainer.elevator.atGoal()) {
+                || RobotContainer.elevator.atGoal(elevatorHeightThreshold, elevatorVelocityThreshold)) {
             lastMoveTime = Timer.getTimestamp();
         } else {
             // If the elevator is not moving, check if it has been stationary for too long
@@ -62,6 +87,7 @@ public class ElevatorMove extends Command {
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        return RobotContainer.elevator.atGoal() && RobotContainer.elevatorArm.atGoal();
+        return RobotContainer.elevator.atGoal(elevatorHeightThreshold, elevatorVelocityThreshold)
+                && RobotContainer.elevatorArm.atGoal(armAngleThreshold, armVelocityThreshold);
     }
 }

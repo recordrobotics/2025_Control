@@ -324,6 +324,11 @@ public class JoystickXbox implements AbstractControl {
     }
 
     @Override
+    public boolean isClimbBurstTriggered() {
+        return false;
+    }
+
+    @Override
     public boolean isCoralSourceIntakeAutoTriggered() {
         return false;
     }

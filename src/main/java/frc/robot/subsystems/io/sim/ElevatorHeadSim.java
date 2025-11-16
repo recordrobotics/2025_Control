@@ -10,6 +10,7 @@ import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -23,15 +24,20 @@ import frc.robot.RobotMap;
 import frc.robot.subsystems.ElevatorHead.CoralShooterStates;
 import frc.robot.subsystems.io.ElevatorHeadIO;
 import frc.robot.utils.SimpleMath;
+import frc.robot.utils.maplesim.IntakeFromGoalSimulation;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeAlgaeOnFly;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
 
 public class ElevatorHeadSim implements ElevatorHeadIO {
 
     private static final double ALGAE_VOLTAGE_DIVIDER = 20.0;
+    private static final double SHOOT_ALGAE_VELOCITY_THRESHOLD = 0.12; // m/s
+    private static final double INTAKE_ALGAE_VELOCITY_THRESHOLD = 3; // m/s
     private static final double SHOOT_CORAL_VELOCITY_THRESHOLD = 1.4; // m/s
     private static final double CORAL_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER = 2.0;
+    private static final double ALGAE_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER = 8.0;
 
     private static final int SHOOTER_CORAL_MOVEMENT_VELOCITY_FILTER_SIZE = 10;
 
@@ -40,7 +46,7 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     private final SparkMax motor;
     private final SparkMaxSim motorSim;
 
-    private boolean hasAlgae = false;
+    private boolean hadAlgae = false;
 
     private MedianFilter velocityFilter = new MedianFilter(SHOOTER_CORAL_MOVEMENT_VELOCITY_FILTER_SIZE);
 
@@ -55,6 +61,8 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
     private final AbstractDriveTrainSimulation drivetrainSim;
 
+    private final IntakeFromGoalSimulation intakeSimulation;
+
     public ElevatorHeadSim(double periodicDt, AbstractDriveTrainSimulation drivetrainSim) {
         this.periodicDt = periodicDt;
         this.drivetrainSim = drivetrainSim;
@@ -68,6 +76,8 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
         if (coralDetectorSim != null) coralDetector.setSimDevice(coralDetectorSim);
         else coralDetector.close();
+
+        intakeSimulation = new IntakeFromGoalSimulation("Algae", drivetrainSim, 1);
     }
 
     @Override
@@ -103,10 +113,6 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     @Override
     public double getPercent() {
         return motor.get();
-    }
-
-    public void setHasAlgae(boolean hasAlgae) {
-        this.hasAlgae = hasAlgae;
     }
 
     @Override
@@ -149,8 +155,24 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
     public void simulationPeriodic() {
         double voltage = motorSim.getAppliedOutput() * motorSim.getBusVoltage();
 
-        if (hasAlgae) {
+        Pose3d algaeTargetPose = RobotContainer.model
+                .elevatorArm
+                .getAlgaeGrabberTargetPoseTop()
+                .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
+
+        intakeSimulation.drivetrainRelativePose =
+                new Transform3d(algaeTargetPose.getTranslation(), algaeTargetPose.getRotation());
+
+        if (intakeSimulation.getGamePiecesAmount() > 0) {
             voltage /= ALGAE_VOLTAGE_DIVIDER;
+            if (!hadAlgae) {
+                RobotContainer.model
+                        .getRobotAlgae()
+                        .setPoseSupplier(RobotContainer.model.elevatorArm::getAlgaeGrabberTargetPoseTop);
+                hadAlgae = true;
+            }
+        } else {
+            hadAlgae = false;
         }
 
         wheelSimModel.setInputVoltage(voltage);
@@ -165,38 +187,66 @@ public class ElevatorHeadSim implements ElevatorHeadIO {
 
         velocityFilter.calculate(RobotContainer.elevatorHead.getVelocity());
 
-        if (!isCoralDetectorTriggered()) { // NC
+        if (velocityFilter.lastValue() < -INTAKE_ALGAE_VELOCITY_THRESHOLD) {
+            intakeSimulation.startIntake();
+        } else {
+            intakeSimulation.stopIntake();
+        }
+
+        if (!isCoralDetectorTriggered()
+                && Math.abs(velocityFilter.lastValue()) > SHOOT_CORAL_VELOCITY_THRESHOLD
+                && RobotContainer.elevatorHead.getCurrentCoralShooterState() != CoralShooterStates.POSITION) {
+            RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
+            setCoralDetectorSim(true); // NC
+
             Pose3d ejectPose = RobotContainer.model
                     .elevatorArm
                     .getCoralShooterTargetPose()
                     .relativeTo(new Pose3d(RobotContainer.model.getRobot()));
-            if (Math.abs(velocityFilter.lastValue()) > SHOOT_CORAL_VELOCITY_THRESHOLD
-                    && RobotContainer.elevatorHead.getCurrentCoralShooterState() != CoralShooterStates.POSITION) {
-                RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
-                setCoralDetectorSim(true); // NC
 
-                Angle angle = ejectPose.getRotation().getMeasureY();
-                if (RobotContainer.elevatorHead.getVelocity() > 0) {
-                    angle = angle.unaryMinus();
-                }
-
-                SimulatedArena.getInstance()
-                        .addGamePieceProjectile(new ReefscapeCoralOnFly(
-                                // Obtain robot position from drive simulation
-                                drivetrainSim.getSimulatedDriveTrainPose().getTranslation(),
-                                ejectPose.toPose2d().getTranslation(),
-                                // Obtain robot speed from drive simulation
-                                drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
-                                // Obtain robot facing from drive simulation
-                                drivetrainSim.getSimulatedDriveTrainPose().getRotation(),
-                                // The height at which the coral is ejected
-                                ejectPose.getMeasureZ(),
-                                // The initial speed of the coral
-                                MetersPerSecond.of(
-                                        Math.abs(RobotContainer.elevatorHead.getVelocity())
-                                                * CORAL_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER /* help maplesim reef simulation */),
-                                angle));
+            Angle angle = ejectPose.getRotation().getMeasureY();
+            if (RobotContainer.elevatorHead.getVelocity() > 0) {
+                angle = angle.unaryMinus();
             }
+
+            SimulatedArena.getInstance()
+                    .addGamePieceProjectile(new ReefscapeCoralOnFly(
+                            // Obtain robot position from drive simulation
+                            drivetrainSim.getSimulatedDriveTrainPose().getTranslation(),
+                            ejectPose.toPose2d().getTranslation(),
+                            // Obtain robot speed from drive simulation
+                            drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+                            // Obtain robot facing from drive simulation
+                            drivetrainSim.getSimulatedDriveTrainPose().getRotation(),
+                            // The height at which the coral is ejected
+                            ejectPose.getMeasureZ(),
+                            // The initial speed of the coral
+                            MetersPerSecond.of(Math.abs(RobotContainer.elevatorHead.getVelocity())
+                                    * CORAL_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER /* help maplesim reef simulation */),
+                            angle));
+        }
+
+        if (velocityFilter.lastValue() > SHOOT_ALGAE_VELOCITY_THRESHOLD
+                && intakeSimulation.obtainGamePieceFromIntake()) {
+            RobotContainer.model.getRobotAlgae().setPoseSupplier(() -> null);
+
+            Angle angle = algaeTargetPose.getRotation().getMeasureY();
+
+            SimulatedArena.getInstance()
+                    .addGamePieceProjectile(new ReefscapeAlgaeOnFly(
+                            // Obtain robot position from drive simulation
+                            drivetrainSim.getSimulatedDriveTrainPose().getTranslation(),
+                            algaeTargetPose.toPose2d().getTranslation(),
+                            // Obtain robot speed from drive simulation
+                            drivetrainSim.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+                            // Obtain robot facing from drive simulation
+                            drivetrainSim.getSimulatedDriveTrainPose().getRotation(),
+                            // The height at which the algae is ejected
+                            algaeTargetPose.getMeasureZ(),
+                            // The initial speed of the algae
+                            MetersPerSecond.of(Math.abs(RobotContainer.elevatorHead.getVelocity())
+                                    * ALGAE_PROJECTILE_INITIAL_VELOCITY_MULTIPLIER /* help maplesim reef simulation */),
+                            angle));
         }
     }
 }

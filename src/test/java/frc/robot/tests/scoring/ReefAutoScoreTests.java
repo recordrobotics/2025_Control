@@ -5,7 +5,7 @@ import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setAllianceStati
 import static edu.wpi.first.wpilibj.simulation.DriverStationSim.setEnabled;
 import static frc.robot.tests.TestControlBridge.Button.*;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
-import static utils.Assertions.assertReefEquals;
+import static utils.Assertions.*;
 import static utils.TestRobot.*;
 
 import edu.wpi.first.hal.AllianceStationID;
@@ -72,10 +72,10 @@ class ReefAutoScoreTests {
                                 }
                             }
 
-                            // Because of debouncer on coral sensor - have to wait two periodic cycles before autoscore
+                            // wait two periodic cycles for pose reset and coral sensor
                             runAfter(2, () -> controlBridge().pressButton(AUTO_SCORE, 1));
                         },
-                        () -> assertReefEquals(branchId));
+                        () -> assertReefCoralExactly(branchId));
             });
         });
     }

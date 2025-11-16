@@ -15,6 +15,7 @@ import frc.robot.Constants.Game.CoralLevel;
 import frc.robot.Constants.Game.CoralPosition;
 import frc.robot.RobotContainer;
 import frc.robot.dashboard.DashboardUI;
+import frc.robot.subsystems.ElevatorArm;
 import frc.robot.utils.AutoUtils;
 import frc.robot.utils.SimpleMath;
 import frc.robot.utils.modifiers.AutoControlModifier;
@@ -23,6 +24,11 @@ import frc.robot.utils.modifiers.DrivetrainControl;
 import java.util.Set;
 
 public class AutoScore extends SequentialCommandGroup {
+
+    public static final double ELEVATOR_MOVE_HEIGHT_THRESHOLD = Constants.Elevator.AT_GOAL_POSITION_TOLERANCE + 1.17;
+    public static final double ELEVATOR_MOVE_VELOCITY_THRESHOLD = Constants.Elevator.AT_GOAL_VELOCITY_TOLERANCE + 999;
+    public static final double ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD = ElevatorArm.POSITION_TOLERANCE + 1.94;
+    public static final double ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD = ElevatorArm.VELOCITY_TOLERANCE + 999;
 
     // 8s timeout for first waypoint
     private static final double FIRST_WAYPOINT_TIMEOUT = 8.0;
@@ -56,7 +62,12 @@ public class AutoScore extends SequentialCommandGroup {
                                     // elevator has to be fully extended before moving to second/third waypoint
                                     insideElevatorMoveRegion ? 0 : 1,
                                     (level != CoralLevel.L1
-                                                    ? new ElevatorMove(level.getHeight())
+                                                    ? new ElevatorMove(
+                                                            level.getHeight(),
+                                                            ELEVATOR_MOVE_HEIGHT_THRESHOLD,
+                                                            ELEVATOR_MOVE_VELOCITY_THRESHOLD,
+                                                            ELEVATOR_MOVE_ARM_ANGLE_THRESHOLD,
+                                                            ELEVATOR_MOVE_ARM_VELOCITY_THRESHOLD)
                                                     : new CoralIntakeMoveL1())
                                             .asProxy(),
                                     AutoControlModifier.getDefault(),
@@ -66,8 +77,11 @@ public class AutoScore extends SequentialCommandGroup {
                 // if ruckig timed out, wait until autoscore is pressed again
                 new WaitUntilCommand(() -> DashboardUI.Overview.getControl().isAutoScoreTriggered())
                         .onlyIf(() -> !RuckigAlign.lastAlignSuccessful() && !RobotState.isAutonomous()),
-                new WaitUntilCommand(() -> RobotState.isAutonomous()
-                                || !DashboardUI.Overview.getControl().isAutoScoreTriggered())
+                // wait until trigger not pressed (only in teleop) AND elevator/arm at goal before shooting (not in L1)
+                new WaitUntilCommand(() -> (RobotState.isAutonomous()
+                                        || !DashboardUI.Overview.getControl().isAutoScoreTriggered())
+                                && (level == CoralLevel.L1
+                                        || (RobotContainer.elevator.atGoal() && RobotContainer.elevatorArm.atGoal())))
                         .andThen(
                                 level != CoralLevel.L1
                                         ? new CoralShoot()
@@ -102,7 +116,7 @@ public class AutoScore extends SequentialCommandGroup {
     }
 
     @SuppressWarnings("java:S6548") // Singleton for default instance
-    private static final class BackawayAutoControlModifier extends AutoControlModifier {
+    public static final class BackawayAutoControlModifier extends AutoControlModifier {
         private static BackawayAutoControlModifier defaultInstance;
 
         private BackawayAutoControlModifier() {}

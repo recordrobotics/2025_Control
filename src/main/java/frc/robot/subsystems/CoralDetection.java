@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotState.Mode;
@@ -50,6 +51,8 @@ public class CoralDetection extends ManagedSubsystemBase {
         MAPLE_SIM
     }
 
+    private final Alert cameraDisconnectedAlert;
+
     public static final class DetectedCoral {
         private Pose3d fieldPose;
         private double timestamp;
@@ -74,12 +77,16 @@ public class CoralDetection extends ManagedSubsystemBase {
 
     public CoralDetection() {
         camera = new PhotonCamera(Constants.PhotonVision.PHOTON_CORAL_INTAKE);
+        cameraDisconnectedAlert = new Alert("Coral Detection Camera Disconnected", Alert.AlertType.kError);
+        cameraDisconnectedAlert.set(true);
     }
 
     @Override
     public void periodicManaged() {
         if (shouldProcessPhotonVisionTargets()) {
             processPhotonVisionTargets();
+        } else {
+            cameraDisconnectedAlert.set(false);
         }
     }
 
@@ -112,6 +119,8 @@ public class CoralDetection extends ManagedSubsystemBase {
     }
 
     private void checkCameraConnection() {
+        cameraDisconnectedAlert.set(!camera.isConnected());
+
         if (Constants.RobotState.getMode() == Mode.SIM && !camera.isConnected()) {
             ConsoleLogger.logError(
                     "Coral Detection camera not connected! Did you forget to setSimulationMode(CoralDetectionSimulationMode.MAPLE_SIM)?");
@@ -127,7 +136,9 @@ public class CoralDetection extends ManagedSubsystemBase {
     }
 
     private static Pose3d calculateProjectedFieldPose(PhotonTrackedTargetTimestamped target, Transform3d projection) {
-        Pose3d robot3d = new Pose3d(RobotContainer.poseSensorFusion.getEstimatedPositionAt(target.timestamp));
+        Pose3d robot3d = new Pose3d(RobotContainer.poseSensorFusion
+                .getEstimatedPositionAt(target.timestamp)
+                .orElseGet(() -> RobotContainer.poseSensorFusion.getEstimatedPosition()));
         Pose3d camera3d = robot3d.transformBy(Constants.PhotonVision.ROBOT_TO_CAMERA_GROUND_INTAKE);
         return camera3d.transformBy(projection);
     }

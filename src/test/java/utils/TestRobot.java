@@ -463,6 +463,9 @@ public class TestRobot {
             ConsoleLogger.logError(e);
         }
 
+        RobotContainer.model.getRobotCoral().setPoseSupplier(() -> null);
+        RobotContainer.model.getRobotAlgae().setPoseSupplier(() -> null);
+
         RobotContainer.resetEncoders();
         CommandScheduler.getInstance().cancelAll();
         RobotContainer.elevator.set(Constants.Elevator.STARTING_HEIGHT);

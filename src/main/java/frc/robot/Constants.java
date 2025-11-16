@@ -109,7 +109,7 @@ public final class Constants {
             }
         }
 
-        public static final Distance ALGAE_OFFSET = Meters.of(-0.1055532306);
+        public static final Distance ALGAE_OFFSET = Meters.of(-0.06);
         public static final Distance ALGAE_REEF_DISTANCE = Centimeters.of(6);
 
         public enum AlgaePosition implements IGamePosition {
@@ -217,10 +217,27 @@ public final class Constants {
             public static final double L2L3_REEF_OFFSET = 0.02;
             public static final double L4_REEF_OFFSET = 0.05;
 
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT =
+                    0.01061; // positive is closer to middle
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT =
+                    0.01720; // positive is closer to middle
+            public static final double SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK =
+                    -0.011455; // positive is closer to reef
+
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = 0;
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = 0;
+            public static final double COMP_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = 0;
+
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT;
+            public static double ADDITIONAL_REEF_SEGMENT_OFFSET_BACK = SPACE_ADDITIONAL_REEF_SEGMENT_OFFSET_BACK;
+
             public final int apriltagId;
+            private final int side;
             private final Pose2d pose;
 
             private CoralPosition(int apriltagId, int side) {
+                this.side = side;
                 this.pose = calculatePoseFromAprilTag(apriltagId, side);
                 this.apriltagId = apriltagId;
             }
@@ -250,12 +267,16 @@ public final class Constants {
             }
 
             public Pose2d getPose(CoralLevel level) {
+                Pose2d newPose = pose.transformBy(new Transform2d(
+                        ADDITIONAL_REEF_SEGMENT_OFFSET_BACK,
+                        (side == 0 ? -ADDITIONAL_REEF_SEGMENT_OFFSET_LEFT : ADDITIONAL_REEF_SEGMENT_OFFSET_RIGHT),
+                        Rotation2d.kZero));
                 return switch (level) {
-                    case L1 -> pose.transformBy(new Transform2d(
+                    case L1 -> newPose.transformBy(new Transform2d(
                             -L1_REEF_OFFSET, CoralIntake.INTAKE_X_OFFSET.in(Meters), Rotation2d.kCW_90deg));
-                    case L2, L3 -> pose.transformBy(
+                    case L2, L3 -> newPose.transformBy(
                             new Transform2d(-L2L3_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
-                    case L4 -> pose.transformBy(
+                    case L4 -> newPose.transformBy(
                             new Transform2d(-L4_REEF_OFFSET, -SHOOTER_OFFSET.in(Meters), Rotation2d.kZero));
                     default -> throw new IllegalArgumentException("Invalid Coral Level: " + level);
                 };
@@ -437,8 +458,6 @@ public final class Constants {
 
         public static final int CORAL_ID = 1;
 
-        public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
-
         private PhotonVision() {}
     }
 
@@ -448,11 +467,9 @@ public final class Constants {
         public static final String LIMELIGHT_CENTER_NAME = "limelight-center";
 
         public static final Transform3d ROBOT_TO_CAMERA_LEFT = new Transform3d(
-                new Translation3d(0.311558, -0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
+                new Translation3d(0.311558, 0.330204, 0.246383), new Rotation3d(0, Units.degreesToRadians(-21), 0));
         public static final Transform3d ROBOT_TO_CAMERA_CENTER = new Transform3d(
-                new Translation3d(0.219412, 0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
-
-        public static final double ROT_STD_DEV_WHEN_TRUSTING = 4;
+                new Translation3d(0.219412, -0.050800, 0.156247), new Rotation3d(0, Units.degreesToRadians(-27), 0));
 
         private Limelight() {}
     }
@@ -494,6 +511,8 @@ public final class Constants {
         public static final Angle PARK_ROTATIONS = START_ROTATIONS;
         public static final Angle EXTENDED_ROTATIONS = Rotations.of(-1.32);
         public static final Angle CLIMBED_ROTATIONS = Rotations.of(0.15);
+
+        public static final Angle CLIMB_BURST_ROTATIONS = Rotations.of(0.05);
 
         public static final double RATCHET_ENGAGED = 0.15;
         public static final double RATCHET_DISENGAGED = 0.025;
@@ -655,7 +674,6 @@ public final class Constants {
         public static final double AT_GOAL_POSITION_TOLERANCE = 0.05;
         public static final double AT_GOAL_VELOCITY_TOLERANCE = 0.07;
 
-        public static final Time SHOOT_TIME = Seconds.of(0.1);
         public static final Time SHOOT_STALL_TIME = Seconds.of(0.3);
 
         public static final double DEBOUNCE_TIME = 0.02;
@@ -889,8 +907,8 @@ public final class Constants {
         // Sensitivies for directional controls (XY) and spin (theta)
         public static final double JOYSTICK_DIRECTIONAL_SENSITIVITY = 1;
         public static final double JOYSTICK_SPIN_SENSITIVITY = 2;
-        public static final double JOYSTICK_X_THRESHOLD = 0.15;
-        public static final double JOYSTICK_Y_THRESHOLD = 0.15;
+        public static final double JOYSTICK_X_THRESHOLD = 0.25;
+        public static final double JOYSTICK_Y_THRESHOLD = 0.25;
         public static final double JOYSTICK_SPIN_THRESHOLD = 0.3;
 
         // Thresholds for directional controls (XY) and spin (theta)
@@ -1001,7 +1019,7 @@ public final class Constants {
 
         public static final double TURN_MAX_JERK = 1600;
         public static final double TURN_MMEXPO_KV = 1.5;
-        public static final double TURN_MMEXPO_KA = 0.4;
+        public static final double TURN_MMEXPO_KA = 0.02;
 
         /** The max speed the robot can travel safely */
         public static final double ROBOT_MAX_SPEED = 4.35;
@@ -1061,7 +1079,7 @@ public final class Constants {
 
         public static final AutoLogLevel.Level AUTO_LOG_LEVEL = getAutoLogLevel();
 
-        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.MAPLE_CLEAN;
+        public static final VisionSimulationMode VISION_SIMULATION_MODE = VisionSimulationMode.PHOTON_SIM_INACCURATE;
 
         // change to use an external photonvision client for coral detection simulation
         public static final CoralDetection.CoralDetectionSimulationMode CORAL_DETECTION_SIMULATION_MODE =
@@ -1105,9 +1123,32 @@ public final class Constants {
         }
 
         public enum VisionSimulationMode {
-            PHOTON_SIM,
-            MAPLE_CLEAN,
-            MAPLE_NOISE;
+            /**
+             * Uses PhotonVision simulation with accurate april tag placement on the field
+             */
+            PHOTON_SIM_ACCURATE(true),
+            /**
+             * Uses PhotonVision simulation with simulated inaccurate april tag placement on the field
+             */
+            PHOTON_SIM_INACCURATE(true),
+            /**
+             * Uses the maplesim actual robot pose as a vision measurement
+             */
+            MAPLE_CLEAN(false),
+            /**
+             * Uses the maplesim actual robot pose with noise added as a vision measurement
+             */
+            MAPLE_NOISE(false);
+
+            final boolean isPhotonSim;
+
+            VisionSimulationMode(boolean isPhotonSim) {
+                this.isPhotonSim = isPhotonSim;
+            }
+
+            public boolean isPhotonSim() {
+                return isPhotonSim;
+            }
         }
 
         public enum Mode {

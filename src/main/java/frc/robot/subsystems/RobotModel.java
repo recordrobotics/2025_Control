@@ -298,7 +298,7 @@ public final class RobotModel extends ManagedSubsystemBase {
             Pose3d robotOrigin = new Pose3d();
             if (RobotContainer.model != null) robotOrigin = new Pose3d(RobotContainer.model.getRobot());
 
-            Pose3d pose = new Pose3d(SHAFT_ORIGIN.plus(new Translation3d(0.18, -0.11, 0.1)), new Rotation3d())
+            Pose3d pose = new Pose3d(SHAFT_ORIGIN.plus(new Translation3d(0.18, -0.06, 0.1)), new Rotation3d())
                     .rotateAround(
                             SHAFT_ORIGIN, new Rotation3d(0, -Units.degreesToRadians(elevatorArmNode.getAngle()), 0));
             pose = new Pose3d(
@@ -390,10 +390,10 @@ public final class RobotModel extends ManagedSubsystemBase {
         }
     }
 
-    public static class RobotCoral {
+    public static class RobotGamePiece {
         private Supplier<Pose3d> poseSupplier;
 
-        public RobotCoral(Supplier<Pose3d> poseSupplier) {
+        public RobotGamePiece(Supplier<Pose3d> poseSupplier) {
             this.poseSupplier = poseSupplier;
         }
 
@@ -415,7 +415,8 @@ public final class RobotModel extends ManagedSubsystemBase {
     public final Climber climber = new Climber();
     public final CoralIntake coralIntake = new CoralIntake();
 
-    private final RobotCoral robotCoral = new RobotCoral(() -> null);
+    private final RobotGamePiece robotCoral = new RobotGamePiece(() -> null);
+    private final RobotGamePiece robotAlgae = new RobotGamePiece(() -> null);
 
     @AutoLogLevel(level = Level.REAL)
     public Pose3d[] mechanismPoses =
@@ -472,7 +473,12 @@ public final class RobotModel extends ManagedSubsystemBase {
     @SuppressWarnings("java:S2325") // rest of the getters are non-static
     public Pose3d[] getAlgaePositions() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
-            return SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
+            List<Pose3d> algaePoses = SimulatedArena.getInstance().getGamePiecesPosesByType("Algae");
+            Pose3d robotAlgaePose = robotAlgae.poseSupplier.get();
+            if (robotAlgaePose != null) {
+                algaePoses.add(robotAlgaePose);
+            }
+            return algaePoses.toArray(new Pose3d[0]);
         } else {
             return new Pose3d[0];
         }
@@ -488,7 +494,11 @@ public final class RobotModel extends ManagedSubsystemBase {
         }
     }
 
-    public RobotCoral getRobotCoral() {
+    public RobotGamePiece getRobotCoral() {
         return robotCoral;
+    }
+
+    public RobotGamePiece getRobotAlgae() {
+        return robotAlgae;
     }
 }

@@ -1,5 +1,7 @@
 package frc.robot.utils.camera;
 
+import edu.wpi.first.math.geometry.Pose2d;
+
 public interface IVisionCamera {
 
     String getName();
@@ -20,7 +22,14 @@ public interface IVisionCamera {
 
     void setPipeline(int pipeline);
 
-    void updateEstimation(boolean trust, boolean ignore);
+    void updateEstimation();
+
+    /***
+     * Add a vision measurement to the filter with weight scaled by distance to the closest pose.
+     * @param trust whether to trust the rotation
+     * @param closestPose the closest pose detected by the cameras, can be null
+     */
+    void addVisionMeasurement(boolean trust, Pose2d closestPose);
 
     void logValues(String id);
 }

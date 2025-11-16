@@ -19,6 +19,7 @@ import frc.robot.utils.AutoLogLevelManager;
 import frc.robot.utils.ConsoleLogger;
 import frc.robot.utils.LocalADStarAK;
 import frc.robot.utils.SysIdManager;
+import frc.robot.utils.maplesim.Arena2025ReefscapeWithAlgae;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -133,6 +134,7 @@ public final class Robot extends LoggedRobot {
 
     private static void configureSimulation() {
         if (Constants.RobotState.getMode() != Constants.RobotState.Mode.REAL) {
+            SimulatedArena.overrideInstance(new Arena2025ReefscapeWithAlgae());
             // TODO: finish maple-sim/wip-increase-branch-tolerance and configure it here
         }
     }
@@ -198,6 +200,8 @@ public final class Robot extends LoggedRobot {
         // End and start reversed to make sure we get latest data before command scheduler
         RobotContainer.poseSensorFusion.endCalculation();
         RobotContainer.poseSensorFusion.startCalculation();
+
+        RobotContainer.robotPeriodic();
 
         try {
             CommandScheduler.getInstance().run();

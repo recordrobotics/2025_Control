@@ -346,6 +346,11 @@ public class TestControlBridge implements AbstractControl {
     }
 
     @Override
+    public boolean isClimbBurstTriggered() {
+        return getButton(Button.CLIMB_BURST);
+    }
+
+    @Override
     public boolean isCoralSourceIntakeAutoTriggered() {
         Pose2d robot = RobotContainer.poseSensorFusion.getEstimatedPosition();
         SourcePosition closestSource = IGamePosition.closestTo(robot, SourcePosition.values());
@@ -500,7 +505,8 @@ public class TestControlBridge implements AbstractControl {
          */
         @Deprecated(forRemoval = true)
         INTAKE_SCORE_L1,
-        CLIMB
+        CLIMB,
+        CLIMB_BURST
     }
 
     public enum Axis {

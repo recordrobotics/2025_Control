@@ -14,24 +14,24 @@ import org.json.simple.parser.ParseException;
 
 public class BargeRightAuto extends SequentialCommandGroup implements IAutoRoutine {
 
-    private static final double ALIGN_TIMEOUT = 2.0;
+    private static final double ALIGN_TIMEOUT = 3.0;
     private static final double SHOOT_TIMEOUT = 1.0;
 
     public BargeRightAuto() {
         try {
             addCommands(
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("BargeRightToReefE")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignWithVision().withTimeout(ALIGN_TIMEOUT)),
+                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
                     new InstantCommand(() -> RobotContainer.drivetrain.kill()),
                     CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
                     AutoUtils.createSource("E", "Right"),
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefD")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignWithVision().withTimeout(ALIGN_TIMEOUT)),
+                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
                     new InstantCommand(() -> RobotContainer.drivetrain.kill()),
                     CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
                     AutoUtils.createSource("D", "Right"),
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("ElevatorStartToReefC")),
-                    CommandUtils.finishOnInterrupt(AutoUtils.alignWithVision().withTimeout(ALIGN_TIMEOUT)),
+                    CommandUtils.finishOnInterrupt(AutoUtils.alignToReefL4().withTimeout(ALIGN_TIMEOUT)),
                     new InstantCommand(() -> RobotContainer.drivetrain.kill()),
                     CommandUtils.finishOnInterrupt(new CoralShoot().withTimeout(SHOOT_TIMEOUT)),
                     AutoBuilder.followPath(PathPlannerPath.fromPathFile("ReefCToPark")),

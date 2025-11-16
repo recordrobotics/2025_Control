@@ -1,11 +1,10 @@
 package frc.robot.subsystems;
 
-import com.google.common.collect.ImmutableSet;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -31,10 +30,8 @@ import frc.robot.utils.camera.CameraType;
 import frc.robot.utils.camera.IVisionCamera;
 import frc.robot.utils.camera.LimelightCamera;
 import frc.robot.utils.camera.PhotonVisionCamera;
-import frc.robot.utils.camera.VisionCameraEstimate.RawVisionFiducial;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -48,13 +45,16 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     public static final double MAX_MEASUREMENT_STD_DEVS = 9_999_999;
 
-    private static final double L1_STD_MULTIPLIER = 2.0;
-    private static final double SOURCE_STD_MULTIPLIER = 8.0;
+    private static final double L1_STD_MULTIPLIER = 1.0;
+    private static final double SOURCE_STD_MULTIPLIER = 1.0;
 
     private static final double ISPE_STD_DEV = 0.7;
-    private static final double MAX_L1_DISTANCE_TO_IGNORE_SOURCE = 2.5;
 
-    private static final double DEFAULT_DEBOUNCE_TIME = 0.5;
+    private static final double MIN_TXTY_FPS = 8.0;
+    private static final double MAX_TXTY_TIME = 1.0 / MIN_TXTY_FPS;
+
+    private static final double MAX_TXTY_DISTANCE_TO_LAST_POSE = 0.3;
+    private static final double MAX_TXTY_DISTANCE_TO_LAST_TAG = 0.8;
 
     public final NavSensor nav;
 
@@ -81,15 +81,12 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
 
     private final Set<IVisionCamera> cameras = Set.of(leftCamera, centerCamera, l1Camera, sourceCamera);
 
-    private final HashSet<VisionDebouncer> visionDebouncers = new HashSet<>();
-
     private ConcurrentSkipListSet<DeferredPoseEstimation> deferredPoseEstimations =
             new ConcurrentSkipListSet<>((a, b) -> Double.compare(a.timestampSeconds, b.timestampSeconds));
 
     private boolean trustLimelightLeft;
     private boolean trustLimelightCenter;
     private boolean useOPI;
-    private boolean useISPE;
     private boolean useVision;
 
     private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -99,7 +96,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
     private Rotation2d updateNav;
     private SwerveModulePosition[] updatePositions;
 
-    private int nextVisionId = 1;
+    private double lastMostCommonTxtyTime = 0;
+    private int lastMostCommonTxtyId = -1;
+    private Pose2d lastMostCommonTxtyRobotPose = new Pose2d();
 
     public PoseSensorFusion() {
         nav = new NavSensor(
@@ -134,7 +133,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         SmartDashboard.putBoolean("Autonomous/TrustLimelightLeft", true);
         SmartDashboard.putBoolean("Autonomous/TrustLimelightCenter", true);
         SmartDashboard.putBoolean("Autonomous/UseOPI", true);
-        SmartDashboard.putBoolean("Autonomous/UseISPE", true);
         SmartDashboard.putBoolean("Autonomous/UseVision", true);
     }
 
@@ -153,7 +151,6 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         trustLimelightLeft = SmartDashboard.getBoolean("Autonomous/TrustLimelightLeft", false);
         trustLimelightCenter = SmartDashboard.getBoolean("Autonomous/TrustLimelightCenter", false);
         useOPI = SmartDashboard.getBoolean("Autonomous/UseOPI", false);
-        useISPE = SmartDashboard.getBoolean("Autonomous/UseISPE", true);
         useVision = SmartDashboard.getBoolean("Autonomous/UseVision", true);
 
         calculationFuture = executor.submit(this::calculationLoop);
@@ -192,13 +189,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         l1Camera.logValues("L1");
         sourceCamera.logValues("Source");
 
-        for (VisionDebouncer debouncer : visionDebouncers) {
-            debouncer.update();
-        }
-
         Logger.recordOutput("SwerveEstimations", independentPoseEstimator.getEstimatedModulePositions());
         Logger.recordOutput("RobotEstimations", independentPoseEstimator.getEstimatedRobotPoses());
         Logger.recordOutput("RobotEstimation", independentPoseEstimator.getEstimatedRobotPose());
+
+        Logger.recordOutput("MostCommonTXTYId", lastMostCommonTxtyId);
 
         Logger.recordOutput(
                 "IntegratedPose",
@@ -206,6 +201,9 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                         getEstimatedPosition(),
                         RobotContainer.drivetrain.getChassisSpeeds(),
                         Constants.Control.SCORE_TARGET_LOOKAHEAD));
+
+        Logger.recordOutput("NAV/Pitch", nav.getPitch());
+        Logger.recordOutput("NAV/Roll", nav.getRoll());
     }
 
     @Override
@@ -218,6 +216,131 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         updateNav = nav.getAdjustedAngle();
         updatePositions = getModulePositions();
 
+        cameras.stream().forEach(IVisionCamera::updateEstimation);
+
+        updateMostCommonTXTYId();
+
+        addCameraVisionMeasurement(trustLimelightLeft, lastMostCommonTxtyId, leftCamera);
+        addCameraVisionMeasurement(trustLimelightCenter, lastMostCommonTxtyId, centerCamera);
+
+        if (useOPI) {
+            addCameraVisionMeasurement(true, lastMostCommonTxtyId, l1Camera);
+            addCameraVisionMeasurement(true, lastMostCommonTxtyId, sourceCamera);
+        }
+
+        updateIndependentPoseEstimator();
+    }
+
+    /**
+     * Updates the last known most common TXTY ID and time based on the current most common TXTY ID
+     */
+    private void updateMostCommonTXTYId() {
+        int mostCommonTxtyId = getMostCommonTXTYId();
+
+        if (shouldUpdateTXTYId(mostCommonTxtyId)) {
+            lastMostCommonTxtyId = mostCommonTxtyId;
+            lastMostCommonTxtyTime = Timer.getTimestamp();
+            if (mostCommonTxtyId != -1) {
+                lastMostCommonTxtyRobotPose = getEstimatedPosition();
+            }
+        }
+    }
+
+    /**
+     * Determines whether the last known most common TXTY ID should still be considered visible based on
+     * <ul>
+     *  <li>Distance to where the tag was last seen
+     *  <li>Distance to the tag's known position
+     * </ul>
+     * @return true if the last known most common TXTY ID should be considered visible, false otherwise
+     */
+    private boolean shouldLastMostCommonTXTYIdBeVisible() {
+        // we are close to where we last saw the tag but don't see it anymore, likely lost tracking
+        // don't use potentially unreliable vision from PNP solver far away from tag
+
+        Pose2d currentPose = getEstimatedPosition();
+        double distanceToWhereTagLastSeen =
+                currentPose.getTranslation().getDistance(lastMostCommonTxtyRobotPose.getTranslation());
+
+        if (distanceToWhereTagLastSeen > MAX_TXTY_DISTANCE_TO_LAST_POSE) {
+            return false;
+        }
+
+        Optional<Pose3d> tagPose = Constants.Game.APRILTAG_LAYOUT.getTagPose(lastMostCommonTxtyId);
+        if (tagPose.isPresent()) {
+            // we are close to the tag but don't see it anymore, likely lost tracking
+            // don't use potentially unreliable vision from PNP solver far away from tag
+
+            double distanceToTag = currentPose
+                    .getTranslation()
+                    .getDistance(tagPose.get().toPose2d().getTranslation());
+
+            if (distanceToTag > MAX_TXTY_DISTANCE_TO_LAST_TAG) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines whether to update the last known most common TXTY ID and time based on:
+     * <ul>
+     *  <li>If there is no last known ID (the delay is only on falling edge)
+     *  <li>If the most common ID is the same as the last known (update the last seen time)
+     *  <li>If the tracked tag is lost but should still be visible (odometry is likely more accurate than far away PNP pose)
+     *  <li>If the last known ID is stale (exceeded max time without being seen)
+     * </ul>
+     * @param mostCommonTxtyId the currently most common TXTY ID or -1 if none are detected
+     * @return true if the last known most common TXTY ID should be updated, false otherwise
+     */
+    @SuppressWarnings("java:S1126") // last return is necessary for clarity
+    private boolean shouldUpdateTXTYId(int mostCommonTxtyId) {
+        if (lastMostCommonTxtyId == -1) return true; // always update if we don't have a last known ID
+
+        if (mostCommonTxtyId == lastMostCommonTxtyId)
+            return true; // always update if the most common ID is the same as last known
+
+        if (mostCommonTxtyId == -1 && shouldLastMostCommonTXTYIdBeVisible())
+            return false; // don't update if we lost tracking of the last known ID and it should be visible
+
+        if (lastMostCommonTxtyTime + MAX_TXTY_TIME < Timer.getTimestamp())
+            return true; // update if the last known ID is stale
+
+        return false;
+    }
+
+    /**
+     * Finds the most common TXTY ID among all cameras with valid estimates
+     * @return the most common TXTY ID or -1 if none are detected
+     */
+    private int getMostCommonTXTYId() {
+        Map<Integer, Integer> txtyTagsCount = new HashMap<>();
+        for (IVisionCamera camera : cameras) {
+            if (camera.getNumTags() > 0
+                    && camera.getMeasurementStdDevs() < MAX_MEASUREMENT_STD_DEVS
+                    && camera.getUnsafeEstimate().isTXTY()) {
+                int id = camera.getUnsafeEstimate().txtyId();
+                txtyTagsCount.put(id, txtyTagsCount.getOrDefault(id, 0) + 1);
+            }
+        }
+
+        int mostCommonTxtyId = -1;
+        int mostCommonTxtyCount = 0;
+        for (Map.Entry<Integer, Integer> entry : txtyTagsCount.entrySet()) {
+            if (entry.getValue() > mostCommonTxtyCount) {
+                mostCommonTxtyId = entry.getKey();
+                mostCommonTxtyCount = entry.getValue();
+            }
+        }
+
+        return mostCommonTxtyId;
+    }
+
+    /**
+     * Updates the independent pose estimator and uses it to correct the main pose estimator when no vision is available
+     */
+    private void updateIndependentPoseEstimator() {
         if (cameras.stream().anyMatch(v -> v.hasVision())) {
             // when vision is correcting the pose, have that override the independent pose estimator
             independentPoseEstimator.reset(getEstimatedPosition());
@@ -226,22 +349,33 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
             independentPoseEstimator.update(getEstimatedPosition().getRotation());
 
             // when no vision use independent pose estimator to correct pose
-            if (useISPE) {
-                addVisionMeasurement(
-                        independentPoseEstimator.getEstimatedRobotPose(),
-                        Timer.getTimestamp(),
-                        VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
-            }
+            addVisionMeasurement(
+                    independentPoseEstimator.getEstimatedRobotPose(),
+                    Timer.getTimestamp(),
+                    VecBuilder.fill(ISPE_STD_DEV, ISPE_STD_DEV, MAX_MEASUREMENT_STD_DEVS));
         }
+    }
 
-        leftCamera.updateEstimation(trustLimelightLeft, false);
-        centerCamera.updateEstimation(trustLimelightCenter, false);
-        l1Camera.updateEstimation(true, !useOPI);
-        sourceCamera.updateEstimation(
-                true,
-                !useOPI
-                        || (l1Camera.hasVision()
-                                && l1Camera.getUnsafeEstimate().avgTagDist() < MAX_L1_DISTANCE_TO_IGNORE_SOURCE));
+    /**
+     * Adds a vision measurement from a camera to the pose filter with measurement rejection if necessary
+     * <ul>
+     *  <li>If there is no targeted TXTY tag, always add the measurement
+     *  <li>If the camera's estimate is TXTY and matches the most common TXTY ID, add the measurement
+     *  <li>Otherwise, do not add the measurement
+     * </ul>
+     * @param trust whether to trust the camera's rotation
+     * @param mostCommonTxtyId the currently detected TXTY tag or -1 if none are detected
+     * @param camera the camera to add the measurement from
+     */
+    private void addCameraVisionMeasurement(boolean trust, int mostCommonTxtyId, IVisionCamera camera) {
+        if (mostCommonTxtyId == -1
+                || (camera.getUnsafeEstimate().isTXTY()
+                        && camera.getUnsafeEstimate().txtyId() == mostCommonTxtyId)) {
+            camera.addVisionMeasurement(
+                    trust,
+                    getEstimatedPositionAt(camera.getUnsafeEstimate().timestampSeconds())
+                            .orElse(null));
+        }
     }
 
     private void updateDashboard() {
@@ -260,15 +394,22 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         return RobotContainer.drivetrain.getModulePositions();
     }
 
+    /**
+     * Gets the estimated position of the robot on the field at the current time
+     * @return the estimated position of the robot on the field
+     */
     @AutoLogLevel(key = "Odometry/Robot", level = Level.REAL)
     public Pose2d getEstimatedPosition() {
         return poseFilter.getEstimatedPosition();
     }
 
-    public Pose2d getEstimatedPositionAt(double timestamp) {
-        Optional<Pose2d> sample = poseFilter.sampleAt(timestamp);
-        if (sample.isEmpty()) return getEstimatedPosition();
-        else return sample.get();
+    /**
+     * Gets the estimated position at a specific timestamp or an empty optional if the timestamp is out of range
+     * @param timestamp the timestamp to get the estimated position at (see {@link Timer#getTimestamp()})
+     * @return an optional containing the estimated position at the specified timestamp, or empty if out of range
+     */
+    public Optional<Pose2d> getEstimatedPositionAt(double timestamp) {
+        return poseFilter.sampleAt(timestamp);
     }
 
     /** Similar to resetPose but adds an argument for the initial pose */
@@ -292,11 +433,11 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
         cameras.stream()
                 .filter(cam -> cam.getNumTags() > 0)
                 .sorted((a, b) -> Double.compare(
-                        a.getCurrentEstimate().avgTagDist(),
-                        b.getCurrentEstimate().avgTagDist()))
+                        a.getUnsafeEstimate().avgTagDist(),
+                        b.getUnsafeEstimate().avgTagDist()))
                 .findFirst()
                 .ifPresentOrElse(
-                        camera -> setToPose(camera.getCurrentEstimate().pose()),
+                        camera -> setToPose(camera.getUnsafeEstimate().pose()),
                         () -> ConsoleLogger.logWarning("No camera has vision!"));
     }
 
@@ -310,270 +451,8 @@ public class PoseSensorFusion extends ManagedSubsystemBase {
                 DriverStationUtils.getCurrentAlliance() == Alliance.Red ? new Rotation2d(Math.PI) : new Rotation2d(0)));
     }
 
-    public enum CameraTarget {
-        LEFT(RobotContainer.poseSensorFusion.getLeftCamera()),
-        CENTER(RobotContainer.poseSensorFusion.getCenterCamera()),
-        L1(RobotContainer.poseSensorFusion.getL1Camera()),
-        SOURCE(RobotContainer.poseSensorFusion.getSourceCamera()),
-        ELEVATOR(LEFT, CENTER),
-        ALL(LEFT, CENTER, L1, SOURCE);
-
-        @SuppressWarnings("ImmutableEnumChecker") // we want IVisionCamera to be mutable
-        private final ImmutableSet<IVisionCamera> cameras;
-
-        CameraTarget(IVisionCamera... cameras) {
-            this.cameras = ImmutableSet.copyOf(cameras);
-        }
-
-        CameraTarget(CameraTarget... targets) {
-            ImmutableSet.Builder<IVisionCamera> cameraList = ImmutableSet.builder();
-            for (CameraTarget target : targets) {
-                for (IVisionCamera camera : target.cameras) {
-                    cameraList.add(camera);
-                }
-            }
-            this.cameras = cameraList.build();
-        }
-
-        boolean contains(IVisionCamera camera) {
-            return cameras.contains(camera);
-        }
-
-        boolean contains(IVisionCamera... cameras) {
-            return this.cameras.containsAll(Set.of(cameras));
-        }
-    }
-
-    public VisionDebouncer registerVisionCheck(CameraTarget camera) {
-        return registerVisionCheck(camera, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
-    }
-
-    public VisionDebouncer registerVisionCheck(
-            CameraTarget camera, double debounceTime, Debouncer.DebounceType debounceType) {
-        return registerVisionCheck(camera, null, debounceTime, debounceType);
-    }
-
-    public VisionDebouncer registerVisionCheck(CameraTarget camera, int... tagIds) {
-        return registerVisionCheck(camera, tagIds, DEFAULT_DEBOUNCE_TIME, Debouncer.DebounceType.kBoth);
-    }
-
-    public VisionDebouncer registerVisionCheck(
-            CameraTarget camera, int[] tagIds, double debounceTime, Debouncer.DebounceType debounceType) {
-        VisionDebouncer vision = new VisionDebouncer(nextVisionId, debounceTime, debounceType, camera, tagIds);
-        visionDebouncers.add(vision);
-        return vision;
-    }
-
-    public void releaseVisionCheck(VisionDebouncer visionDebouncer) {
-        visionDebouncers.remove(visionDebouncer);
-    }
-
     @Override
     public void close() throws Exception {
         nav.close();
-    }
-
-    public LimelightCamera getLeftCamera() {
-        return leftCamera;
-    }
-
-    public LimelightCamera getCenterCamera() {
-        return centerCamera;
-    }
-
-    public PhotonVisionCamera getL1Camera() {
-        return l1Camera;
-    }
-
-    public PhotonVisionCamera getSourceCamera() {
-        return sourceCamera;
-    }
-
-    public Set<IVisionCamera> getCameras() {
-        return cameras;
-    }
-
-    public static final class VisionDebouncer {
-        private final Debouncer debouncer;
-        private CameraTarget camera;
-        private int[] tagIds;
-
-        private final int id;
-
-        private boolean result = false;
-        private double lastAccessTime;
-
-        private boolean persistent = false;
-
-        private VisionDebouncer(
-                int id, double debounceTime, Debouncer.DebounceType debounceType, CameraTarget camera, int[] tagIds) {
-            this.id = id;
-            this.camera = camera;
-            this.tagIds = tagIds;
-
-            debouncer = new Debouncer(0, debounceType);
-            debouncer.calculate(hasVisionRaw());
-            debouncer.setDebounceTime(debounceTime);
-
-            lastAccessTime = Timer.getTimestamp();
-        }
-
-        private boolean hasVisionRaw() {
-            boolean rawInput = hasAnyVision();
-            if (rawInput && tagIds != null) {
-                rawInput = hasRequiredTags();
-            }
-            return rawInput;
-        }
-
-        private boolean hasAnyVision() {
-            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
-                if (camera.contains(vis) && vis.hasVision()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private boolean hasRequiredTags() {
-            List<Integer> visionTags = collectVisionTags();
-            for (int tagId : tagIds) {
-                if (!visionTags.contains(tagId)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private List<Integer> collectVisionTags() {
-            ArrayList<Integer> visionTags = new ArrayList<>();
-            for (IVisionCamera vis : RobotContainer.poseSensorFusion.getCameras()) {
-                if (camera.contains(vis)) {
-                    for (RawVisionFiducial tag : vis.getCurrentEstimate().rawFiducials()) {
-                        visionTags.add(tag.id());
-                    }
-                }
-            }
-            return visionTags;
-        }
-
-        private void update() {
-            boolean rawInput = hasVisionRaw();
-
-            result = debouncer.calculate(rawInput);
-
-            double timeSinceLastAccessed = Timer.getTimestamp() - lastAccessTime;
-            if (!persistent && timeSinceLastAccessed > 1.0) {
-                ConsoleLogger.logWarning("Detected abandoned "
-                        + toString()
-                        + " last accessed "
-                        + (int) Math.floor(timeSinceLastAccessed)
-                        + " seconds ago.");
-            }
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("VisionDebouncer{");
-            sb.append("id=").append(id);
-            sb.append(", camera=").append(camera);
-            sb.append(", tagIds=");
-            if (tagIds != null) {
-                for (int tagId : tagIds) {
-                    sb.append(tagId).append(" ");
-                }
-            }
-            sb.append(", value=").append(result);
-            sb.append('}');
-            return sb.toString();
-        }
-
-        public boolean hasVision() {
-            lastAccessTime = Timer.getTimestamp();
-            return result;
-        }
-
-        public void setCamera(CameraTarget camera) {
-            this.camera = camera;
-        }
-
-        public VisionDebouncer withCamera(CameraTarget camera) {
-            setCamera(camera);
-            return this;
-        }
-
-        public void setTagIds(int[] tagIds) {
-            this.tagIds = tagIds;
-        }
-
-        public VisionDebouncer withTagIds(int[] tagIds) {
-            setTagIds(tagIds);
-            return this;
-        }
-
-        public CameraTarget getCamera() {
-            return camera;
-        }
-
-        public int[] getTagIds() {
-            return tagIds;
-        }
-
-        public void setDebounceTime(double time) {
-            debouncer.setDebounceTime(time);
-        }
-
-        public void setDebounceType(Debouncer.DebounceType debounceType) {
-            debouncer.setDebounceType(debounceType);
-        }
-
-        public VisionDebouncer withDebounceTime(double time) {
-            setDebounceTime(time);
-            return this;
-        }
-
-        public VisionDebouncer withDebounceType(Debouncer.DebounceType debounceType) {
-            setDebounceType(debounceType);
-            return this;
-        }
-
-        public double getDebounceTime() {
-            return debouncer.getDebounceTime();
-        }
-
-        public Debouncer.DebounceType getDebounceType() {
-            return debouncer.getDebounceType();
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public void release() {
-            RobotContainer.poseSensorFusion.releaseVisionCheck(this);
-        }
-
-        public boolean isPersistent() {
-            return persistent;
-        }
-
-        public void setPersistent(boolean persistent) {
-            this.persistent = persistent;
-        }
-
-        public void setPersistent() {
-            setPersistent(true);
-        }
-
-        public VisionDebouncer withPersistent() {
-            setPersistent();
-            return this;
-        }
-
-        public VisionDebouncer withPersistent(boolean persistent) {
-            setPersistent(persistent);
-            return this;
-        }
     }
 }
